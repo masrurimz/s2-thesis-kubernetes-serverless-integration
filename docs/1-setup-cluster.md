@@ -9,19 +9,12 @@ Cluster A will host the Rust app and HAProxy.
 ### Cluster A Configuration (in `cluster-configs/cluster-a/k3d-cluster-a.yaml`)
 
 ```yaml
-apiVersion: k3d.io/v1alpha1
+apiVersion: k3d.io/v1alpha5
 kind: Simple
 metadata:
   name: cluster-a
 servers: 1
 agents: 2
-options:
-  k3s:
-    extraArgs:
-      - --kubelet-arg=eviction-hard=memory.available<500Mi
-  limits:
-    cpu: 2
-    memory: 1Gi
 ```
 
 ### Create Cluster A
