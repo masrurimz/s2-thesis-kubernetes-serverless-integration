@@ -248,7 +248,7 @@ kubectl apply -f autoscaler/cluster-autoscaler.yaml
 
 ### **4.3. Create Automation Script**
 
-**File:** `scripts/autoscale_nodes.sh`
+**File:** `autoscaler/autoscale-docker-node.sh`
 
 ```bash
 #!/bin/bash
@@ -282,10 +282,10 @@ remove_node() {
 # Monitor Cluster Autoscaler logs
 echo "Monitoring Cluster Autoscaler logs..."
 $KUBECTL -n kube-system logs -f deployment/cluster-autoscaler | while read -r line; do
-  if echo "$line" | grep -q "Scale-up": then
+  if echo "$line" | grep -q "Scale-up"; then
     echo "Scale-up event detected."
     add_node
-  elif echo "$line" | grep -q "Scale-down": then
+  elif echo "$line" | grep -q "Scale-down"; then
     echo "Scale-down event detected."
     remove_node
   fi
