@@ -29,10 +29,10 @@ remove_node() {
 # Monitor Cluster Autoscaler logs
 echo "Monitoring Cluster Autoscaler logs..."
 $KUBECTL -n kube-system logs -f deployment/cluster-autoscaler | while read -r line; do
-  if echo "$line" | grep -q "Scale-up": then
+  if echo "$line" | grep -q "Scale-up"; then
     echo "Scale-up event detected."
     add_node
-  elif echo "$line" | grep -q "Scale-down": then
+  elif echo "$line" | grep -q "Scale-down"; then
     echo "Scale-down event detected."
     remove_node
   fi
