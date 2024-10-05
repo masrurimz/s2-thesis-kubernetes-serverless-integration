@@ -33,14 +33,12 @@ my-k3d-cluster/
 **File:** `cluster/k3d-config.yaml`
 
 ```yaml
-apiVersion: k3d.io/v1alpha4
+apiVersion: k3d.io/v1alpha5
 kind: Simple
 metadata:
   name: mycluster
-servers:
-  - replicaCount: 1
-agents:
-  - replicaCount: 2
+servers: 1
+agents: 2
 options:
   k3d:
     wait: true
