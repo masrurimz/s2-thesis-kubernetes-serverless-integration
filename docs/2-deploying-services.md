@@ -30,14 +30,47 @@ kubectl get pods --context k3d-cluster-b
 
 Deploy the Rust app to **Cluster A**:
 
+### Rust App Deployment Configuration (in `cluster-configs/cluster-a/deployment.yaml`)
+
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rust-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rust-app
+  template:
+    metadata:
+      labels:
+        app: rust-app
+    spec:
+      containers:
+        - name: rust-app
+          image: rust-app:latest
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: "0.512"
+              memory: "256Mi"
+            requests:
+              cpu: "0.125"
+              memory: "125Mi"
+```
+
+### Deploy Rust App on Cluster A
+
 ```bash
-kubectl apply -f cluster-configs/cluster-b/deployment.yaml --context k3d-cluster-b
+kubectl apply -f cluster-configs/cluster-a/deployment.yaml --context k3d-cluster-a
 ```
 
 Verify the deployment:
 
 ```bash
-kubectl get pods --context k3d-cluster-b
+kubectl get pods --context k3d-cluster-a
 ```
 
 ## Deploying Knative App (Cluster C)

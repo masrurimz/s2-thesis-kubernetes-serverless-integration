@@ -1,0 +1,27 @@
+# high-cpu-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: high-cpu
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: high-cpu
+  template:
+    metadata:
+      labels:
+        app: high-cpu
+    spec:
+      containers:
+        - name: busybox
+          image: busybox
+          command:
+            [
+              "sh",
+              "-c",
+              "while true; do echo 'Hello, Kubernetes!'; sleep 1; done",
+            ]
+          resources:
+            requests:
+              cpu: "500m"
