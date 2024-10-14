@@ -5,6 +5,10 @@
 KUBECTL="kubectl"
 CLUSTER_NAME="mycluster"
 
+CPU_LIMIT="0.5"          # CPUs per node
+MEMORY_LIMIT="500m"      # Memory per node
+MEMORY_SWAP_LIMIT="500m" # Memory swap per node
+
 # Function to add a node
 add_node() {
   NODE_COUNT=$(k3d node list | grep "${CLUSTER_NAME}-agent" | wc -l)
@@ -12,7 +16,7 @@ add_node() {
   echo "Adding node $NODE_NAME..."
   k3d node create $NODE_NAME --cluster $CLUSTER_NAME --role agent
   # Apply resource limits
-  docker update --cpus=1 --memory=1g $NODE_NAME
+  docker update --cpus=$CPU_LIMIT --memory=$MEMORY_LIMIT --memory-swap=$MEMORY_SWAP_LIMIT $NODE_NAME
 }
 
 # Function to remove a node
