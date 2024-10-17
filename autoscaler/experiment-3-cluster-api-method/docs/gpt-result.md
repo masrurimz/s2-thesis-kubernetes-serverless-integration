@@ -144,17 +144,10 @@ You should see information about the Kubernetes master and services running.
 
 The **Cluster API Operator** manages Cluster API components declaratively.
 
-### **3.0 Install Cluster Cert Manager from Helm Repository**
+### **3.1 Install Cluster Cert Manager from Helm Repository**
 
 ```bash
 kubectl apply -f https://github.com/jetstack/cert-manager/releases/latest/download/cert-manager.yaml
-```
-
-### **3.1 Add the Cluster API Helm Repository**
-
-```bash
-helm repo add cluster-api https://cluster-api.github.io/cluster-api
-helm repo update
 ```
 
 ### **3.2 Install the Cluster API Operator**
@@ -165,7 +158,7 @@ helm repo update
 helm install capi-operator capi-operator/cluster-api-operator --create-namespace -n capi-operator-system
 
 # helm install capi-operator cluster-api/cluster-api \
-#   --namespace cluster-api-system \
+#   --namespace capi-operator-system \
 #   --create-namespace
 ```
 
@@ -173,13 +166,13 @@ helm install capi-operator capi-operator/cluster-api-operator --create-namespace
 
 - `capi-operator`: Name of the Helm release.
 - `cluster-api/cluster-api`: Chart name.
-- `--namespace cluster-api-system`: Namespace to install the operator.
+- `--namespace capi-operator-system`: Namespace to install the operator.
 - `--create-namespace`: Creates the namespace if it doesn't exist.
 
 ### **3.3 Verify the Installation**
 
 ```bash
-kubectl get pods -n cluster-api-system
+kubectl get pods -n capi-operator-system
 ```
 
 **Expected Output:**
@@ -202,20 +195,20 @@ helm repo update
 ### **4.2 Install the Docker Infrastructure Provider**
 
 ```bash
-helm install capi-docker cluster-api/docker \
-  --namespace cluster-api-system
+helm install capi-operator capi-operator/cluster-api-operator --create-namespace -n capi-operator-system --set infrastructure=docker:v1.4.2  --wait --timeout 90s
+# core Cluster API with kubeadm bootstrap and control plane providers will also be installed
 ```
 
 **Explanation:**
 
 - `capi-docker`: Name of the Helm release.
 - `cluster-api/docker`: Chart name.
-- `--namespace cluster-api-system`: Namespace where Cluster API Operator is installed.
+- `--namespace capi-operator-system`: Namespace where Cluster API Operator is installed.
 
 ### **4.3 Verify Provider Installation**
 
 ```bash
-kubectl get pods -n cluster-api-system
+kubectl get pods -n capi-operator-system
 ```
 
 **Expected Output:**
