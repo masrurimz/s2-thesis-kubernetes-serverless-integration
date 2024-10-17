@@ -117,7 +117,7 @@ The **management cluster** will host the **Cluster API Operator** and manage you
 ```bash
 k3d cluster create management-cluster \
   --agents 1 \
-  --port "6443:6443@loadbalancer" \
+  --port "6443:6443@loadbalancer:0" \
   --k3s-arg "--disable=traefik@server:0"
 ```
 
