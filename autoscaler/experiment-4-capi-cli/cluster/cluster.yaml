@@ -1,0 +1,49 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: my-cluster
+  namespace: default
+spec:
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: DockerCluster
+    name: my-cluster
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: KubeadmControlPlane
+    name: my-cluster-control-plane
+  topology:
+    version: "v1.25.0" # Specify desired Kubernetes version
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  name: my-cluster-control-plane
+  namespace: default
+spec:
+  replicas: 1
+  version: "v1.25.0"
+  infrastructureTemplate:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: DockerMachineTemplate
+    name: my-cluster-control-plane
+  machineConfig:
+    # Optional: Define additional kubeadm configurations
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: DockerCluster
+metadata:
+  name: my-cluster
+  namespace: default
+spec:
+  # Docker-specific cluster configurations
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: DockerMachineTemplate
+metadata:
+  name: my-cluster-control-plane
+  namespace: default
+spec:
+  template:
+    spec:
+      image: rancher/k3s:v1.25.0-k3s1 # Specify desired k3s image

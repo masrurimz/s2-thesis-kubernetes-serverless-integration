@@ -1,0 +1,12 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+kind: DockerMachineTemplate
+metadata:
+  name: my-docker-control-plane
+  namespace: cluster-api
+spec:
+  template:
+    spec:
+      image: rancher/k3s:v1.26.0-k3s1
+      extraMounts:
+        - hostPath: /var/run/docker.sock
+          containerPath: /var/run/docker.sock
