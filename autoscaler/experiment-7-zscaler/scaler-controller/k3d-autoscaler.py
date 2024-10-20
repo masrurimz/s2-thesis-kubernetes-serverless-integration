@@ -20,8 +20,9 @@ CPU_UPPER_THRESHOLD = 80  # in percent
 CPU_LOWER_THRESHOLD = 30  # in percent
 
 # Resource Limits for Each Node
-NODE_MEMORY_LIMIT = '512M'  # Memory limit per node (e.g., '2g' for 2 Gigabytes)
-NODE_CPU_LIMIT = '1'       # CPU limit per node (e.g., '2' for 2 CPUs)
+NODE_MEMORY_LIMIT = '512M'       # Memory limit per node (e.g., '512M' for 512 Megabytes)
+NODE_CPU_LIMIT = '1'             # CPU limit per node (e.g., '1' for 1 CPU)
+NODE_MEMORY_SWAP_LIMIT = '512M'  # Memory swap limit per node (set equal to NODE_MEMORY_LIMIT)
 
 # Check Interval and Cooldown Periods
 CHECK_INTERVAL = 60      # in seconds
@@ -53,16 +54,36 @@ logging.getLogger('').addHandler(console)
 # Autoscaler Functions
 # ===============================
 
+def is_metrics_server_available():
+    """
+    Checks if the Metrics Server is available by attempting to fetch node metrics.
+    
+    Returns:
+        bool: True if available, False otherwise.
+    """
+    try:
+        subprocess.run(
+            ['kubectl', 'top', 'nodes'],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        logging.debug("Metrics Server is available.")
+        return True
+    except subprocess.CalledProcessError:
+        logging.error("Metrics Server is not available. Ensure it is installed and running.")
+        return False
+
 def get_average_cpu_utilization():
     """
-    Fetches the average CPU utilization across all nodes in the cluster.
+    Fetches the average CPU utilization across all agent nodes in the cluster.
 
     Returns:
-        float: Average CPU utilization percentage.
+        float: Average CPU utilization percentage, or None if unavailable.
     """
     try:
         result = subprocess.run(
-            ['kubectl', 'top', 'nodes', '--no-headers'],
+            ['kubectl', 'top', 'nodes', '-l', 'k3s.io/role=agent', '--no-headers'],
             capture_output=True,
             text=True,
             check=True
@@ -77,7 +98,7 @@ def get_average_cpu_utilization():
             cpu_usage_str = parts[1]
             if cpu_usage_str.endswith('m'):
                 cpu_usage = int(cpu_usage_str.rstrip('m'))
-                cpu_percent = cpu_usage / 1000 * 100  # Convert to percentage
+                cpu_percent = (cpu_usage / 1000) * 100  # Convert to percentage
             else:
                 # Assume it's in cores
                 cpu_usage = float(cpu_usage_str)
@@ -89,24 +110,24 @@ def get_average_cpu_utilization():
         return average_cpu
     except subprocess.CalledProcessError as e:
         logging.error(f"Error fetching metrics: {e}")
-        return 0
+        return None
 
 def get_current_node_count():
     """
-    Retrieves the current number of nodes in the cluster.
+    Retrieves the current number of agent nodes in the cluster.
 
     Returns:
-        int: Number of nodes.
+        int: Number of agent nodes.
     """
     try:
         result = subprocess.run(
-            ['kubectl', 'get', 'nodes', '--no-headers'],
+            ['kubectl', 'get', 'nodes', '-l', 'k3s.io/role=agent', '--no-headers'],
             capture_output=True,
             text=True,
             check=True
         )
         node_count = len([line for line in result.stdout.strip().split('\n') if line])
-        logging.debug(f"Current node count: {node_count}")
+        logging.debug(f"Current agent node count: {node_count}")
         return node_count
     except subprocess.CalledProcessError as e:
         logging.error(f"Error fetching node count: {e}")
@@ -133,12 +154,95 @@ def get_current_docker_containers():
         logging.error(f"Error fetching Docker containers: {e}")
         return set()
 
+def get_docker_container_by_node(node_name):
+    """
+    Retrieves the Docker container name associated with a given Kubernetes node.
+
+    Args:
+        node_name (str): Name of the Kubernetes node.
+
+    Returns:
+        str or None: Docker container name if found, else None.
+    """
+    try:
+        # List Docker containers with name matching the node
+        result = subprocess.run(
+            ['docker', 'ps', '--filter', f'name={node_name}', '--format', '{{.Names}}'],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        container_name = result.stdout.strip()
+        if container_name:
+            logging.debug(f"Found Docker container '{container_name}' for node '{node_name}'.")
+            return container_name
+        else:
+            logging.warning(f"No Docker container found for node '{node_name}'.")
+            return None
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Error fetching Docker container for node '{node_name}': {e}")
+        return None
+
+def ensure_resource_limits_on_existing_nodes():
+    """
+    Ensures that all existing agent nodes in the cluster have the specified resource limits applied.
+    """
+    logging.info("Ensuring resource limits on existing agent nodes...")
+    try:
+        result = subprocess.run(
+            ['kubectl', 'get', 'nodes', '-l', 'k3s.io/role=agent', '--no-headers'],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        node_names = [line.split()[0] for line in result.stdout.strip().split('\n') if line]
+        logging.debug(f"Existing agent nodes: {node_names}")
+
+        for node in node_names:
+            docker_container_name = get_docker_container_by_node(node)
+            if not docker_container_name:
+                logging.warning(f"Skipping node '{node}' as its Docker container could not be identified.")
+                continue
+
+            # Retrieve current resource limits
+            try:
+                inspect_result = subprocess.run(
+                    ['docker', 'inspect', docker_container_name],
+                    capture_output=True,
+                    text=True,
+                    check=True
+                )
+                # Check if Memory, MemorySwap, and CpuQuota are already set as desired
+                if (f'"Memory": "{NODE_MEMORY_LIMIT}"' in inspect_result.stdout and
+                    f'"MemorySwap": "{NODE_MEMORY_SWAP_LIMIT}"' in inspect_result.stdout and
+                    f'"NanoCpus": {int(float(NODE_CPU_LIMIT) * 1e9)}' in inspect_result.stdout):
+                    logging.info(f"Node '{node}' already has the desired resource limits.")
+                    continue  # Resource limits are already set
+            except subprocess.CalledProcessError as e:
+                logging.error(f"Error inspecting Docker container '{docker_container_name}': {e}")
+                continue
+
+            logging.info(f"Applying resource limits to existing node '{node}' (Container: {docker_container_name})")
+            try:
+                subprocess.run([
+                    'docker', 'update',
+                    '--cpus', NODE_CPU_LIMIT,
+                    '--memory', NODE_MEMORY_LIMIT,
+                    '--memory-swap', NODE_MEMORY_SWAP_LIMIT,
+                    docker_container_name
+                ], check=True)
+                logging.info(f"Resource limits applied to node '{node}' successfully.")
+            except subprocess.CalledProcessError as e:
+                logging.error(f"Error applying resource limits to node '{node}': {e}")
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Error fetching existing agent nodes: {e}")
+
 def scale_up():
     """
-    Scales up the cluster by adding a new node with specified resource limits.
+    Scales up the cluster by adding a new agent node with specified resource limits.
     """
     node_name = f"autoscaler-cluster-agent-{int(time.time())}"
-    logging.info(f"Scaling up: Creating node {node_name}")
+    logging.info(f"Scaling up: Creating node '{node_name}'")
     try:
         # Get existing containers before creating the node
         before_containers = get_current_docker_containers()
@@ -149,7 +253,7 @@ def scale_up():
             '--cluster', CLUSTER_NAME,
             '--role', 'agent'
         ], check=True)
-        logging.info(f"Node {node_name} created successfully.")
+        logging.info(f"Node '{node_name}' created successfully.")
 
         # Allow some time for the Docker container to start
         time.sleep(5)  # Adjust as necessary based on your system's performance
@@ -164,16 +268,17 @@ def scale_up():
 
         # Assuming only one new container was created
         docker_container_name = new_containers.pop()
-        logging.info(f"Applying resource limits to Docker container {docker_container_name}")
+        logging.info(f"Applying resource limits to Docker container '{docker_container_name}'")
 
         # Update the Docker container with resource limits
         subprocess.run([
             'docker', 'update',
             '--cpus', NODE_CPU_LIMIT,
             '--memory', NODE_MEMORY_LIMIT,
+            '--memory-swap', NODE_MEMORY_SWAP_LIMIT,
             docker_container_name
         ], check=True)
-        logging.info(f"Resource limits applied to node {node_name} successfully.")
+        logging.info(f"Resource limits applied to node '{node_name}' successfully.")
 
         # Optional: Cooldown after scaling up
         logging.info(f"Cooling down for {COOLDOWN_PERIOD} seconds after scaling up.")
@@ -184,14 +289,14 @@ def scale_up():
 
 def get_nodes_sorted_by_load():
     """
-    Retrieves and sorts nodes by their CPU usage in descending order.
+    Retrieves and sorts agent nodes by their CPU usage in descending order.
 
     Returns:
         list of tuples: List containing tuples of (node_name, cpu_percent).
     """
     try:
         result = subprocess.run(
-            ['kubectl', 'top', 'nodes', '--no-headers'],
+            ['kubectl', 'top', 'nodes', '-l', 'k3s.io/role=agent', '--no-headers'],
             capture_output=True,
             text=True,
             check=True
@@ -205,7 +310,7 @@ def get_nodes_sorted_by_load():
             cpu_usage_str = parts[1]
             if cpu_usage_str.endswith('m'):
                 cpu_usage = int(cpu_usage_str.rstrip('m'))
-                cpu_percent = cpu_usage / 1000 * 100  # Convert to percentage
+                cpu_percent = (cpu_usage / 1000) * 100  # Convert to percentage
             else:
                 cpu_usage = float(cpu_usage_str)
                 cpu_percent = cpu_usage * 100
@@ -220,19 +325,19 @@ def get_nodes_sorted_by_load():
 
 def scale_down():
     """
-    Scales down the cluster by removing the least loaded node.
+    Scales down the cluster by removing the least loaded agent node.
     """
     nodes_sorted = get_nodes_sorted_by_load()
     if not nodes_sorted:
-        logging.warning("No nodes available to scale down.")
+        logging.warning("No agent nodes available to scale down.")
         return
     # Select the node with the lowest CPU usage
     node_to_remove, cpu_percent = nodes_sorted[-1]
-    logging.info(f"Scaling down: Removing node {node_to_remove} with CPU usage {cpu_percent}%")
+    logging.info(f"Scaling down: Removing node '{node_to_remove}' with CPU usage {cpu_percent}%")
     try:
         # Cordon the node to prevent new pods from being scheduled
         subprocess.run(['kubectl', 'cordon', node_to_remove], check=True)
-        logging.debug(f"Node {node_to_remove} cordoned successfully.")
+        logging.debug(f"Node '{node_to_remove}' cordoned successfully.")
 
         # Drain the node to remove all pods
         subprocess.run([
@@ -241,11 +346,11 @@ def scale_down():
             '--delete-local-data',
             '--force'
         ], check=True)
-        logging.debug(f"Node {node_to_remove} drained successfully.")
+        logging.debug(f"Node '{node_to_remove}' drained successfully.")
 
         # Delete the node from the k3d cluster
         subprocess.run(['k3d', 'node', 'delete', node_to_remove, '--cluster', CLUSTER_NAME], check=True)
-        logging.info(f"Node {node_to_remove} removed successfully.")
+        logging.info(f"Node '{node_to_remove}' removed successfully.")
 
         # Optional: Cooldown after scaling down
         logging.info(f"Cooling down for {COOLDOWN_PERIOD} seconds after scaling down.")
@@ -259,20 +364,30 @@ def main():
     Main loop that continuously monitors CPU utilization and scales the cluster accordingly.
     """
     logging.info("Starting k3d Autoscaler...")
-    while True:
-        average_cpu = get_average_cpu_utilization()
-        logging.info(f"Average CPU Utilization: {average_cpu:.2f}%")
-        node_count = get_current_node_count()
-        logging.info(f"Current Node Count: {node_count}")
 
-        if average_cpu > CPU_UPPER_THRESHOLD and node_count < MAX_NODES:
-            logging.info("CPU usage above upper threshold. Initiating scale up...")
-            scale_up()
-        elif average_cpu < CPU_LOWER_THRESHOLD and node_count > MIN_NODES:
-            logging.info("CPU usage below lower threshold. Initiating scale down...")
-            scale_down()
+    # Ensure resource limits on existing agent nodes at startup
+    ensure_resource_limits_on_existing_nodes()
+
+    while True:
+        if not is_metrics_server_available():
+            logging.warning("Metrics Server is unavailable. Skipping this cycle.")
         else:
-            logging.info("No scaling action required.")
+            average_cpu = get_average_cpu_utilization()
+            if average_cpu is None:
+                logging.warning("Could not retrieve average CPU utilization. Skipping this cycle.")
+            else:
+                logging.info(f"Average CPU Utilization: {average_cpu:.2f}%")
+                node_count = get_current_node_count()
+                logging.info(f"Current Agent Node Count: {node_count}")
+
+                if average_cpu > CPU_UPPER_THRESHOLD and node_count < MAX_NODES:
+                    logging.info("CPU usage above upper threshold. Initiating scale up...")
+                    scale_up()
+                elif average_cpu < CPU_LOWER_THRESHOLD and node_count > MIN_NODES:
+                    logging.info("CPU usage below lower threshold. Initiating scale down...")
+                    scale_down()
+                else:
+                    logging.info("No scaling action required.")
 
         logging.info(f"Sleeping for {CHECK_INTERVAL} seconds...\n")
         time.sleep(CHECK_INTERVAL)
