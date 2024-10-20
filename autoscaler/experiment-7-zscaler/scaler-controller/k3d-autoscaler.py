@@ -251,7 +251,8 @@ def scale_up():
         subprocess.run([
             'k3d', 'node', 'create', node_name,
             '--cluster', CLUSTER_NAME,
-            '--role', 'agent'
+            '--role', 'agent',
+            '--k3s-node-label', 'k3s.io/role=agent'
         ], check=True)
         logging.info(f"Node '{node_name}' created successfully.")
 
