@@ -144,7 +144,7 @@ You should see information about the Kubernetes master and services running.
 
 The **Cluster API Operator** manages Cluster API components declaratively.
 
-### **3.1 Install Cluster Cert Manager from Helm Repository**
+### **3.1 Install Cert Manager**
 
 ```bash
 kubectl apply -f https://github.com/jetstack/cert-manager/releases/latest/download/cert-manager.yaml
@@ -155,7 +155,8 @@ kubectl apply -f https://github.com/jetstack/cert-manager/releases/latest/downlo
 ```bash
 helm repo add capi-operator https://kubernetes-sigs.github.io/cluster-api-operator
 helm repo update
-helm install capi-operator capi-operator/cluster-api-operator --create-namespace -n capi-operator-system
+# Skip install, will use the installation with docker provider
+# helm install capi-operator capi-operator/cluster-api-operator --create-namespace -n capi-operator-system
 
 # helm install capi-operator cluster-api/cluster-api \
 #   --namespace capi-operator-system \
@@ -185,12 +186,12 @@ All pods should be in the `Running` state without issues.
 
 Configure the **Docker** infrastructure provider to manage Kubernetes nodes as Docker containers.
 
-### **4.1 Add the Cluster API Docker Provider Repository**
+<!-- ### **4.1 Add the Cluster API Docker Provider Repository**
 
 ```bash
 helm repo add cluster-api https://cluster-api.github.io/cluster-api
 helm repo update
-```
+``` -->
 
 ### **4.2 Install the Docker Infrastructure Provider**
 
