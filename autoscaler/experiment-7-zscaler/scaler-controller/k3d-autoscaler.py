@@ -344,13 +344,13 @@ def scale_down():
         subprocess.run([
             'kubectl', 'drain', node_to_remove,
             '--ignore-daemonsets',
-            '--delete-local-data',
+            '--delete-emptydir-data',  # Updated flag
             '--force'
         ], check=True)
         logging.debug(f"Node '{node_to_remove}' drained successfully.")
 
-        # Delete the node from the k3d cluster
-        subprocess.run(['k3d', 'node', 'delete', node_to_remove, '--cluster', CLUSTER_NAME], check=True)
+        # Delete the node from the k3d cluster without the --cluster flag
+        subprocess.run(['k3d', 'node', 'delete', node_to_remove], check=True)
         logging.info(f"Node '{node_to_remove}' removed successfully.")
 
         # Optional: Cooldown after scaling down
