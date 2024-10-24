@@ -31,7 +31,7 @@ Ensure Docker is running and you have sufficient permissions to run Docker comma
 
 k3d is a lightweight wrapper to run k3s (Rancher's Kubernetes distribution) in Docker.
 
-### Installation Steps:
+### Installation Steps
 
 **Using Homebrew (macOS/Linux):**
 
@@ -95,7 +95,7 @@ mycluster  1         1        True
 
 If you haven't installed `kubectl` yet, follow these steps. If already installed, skip to the next section.
 
-### Installation Steps:
+### Installation Steps
 
 **Using Homebrew (macOS/Linux):**
 
@@ -129,8 +129,8 @@ kubectl version --client
 
 There are multiple ways to deploy Prometheus on Kubernetes. Two popular methods are:
 
-1. **Using Helm Charts**
-2. **Using Prometheus Operator**
+- **Using Helm Charts**
+- **Using Prometheus Operator (recommended)**
 
 Below, both methods are detailed.
 
@@ -203,19 +203,63 @@ List services in the `monitoring` namespace:
 kubectl get svc -n monitoring
 ```
 
-Look for a service named `prometheus-server` or similar.
+Look for a service named `kube-prometheus-stack-prometheus` or similar.
 
-### Step 2: Port-Forward to Your Local Machine
+### Step 2: Port-Forward the Prometheus Service
+
+Now, port-forward the **kube-prometheus-stack-prometheus** service to access the Prometheus UI locally.
 
 ```bash
-kubectl port-forward -n monitoring svc/prometheus-server 9090:80
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090
 ```
 
-**Note:** Replace `prometheus-server` and ports as per your service details.
+**Explanation:**
 
-### Step 3: Access the Dashboard
+- **Namespace:** `monitoring`
+- **Service Name:** `kube-prometheus-stack-prometheus`
+- **Port Mapping:** Host port `9090` to service port `9090`
 
-Open your web browser and navigate to [http://localhost:9090](http://localhost:9090). You should see the Prometheus UI.
+**Note:** Ensure that port `9090` on your local machine is free. If it's already in use, choose an alternative local port (e.g., `9091:9090`).
+
+### Step 3: Access the Prometheus Dashboard
+
+1. **Open Your Web Browser:**
+
+   Navigate to [http://localhost:9090](http://localhost:9090).
+
+2. **Prometheus UI:**
+
+   You should see the Prometheus dashboard where you can:
+
+   - **Explore Metrics:** Use the **Graph** tab to query and visualize metrics.
+   - **Check Targets:** Navigate to **Status > Targets** to ensure all scrape targets are up and running.
+
+### **Optional:** Access Grafana Dashboard
+
+Since **kube-prometheus-stack** also deploys Grafana, you might want to access it for more advanced visualizations.
+
+1. **Port-Forward the Grafana Service:**
+
+   ```bash
+   kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
+   ```
+
+2. **Open Grafana in Your Browser:**
+
+   Navigate to [http://localhost:3000](http://localhost:3000).
+
+3. **Login to Grafana:**
+
+   - **Username:** `admin`
+   - **Password:** Retrieve the Grafana admin password using the following command:
+
+     ```bash
+     kubectl get secret -n monitoring kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+     ```
+
+4. **Explore Dashboards:**
+
+   Utilize pre-configured dashboards or create custom ones to visualize your metrics effectively.
 
 ---
 
