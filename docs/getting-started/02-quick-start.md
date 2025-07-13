@@ -1,13 +1,33 @@
 # Quick Start: 15-Minute Hybrid Demo
 
 ## Goal
+
 Get a basic hybrid k3s-serverless system running in 15 minutes to understand the core concept.
 
 ## Prerequisites
+
 - Docker running
 - kubectl installed
 - k3d installed
-- 4GB+ available RAM
+- **4GB+ available RAM** (8GB recommended)
+
+## Resource Configurations
+
+**Standard Setup (8GB+ RAM):** Follow all steps as written
+
+**Resource-Constrained Setup (4-6GB RAM):** Use these modifications:
+
+```bash
+# Step 1: Create smaller cluster (no agents)
+k3d cluster create demo-hybrid --port "8080:80@loadbalancer"
+
+# Step 4: Add resource limits to HAProxy
+docker run -d --name traffic-router \
+  --memory="256m" --cpus="0.25" \
+  -p 8082:8082 \
+  -v /tmp/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg \
+  haproxy:alpine
+```
 
 ## Step 1: Setup Basic Infrastructure (3 minutes)
 
@@ -97,11 +117,13 @@ done
 ## Understanding the Demo
 
 ### Traffic Flow
+
 ```
 User Request → HAProxy Router → 80% to K3s / 20% to Serverless
 ```
 
 ### Key Concepts Demonstrated
+
 1. **Traffic Distribution**: Requests split between different compute models
 2. **Independent Scaling**: Each backend can scale independently
 3. **Cost Optimization**: Majority traffic uses cost-effective k3s
@@ -110,11 +132,13 @@ User Request → HAProxy Router → 80% to K3s / 20% to Serverless
 ## Next Steps
 
 ### Make It Intelligent (Sprint 1)
+
 - Add load monitoring
 - Implement dynamic weight adjustment
 - Add basic prediction
 
 ### Add Sophistication (Later Sprints)
+
 - Machine learning prediction
 - SLO-based routing
 - Real dataset integration
@@ -133,16 +157,19 @@ rm /tmp/haproxy.cfg
 ## Troubleshooting
 
 **HAProxy won't start**: Check if port 8082 is available
+
 ```bash
 lsof -i :8082
 ```
 
 **K3s cluster issues**: Verify Docker has enough resources
+
 ```bash
 docker system df
 ```
 
 **Can't access services**: Check cluster status
+
 ```bash
 kubectl get pods --all-namespaces
 ```

@@ -166,6 +166,7 @@ Create a working system that demonstrates traffic can be intelligently routed be
 
 ### K3s Cluster Configuration
 
+**Full Resource Configuration (16GB+ RAM):**
 ```yaml
 # k3d-cluster-config.yaml
 apiVersion: k3d.io/v1alpha1
@@ -184,8 +185,29 @@ options:
       memory: 2Gi
 ```
 
+**Resource-Constrained Configuration (8GB RAM):**
+```yaml
+# k3d-cluster-config-constrained.yaml
+apiVersion: k3d.io/v1alpha1
+kind: Simple
+metadata:
+  name: hybrid-sprint1-constrained
+servers: 1
+agents: 0  # Single node only
+options:
+  k3s:
+    extraArgs:
+      - --kubelet-arg=eviction-hard=memory.available<100Mi
+      - --kubelet-arg=system-reserved=memory=512Mi
+  resources:
+    limits:
+      cpu: 1       # Reduced from 2
+      memory: 2Gi  # Same, but single node
+```
+
 ### HAProxy Configuration
 
+**Basic Configuration (All Resource Levels):**
 ```
 # haproxy.cfg
 global
@@ -214,6 +236,54 @@ listen stats
     stats enable
     stats uri /stats
     stats refresh 30s
+```
+
+### Docker Compose for Resource Management
+
+**Full Resource Configuration:**
+```yaml
+# docker-compose.yml
+version: '3.8'
+services:
+  haproxy:
+    image: haproxy:2.4
+    mem_limit: 512m
+    cpus: 0.25
+    
+  serverless-sim:
+    image: nginx:alpine
+    mem_limit: 1g
+    cpus: 0.5
+    
+  prometheus:
+    image: prom/prometheus
+    mem_limit: 2g
+    cpus: 0.5
+```
+
+**Resource-Constrained Configuration (8GB RAM):**
+```yaml
+# docker-compose-constrained.yml
+version: '3.8'
+services:
+  haproxy:
+    image: haproxy:2.4
+    mem_limit: 256m      # Reduced from 512m
+    cpus: 0.25
+    
+  serverless-sim:
+    image: nginx:alpine
+    mem_limit: 512m      # Reduced from 1g
+    cpus: 0.25           # Reduced from 0.5
+    
+  prometheus:
+    image: prom/prometheus
+    mem_limit: 1g        # Reduced from 2g
+    cpus: 0.25           # Reduced from 0.5
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=1h'  # Shorter retention
+      - '--storage.tsdb.wal-compression'    # Enable compression
 ```
 
 ### Load Testing Script
@@ -266,18 +336,39 @@ export default function () {
 
 ## Expected Results
 
-### Performance Baseline
+### Performance Baseline (Full Resources)
 
 - **Normal Load (100 RPS)**: <100ms p95 response time
 - **Traffic Spike (500 RPS)**: <200ms p95 response time
 - **Error Rate**: <1% under all load conditions
 - **Backend Distribution**: 80/20 split maintained
 
+### Performance Baseline (Resource-Constrained 8GB)
+
+- **Normal Load (50 RPS)**: <150ms p95 response time
+- **Traffic Spike (200 RPS)**: <300ms p95 response time
+- **Error Rate**: <2% under all load conditions
+- **Backend Distribution**: 70/30 split to reduce k3s load
+
+### Resource Utilization Expectations
+
+**Full Environment (16GB+ RAM):**
+- **System RAM Usage**: ~8GB during testing
+- **CPU Usage**: ~50% during load tests
+- **Docker Memory**: ~6GB allocated
+
+**Constrained Environment (8GB RAM):**
+- **System RAM Usage**: ~6GB during testing
+- **CPU Usage**: ~70% during load tests
+- **Docker Memory**: ~4GB allocated
+- **Monitoring Frequency**: Reduced to conserve resources
+
 ### Cost Analysis
 
 - **K3s Dominant**: Lower cost per request during steady load
 - **Serverless Supplement**: Higher cost but better performance during spikes
 - **Hybrid Advantage**: Balance of cost and performance
+- **Resource Efficiency**: 60-80% better resource utilization vs single-backend approach
 
 ## Deliverables
 
