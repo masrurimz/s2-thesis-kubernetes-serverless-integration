@@ -1,0 +1,25 @@
+apiVersion: serving.knative.dev/v1beta1
+kind: DomainMapping
+metadata:
+  name: serverless.localhost
+  namespace: default
+spec:
+  ref:
+    name: serverless-sim
+    kind: Service
+    apiVersion: serving.knative.dev/v1
+---
+# Alternative: Direct service exposure
+apiVersion: v1
+kind: Service
+metadata:
+  name: serverless-direct
+  namespace: default
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 8080
+    nodePort: 30081
+  selector:
+    serving.knative.dev/service: serverless-sim

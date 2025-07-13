@@ -137,6 +137,63 @@ kubectl get services
 
 ### Knative Backend Issues
 
+#### Issue: Browser Cannot Access Knative Directly
+
+**Symptoms**:
+
+- Browser shows "This site can't be reached" when accessing `http://localhost:8081`
+- 426 Upgrade Required error in browser
+- Works with curl but not browser
+
+**Root Cause**: Knative requires Host header: `serverless-sim.default.localhost`
+
+**✅ SOLUTIONS**:
+
+**Option 1: /etc/hosts Setup (Recommended)**
+
+```bash
+# Setup browser-friendly access
+./scripts/knative-browser-access.sh --setup-hosts
+
+# Or manually
+sudo bash -c 'echo "127.0.0.1 serverless-sim.default.localhost" >> /etc/hosts'
+
+# Then access in browser
+open http://serverless-sim.default.localhost:8081
+```
+
+**Option 2: Browser Extension**
+
+```bash
+# Chrome: Install "ModHeader" extension
+# Firefox: Install "Modify Headers" extension
+# Add header: Host = serverless-sim.default.localhost
+# Access: http://localhost:8081
+```
+
+**Option 3: Use curl with headers**
+
+```bash
+# Command line access (always works)
+curl -H "Host: serverless-sim.default.localhost" http://localhost:8081
+```
+
+**Option 4: Through HAProxy (mixed traffic)**
+
+```bash
+# Access hybrid system (80% K3s, 20% Knative)
+open http://localhost:8082
+```
+
+**Verification**:
+
+```bash
+# Test all access methods
+./scripts/knative-browser-access.sh --test
+
+# Expected: All 4 methods should work
+```
+
 #### Issue: Knative Service Down (426 Upgrade Required) - ✅ RESOLVED
 
 **Symptoms**:

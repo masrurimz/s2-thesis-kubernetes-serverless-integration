@@ -79,6 +79,39 @@ curl -H "Host: serverless-sim.default.localhost" http://localhost:8081        # 
 curl -H "Host: serverless-sim.default.localhost" http://localhost:8081/health # Health check
 ```
 
+### Knative Browser Access Setup
+
+**Option 1: /etc/hosts Setup (Recommended for Browser Access)**
+
+```bash
+# Setup direct browser access (one-time)
+./scripts/knative-browser-access.sh --setup-hosts
+
+# Alternative manual setup
+sudo bash -c 'echo "127.0.0.1 serverless-sim.default.localhost" >> /etc/hosts'
+
+# Then access in any browser
+open http://serverless-sim.default.localhost:8081
+```
+
+**Option 2: Browser Extension Setup**
+
+```bash
+# Chrome: Install "ModHeader" extension
+# Firefox: Install "Modify Headers" extension
+# Add header: Host = serverless-sim.default.localhost
+# Access: http://localhost:8081
+```
+
+**Option 3: Test All Access Methods**
+
+```bash
+# Comprehensive testing of all access methods
+./scripts/knative-browser-access.sh --test
+
+# Expected output shows 4 working access methods
+```
+
 **Resource Allocation**:
 
 - Knative overhead: ~200MB RAM
@@ -102,6 +135,18 @@ curl -s -H "Host: serverless-sim.default.localhost" http://localhost:8081 | grep
 ```bash
 curl http://localhost:8080/health  # Should return "k3s-cluster healthy"
 curl -H "Host: serverless-sim.default.localhost" http://localhost:8081/health  # Should return "serverless-sim healthy (knative)"
+```
+
+### 2b. Browser Access Validation (if /etc/hosts setup)
+
+```bash
+# Test browser-friendly URL (requires /etc/hosts setup)
+curl http://serverless-sim.default.localhost:8081/health
+# Should return "serverless-sim healthy (knative)"
+
+# Test in browser
+open http://serverless-sim.default.localhost:8081
+# Should show Knative Serverless Backend page
 ```
 
 ### 3. Resource Usage Check

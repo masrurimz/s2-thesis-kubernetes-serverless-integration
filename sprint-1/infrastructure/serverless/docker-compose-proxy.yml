@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  knative-proxy:
+    image: nginx:alpine
+    container_name: knative-browser-proxy
+    ports:
+      - "8085:8085"
+    volumes:
+      - ./nginx-proxy.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+    networks:
+      - default
+    depends_on: []
+    
+networks:
+  default:
+    external: false
