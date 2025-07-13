@@ -18,7 +18,7 @@
                        │                 │           │
                        │                 │    ┌─────────────────┐
                        │                 │───►│ Serverless Sim  │
-                       │                 │    │ (Docker nginx)  │
+                       │                 │    │(Knative Service)│
                        └─────────────────┘    │ Port: 8081      │
                               │               └─────────────────┘
                        ┌─────────────────┐           │
@@ -59,7 +59,7 @@
 
 - Health checks every 5 seconds via HTTP GET /
 - Load balancing via weighted round-robin
-- Isolated Docker container networking
+- Knative Service networking with Host headers
 
 **Prometheus ↔ All Components:**
 
@@ -104,7 +104,7 @@ Storage: 10GB
 ### 2. Serverless Simulation Backend
 
 **Purpose**: Infinite scaling simulation for overflow traffic
-**Technology**: Docker container with nginx
+**Technology**: Knative Serving with nginx
 
 **Configuration**:
 
@@ -122,14 +122,14 @@ Storage: 2GB
 
 **Services**:
 
-- **nginx container**: Isolated HTTP server on port 8081
+- **Knative Service**: Serverless HTTP server with scale-to-zero
 - **Health endpoint**: Responds to GET / with HTTP 200
-- **Container networking**: Bridge mode with port mapping
+- **Networking**: Kourier ingress with port forwarding on 8081
 
 **Files to Create**:
 
-- `sprint-1/infrastructure/serverless/docker-compose.yml`: Container configuration
-- `sprint-1/infrastructure/serverless/nginx.conf`: Custom nginx configuration
+- `sprint-1/infrastructure/serverless/knative-service.yaml`: Knative Service definition
+- `sprint-1/scripts/test-knative.sh`: Testing script with Host headers
 
 ### 3. Traffic Router (HAProxy)
 
@@ -261,8 +261,8 @@ sprint-1/
 │   │   ├── nginx-deployment.yaml       # Kubernetes nginx deployment
 │   │   └── nginx-service.yaml          # Kubernetes service configuration
 │   ├── serverless/
-│   │   ├── docker-compose.yml          # Docker container configuration
-│   │   └── nginx.conf                  # Custom nginx configuration
+│   │   ├── knative-service.yaml        # Knative Service definition
+│   │   └── [deprecated]                # Docker configs no longer used
 │   ├── haproxy/
 │   │   ├── haproxy.cfg                 # HAProxy main configuration
 │   │   └── docker-compose.yml          # HAProxy container setup
