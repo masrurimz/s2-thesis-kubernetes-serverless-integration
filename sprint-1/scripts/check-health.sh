@@ -30,6 +30,18 @@ check_component() {
     fi
 }
 
+check_knative_component() {
+    echo -n "Checking Knative Serverless... "
+    
+    if curl -s -o /dev/null -w "%{http_code}" -H "Host: serverless-sim.default.localhost" "http://localhost:8081" | grep -q "200"; then
+        echo -e "${GREEN}✅ UP${NC}"
+        return 0
+    else
+        echo -e "${RED}❌ DOWN${NC}"
+        return 1
+    fi
+}
+
 check_metrics() {
     local service="$1"
     local query="$2"
@@ -51,38 +63,68 @@ echo "-------------------"
 
 # Core components
 check_component "K3s Backend" "http://localhost:8080" || K3S_FAIL=1
-check_component "Knative Serverless" "http://localhost:8081" || KNATIVE_FAIL=1
+check_knative_component || KNATIVE_FAIL=1
 check_component "HAProxy Router" "http://localhost:8082" || HAPROXY_FAIL=1
 check_component "HAProxy Stats" "http://localhost:8404/stats" || STATS_FAIL=1
-check_component "Prometheus" "http://localhost:9090/-/healthy" || PROMETHEUS_FAIL=1
 
 echo ""
-echo "📊 Metrics Validation:"
-echo "---------------------"
+echo "📊 HAProxy Backend Status:"
+echo "--------------------------"
 
-# Metrics checks
-check_metrics "HAProxy" "up{job=\"haproxy\"}" || HAPROXY_METRICS_FAIL=1
-check_metrics "Prometheus" "up{job=\"prometheus\"}" || PROMETHEUS_METRICS_FAIL=1
-check_metrics "Traffic Distribution" "hybrid:traffic_distribution:k3s_percentage" || TRAFFIC_METRICS_FAIL=1
+# Get HAProxy stats for backend validation
+HAPROXY_STATS=$(curl -s "http://localhost:8404/stats;csv" 2>/dev/null)
+if [[ -n "$HAPROXY_STATS" ]]; then
+    K3S_STATUS=$(echo "$HAPROXY_STATS" | grep "servers,k3s-cluster" | cut -d',' -f18)
+    KNATIVE_STATUS=$(echo "$HAPROXY_STATS" | grep "servers,serverless-sim" | cut -d',' -f18)
+    
+    echo -n "HAProxy K3s Backend... "
+    if [[ "$K3S_STATUS" == "UP" ]]; then
+        echo -e "${GREEN}✅ UP${NC}"
+    else
+        echo -e "${RED}❌ DOWN${NC}"
+        HAPROXY_K3S_FAIL=1
+    fi
+    
+    echo -n "HAProxy Knative Backend... "
+    if [[ "$KNATIVE_STATUS" == "UP" ]]; then
+        echo -e "${GREEN}✅ UP${NC}"
+    else
+        echo -e "${RED}❌ DOWN${NC}"
+        HAPROXY_KNATIVE_FAIL=1
+    fi
+else
+    echo -e "${RED}❌ Cannot retrieve HAProxy stats${NC}"
+    HAPROXY_METRICS_FAIL=1
+fi
 
 echo ""
 echo "🎯 Traffic Distribution:"
 echo "-----------------------"
 
-# Get traffic distribution from Prometheus
-K3S_PERCENT=$(curl -s "http://localhost:9090/api/v1/query?query=hybrid:traffic_distribution:k3s_percentage" | jq -r '.data.result[0].value[1]' 2>/dev/null || echo "N/A")
-SERVERLESS_PERCENT=$(curl -s "http://localhost:9090/api/v1/query?query=hybrid:traffic_distribution:serverless_percentage" | jq -r '.data.result[0].value[1]' 2>/dev/null || echo "N/A")
-
-echo "K3s Cluster: ${K3S_PERCENT}%"
-echo "Serverless: ${SERVERLESS_PERCENT}%"
-
-# Traffic distribution validation
-if [[ "$K3S_PERCENT" != "N/A" ]] && [[ "$SERVERLESS_PERCENT" != "N/A" ]]; then
-    # Check if within expected ranges (70-90% for K3s, 10-30% for serverless)
-    if (( $(echo "$K3S_PERCENT >= 70 && $K3S_PERCENT <= 90" | bc -l) )); then
-        echo -e "Traffic Distribution: ${GREEN}✅ HEALTHY (within 80/20 ±10%)${NC}"
+# Get traffic distribution from HAProxy stats
+if [[ -n "$HAPROXY_STATS" ]]; then
+    K3S_REQUESTS=$(echo "$HAPROXY_STATS" | grep "servers,k3s-cluster" | cut -d',' -f8)
+    KNATIVE_REQUESTS=$(echo "$HAPROXY_STATS" | grep "servers,serverless-sim" | cut -d',' -f8)
+    
+    if [[ -n "$K3S_REQUESTS" ]] && [[ -n "$KNATIVE_REQUESTS" ]] && [[ "$K3S_REQUESTS" -gt 0 || "$KNATIVE_REQUESTS" -gt 0 ]]; then
+        TOTAL_REQUESTS=$((K3S_REQUESTS + KNATIVE_REQUESTS))
+        K3S_PERCENT=$((K3S_REQUESTS * 100 / TOTAL_REQUESTS))
+        KNATIVE_PERCENT=$((KNATIVE_REQUESTS * 100 / TOTAL_REQUESTS))
+        
+        echo "K3s Cluster: ${K3S_REQUESTS} requests (${K3S_PERCENT}%)"
+        echo "Serverless: ${KNATIVE_REQUESTS} requests (${KNATIVE_PERCENT}%)"
+        
+        # Check if within expected ranges (70-90% for K3s, 10-30% for serverless)
+        if [[ $K3S_PERCENT -ge 70 && $K3S_PERCENT -le 90 ]]; then
+            echo -e "Traffic Distribution: ${GREEN}✅ HEALTHY (within 80/20 ±10%)${NC}"
+        else
+            echo -e "Traffic Distribution: ${YELLOW}⚠️ WARNING (outside expected range)${NC}"
+            TRAFFIC_DISTRIBUTION_WARN=1
+        fi
     else
-        echo -e "Traffic Distribution: ${YELLOW}⚠️ WARNING (outside expected range)${NC}"
+        echo "K3s Cluster: 0 requests"
+        echo "Serverless: 0 requests"
+        echo -e "Traffic Distribution: ${YELLOW}⚠️ NO TRAFFIC DATA${NC}"
         TRAFFIC_DISTRIBUTION_WARN=1
     fi
 else
@@ -96,28 +138,32 @@ echo "------------------------"
 
 # Container resource usage
 echo "Docker Containers:"
-docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}" \
-    sprint1-haproxy sprint1-prometheus 2>/dev/null || echo "Containers not running"
+docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}" 2>/dev/null | grep -E "(sprint1|haproxy)" || echo "Sprint 1 containers not found"
 
 echo ""
-echo "📈 Recent Performance:"
-echo "---------------------"
+echo "📈 Current Performance:"
+echo "----------------------"
 
-# Get recent response times
-AVG_RESPONSE=$(curl -s "http://localhost:9090/api/v1/query?query=hybrid:response_time:weighted_average" | jq -r '.data.result[0].value[1]' 2>/dev/null || echo "N/A")
-REQUEST_RATE=$(curl -s "http://localhost:9090/api/v1/query?query=rate(hybrid:request_rate:total[5m])" | jq -r '.data.result[0].value[1]' 2>/dev/null || echo "N/A")
-
-echo "Average Response Time: ${AVG_RESPONSE}s"
-echo "Request Rate (5m): ${REQUEST_RATE} req/s"
-
-# Performance validation
-if [[ "$AVG_RESPONSE" != "N/A" ]]; then
-    if (( $(echo "$AVG_RESPONSE < 0.2" | bc -l) )); then
-        echo -e "Performance: ${GREEN}✅ GOOD (<200ms average)${NC}"
-    else
-        echo -e "Performance: ${YELLOW}⚠️ SLOW (>200ms average)${NC}"
+# Test response time with a quick request
+echo -n "Testing hybrid endpoint response time... "
+RESPONSE_TIME=$(curl -s -o /dev/null -w "%{time_total}" "http://localhost:8082" 2>/dev/null)
+if [[ -n "$RESPONSE_TIME" ]]; then
+    RESPONSE_MS=$(echo "$RESPONSE_TIME * 1000" | bc -l | cut -d'.' -f1)
+    echo "${RESPONSE_MS}ms"
+    
+    if [[ $RESPONSE_MS -lt 200 ]]; then
+        echo -e "Performance: ${GREEN}✅ EXCELLENT (<200ms)${NC}"
+    elif [[ $RESPONSE_MS -lt 500 ]]; then
+        echo -e "Performance: ${YELLOW}⚠️ ACCEPTABLE (200-500ms)${NC}"
         PERFORMANCE_WARN=1
+    else
+        echo -e "Performance: ${RED}❌ SLOW (>500ms)${NC}"
+        PERFORMANCE_FAIL=1
     fi
+else
+    echo "Failed to test"
+    echo -e "Performance: ${RED}❌ TEST FAILED${NC}"
+    PERFORMANCE_FAIL=1
 fi
 
 echo ""
@@ -132,11 +178,11 @@ WARNINGS=0
 [[ -n "$KNATIVE_FAIL" ]] && ((FAILURES++))
 [[ -n "$HAPROXY_FAIL" ]] && ((FAILURES++))
 [[ -n "$STATS_FAIL" ]] && ((FAILURES++))
-[[ -n "$PROMETHEUS_FAIL" ]] && ((FAILURES++))
 [[ -n "$HAPROXY_METRICS_FAIL" ]] && ((FAILURES++))
-[[ -n "$PROMETHEUS_METRICS_FAIL" ]] && ((FAILURES++))
-[[ -n "$TRAFFIC_METRICS_FAIL" ]] && ((FAILURES++))
+[[ -n "$HAPROXY_K3S_FAIL" ]] && ((FAILURES++))
+[[ -n "$HAPROXY_KNATIVE_FAIL" ]] && ((FAILURES++))
 [[ -n "$TRAFFIC_DISTRIBUTION_FAIL" ]] && ((FAILURES++))
+[[ -n "$PERFORMANCE_FAIL" ]] && ((FAILURES++))
 
 [[ -n "$TRAFFIC_DISTRIBUTION_WARN" ]] && ((WARNINGS++))
 [[ -n "$PERFORMANCE_WARN" ]] && ((WARNINGS++))
