@@ -85,24 +85,33 @@ check_components() {
     echo "----------------------------"
     
     # Check each component
-    components=(
-        "K3s Backend:http://localhost:8080"
-        "Knative Serverless:http://localhost:8081"
-        "HAProxy Router:http://localhost:8082"
-        "HAProxy Stats:http://localhost:8404/stats"
-    )
+    echo -n "K3s Backend: "
+    if curl -s -o /dev/null -w "%{http_code}" "http://localhost:8080" | grep -q "200"; then
+        echo "✅ UP"
+    else
+        echo "❌ DOWN"
+    fi
     
-    for component in "${components[@]}"; do
-        name=$(echo "$component" | cut -d':' -f1)
-        url=$(echo "$component" | cut -d':' -f2,3)
-        
-        echo -n "$name: "
-        if curl -s -o /dev/null -w "%{http_code}" "$url" | grep -q "200"; then
-            echo "✅ UP"
-        else
-            echo "❌ DOWN"
-        fi
-    done
+    echo -n "Knative Serverless: "
+    if curl -s -o /dev/null -w "%{http_code}" -H "Host: serverless-sim.default.localhost" "http://localhost:8081" | grep -q "200"; then
+        echo "✅ UP"
+    else
+        echo "❌ DOWN"
+    fi
+    
+    echo -n "HAProxy Router: "
+    if curl -s -o /dev/null -w "%{http_code}" "http://localhost:8082" | grep -q "200"; then
+        echo "✅ UP"
+    else
+        echo "❌ DOWN"
+    fi
+    
+    echo -n "HAProxy Stats: "
+    if curl -s -o /dev/null -w "%{http_code}" "http://localhost:8404/stats" | grep -q "200"; then
+        echo "✅ UP"
+    else
+        echo "❌ DOWN"
+    fi
     echo ""
 }
 
