@@ -4,127 +4,256 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Kubernetes & Serverless Integration research project that demonstrates multi-cluster Kubernetes environments using k3d with incremental Rust application development, PostgreSQL/MinIO integration, Prometheus monitoring, HAProxy traffic management, and Knative serverless integration.
+This is a Kubernetes & Serverless Integration thesis research project that implements a **hybrid k3s-serverless architecture** with intelligent traffic routing based on workload prediction and SLO monitoring.
 
-### Architecture
+### Research Focus
 
-The project implements a 3-cluster architecture:
+**Thesis Title**: "Decision Making and Elastic Scalability Management in Heterogeneous Cloud Environments Based on Workload Prediction"
 
-- **Cluster A**: Main Rust application deployment with HAProxy traffic controller
-- **Cluster B**: Backend services (PostgreSQL database, MinIO object storage)
-- **Cluster C**: Serverless backup using Knative for traffic overflow
+The project implements a novel hybrid approach that intelligently routes traffic between cost-effective Kubernetes clusters and infinitely-scalable serverless functions using GRU neural networks and formal SLO monitoring.
+
+### Architecture Evolution
+
+The project follows an **incremental 5-sprint methodology**:
+
+- **Sprint 1**: Basic hybrid foundation (k3s + Docker serverless simulation)
+- **Sprint 2**: Automated load prediction with linear regression  
+- **Sprint 3**: SLO-aware routing with 99th percentile latency monitoring
+- **Sprint 4**: GRU neural network integration with real HTTP trace data
+- **Sprint 5**: Complete ElaX algorithm implementation with formal evaluation
 
 ### Key Components
 
-- **Rust Applications**: Incremental versions (v1-basic → v5-full-app) using actix-web framework
-- **Traffic Controller**: Python-based LSTM controller for intelligent traffic routing
-- **Autoscaling Experiments**: Multiple autoscaling strategies and implementations
-- **Infrastructure Scripts**: Automated cluster setup, deployment, and teardown
+- **Hybrid Traffic Router**: HAProxy with intelligent weight adjustment
+- **Workload Predictor**: Evolution from linear regression → GRU neural networks
+- **SLO Monitor**: Algorithm 1 implementation with tail latency tracking
+- **Cost Optimizer**: Real-time cost analysis and optimization
+- **Evaluation Framework**: RMSE accuracy and formal thesis validation
 
 ## Development Commands
 
-### Rust Applications
-
-The project contains multiple Rust app versions in `apps/rust-app/`:
+### Quick Start (15 minutes)
 
 ```bash
-# Build Rust applications
-cd apps/rust-app/v1-basic && cargo build --release
-cd apps/rust-app/v2-prometheus && cargo build --release
+# Get hybrid system running quickly
+# See: docs/getting-started/02-quick-start.md
 
-# Run locally
-cd apps/rust-app/v1-basic && cargo run
-cd apps/rust-app/v2-prometheus && cargo run
+# Create k3s cluster
+k3d cluster create demo-hybrid --agents 1 --port "8080:80@loadbalancer"
 
-# Test Rust code
-cargo test
+# Deploy test application
+kubectl create deployment test-app --image=nginx:alpine
+kubectl expose deployment test-app --port=80 --target-port=80
 
-# Check Rust code
-cargo check
-cargo clippy
+# Create serverless simulation
+docker run -d --name serverless-sim -p 8081:80 nginx:alpine
+
+# Setup traffic router (HAProxy)
+docker run -d --name traffic-router -p 8082:8082 -v /tmp/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg haproxy:alpine
 ```
 
-### Infrastructure Management
+### Sprint Development
 
 ```bash
-# Set up all clusters
-./infra/setup-clusters.sh
+# Sprint 1: Basic Hybrid Foundation
+cd docs/incremental-development/phase-1-basic-hybrid.md
+# Follow day-by-day implementation plan
 
-# Deploy applications to clusters
-./infra/deploy-applications.sh
+# Sprint 2: Load Prediction  
+cd docs/incremental-development/phase-2-prediction.md
+# Add linear regression and automated routing
 
-# Tear down all clusters
-./infra/teardown-clusters.sh
+# Sprint 3: SLO Monitoring
+cd docs/incremental-development/phase-3-slo-monitoring.md  
+# Implement Algorithm 1 and tail latency monitoring
+
+# Sprint 4: GRU Integration
+cd docs/incremental-development/phase-4-gru-integration.md
+# Real dataset processing and neural networks
+
+# Sprint 5: Full ElaX System
+cd docs/incremental-development/phase-5-full-thesis.md
+# Complete thesis implementation
 ```
 
-### Kubernetes Operations
+### Monitoring & Metrics
 
 ```bash
-# Switch between cluster contexts
-kubectl config use-context k3d-cluster-a
-kubectl config use-context k3d-cluster-b
-kubectl config use-context k3d-cluster-c
+# Prometheus metrics
+curl http://localhost:9090/api/v1/query?query=http_requests_total
 
-# Apply configurations to specific clusters
-kubectl apply -f cluster-configs/cluster-a/ --context k3d-cluster-a
-kubectl apply -f cluster-configs/cluster-b/ --context k3d-cluster-b
-kubectl apply -f cluster-configs/cluster-c/ --context k3d-cluster-c
+# HAProxy stats
+curl http://localhost:8404/stats
 
-# Check cluster status
-kubectl get nodes --context k3d-cluster-a
-kubectl get pods --all-namespaces --context k3d-cluster-a
+# System monitoring
+kubectl top nodes
+kubectl top pods
+
+# Check SLO compliance
+python scripts/check_slo_compliance.py --threshold 200ms
 ```
 
-### Docker Operations
+### Resource Management
 
 ```bash
-# Build Rust app images
-docker build -t rust-app:v1 apps/rust-app/v1-basic/
-docker build -t rust-app:v2 apps/rust-app/v2-prometheus/
+# Resource-constrained setup (8GB RAM)
+docker run --memory="1g" --cpus="0.5" prometheus/prometheus
+k3d cluster create constrained --agents 0 --resources.limits.memory=2Gi
 
-# Build controller image
-docker build -t traffic-controller controller/
+# Full environment setup (16GB+ RAM)
+docker-compose -f docker-compose-full.yml up -d
+k3d cluster create full --agents 2 --resources.limits.memory=4Gi
 ```
 
-## Code Structure
+## Documentation Structure
 
-### Rust Applications Evolution
+### Getting Started
+- `docs/getting-started/01-prerequisites.md`: System requirements and installation
+- `docs/getting-started/02-quick-start.md`: 15-minute hybrid demo
+- `docs/getting-started/03-understanding-architecture.md`: Deep dive into components
 
-- `apps/rust-app/v1-basic/`: Basic HTTP server with actix-web
-- `apps/rust-app/v2-prometheus/`: Adds Prometheus metrics integration
-- `apps/rust-app/v3-file-upload/`: Adds file upload to MinIO
-- `apps/rust-app/v4-db-integration/`: Adds PostgreSQL database integration
-- `apps/rust-app/v5-full-app/`: Complete application with all features
+### Incremental Development (5 Sprints)
+- `docs/incremental-development/README.md`: Agile sprint methodology overview
+- `docs/incremental-development/phase-1-basic-hybrid.md`: Foundation week
+- `docs/incremental-development/phase-2-prediction.md`: Linear regression automation  
+- `docs/incremental-development/phase-3-slo-monitoring.md`: Algorithm 1 + SLO monitoring
+- `docs/incremental-development/phase-4-gru-integration.md`: Neural networks + real data
+- `docs/incremental-development/phase-5-full-thesis.md`: Complete ElaX implementation
 
-### Infrastructure Components
+### Thesis Implementation
+- `docs/thesis-implementation/`: Formal research documentation
+- `docs/reference/`: Background materials and algorithm specifications
+- `docs/archived/`: Historical documentation from previous approaches
 
-- `cluster-configs/`: Kubernetes manifests for each cluster
-- `controller/`: Python-based LSTM traffic prediction controller
-- `infra/`: Shell scripts for infrastructure automation
-- `autoscaler/`: Various autoscaling experiments and implementations
-- `monitoring/`: Prometheus monitoring configurations
+### Code Components
 
-### Dependencies
+- `apps/rust-app/v2-prometheus/`: Simple HTTP server with Prometheus metrics
+- `monitoring/prometheus-v2-separate-cluster-client-server/`: Monitoring stack
+- `autoscaler/experiment-6-odhi-scaler/`: Latest autoscaling experiments  
+- `scripts/`: Utility scripts for setup, testing, and evaluation
 
-- **Rust**: actix-web framework for HTTP servers
-- **Python**: LSTM model dependencies in controller/requirements.txt
-- **Kubernetes**: k3d for local cluster management
-- **Monitoring**: Prometheus for metrics collection
+## Hardware Constraints
+
+### Minimum Requirements
+- **Full Development**: 8+ cores, 32GB RAM
+- **Resource-Constrained Testing**: 4+ cores, 8GB RAM (6GB usable)
+
+### Sprint Resource Requirements
+- **Sprint 1-2**: 4-6GB RAM (basic hybrid + prediction)
+- **Sprint 3**: 6-8GB RAM (SLO monitoring stack)
+- **Sprint 4-5**: 8-16GB RAM (GRU training + real datasets)
+
+Resource-constrained configurations available for all sprints with reduced monitoring frequency and data retention.
 
 ## Development Workflow
 
-1. **Start clusters**: `./infra/setup-clusters.sh`
-2. **Build Rust apps**: Navigate to version directory and run `cargo build --release`
-3. **Build Docker images**: Use appropriate Dockerfiles in each app version
-4. **Deploy to clusters**: `./infra/deploy-applications.sh` or manual kubectl apply
-5. **Monitor**: Access Prometheus metrics and check application logs
-6. **Test autoscaling**: Use load testing tools against deployed applications
-7. **Cleanup**: `./infra/teardown-clusters.sh`
+1. **Choose Sprint**: Start with [Sprint 1](docs/incremental-development/phase-1-basic-hybrid.md)
+2. **Check Prerequisites**: Verify system requirements and install dependencies
+3. **Follow Daily Plans**: Each sprint has 5-day implementation schedule
+4. **Validate at Each Step**: Ensure working system before proceeding
+5. **Complete Sprint**: Mark todos as done, document learnings
+6. **Proceed to Next**: Build on previous sprint's foundation
 
-## Important Notes
+## Key Research Elements
 
-- All Rust applications use actix-web framework with specific optimization profiles
-- Infrastructure scripts handle k3d cluster lifecycle management
-- Multiple autoscaling experiments are available in the autoscaler/ directory
-- The project simulates real-world Kubernetes environments with resource constraints
-- Traffic routing between clusters is handled by HAProxy with LSTM-based intelligence
+### Datasets
+- **ClarkNet HTTP Traces**: 4M+ requests for real workload patterns
+- **Calgary HTTP Traces**: Complementary dataset for validation
+- **Synthetic Load**: Generated patterns for controlled testing
+
+### Algorithms  
+- **Algorithm 1**: Thesis routing controller with 5-second SLO violation detection
+- **ElaX Algorithm**: Base algorithm modified for hybrid environments
+- **GRU Neural Networks**: 30-second workload prediction with RMSE <10%
+
+### Evaluation Metrics
+- **Prediction Accuracy**: RMSE measurement on real HTTP trace data
+- **SLO Compliance**: 99th percentile latency <200ms target
+- **Cost Optimization**: Hybrid vs pure k3s vs pure serverless analysis
+- **Response Time**: Algorithm 1 detection and reaction speed
+
+---
+
+# 🧠 Claude Code Workflow
+
+## 🔑 Core Principles
+
+- **NO HIGH-LEVEL BULLSHIT** – Show real code, not vague suggestions.
+- **Terse, expert-level, casual communication** – Get to the point.
+- **Anticipate needs** – Offer solutions they haven't asked for yet.
+
+---
+
+## 📋 Task Management
+
+- Use `TodoWrite` / `TodoRead` *aggressively* for complex or multi-step tasks.
+- Break tasks into concrete, actionable items.
+- Mark todos as done immediately after completion.
+- Use todos as your battle plan – always structure complex ops around them.
+
+---
+
+## 🔍 Search & Analysis
+
+- Use `Task` tool for multi-round open-ended investigation.
+- **Batch** search operations (esp. Bash) to minimize latency.
+- Prefer `rg` (ripgrep) over `grep`, `fd` over `find`, etc.
+- Read and diff multiple files at once where analysis demands it.
+
+---
+
+## 🧬 Code Changes
+
+- Always check `@nimbly-technologies/*` modules for internal libs/utilities.
+- Match existing code patterns – review similar files before adding new logic.
+- Add comments only where the logic isn't self-evident.
+- Don't touch unrelated files – surgical edits only.
+
+---
+
+## 🗃️ Git Workflow
+
+- Commit at *logical checkpoints* with clear commit messages.
+- Format commit messages:
+  - `feat:`, `fix:`, `refactor:`, `chore:`, etc. + short summary
+- Do **not** squash – user will squash and rename commits later.
+- Never push unless explicitly instructed.
+- Don't run deployment scripts unless told to.
+
+---
+
+## 📁 File Ops
+
+- CREATE markdown files to document implemented logic. 
+- ALWAYS edit existing files if possible.
+- NEVER delete MongoDB data without explicit confirmation.
+
+---
+
+## 🛠️ Tool Usage
+
+- Batch all independent operations into single calls.
+- Use absolute paths.
+- Parallelize wherever possible:
+  - e.g., `&` in Bash, `xargs -P`, background jobs.
+- Use optimized tools (`rg`, `fd`, etc.) over slower legacy ones.
+
+---
+
+## 💬 Response Style
+
+- Lead with the solution. Explain later, only if necessary.
+- Show only relevant code (a few lines before/after).
+- Reference files with this format:
+  - `path/to/file.ts:42`
+- Split large responses cleanly.
+- No fluff. No filler.
+
+---
+
+## 🚫 What NOT to Do
+
+- ❌ Don't update Git config
+- ❌ Don't push to remote unless told to
+- ❌ Don't deploy unless told to
+- ❌ Don't touch unrelated DB entries
