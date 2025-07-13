@@ -1,4 +1,3 @@
-
 # Prerequisites Installation
 
 This guide explains how to install the necessary tools to run the Kubernetes cluster simulation on both macOS and Linux.
