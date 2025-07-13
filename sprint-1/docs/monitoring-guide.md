@@ -107,9 +107,13 @@ curl -s "http://localhost:8404/stats?stats;csv"
 curl http://localhost:8080
 curl http://localhost:8080/health
 
-# Knative serverless backend  
+# Knative serverless backend (command line)
 curl -H "Host: serverless-sim.default.localhost" http://localhost:8081
 curl -H "Host: serverless-sim.default.localhost" http://localhost:8081/health
+
+# Knative serverless backend (browser-friendly, requires /etc/hosts setup)
+curl http://serverless-sim.default.localhost:8081
+curl http://serverless-sim.default.localhost:8081/health
 
 # HAProxy hybrid endpoint
 curl http://localhost:8082
@@ -117,6 +121,37 @@ curl http://localhost:8082
 # Prometheus metrics (if running)
 curl http://localhost:9090/-/healthy
 curl "http://localhost:9090/api/v1/query?query=up"
+```
+
+### Browser-Based Monitoring
+
+**Setup Browser Access (One-time)**:
+
+```bash
+# Enable browser access to Knative
+./scripts/knative-browser-access.sh --setup-hosts
+
+# Test browser access setup
+./scripts/knative-browser-access.sh --test
+```
+
+**Browser Monitoring URLs**:
+
+```bash
+# HAProxy Stats Dashboard
+open http://localhost:8404/stats
+
+# K3s Cluster Backend
+open http://localhost:8080
+
+# Knative Serverless Backend (requires /etc/hosts setup)
+open http://serverless-sim.default.localhost:8081
+
+# Hybrid Traffic Endpoint
+open http://localhost:8082
+
+# Prometheus Dashboard (if running)
+open http://localhost:9090
 ```
 
 ## Traffic Distribution Monitoring

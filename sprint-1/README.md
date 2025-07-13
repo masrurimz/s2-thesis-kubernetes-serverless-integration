@@ -44,6 +44,14 @@ cd ../../scripts
 # Access hybrid endpoint (80/20 distribution)
 curl http://localhost:8082
 
+# Access individual backends
+curl http://localhost:8080                           # K3s cluster direct
+curl -H "Host: serverless-sim.default.localhost" http://localhost:8081  # Knative direct
+
+# Browser access to Knative (setup required)
+./scripts/knative-browser-access.sh --setup-hosts   # Setup /etc/hosts
+# Then access: http://serverless-sim.default.localhost:8081
+
 # Real-time system monitoring
 ./scripts/monitor-system.sh
 ./scripts/monitor-system.sh --watch  # Continuous monitoring
@@ -59,6 +67,9 @@ open http://localhost:9090
 
 # System health check
 ./scripts/check-health.sh
+
+# Test all Knative access methods
+./scripts/knative-browser-access.sh --test
 ```
 
 ### Load Testing (Day 4 - Pending)
@@ -100,6 +111,46 @@ k6 run load-testing/endurance-test.js
                        │   Port: 9090    │
                        └─────────────────┘
 ```
+
+## Knative Browser Access
+
+The Knative serverless backend requires a Host header for routing. Here are 4 ways to access it:
+
+### ✅ Option 1: /etc/hosts Setup (Recommended)
+
+```bash
+# Setup (one-time)
+./scripts/knative-browser-access.sh --setup-hosts
+
+# Then access in any browser
+open http://serverless-sim.default.localhost:8081
+```
+
+### ✅ Option 2: Browser Extension
+
+- **Chrome**: Install "ModHeader" extension
+- **Firefox**: Install "Modify Headers" extension
+- Add header: `Host: serverless-sim.default.localhost`
+- Access: `http://localhost:8081`
+
+### ✅ Option 3: Command Line with Headers
+
+```bash
+# curl
+curl -H "Host: serverless-sim.default.localhost" http://localhost:8081
+
+# httpie
+http localhost:8081 Host:serverless-sim.default.localhost
+```
+
+### ✅ Option 4: Through HAProxy (Mixed Traffic)
+
+```bash
+# 80% K3s, 20% Knative mixed traffic
+open http://localhost:8082
+```
+
+**Test all methods**: `./scripts/knative-browser-access.sh --test`
 
 ## Components
 

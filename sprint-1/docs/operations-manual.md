@@ -1,5 +1,39 @@
 # Sprint 1 Operations Manual
 
+## Knative Direct Access Operations
+
+### Browser Access Commands
+
+```bash
+# Setup browser access (one-time)
+./scripts/knative-browser-access.sh --setup-hosts
+
+# Test all access methods
+./scripts/knative-browser-access.sh --test
+
+# Access in browser (after /etc/hosts setup)
+open http://serverless-sim.default.localhost:8081
+
+# Command line access with headers
+curl -H "Host: serverless-sim.default.localhost" http://localhost:8081
+```
+
+### Individual Backend Testing
+
+```bash
+# Test K3s cluster directly
+curl http://localhost:8080
+curl http://localhost:8080/health
+
+# Test Knative directly (with Host header)
+curl -H "Host: serverless-sim.default.localhost" http://localhost:8081
+curl -H "Host: serverless-sim.default.localhost" http://localhost:8081/health
+
+# Test Knative directly (browser-friendly URL, requires /etc/hosts)
+curl http://serverless-sim.default.localhost:8081
+curl http://serverless-sim.default.localhost:8081/health
+```
+
 ## HAProxy Traffic Router Operations
 
 ### Quick Reference Commands
