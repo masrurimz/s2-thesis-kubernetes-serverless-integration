@@ -62,7 +62,7 @@ Replace manual traffic routing with automated decisions based on simple load pre
 **Purpose**: Predict next 5 minutes of traffic based on historical patterns
 
 ```python
-class SimpleLoadPredictor:
+class SimpleLoadPredictor:/
     def __init__(self):
         self.model = LinearRegression()
         self.window_size = 60  # 60 data points (minutes)
@@ -98,6 +98,7 @@ class TrafficController:
 ### Resource Configuration
 
 **Full Environment (16GB+ RAM):**
+
 ```yaml
 # influxdb configuration
 influxdb:
@@ -108,14 +109,15 @@ influxdb:
 ```
 
 **Resource-Constrained Environment (8GB RAM):**
+
 ```yaml
 # influxdb configuration (constrained)
 influxdb:
-  mem_limit: 1g        # Reduced from 2g
-  cpus: 0.25           # Reduced from 0.5
-  retention: 24h       # Reduced from 7d
-  query_timeout: 10s   # Reduced from 30s
-  wal_fsync_delay: 1s  # Reduce write frequency
+  mem_limit: 1g # Reduced from 2g
+  cpus: 0.25 # Reduced from 0.5
+  retention: 24h # Reduced from 7d
+  query_timeout: 10s # Reduced from 30s
+  wal_fsync_delay: 1s # Reduce write frequency
 ```
 
 ### 4. Automated Decision Loop
