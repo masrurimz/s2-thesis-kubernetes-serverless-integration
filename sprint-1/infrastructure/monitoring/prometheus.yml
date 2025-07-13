@@ -1,0 +1,59 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  # Resource-constrained setup: 1h retention
+  external_labels:
+    cluster: 'hybrid-sprint1'
+    env: 'dev'
+
+# Alert and recording rules
+rule_files:
+  - "rules.yml"
+
+# Scrape configuration
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s
+
+  # HAProxy stats endpoint (basic stats scraping)
+  - job_name: 'haproxy'
+    static_configs:
+      - targets: ['host.docker.internal:8404']
+    scrape_interval: 15s
+    metrics_path: '/stats'
+    params:
+      stats: ['csv']
+    scheme: 'http'
+
+  # K3s cluster metrics (via kubectl proxy if available)
+  - job_name: 'kubernetes-nodes'
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+    scrape_interval: 30s
+    metrics_path: '/metrics'
+    scheme: 'http'
+
+  # System metrics from node-exporter (if deployed)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['host.docker.internal:9100']
+    scrape_interval: 30s
+
+# Storage configuration for resource constraints
+storage:
+  tsdb:
+    retention.time: 1h
+    retention.size: 512MB
+    path: /prometheus/data
+
+# Remote write disabled for resource constraints
+# remote_write: []
+
+# Alertmanager disabled for Sprint 1 simplicity
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ['alertmanager:9093']
