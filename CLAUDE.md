@@ -14,13 +14,15 @@ The project implements a novel hybrid approach that intelligently routes traffic
 
 ### Architecture Evolution
 
-The project follows an **incremental 5-sprint methodology**:
+The project follows an **incremental 5-sprint methodology** optimized for LLM-assisted development:
 
-- **Sprint 1**: Basic hybrid foundation (k3s + Docker serverless simulation)
-- **Sprint 2**: Automated load prediction with linear regression  
-- **Sprint 3**: SLO-aware routing with 99th percentile latency monitoring
-- **Sprint 4**: GRU neural network integration with real HTTP trace data
-- **Sprint 5**: Complete ElaX algorithm implementation with formal evaluation
+- **Sprint 1**: Basic hybrid foundation (k3s + Knative serverless) - _1 day with LLM_
+- **Sprint 2**: Automated load prediction with linear regression - _1-2 days with LLM_
+- **Sprint 3**: SLO-aware routing with 99th percentile latency monitoring - _2-3 days with LLM_
+- **Sprint 4**: GRU neural network integration with real HTTP trace data - _3-5 days (ML training)_
+- **Sprint 5**: Complete ElaX algorithm implementation with formal evaluation - _2-3 days with LLM_
+
+**Total Project Duration**: 2-3 weeks (not months) with LLM assistance
 
 ### Key Components
 
@@ -59,12 +61,12 @@ docker run -d --name traffic-router -p 8082:8082 -v /tmp/haproxy.cfg:/usr/local/
 cd docs/incremental-development/phase-1-basic-hybrid.md
 # Follow day-by-day implementation plan
 
-# Sprint 2: Load Prediction  
+# Sprint 2: Load Prediction
 cd docs/incremental-development/phase-2-prediction.md
 # Add linear regression and automated routing
 
 # Sprint 3: SLO Monitoring
-cd docs/incremental-development/phase-3-slo-monitoring.md  
+cd docs/incremental-development/phase-3-slo-monitoring.md
 # Implement Algorithm 1 and tail latency monitoring
 
 # Sprint 4: GRU Integration
@@ -108,19 +110,22 @@ k3d cluster create full --agents 2 --resources.limits.memory=4Gi
 ## Documentation Structure
 
 ### Getting Started
+
 - `docs/getting-started/01-prerequisites.md`: System requirements and installation
 - `docs/getting-started/02-quick-start.md`: 15-minute hybrid demo
 - `docs/getting-started/03-understanding-architecture.md`: Deep dive into components
 
 ### Incremental Development (5 Sprints)
+
 - `docs/incremental-development/README.md`: Agile sprint methodology overview
 - `docs/incremental-development/phase-1-basic-hybrid.md`: Foundation week
-- `docs/incremental-development/phase-2-prediction.md`: Linear regression automation  
+- `docs/incremental-development/phase-2-prediction.md`: Linear regression automation
 - `docs/incremental-development/phase-3-slo-monitoring.md`: Algorithm 1 + SLO monitoring
 - `docs/incremental-development/phase-4-gru-integration.md`: Neural networks + real data
 - `docs/incremental-development/phase-5-full-thesis.md`: Complete ElaX implementation
 
 ### Thesis Implementation
+
 - `docs/thesis-implementation/`: Formal research documentation
 - `docs/reference/`: Background materials and algorithm specifications
 - `docs/archived/`: Historical documentation from previous approaches
@@ -129,16 +134,18 @@ k3d cluster create full --agents 2 --resources.limits.memory=4Gi
 
 - `apps/rust-app/v2-prometheus/`: Simple HTTP server with Prometheus metrics
 - `monitoring/prometheus-v2-separate-cluster-client-server/`: Monitoring stack
-- `autoscaler/experiment-6-odhi-scaler/`: Latest autoscaling experiments  
+- `autoscaler/experiment-6-odhi-scaler/`: Latest autoscaling experiments
 - `scripts/`: Utility scripts for setup, testing, and evaluation
 
 ## Hardware Constraints
 
 ### Minimum Requirements
+
 - **Full Development**: 8+ cores, 32GB RAM
 - **Resource-Constrained Testing**: 4+ cores, 8GB RAM (6GB usable)
 
 ### Sprint Resource Requirements
+
 - **Sprint 1-2**: 4-6GB RAM (basic hybrid + prediction)
 - **Sprint 3**: 6-8GB RAM (SLO monitoring stack)
 - **Sprint 4-5**: 8-16GB RAM (GRU training + real datasets)
@@ -157,16 +164,19 @@ Resource-constrained configurations available for all sprints with reduced monit
 ## Key Research Elements
 
 ### Datasets
+
 - **ClarkNet HTTP Traces**: 4M+ requests for real workload patterns
 - **Calgary HTTP Traces**: Complementary dataset for validation
 - **Synthetic Load**: Generated patterns for controlled testing
 
-### Algorithms  
+### Algorithms
+
 - **Algorithm 1**: Thesis routing controller with 5-second SLO violation detection
 - **ElaX Algorithm**: Base algorithm modified for hybrid environments
 - **GRU Neural Networks**: 30-second workload prediction with RMSE <10%
 
 ### Evaluation Metrics
+
 - **Prediction Accuracy**: RMSE measurement on real HTTP trace data
 - **SLO Compliance**: 99th percentile latency <200ms target
 - **Cost Optimization**: Hybrid vs pure k3s vs pure serverless analysis
@@ -181,15 +191,18 @@ Resource-constrained configurations available for all sprints with reduced monit
 - **NO HIGH-LEVEL BULLSHIT** – Show real code, not vague suggestions.
 - **Terse, expert-level, casual communication** – Get to the point.
 - **Anticipate needs** – Offer solutions they haven't asked for yet.
+- **LLM-AWARE DEVELOPMENT** – Use burst implementation + validation cycles, not human time estimates.
 
 ---
 
 ## 📋 Task Management
 
-- Use `TodoWrite` / `TodoRead` *aggressively* for complex or multi-step tasks.
+- Use `TodoWrite` / `TodoRead` _aggressively_ for complex or multi-step tasks.
 - Break tasks into concrete, actionable items.
 - Mark todos as done immediately after completion.
 - Use todos as your battle plan – always structure complex ops around them.
+- **LLM Planning**: Estimate in "execution blocks" (15-30 min) not hours/days.
+- **Context Batching**: Group related tasks by domain/component for parallel execution.
 
 ---
 
@@ -213,7 +226,7 @@ Resource-constrained configurations available for all sprints with reduced monit
 
 ## 🗃️ Git Workflow
 
-- Commit at *logical checkpoints* with clear commit messages.
+- Commit at _logical checkpoints_ with clear commit messages.
 - Format commit messages:
   - `feat:`, `fix:`, `refactor:`, `chore:`, etc. + short summary
 - Do **not** squash – user will squash and rename commits later.
@@ -224,7 +237,7 @@ Resource-constrained configurations available for all sprints with reduced monit
 
 ## 📁 File Ops
 
-- CREATE markdown files to document implemented logic. 
+- CREATE markdown files to document implemented logic.
 - ALWAYS edit existing files if possible.
 - NEVER delete MongoDB data without explicit confirmation.
 
@@ -237,6 +250,8 @@ Resource-constrained configurations available for all sprints with reduced monit
 - Parallelize wherever possible:
   - e.g., `&` in Bash, `xargs -P`, background jobs.
 - Use optimized tools (`rg`, `fd`, etc.) over slower legacy ones.
+- **LLM Optimization**: Create 5-10 related files simultaneously in burst implementation.
+- **Validation Cycles**: Plan explicit human testing phases between implementation bursts.
 
 ---
 
@@ -257,3 +272,40 @@ Resource-constrained configurations available for all sprints with reduced monit
 - ❌ Don't push to remote unless told to
 - ❌ Don't deploy unless told to
 - ❌ Don't touch unrelated DB entries
+- ❌ Don't use human time estimates (hours/days) for LLM-capable tasks
+- ❌ Don't plan sequential tasks that can be executed in parallel batches
+
+---
+
+## 🚀 LLM Development Guidelines
+
+**Reference**: See `CLAUDE-LLM-METHODOLOGY.md` for complete methodology
+
+### Core LLM Approach
+
+- **Execution Blocks**: 15-30 minute focused implementation bursts
+- **Context Batching**: Group related tasks (configs, docs, scripts) together
+- **Burst + Validate**: Implementation → Human Testing → Feedback → Next Burst
+- **Parallel Creation**: Generate 5-10 related files simultaneously
+
+### LLM Strengths (Leverage)
+
+- Configuration generation (YAML, JSON, configs)
+- Pattern-based implementation following existing conventions
+- Documentation created simultaneously with code
+- Parallel execution of related tasks
+
+### LLM Limitations (Account For)
+
+- Complex multi-system debugging requires human feedback
+- Integration validation needs real-world testing
+- Performance optimization requires iterative measurement
+- Domain expertise and business logic validation
+
+### Estimation Framework
+
+- **Simple**: 1 execution block (single component, docs, scripts)
+- **Medium**: 2-3 execution blocks (multi-component integration)
+- **Complex**: Multiple burst + validation cycles (system-wide changes)
+
+Always plan with LLM reality: Sprint 1 = 1 day actual (not 5 days traditional)
