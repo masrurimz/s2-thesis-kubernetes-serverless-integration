@@ -1,0 +1,88 @@
+groups:
+  - name: hybrid_system_alerts
+    interval: 30s
+    rules:
+      # HAProxy backend health alerts
+      - alert: HAProxyBackendDown
+        expr: haproxy_backend_up == 0
+        for: 30s
+        labels:
+          severity: critical
+          component: haproxy
+        annotations:
+          summary: "HAProxy backend {{ $labels.backend }} is down"
+          description: "Backend {{ $labels.backend }} has been down for more than 30 seconds"
+
+      # High response time alert
+      - alert: HighResponseTime
+        expr: haproxy_backend_response_time_average_seconds > 0.2
+        for: 1m
+        labels:
+          severity: warning
+          component: haproxy
+        annotations:
+          summary: "High response time on {{ $labels.backend }}"
+          description: "Average response time {{ $value }}s exceeds 200ms threshold"
+
+      # Traffic distribution imbalance
+      - alert: TrafficImbalance
+        expr: |
+          (
+            haproxy_backend_current_sessions{backend="k3s-cluster"} / 
+            (haproxy_backend_current_sessions{backend="k3s-cluster"} + haproxy_backend_current_sessions{backend="serverless-sim"})
+          ) < 0.70 or 
+          (
+            haproxy_backend_current_sessions{backend="k3s-cluster"} / 
+            (haproxy_backend_current_sessions{backend="k3s-cluster"} + haproxy_backend_current_sessions{backend="serverless-sim"})
+          ) > 0.90
+        for: 2m
+        labels:
+          severity: warning
+          component: routing
+        annotations:
+          summary: "Traffic distribution outside expected 80/20 range"
+          description: "Current distribution deviates from expected 80/20 split"
+
+      # Resource utilization alerts
+      - alert: HighMemoryUsage
+        expr: (prometheus_tsdb_symbol_table_size_bytes / (512 * 1024 * 1024)) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          component: monitoring
+        annotations:
+          summary: "Prometheus memory usage high"
+          description: "Memory usage {{ $value | humanizePercentage }} exceeds 80% of 512MB limit"
+
+  - name: hybrid_system_recording_rules
+    interval: 30s
+    rules:
+      # Traffic distribution percentage
+      - record: hybrid:traffic_distribution:k3s_percentage
+        expr: |
+          haproxy_backend_current_sessions{backend="k3s-cluster"} / 
+          (haproxy_backend_current_sessions{backend="k3s-cluster"} + haproxy_backend_current_sessions{backend="serverless-sim"}) * 100
+
+      - record: hybrid:traffic_distribution:serverless_percentage
+        expr: |
+          haproxy_backend_current_sessions{backend="serverless-sim"} / 
+          (haproxy_backend_current_sessions{backend="k3s-cluster"} + haproxy_backend_current_sessions{backend="serverless-sim"}) * 100
+
+      # Combined response time weighted average
+      - record: hybrid:response_time:weighted_average
+        expr: |
+          (
+            haproxy_backend_response_time_average_seconds{backend="k3s-cluster"} * haproxy_backend_current_sessions{backend="k3s-cluster"} +
+            haproxy_backend_response_time_average_seconds{backend="serverless-sim"} * haproxy_backend_current_sessions{backend="serverless-sim"}
+          ) / 
+          (haproxy_backend_current_sessions{backend="k3s-cluster"} + haproxy_backend_current_sessions{backend="serverless-sim"})
+
+      # Total request rate across both backends
+      - record: hybrid:request_rate:total
+        expr: |
+          sum(haproxy_backend_http_requests_total{backend=~"k3s-cluster|serverless-sim"})
+
+      # Backend availability ratio (uptime)
+      - record: hybrid:availability:backend_ratio
+        expr: |
+          sum(haproxy_backend_up) / count(haproxy_backend_up)
