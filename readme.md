@@ -1,6 +1,16 @@
-# Kubernetes & Serverless Integration
+# Hybrid K8s-Serverless Integration Research
 
-This guide will walk you through the process of setting up a multi-cluster Kubernetes environment using k3d, building a Rust app incrementally, and deploying services like PostgreSQL and MinIO. It will also cover monitoring with Prometheus, traffic management with HAProxy, and serverless integration using Knative.
+**Thesis**: Decision Making and Elastic Scalability Management in Heterogeneous Cloud Environments Based on Workload Prediction
+
+This research implements a novel hybrid architecture combining Kubernetes clusters with serverless computing using GRU-based workload prediction and ElaX algorithm implementation.
+
+## 🚀 Quick Start
+
+**New to the project?** → See **[docs/getting-started/](docs/getting-started/)** for a 15-minute demo
+
+**Implementing the thesis?** → See **[docs/thesis-implementation/](docs/thesis-implementation/)** for formal research documentation
+
+**Building incrementally?** → See **[docs/incremental-development/](docs/incremental-development/)** for agile sprint approach
 
 ### **Table of Contents**
 
