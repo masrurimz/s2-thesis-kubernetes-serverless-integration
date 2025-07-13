@@ -1,0 +1,24 @@
+version: '3.8'
+services:
+  serverless-sim:
+    image: nginx:alpine
+    container_name: sprint1-serverless
+    ports:
+      - "8081:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+    restart: unless-stopped
+    environment:
+      - BACKEND_TYPE=serverless-sim
+    networks:
+      - hybrid-network
+
+networks:
+  hybrid-network:
+    driver: bridge

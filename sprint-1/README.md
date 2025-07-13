@@ -5,11 +5,13 @@
 ## Quick Start
 
 ### Prerequisites
+
 - Docker running with 6GB+ RAM allocated
 - kubectl and k3d installed
 - k6 installed for load testing
 
 ### Setup (5 minutes)
+
 ```bash
 # Deploy entire hybrid system
 ./scripts/setup.sh
@@ -22,6 +24,7 @@
 ```
 
 ### Usage
+
 ```bash
 # Access hybrid endpoint
 curl http://localhost:8082
@@ -37,6 +40,7 @@ open http://localhost:9090
 ```
 
 ### Load Testing
+
 ```bash
 # Run all load tests
 ./scripts/run-load-tests.sh
@@ -48,6 +52,7 @@ k6 run load-testing/endurance-test.js
 ```
 
 ### Cleanup
+
 ```bash
 # Remove all components
 ./scripts/teardown.sh
@@ -64,30 +69,33 @@ k6 run load-testing/endurance-test.js
                        │                 │           │
                        │                 │    ┌─────────────────┐
                        │                 │───►│ Serverless Sim  │
-                       │                 │    │ (Docker nginx)  │
+                       │                 │    │(Knative Service)│
                        └─────────────────┘    │ Port: 8081      │
                               │               └─────────────────┘
                        ┌─────────────────┐           │
                        │   Monitoring    │◄──────────┘
-                       │  (Prometheus)   │           
-                       │   Port: 9090    │           
-                       └─────────────────┘           
+                       │  (Prometheus)   │
+                       │   Port: 9090    │
+                       └─────────────────┘
 ```
 
 ## Components
 
 ### Core Infrastructure
+
 - **K3s Cluster** (`infrastructure/k3s/`): Cost-effective primary backend
-- **Serverless Simulation** (`infrastructure/serverless/`): Infinite scaling simulation
+- **Knative Serverless** (`infrastructure/serverless/`): Authentic serverless with scale-to-zero
 - **HAProxy Router** (`infrastructure/haproxy/`): Intelligent traffic distribution
 - **Prometheus Monitoring** (`infrastructure/monitoring/`): Metrics collection
 
 ### Automation Scripts
+
 - **Setup/Teardown** (`scripts/`): System lifecycle management
 - **Testing** (`scripts/`): Health checks and traffic validation
 - **Operations** (`scripts/`): Manual weight adjustment and monitoring
 
 ### Load Testing
+
 - **Steady Load** (`load-testing/steady-load.js`): Constant 50 RPS test
 - **Traffic Spike** (`load-testing/spike-load.js`): 50→200→50 RPS simulation
 - **Endurance** (`load-testing/endurance-test.js`): 30-minute stability test
@@ -95,13 +103,15 @@ k6 run load-testing/endurance-test.js
 ## Resource Requirements
 
 ### Constrained Environment (6GB Usable RAM)
-| Component | RAM | CPU | Port |
-|-----------|-----|-----|------|
-| K3s Cluster | 2GB | 1.0 | 8080 |
-| Serverless Sim | 512MB | 0.25 | 8081 |
-| HAProxy | 256MB | 0.25 | 8082 |
-| Prometheus | 1GB | 0.25 | 9090 |
-| **Total** | **3.8GB** | **1.75** | - |
+
+| Component       | RAM       | CPU      | Port |
+| --------------- | --------- | -------- | ---- |
+| K3s Cluster     | 2GB       | 1.0      | 8080 |
+| Knative Serving | 200MB     | 0.25     | -    |
+| Knative Pods    | 128MB     | 0.1      | 8081 |
+| HAProxy         | 256MB     | 0.25     | 8082 |
+| Prometheus      | 1GB       | 0.25     | 9090 |
+| **Total**       | **4.1GB** | **1.85** | -    |
 
 ## Success Criteria
 

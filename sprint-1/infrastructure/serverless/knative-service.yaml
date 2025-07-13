@@ -1,0 +1,87 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: serverless-sim
+  namespace: default
+spec:
+  template:
+    metadata:
+      annotations:
+        # Enable scale-to-zero
+        autoscaling.knative.dev/minScale: "0"
+        autoscaling.knative.dev/maxScale: "10"
+        # Target 1 concurrent request per pod
+        autoscaling.knative.dev/target: "1"
+        # Scale down after 30 seconds of no traffic
+        autoscaling.knative.dev/scale-down-delay: "30s"
+        # Resource constraints
+        autoscaling.knative.dev/class: "kpa.autoscaling.knative.dev"
+    spec:
+      containers:
+      - image: nginx:alpine
+        name: serverless-sim
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+        env:
+        - name: BACKEND_TYPE
+          value: "serverless-sim"
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: default.conf
+        - name: nginx-html
+          mountPath: /usr/share/nginx/html/index.html
+          subPath: index.html
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: serverless-config
+      - name: nginx-html
+        configMap:
+          name: serverless-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: serverless-config
+  namespace: default
+data:
+  default.conf: |
+    server {
+        listen 80;
+        server_name localhost;
+        
+        location / {
+            root /usr/share/nginx/html;
+            index index.html index.htm;
+        }
+        
+        location /health {
+            access_log off;
+            return 200 "serverless-sim healthy (knative)\n";
+            add_header Content-Type text/plain;
+        }
+    }
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Knative Serverless Backend</title>
+    </head>
+    <body>
+        <h1>Knative Serverless Backend</h1>
+        <p>Backend Type: serverless-sim</p>
+        <p>Platform: Knative Serving</p>
+        <p>Cluster: k3s</p>
+        <p>Port: 8081 (via Kourier)</p>
+        <p>Status: Active</p>
+        <p>Features: Cold starts, Scale-to-zero, Autoscaling</p>
+    </body>
+    </html>

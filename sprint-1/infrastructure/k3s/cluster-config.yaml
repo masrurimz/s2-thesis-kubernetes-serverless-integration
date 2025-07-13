@@ -1,0 +1,24 @@
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: hybrid-sprint1
+servers: 1
+agents: 0  # Single node for constrained environments
+options:
+  k3s:
+    extraArgs:
+      - arg: --kubelet-arg=eviction-hard=memory.available<100Mi
+        nodeFilters:
+          - server:*
+      - arg: --kubelet-arg=system-reserved=memory=512Mi
+        nodeFilters:
+          - server:*
+  runtime:
+    ulimits:
+      - name: nofile
+        soft: 65536
+        hard: 65536
+ports:
+  - port: 8080:80
+    nodeFilters:
+      - loadbalancer
