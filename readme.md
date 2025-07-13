@@ -23,52 +23,51 @@ This guide will walk you through the process of setting up a multi-cluster Kuber
 ```md
 kubernetes-cluster-simulation/
 │
-├── apps/                         # Application-related code
-│   ├── rust-app/
-│   │   ├── src/
-│   │   │   ├── main.rs             # Main Rust app file
-│   │   │   └── monitoring.rs       # Module for Prometheus metrics
-│   │   │   └── storage.rs          # Module for file upload to object storage
-│   │   │   └── db.rs               # Module for database updates
-│   │   ├── Cargo.toml              # Rust app dependencies
-│   │   └── Dockerfile              # Dockerfile for the Rust app
+├── apps/ # Application-related code
+│ ├── rust-app/
+│ │ ├── src/
+│ │ │ ├── main.rs # Main Rust app file
+│ │ │ └── monitoring.rs # Module for Prometheus metrics
+│ │ │ └── storage.rs # Module for file upload to object storage
+│ │ │ └── db.rs # Module for database updates
+│ │ ├── Cargo.toml # Rust app dependencies
+│ │ └── Dockerfile # Dockerfile for the Rust app
 │
-├── cluster-configs/              # Kubernetes cluster configurations
-│   ├── clusterA/
-│   │   ├── deployment.yaml       # Application deployment for Cluster A
-│   │   ├── prometheus.yaml       # Prometheus configuration for Cluster A
-│   │   ├── haproxy.yaml          # HAProxy configuration for Cluster A
-│   │   ├── daemon-controller.yaml# DaemonSet for HAProxy controller
-│   │   └── k3d-clusterA.yaml     # k3d configuration for Cluster A
-│   ├── clusterB/
-│   │   ├── postgres.yaml         # PostgreSQL StatefulSet for Cluster B
-│   │   ├── minio.yaml            # MinIO StatefulSet for Cluster B
-│   │   └── k3d-clusterB.yaml     # k3d configuration for Cluster B
-│   └── clusterC/
-│       ├── knative-app.yaml      # Knative application deployment for Cluster C
-│       └── k3d-clusterC.yaml     # k3d configuration for Cluster C
+├── cluster-configs/ # Kubernetes cluster configurations
+│ ├── clusterA/
+│ │ ├── deployment.yaml # Application deployment for Cluster A
+│ │ ├── prometheus.yaml # Prometheus configuration for Cluster A
+│ │ ├── haproxy.yaml # HAProxy configuration for Cluster A
+│ │ ├── daemon-controller.yaml# DaemonSet for HAProxy controller
+│ │ └── k3d-clusterA.yaml # k3d configuration for Cluster A
+│ ├── clusterB/
+│ │ ├── postgres.yaml # PostgreSQL StatefulSet for Cluster B
+│ │ ├── minio.yaml # MinIO StatefulSet for Cluster B
+│ │ └── k3d-clusterB.yaml # k3d configuration for Cluster B
+│ └── clusterC/
+│ ├── knative-app.yaml # Knative application deployment for Cluster C
+│ └── k3d-clusterC.yaml # k3d configuration for Cluster C
 │
-├── controller/                   # LSTM traffic prediction controller
-│   ├── src/
-│   │   └── main.py               # Python code for traffic controller
-│   ├── model/                    # Pretrained LSTM model for traffic prediction
-│   ├── Dockerfile                # Dockerfile to containerize the controller
-│   └── requirements.txt          # Python dependencies for the controller
+├── controller/ # LSTM traffic prediction controller
+│ ├── src/
+│ │ └── main.py # Python code for traffic controller
+│ ├── model/ # Pretrained LSTM model for traffic prediction
+│ ├── Dockerfile # Dockerfile to containerize the controller
+│ └── requirements.txt # Python dependencies for the controller
 │
-├── infra/                        # Infrastructure setup scripts
-│   ├── setup-clusters.sh         # Script to set up clusters with k3d
-│   ├── deploy-applications.sh    # Script to deploy apps to clusters
-│   └── teardown-clusters.sh      # Script to tear down clusters
+├── infra/ # Infrastructure setup scripts
+│ ├── setup-clusters.sh # Script to set up clusters with k3d
+│ ├── deploy-applications.sh # Script to deploy apps to clusters
+│ └── teardown-clusters.sh # Script to tear down clusters
 │
 ├── docs/
-│   ├── README.md                 # Main documentation for setup and experiment
-│   ├── experiment-results.md     # Record experiment results
+│ ├── README.md # Main documentation for setup and experiment
+│ ├── experiment-results.md # Record experiment results
 │
 ├── tests/
-│   └── integration_tests/        # Integration tests for each milestone
+│ └── integration_tests/ # Integration tests for each milestone
 ├── .gitignore
 └── README.md
-
 ```
 
 ---
@@ -176,10 +175,10 @@ Next, we'll create a basic HTTP server in Rust and deploy it to **Cluster A**.
            app: rust-app
        spec:
          containers:
-         - name: rust-app
-           image: rust-app:latest
-           ports:
-           - containerPort: 8080
+           - name: rust-app
+             image: rust-app:latest
+             ports:
+               - containerPort: 8080
    ```
 
    Deploy the app to Cluster A:
@@ -214,11 +213,11 @@ To support database updates and file uploads, you need to set up **PostgreSQL** 
            app: postgres
        spec:
          containers:
-         - name: postgres
-           image: postgres:latest
-           env:
-           - name: POSTGRES_PASSWORD
-             value: example
+           - name: postgres
+             image: postgres:latest
+             env:
+               - name: POSTGRES_PASSWORD
+                 value: example
    ```
 
 2. **MinIO Setup:**
@@ -241,11 +240,11 @@ To support database updates and file uploads, you need to set up **PostgreSQL** 
            app: minio
        spec:
          containers:
-         - name: minio
-           image: minio/minio:latest
-           args:
-           - server
-           - /data
+           - name: minio
+             image: minio/minio:latest
+             args:
+               - server
+               - /data
    ```
 
 Deploy both services to **Cluster B**:
@@ -274,8 +273,8 @@ Now, add **Prometheus** to monitor the Rust app's performance.
        matchLabels:
          app: rust-app
      endpoints:
-     - port: 8080
-       path: /metrics
+       - port: 8080
+         path: /metrics
    ```
 
 2. **Integrate Prometheus Metrics in the Rust App:**
