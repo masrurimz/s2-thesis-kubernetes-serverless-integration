@@ -1,0 +1,107 @@
+[tool.poetry]
+name = "sprint2-intelligent-routing"
+version = "2.0.0"
+description = "Sprint 2: Intelligent routing with load prediction for hybrid k3s-serverless system"
+authors = ["Muhammad Zahid Masruri <masruri03@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [
+    {include = "prediction_engine"},
+    {include = "intelligent_router"},
+    {include = "monitoring_v2"},
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+# Core ML and Data Processing
+scikit-learn = "^1.3.0"
+pandas = "^2.0.0"
+numpy = "^1.24.0"
+# API Server and Web Framework
+fastapi = "^0.100.0"
+uvicorn = "^0.23.0"
+pydantic = "^2.0.0"
+# HTTP Client and Integration
+requests = "^2.31.0"
+aiohttp = "^3.8.0"
+# Data Storage and Persistence
+sqlalchemy = "^2.0.0"
+# Monitoring and Logging
+prometheus-client = "^0.17.0"
+structlog = "^23.0.0"
+# Model and Data Processing
+joblib = "^1.3.0"
+psutil = "^5.9.0"
+
+[tool.poetry.group.dev.dependencies]
+# Testing Framework
+pytest = "^7.4.0"
+pytest-asyncio = "^0.21.0"
+pytest-cov = "^4.1.0"
+# Code Quality
+black = "^23.0.0"
+flake8 = "^6.0.0"
+isort = "^5.12.0"
+mypy = "^1.5.0"
+# Development Tools
+ipython = "^8.14.0"
+jupyter = "^1.0.0"
+
+[tool.poetry.group.analysis.dependencies]
+# Data Analysis and Visualization
+plotly = "^5.15.0"
+matplotlib = "^3.7.0"
+seaborn = "^0.12.0"
+# Research and Analysis
+scipy = "^1.11.0"
+
+[tool.poetry.scripts]
+prediction-server = "prediction_engine.prediction_server:main"
+intelligent-router = "intelligent_router.routing_controller:main"
+data-collector = "prediction_engine.data_collector:main"
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["prediction_engine", "intelligent_router", "monitoring_v2"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --cov=prediction_engine --cov=intelligent_router --cov=monitoring_v2"
+testpaths = [
+    "tests",
+    "prediction-engine/tests",
+    "intelligent-router/tests",
+    "monitoring-v2/tests",
+]
+python_files = ["test_*.py", "*_test.py"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
