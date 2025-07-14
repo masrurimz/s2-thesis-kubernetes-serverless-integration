@@ -16,9 +16,9 @@ from typing import Dict, Optional, Tuple
 import requests
 import structlog
 
-from weight_adjuster import HAProxyWeightAdjuster
-from decision_logger import DecisionLogger
-from fallback_handler import FallbackHandler
+from .weight_adjuster import HAProxyWeightAdjuster
+# from .decision_logger import DecisionLogger
+# from .fallback_handler import FallbackHandler
 
 logger = structlog.get_logger(__name__)
 
@@ -49,8 +49,8 @@ class IntelligentRoutingController:
         
         # Initialize components
         self.weight_adjuster = HAProxyWeightAdjuster(haproxy_socket_path)
-        self.decision_logger = DecisionLogger()
-        self.fallback_handler = FallbackHandler()
+        # self.decision_logger = DecisionLogger()
+        # self.fallback_handler = FallbackHandler()
         
         # Controller state
         self.is_running = False
