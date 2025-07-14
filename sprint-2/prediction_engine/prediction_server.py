@@ -18,8 +18,8 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from data_collector import DataCollector
-from linear_model import TrafficPredictor
+from .data_collector import DataCollector
+from .linear_model import TrafficPredictor
 
 # Configure structured logging
 logger = structlog.get_logger(__name__)

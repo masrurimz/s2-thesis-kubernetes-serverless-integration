@@ -91,7 +91,7 @@ class TrafficPredictor:
                 window_data['error_rate'].mean(),
                 
                 # Temporal features
-                self._extract_temporal_features(df.iloc[i]['timestamp']),
+                *self._extract_temporal_features(df.iloc[i]['timestamp']),
                 
                 # Trend features
                 self._calculate_trend(window_data['total_requests']),
@@ -382,7 +382,7 @@ import time
 
 def main():
     """Test the traffic prediction model."""
-    from data_collector import DataCollector
+    from .data_collector import DataCollector
     
     # Initialize components
     collector = DataCollector()
