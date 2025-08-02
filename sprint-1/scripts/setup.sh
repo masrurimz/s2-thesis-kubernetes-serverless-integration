@@ -94,7 +94,7 @@ deploy_k3s() {
     kubectl apply -f nginx-service.yaml
     
     # Wait for deployment to be ready
-    kubectl wait --for=condition=available deployment/nginx-deployment --timeout=300s
+    kubectl wait --for=condition=available deployment/nginx-app --timeout=300s
     
     log_success "K3s cluster deployed and ready on port 8080"
 }
