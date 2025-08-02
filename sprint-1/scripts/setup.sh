@@ -118,6 +118,12 @@ deploy_knative() {
         --type merge \
         --patch '{"data":{"ingress-class":"kourier.ingress.networking.knative.dev"}}'
     
+    # Configure localhost domain for external access
+    kubectl patch configmap/config-domain \
+        --namespace knative-serving \
+        --type merge \
+        --patch '{"data":{"localhost":""}}'
+    
     # Wait for Knative to be ready
     kubectl wait --for=condition=ready pod --all -n knative-serving --timeout=300s
     kubectl wait --for=condition=ready pod --all -n kourier-system --timeout=300s
@@ -128,10 +134,13 @@ deploy_knative() {
     # Wait for Knative service to be ready
     kubectl wait --for=condition=ready ksvc/serverless-sim --timeout=300s
     
-    # Start port forwarding in background
-    kubectl port-forward -n kourier-system service/kourier 8081:80 --address=0.0.0.0 &
+    # Start port forwarding in background with proper daemonization
+    nohup kubectl port-forward -n kourier-system service/kourier 8081:80 --address=0.0.0.0 > /tmp/knative-port-forward.log 2>&1 &
     PORT_FORWARD_PID=$!
     echo $PORT_FORWARD_PID > /tmp/knative-port-forward.pid
+    
+    # Detach from terminal completely
+    disown
     
     # Wait a moment for port forwarding to establish
     sleep 5
@@ -203,8 +212,9 @@ validate_deployment() {
         exit 1
     fi
     
-    # Test Knative backend
-    if curl -sf -H "Host: serverless-sim.default.localhost" http://localhost:8081 > /dev/null; then
+    # Test Knative backend (wait for cold start)
+    log_info "Testing Knative backend (allowing for cold start)..."
+    if curl -sf -H "Host: serverless-sim.default.localhost" http://localhost:8081/health --max-time 60 > /dev/null; then
         log_success "Knative backend responding on port 8081"
     else
         log_warning "Knative backend not responding - may need time to warm up"
