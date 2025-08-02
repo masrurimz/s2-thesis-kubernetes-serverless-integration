@@ -309,3 +309,250 @@ Resource-constrained configurations available for all sprints with reduced monit
 - **Complex**: Multiple burst + validation cycles (system-wide changes)
 
 Always plan with LLM reality: Sprint 1 = 1 day actual (not 5 days traditional)
+
+---
+
+## 🤝 User-LLM Validation Collaboration
+
+### Role Separation
+
+**LLM Role**:
+- Code validation, syntax checking, import testing
+- Analysis of user feedback and error messages
+- Configuration generation and pattern implementation
+- Documentation updates and logic verification
+
+**User Role**:
+- Execute long-running services (servers, monitoring, prediction engines)
+- Integration testing and performance measurement
+- Manual verification of system behavior
+- Resource management and process monitoring
+
+### Handoff Protocol
+
+**Phase 1 (LLM Implementation)**:
+- LLM provides specific commands for user execution
+- Clear step-by-step instructions with expected outputs
+- Error handling guidance and troubleshooting steps
+
+**Phase 2 (User Execution)**:
+- User executes services and reports results
+- Captures logs, error messages, and performance metrics
+- Tests integration points and validates behavior
+
+**Phase 3 (Collaborative Analysis)**:
+- User reports findings back to LLM with specific details
+- LLM analyzes feedback and provides next steps
+- Iterative refinement based on real-world testing
+
+### Example Workflow
+
+```bash
+# LLM provides commands like:
+uv run prediction-server --debug
+# User executes and reports: "Server started on port 8000, logs show..."
+
+# LLM analyzes feedback:
+# "Based on your logs, the prediction accuracy is 85%. Let's optimize..."
+```
+
+---
+
+## 📦 UV Package Management Usage
+
+### Core UV Commands
+
+```bash
+# Project setup and dependency management
+uv sync                    # Install dependencies from pyproject.toml
+uv lock                    # Update dependency lock file
+uv add package-name        # Add new dependency
+uv remove package-name     # Remove dependency
+
+# Script execution patterns
+uv run script.py                    # Run Python script
+uv run -m module.name              # Run module directly
+uv run prediction-server           # Run defined script from pyproject.toml
+uv run --script training-pipeline  # Run specific project script
+```
+
+### Project Scripts Integration
+
+**Defined in pyproject.toml**:
+```toml
+[project.scripts]
+prediction-server = "intelligent_router.prediction_server:main"
+routing-controller = "intelligent_router.routing_controller:main"
+load-generator = "scripts.load_generator:main"
+```
+
+**Usage**:
+```bash
+# Development testing
+uv run prediction-server --port 8000 --debug
+uv run routing-controller --config config/routing.yml
+uv run load-generator --duration 300 --rps 50
+
+# Module imports and testing
+uv run -m intelligent_router.prediction_engine
+uv run -m pytest tests/
+```
+
+### Common Patterns
+
+- **Development**: `uv run` for all script execution
+- **Testing**: `uv run -m pytest` or `uv run test-script`
+- **Services**: Use project scripts for long-running services
+- **Environment**: `uv sync` before each development session
+
+---
+
+## 🔄 Subagent Context Management
+
+### When to Use Subagents
+
+**Large File Updates**:
+- Multi-file documentation updates
+- Extensive codebase refactoring
+- Complex configuration changes across multiple files
+
+**Extensive Research**:
+- Multi-round analysis of system architecture
+- Deep investigation of performance issues
+- Comprehensive pattern analysis across codebase
+
+**Context-Heavy Tasks**:
+- When main conversation context approaches limits
+- Complex debugging requiring multiple tool iterations
+- Large-scale code review and optimization
+
+### Delegation Patterns
+
+**Research Subagents**:
+```
+Task: "Analyze prediction accuracy patterns in Sprint 2 results"
+Scope: Limited to /sprint-2/results/ and related metrics
+Output: Summary report for main conversation
+```
+
+**Implementation Subagents**:
+```
+Task: "Update all configuration files for Sprint 3 SLO monitoring"
+Scope: Config files, documentation, setup scripts
+Output: Ready-to-execute implementation plan
+```
+
+**Analysis Subagents**:
+```
+Task: "Review HAProxy routing logic and suggest optimizations"
+Scope: Routing components and performance data
+Output: Specific optimization recommendations
+```
+
+### Integration Protocol
+
+1. **Delegation**: Main conversation creates focused subagent task
+2. **Execution**: Subagent performs deep analysis/implementation
+3. **Integration**: Subagent provides summary and actionable items
+4. **Continuation**: Main conversation proceeds with subagent findings
+
+### Context Preservation
+
+- Subagents maintain focus on specific domains/components
+- Main conversation preserves overall project context
+- Integration points clearly defined for knowledge transfer
+- Prevents main conversation context exhaustion
+
+---
+
+## ✅ Sprint Validation Workflow
+
+### Sprint 1 + Sprint 2 Integration
+
+**Foundation (Sprint 1)**:
+- Basic hybrid k3s + serverless architecture
+- HAProxy traffic routing with static weights
+- Container orchestration and basic monitoring
+
+**Intelligence Layer (Sprint 2)**:
+- Linear regression prediction engine
+- Automated weight adjustment based on predictions
+- Performance metrics collection and analysis
+
+### Validation Phase Structure
+
+**Phase 1: Code Validation (LLM)**
+```bash
+# LLM validates syntax and logic
+uv run -m intelligent_router.prediction_engine  # Import test
+uv run --check routing_controller.py            # Syntax validation
+uv run -m pytest tests/test_prediction.py       # Unit tests
+```
+
+**Phase 2: Service Execution (User)**
+```bash
+# User executes long-running services
+uv run prediction-server --port 8000 &
+uv run routing-controller --interval 30 &
+docker-compose up -d monitoring-stack
+
+# User monitors and reports
+curl http://localhost:8000/predict
+tail -f logs/prediction-server.log
+```
+
+**Phase 3: Performance Analysis (Collaborative)**
+```bash
+# User collects metrics
+curl http://localhost:9090/api/v1/query?query=prediction_accuracy
+kubectl top pods
+docker stats
+
+# LLM analyzes user feedback
+# "Prediction accuracy: 87%, latency: 45ms, memory usage: 120MB"
+# "Routing decisions: 73% k3s, 27% serverless"
+```
+
+### Commands for User Execution
+
+**Sprint 1 Validation**:
+```bash
+# Verify hybrid system is operational
+kubectl get pods -A
+curl http://localhost:8080/health    # k3s endpoint
+curl http://localhost:8081/health    # serverless endpoint
+curl http://localhost:8082/stats     # HAProxy stats
+```
+
+**Sprint 2 Validation**:
+```bash
+# Start prediction services
+uv run prediction-server --config config/prediction.yml
+uv run routing-controller --log-level debug
+
+# Generate test load
+uv run load-generator --pattern increasing --duration 600
+
+# Monitor prediction accuracy
+watch "curl -s http://localhost:8000/metrics | grep accuracy"
+```
+
+### Expected Outputs for LLM Analysis
+
+**Performance Metrics**:
+- Prediction accuracy percentage
+- Response latency measurements
+- Resource utilization (CPU, memory)
+- Routing decision distribution
+
+**Error Patterns**:
+- Service startup logs
+- Prediction engine error messages
+- Routing controller decisions
+- System resource constraints
+
+**Integration Status**:
+- Service communication health
+- Data flow between components
+- Configuration validation results
+- End-to-end system behavior
