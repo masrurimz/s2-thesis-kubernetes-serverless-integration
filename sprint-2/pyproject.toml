@@ -1,64 +1,74 @@
-[tool.poetry]
+[project]
 name = "sprint2-intelligent-routing"
 version = "2.0.0"
 description = "Sprint 2: Intelligent routing with load prediction for hybrid k3s-serverless system"
-authors = ["Muhammad Zahid Masruri <masruri03@gmail.com>"]
-license = "MIT"
+authors = [{ name = "Muhammad Zahid Masruri", email = "masruri03@gmail.com" }]
+requires-python = "~=3.9"
 readme = "README.md"
-packages = [
-    {include = "prediction_engine"},
-    {include = "intelligent_router"},
-    {include = "monitoring_v2"},
+license = "MIT"
+dependencies = [
+    "scikit-learn>=1.3.0,<2",
+    "pandas>=2.0.0,<3",
+    "numpy>=1.24.0,<2",
+    "fastapi>=0.100.0,<0.101",
+    "uvicorn>=0.23.0,<0.24",
+    "pydantic>=2.0.0,<3",
+    "requests>=2.31.0,<3",
+    "aiohttp>=3.8.0,<4",
+    "sqlalchemy>=2.0.0,<3",
+    "prometheus-client>=0.17.0,<0.18",
+    "structlog>=23.0.0,<24",
+    "joblib>=1.3.0,<2",
+    "psutil>=5.9.0,<6",
 ]
 
-[tool.poetry.dependencies]
-python = "^3.9"
-# Core ML and Data Processing
-scikit-learn = "^1.3.0"
-pandas = "^2.0.0"
-numpy = "^1.24.0"
-# API Server and Web Framework
-fastapi = "^0.100.0"
-uvicorn = "^0.23.0"
-pydantic = "^2.0.0"
-# HTTP Client and Integration
-requests = "^2.31.0"
-aiohttp = "^3.8.0"
-# Data Storage and Persistence
-sqlalchemy = "^2.0.0"
-# Monitoring and Logging
-prometheus-client = "^0.17.0"
-structlog = "^23.0.0"
-# Model and Data Processing
-joblib = "^1.3.0"
-psutil = "^5.9.0"
-
-[tool.poetry.group.dev.dependencies]
-# Testing Framework
-pytest = "^7.4.0"
-pytest-asyncio = "^0.21.0"
-pytest-cov = "^4.1.0"
-# Code Quality
-black = "^23.0.0"
-flake8 = "^6.0.0"
-isort = "^5.12.0"
-mypy = "^1.5.0"
-# Development Tools
-ipython = "^8.14.0"
-jupyter = "^1.0.0"
-
-[tool.poetry.group.analysis.dependencies]
-# Data Analysis and Visualization
-plotly = "^5.15.0"
-matplotlib = "^3.7.0"
-seaborn = "^0.12.0"
-# Research and Analysis
-scipy = "^1.11.0"
-
-[tool.poetry.scripts]
+[project.scripts]
 prediction-server = "prediction_engine.prediction_server:main"
 intelligent-router = "intelligent_router.routing_controller:main"
 data-collector = "prediction_engine.data_collector:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=7.4.0,<8",
+    "pytest-asyncio>=0.21.0,<0.22",
+    "pytest-cov>=4.1.0,<5",
+    "black>=23.0.0,<24",
+    "flake8>=6.0.0,<7",
+    "isort>=5.12.0,<6",
+    "mypy>=1.5.0,<2",
+    "ipython>=8.14.0,<9",
+    "jupyter>=1.0.0,<2",
+]
+analysis = [
+    "plotly>=5.15.0,<6",
+    "matplotlib>=3.7.0,<4",
+    "seaborn>=0.12.0,<0.13",
+    "scipy>=1.11.0,<2",
+]
+
+[tool.uv]
+default-groups = [
+    "dev",
+    "analysis",
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "prediction_engine",
+    "intelligent_router",
+    "monitoring_v2",
+]
+
+[tool.hatch.build.targets.wheel]
+include = [
+    "prediction_engine",
+    "intelligent_router",
+    "monitoring_v2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.black]
 line-length = 88
@@ -101,7 +111,3 @@ testpaths = [
     "monitoring-v2/tests",
 ]
 python_files = ["test_*.py", "*_test.py"]
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"

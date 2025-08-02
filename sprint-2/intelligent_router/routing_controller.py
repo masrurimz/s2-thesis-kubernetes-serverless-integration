@@ -17,8 +17,8 @@ import requests
 import structlog
 
 from .weight_adjuster import HAProxyWeightAdjuster
-# from .decision_logger import DecisionLogger
-# from .fallback_handler import FallbackHandler
+from .decision_logger import DecisionLogger
+from .fallback_handler import FallbackHandler
 
 logger = structlog.get_logger(__name__)
 
@@ -49,8 +49,8 @@ class IntelligentRoutingController:
         
         # Initialize components
         self.weight_adjuster = HAProxyWeightAdjuster(haproxy_socket_path)
-        # self.decision_logger = DecisionLogger()
-        # self.fallback_handler = FallbackHandler()
+        self.decision_logger = DecisionLogger()
+        self.fallback_handler = FallbackHandler()
         
         # Controller state
         self.is_running = False
@@ -150,7 +150,10 @@ class IntelligentRoutingController:
                 decision_type = "fallback"
                 
             # Apply weight changes if needed
-            weights_changed = await self._apply_weight_changes(target_weights)
+            if hasattr(self, 'weight_adjuster'):
+                weights_changed = await self._apply_weight_changes(target_weights)
+            else:
+                weights_changed = False
             
             # Log decision
             decision = {
@@ -164,7 +167,8 @@ class IntelligentRoutingController:
                 'decision_latency': time.time() - decision_start
             }
             
-            self.decision_logger.log_decision(decision)
+            if hasattr(self, 'decision_logger'):
+                self.decision_logger.log_decision(decision)
             
             # Update tracking
             self.last_decision_time = int(time.time())
@@ -337,8 +341,8 @@ class IntelligentRoutingController:
                 logger.debug("Weight change too small, skipping")
                 return False
                 
-            # Apply weight changes
-            success = await self.weight_adjuster.set_weights(
+            # Apply weight changes  
+            success = self.weight_adjuster.set_weights_with_retry(
                 target_weights["k3s"],
                 target_weights["knative"]
             )
@@ -376,11 +380,12 @@ class IntelligentRoutingController:
             logger.warning("HAProxy stats not accessible")
             
         # Check weight adjustment capability
-        test_success = await self.weight_adjuster.test_connection()
-        if test_success:
-            logger.info("HAProxy weight adjustment working")
-        else:
-            logger.warning("HAProxy weight adjustment not working")
+        if hasattr(self, 'weight_adjuster'):
+            test_success = self.weight_adjuster.test_connection()
+            if test_success:
+                logger.info("HAProxy weight adjustment working")
+            else:
+                logger.warning("HAProxy weight adjustment not working")
             
     async def _enter_fallback_mode(self) -> None:
         """Enter fallback mode due to consecutive failures."""
