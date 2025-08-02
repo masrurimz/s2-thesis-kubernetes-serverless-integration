@@ -1,113 +1,25 @@
 [project]
 name = "sprint2-intelligent-routing"
-version = "2.0.0"
+version = "0.1.0"
 description = "Sprint 2: Intelligent routing with load prediction for hybrid k3s-serverless system"
-authors = [{ name = "Muhammad Zahid Masruri", email = "masruri03@gmail.com" }]
-requires-python = "~=3.9"
-readme = "README.md"
-license = "MIT"
+requires-python = ">=3.13"
 dependencies = [
-    "scikit-learn>=1.3.0,<2",
-    "pandas>=2.0.0,<3",
-    "numpy>=1.24.0,<2",
-    "fastapi>=0.100.0,<0.101",
-    "uvicorn>=0.23.0,<0.24",
-    "pydantic>=2.0.0,<3",
-    "requests>=2.31.0,<3",
-    "aiohttp>=3.8.0,<4",
-    "sqlalchemy>=2.0.0,<3",
-    "prometheus-client>=0.17.0,<0.18",
-    "structlog>=23.0.0,<24",
-    "joblib>=1.3.0,<2",
-    "psutil>=5.9.0,<6",
+    "aiohttp>=3.12.15",
+    "fastapi>=0.116.1",
+    "joblib",
+    "pandas>=2.3.1",
+    "pydantic>=2.11.7",
+    "requests>=2.32.4",
+    "scikit-learn>=1.7.1",
+    "scipy>=1.16.1",
+    "structlog",
+    "uvicorn>=0.35.0",
 ]
 
 [project.scripts]
 prediction-server = "prediction_engine.prediction_server:main"
 intelligent-router = "intelligent_router.routing_controller:main"
 data-collector = "prediction_engine.data_collector:main"
-
-[dependency-groups]
-dev = [
-    "pytest>=7.4.0,<8",
-    "pytest-asyncio>=0.21.0,<0.22",
-    "pytest-cov>=4.1.0,<5",
-    "black>=23.0.0,<24",
-    "flake8>=6.0.0,<7",
-    "isort>=5.12.0,<6",
-    "mypy>=1.5.0,<2",
-    "ipython>=8.14.0,<9",
-    "jupyter>=1.0.0,<2",
-]
-analysis = [
-    "plotly>=5.15.0,<6",
-    "matplotlib>=3.7.0,<4",
-    "seaborn>=0.12.0,<0.13",
-    "scipy>=1.11.0,<2",
-]
-
-[tool.uv]
-default-groups = [
-    "dev",
-    "analysis",
-]
-
-[tool.hatch.build.targets.sdist]
-include = [
-    "prediction_engine",
-    "intelligent_router",
-    "monitoring_v2",
-]
-
-[tool.hatch.build.targets.wheel]
-include = [
-    "prediction_engine",
-    "intelligent_router",
-    "monitoring_v2",
-]
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.black]
-line-length = 88
-target-version = ['py39']
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
-
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-line_length = 88
-known_first_party = ["prediction_engine", "intelligent_router", "monitoring_v2"]
-
-[tool.mypy]
-python_version = "3.9"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-ignore_missing_imports = true
-
-[tool.pytest.ini_options]
-minversion = "7.0"
-addopts = "-ra -q --cov=prediction_engine --cov=intelligent_router --cov=monitoring_v2"
-testpaths = [
-    "tests",
-    "prediction-engine/tests",
-    "intelligent-router/tests",
-    "monitoring-v2/tests",
-]
-python_files = ["test_*.py", "*_test.py"]
+weight-adjuster = "intelligent_router.weight_adjuster:main"
+decision-logger = "intelligent_router.decision_logger:main"
+fallback-handler = "intelligent_router.fallback_handler:main"
