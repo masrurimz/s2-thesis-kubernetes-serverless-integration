@@ -338,9 +338,9 @@ async def retrain_model_task():
 def main():
     """Run the prediction server."""
     uvicorn.run(
-        "prediction_server:app",
+        "prediction_engine.prediction_server:app",
         host="0.0.0.0",
-        port=8090,
+        port=8003,
         reload=False,
         log_level="info"
     )

@@ -27,9 +27,9 @@ class IntelligentRoutingController:
     """Main controller for intelligent traffic routing."""
     
     def __init__(self,
-                 prediction_api_url: str = "http://localhost:8090",
+                 prediction_api_url: str = "http://localhost:8003",
                  haproxy_stats_url: str = "http://localhost:8404/stats;csv",
-                 haproxy_socket_path: str = "/tmp/haproxy-admin.sock",
+                 haproxy_socket_path: str = "/tmp/haproxy.sock",
                  routing_interval: int = 30,
                  enable_intelligent_routing: bool = True):
         """
@@ -423,8 +423,8 @@ class IntelligentRoutingController:
         }
 
 
-async def main():
-    """Main function for testing the routing controller."""
+async def main_async():
+    """Async main function for the intelligent router."""
     controller = IntelligentRoutingController()
     
     try:
@@ -433,5 +433,10 @@ async def main():
         await controller.stop()
 
 
+def main():
+    """Entry point for the intelligent router script."""
+    asyncio.run(main_async())
+
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
