@@ -1,0 +1,51 @@
+# Controller
+
+Intelligent routing controller for hybrid K8s-Serverless system with workload prediction.
+
+## Components
+
+| Package | Purpose | Status |
+|---------|---------|--------|
+| `prediction_engine/` | Traffic prediction with linear regression | 🔧 Needs validation |
+| `intelligent_router/` | HAProxy weight adjustment + decision logging | 🔧 Needs validation |
+| `monitoring_v2/` | Enhanced monitoring (stub) | 🔴 Not implemented |
+
+## Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Prediction      │    │ Intelligent     │    │   HAProxy       │
+│ Engine          │───►│ Router          │───►│   (weights)     │
+│ (Linear/GRU)    │    │ (Algorithm 1)   │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+## Quick Start
+
+```bash
+cd controller
+
+# Install dependencies
+uv sync
+
+# Start prediction server
+uv run prediction-server
+
+# Start routing controller
+uv run routing-controller
+```
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `uv run prediction-server` | Start FastAPI prediction API |
+| `uv run routing-controller` | Start intelligent routing loop |
+| `uv run data-collector` | Collect HAProxy stats |
+| `uv run weight-adjuster` | Adjust HAProxy weights |
+
+## Thesis Mapping
+
+- **Algorithm 1** (Routing Controller): `intelligent_router/routing_controller.py`
+- **Algorithm 2** (Cluster Controller): Integrated into prediction + routing flow
+- **Resource Model** (R = αx + β): `prediction_engine/linear_model.py`
