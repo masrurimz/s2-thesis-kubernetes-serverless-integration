@@ -265,7 +265,10 @@ def calculate_weight_recommendation(predicted_requests: float,
         Dictionary with recommended k3s and knative weights
     """
     # Simple heuristic: adjust weights based on predicted load change
-    load_change = (predicted_requests - current_requests) / current_requests
+    if current_requests > 0:
+        load_change = (predicted_requests - current_requests) / current_requests
+    else:
+        load_change = 0.0 if predicted_requests == 0 else 1.0
     
     # Default weights
     k3s_weight = 80
