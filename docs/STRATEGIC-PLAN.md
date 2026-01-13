@@ -1,289 +1,315 @@
 # Thesis Strategic Plan
 
-**Generated**: January 2026  
+**Updated**: January 2026  
 **Status**: Active Planning Document  
-**Thread Reference**: http://127.0.0.1:8317/threads/T-019bb86b-46e3-72db-bd8e-5d6e7a024749
+**Thread Reference**: http://127.0.0.1:8317/threads/T-019bb88a-01c6-7653-afec-5aaa2c6d0618
 
 ---
 
 ## Executive Summary
 
-This thesis is **experimental** - the GRU-based approach may not outperform simpler methods. The strategy below assumes uncertainty and provides contingency branches.
+This thesis proves that a **HYBRID approach (K8s + Serverless)** outperforms using either platform alone, and that **prediction-based routing** improves upon reactive-only control.
 
-### Key Insight
-> Design the work so you can **graduate even if GRU is not better** than simple models. The thesis becomes about **systematic comparison and hybrid decision-making**, not "GRU wins."
+### Core Thesis Statement
+> In a heterogeneous cloud environment, an SLO-aware hybrid autoscaling and routing mechanism using workload prediction achieves **better SLO compliance and cost-efficiency** than pure Kubernetes, pure serverless, or reactive-only hybrid approaches.
 
 ---
 
 ## Hypothesis Hierarchy
 
-| Level | Hypothesis | Fallback if False |
-|-------|------------|-------------------|
-| **H1** | A learned predictor (LR/GRU) can forecast traffic with RMSE <10% | Focus on "why prediction is hard" + SLO-reactive control |
-| **H2** | Prediction-based routing improves SLO compliance vs reactive | Analyze when proactive control harms SLOs |
-| **H3** | GRU outperforms linear regression | Document "GRU not superior under resource constraints" |
+| Level | Hypothesis | What to Prove | Evaluation Method |
+|-------|------------|---------------|-------------------|
+| **H1 (System)** | Hybrid > Pure approaches | K8s+Serverless beats K8s-only AND Serverless-only | Scenario 1,2 vs 4 comparison |
+| **H2 (Control)** | Predictive > Reactive | Adding prediction improves SLO/cost vs reactive hybrid | Scenario 3 vs 4 comparison |
+| **H3 (Model)** | GRU justification | GRU provides adequate prediction for the controller | Offline RMSE + closed-loop validation |
+
+### Key Insight
+> H1 and H2 are the **main contributions**. H3 is **supporting evidence** for the model choice. The thesis succeeds if H1+H2 are proven, regardless of whether GRU dramatically outperforms simpler models.
 
 ---
 
-## Phase Plan (Replaces Sprint 2-5)
+## Evaluation Scenarios (From Thesis Proposal 3.5.2)
 
-### Phase 0: Consolidation (Now → 2 weeks)
+| Scenario | Configuration | Purpose |
+|----------|---------------|---------|
+| **S1: K8s-Only** | All traffic → Kubernetes | Baseline: traditional container orchestration |
+| **S2: Serverless-Only** | All traffic → Knative | Baseline: pure FaaS approach |
+| **S3: Hybrid Reactive** | Algorithm 1 (SLO-based routing), no prediction | Control: hybrid without prediction |
+| **S4: Hybrid Predictive** | Algorithm 1 + Algorithm 2 (GRU prediction) | Proposed: full system |
 
-**Goal**: Setup experiment tracking + MVE-1 (offline LR vs baselines)
+### Comparison Matrix
 
-**Tasks**:
-- [ ] Create `experiments/` directory structure
-- [ ] Implement `experiment_logger.py` (SQLite-based)
-- [ ] Process ClarkNet dataset → RPS time series
-- [ ] Run LR vs naive baselines offline
-- [ ] Generate first thesis-ready table/plot
-
-**Go/No-Go Criteria**:
-- ✅ Go: LR outperforms naive baselines
-- ⚠️ Partial: LR ≈ naive → adjust thesis to "prediction difficulty analysis"
-- ❌ No-Go: Pipeline fails → fix data processing before continuing
+| Comparison | Tests Hypothesis | Expected Result |
+|------------|------------------|-----------------|
+| S4 vs S1 | H1 (Hybrid > K8s) | Lower p99 during spikes, better cost at baseline |
+| S4 vs S2 | H1 (Hybrid > Serverless) | Lower cost at steady load, no cold-start issues |
+| S4 vs S3 | H2 (Predictive > Reactive) | Fewer SLO violations, proactive scaling |
+| GRU vs LR (offline) | H3 (Model choice) | Justify GRU selection |
 
 ---
 
-### Phase 1: Sprint 2 Validation (2 weeks)
+## Phase Plan
 
-**Goal**: Validate existing code against real HAProxy
+### Phase 0: Sprint 2 Validation (Now → 1 week)
+
+**Goal**: Validate existing 2,677 lines of Sprint 2 code against real infrastructure
 
 **Tasks**:
-- [ ] Get prediction_server running with health checks
+- [ ] Start prediction_server, verify API endpoints
 - [ ] Test data_collector against real HAProxy stats
 - [ ] Verify weight_adjuster with HAProxy admin socket
-- [ ] Add minimal pytest coverage
-- [ ] Measure actual RMSE in live environment
+- [ ] Execute one complete routing cycle end-to-end
+- [ ] Measure baseline RMSE with current linear model
 
-**Go/No-Go Criteria**:
-- ✅ Go: System stable enough for long tests
-- ❌ No-Go: Too brittle → shift to simulation/replay mode
-
----
-
-### Phase 2: GRU Implementation + Comparison (3 weeks)
-
-**Goal**: Implement GRU and compare offline vs LR
-
-**Tasks**:
-- [ ] Implement GRU training script (`ml_models/gru_predictor.py`)
-- [ ] Run controlled experiments on ClarkNet + Calgary
-- [ ] Fixed horizon (30s), fixed splits (70/15/15)
-- [ ] Log all runs via experiment logger
-- [ ] Generate comparison tables/plots
-
-**Go/No-Go Criteria**:
-- ✅ Go: GRU clearly better → use in live controller
-- ⚠️ Partial: GRU ≈ LR → keep LR as main, GRU as secondary
-- ❌ No-Go: GRU worse → thesis about "why GRU doesn't help here"
+**Success Criteria**:
+- System runs stable for 10+ minutes
+- API responds correctly to prediction requests
+- Weight adjustments reflect in HAProxy
 
 ---
 
-### Phase 3: SLO Monitoring + Closed-Loop (3 weeks)
+### Phase 1: Four Scenarios Infrastructure (1-2 weeks)
 
-**Goal**: Implement Algorithm 1 and run full experiments
-
-**Scenarios to Test**:
-1. Static 80/20 routing (baseline)
-2. Reactive-only routing (Algorithm 1, no prediction)
-3. Proactive routing with LR
-4. Proactive routing with GRU (if Phase 2 positive)
+**Goal**: Build infrastructure to run all 4 evaluation scenarios
 
 **Tasks**:
-- [ ] Implement SLO monitoring (p99 from Prometheus/HAProxy)
-- [ ] Wire Algorithm 1 to existing router
-- [ ] Run load tests: steady, spike, endurance
-- [ ] Collect per-scenario metrics
+- [ ] **S1 Setup**: K8s-only routing configuration
+- [ ] **S2 Setup**: Serverless-only routing configuration  
+- [ ] **S3 Setup**: Reactive hybrid (Algorithm 1 without prediction)
+- [ ] **S4 Setup**: Full predictive hybrid (current Sprint 2)
+- [ ] Load test scripts for: steady, spike, endurance patterns
+- [ ] Metrics collection: p50/p95/p99 latency, error rate, cost proxy
 
-**Go/No-Go Criteria**:
-- ✅ Go: Any improvement with prediction → strong result
-- ❌ No-Go: No improvement → "limits of proactive control" paper
+**Deliverable**: `./run-scenario.sh [s1|s2|s3|s4] [steady|spike|endurance]`
+
+---
+
+### Phase 2: GRU Implementation (2 weeks)
+
+**Goal**: Implement GRU predictor and validate against LR baseline
+
+**Tasks**:
+- [ ] Download and process ClarkNet + Calgary datasets
+- [ ] Implement GRU training pipeline (`ml_models/gru_predictor.py`)
+- [ ] Run offline comparison: GRU vs LR vs naive baselines
+- [ ] Generate thesis-ready comparison table (RMSE, MAE, MAPE)
+- [ ] Integrate best model into prediction_server
+
+**Success Criteria**:
+- RMSE < 10% of average traffic (thesis target)
+- Training pipeline reproducible with fixed seeds
+
+---
+
+### Phase 3: Full Evaluation (2-3 weeks)
+
+**Goal**: Run complete evaluation across all 4 scenarios with real datasets
+
+**Experiments**:
+```
+For each scenario [S1, S2, S3, S4]:
+  For each workload [steady, spike, endurance]:
+    For each dataset [ClarkNet, Calgary]:
+      Run 3 repetitions
+      Collect: p50, p95, p99, error_rate, resource_usage, cost_proxy
+```
+
+**Tasks**:
+- [ ] Execute experiment matrix (4 × 3 × 2 × 3 = 72 runs)
+- [ ] Statistical analysis with confidence intervals
+- [ ] Generate comparison tables and figures
+- [ ] Document anomalies and edge cases
+
+**Deliverables**:
+- Table: H1 proof (S4 vs S1, S4 vs S2)
+- Table: H2 proof (S4 vs S3)
+- Figure: Latency distribution per scenario
+- Figure: Cost comparison across workload patterns
 
 ---
 
 ### Phase 4: Thesis Writing (2-3 weeks)
 
-**Goal**: Write thesis with reproducible experiments
+**Goal**: Write thesis chapters with reproducible results
 
-**Deliverables**:
-- Chapter 4: Results (structured by hypotheses)
-- Chapter 5: Discussion (when prediction helps/hurts)
-- Reproducibility appendix
-- Academic paper draft
+**Chapter Structure**:
+- **Chapter 4: Results**
+  - 4.1 Prediction Model Evaluation (H3)
+  - 4.2 Hybrid vs Pure Approaches (H1)
+  - 4.3 Predictive vs Reactive Control (H2)
+- **Chapter 5: Discussion**
+  - When hybrid excels vs when it doesn't
+  - Cost-benefit analysis
+  - Limitations and threats to validity
+- **Appendix**: Reproducibility instructions
 
 ---
 
-## Project Structure (Recommended)
+## Project Structure
 
 ```
 ├── AGENTS.md                    # LLM workflow
 ├── CLAUDE.md                    # Project context
-├── experiments/                 # NEW: Experiment tracking
-│   ├── offline-prediction/
-│   │   ├── configs/            # YAML experiment configs
-│   │   └── runs/               # Timestamped run outputs
-│   ├── closed-loop/
-│   │   ├── scenarios/          # Load test scenarios
-│   │   └── runs/               # Run outputs
-│   ├── experiments.db          # SQLite tracking
-│   └── experiment_logger.py    # Logging utility
-├── ml_models/                   # NEW: ML model implementations
+├── experiments/                 # Experiment tracking
+│   ├── scenarios/              # S1, S2, S3, S4 configurations
+│   ├── workloads/              # steady, spike, endurance configs
+│   ├── runs/                   # Timestamped run outputs
+│   └── experiments.db          # SQLite tracking
+├── ml_models/                   # ML model implementations
 │   ├── baselines/
 │   │   ├── naive.py            # Last-value baseline
 │   │   └── moving_avg.py       # Moving average
-│   ├── linear_model.py         # From sprint-2 (refactored)
+│   ├── linear_model.py         # From sprint-2
 │   └── gru_predictor.py        # GRU implementation
 ├── data/                        # Datasets
 │   ├── raw/                    # Original logs
 │   │   ├── clarknet/
 │   │   └── calgary/
 │   └── processed/              # RPS time series
-├── sprint-1/                    # Baseline infrastructure (keep as-is)
-├── sprint-2/                    # V1 Decision Engine (keep, validate)
+├── sprint-1/                    # ✅ Complete - Hybrid infrastructure
+├── sprint-2/                    # 🔧 Validation needed - Prediction engine
 ├── docs/
 │   ├── thesis-proposal/        # Extracted proposal
-│   ├── thesis-implementation/  # Experiment → Chapter mapping
-│   └── ...
+│   └── thesis-implementation/  # Experiment → Chapter mapping
 └── results/                     # Final thesis results
-    ├── tables/
-    ├── figures/
-    └── raw/
+    ├── tables/                 # LaTeX-ready tables
+    ├── figures/                # Publication-quality figures
+    └── raw/                    # Raw experiment data
 ```
 
 ---
 
-## Experiment Tracking (Lightweight MLOps)
+## Metrics & Targets (From Thesis Proposal)
 
-### What to Track Per Run
+### Performance Metrics
 
-```yaml
-run_id: "20260115-1430_gru_clarknet_30s"
-git_commit: "abc1234"
-model_type: "gru"
-dataset: "clarknet"
-data_window: "days_1_3"
-prediction_horizon: 30
-hyperparameters:
-  units: 64
-  layers: 2
-  dropout: 0.2
-  learning_rate: 0.001
-  batch_size: 32
-  epochs: 100
-metrics:
-  rmse: 8.5
-  mae: 5.2
-  mape: 12.3
-  training_time_sec: 450
-environment:
-  python: "3.13"
-  sklearn: "1.4.0"
-  torch: "2.2.0"
-```
+| Metric | Description | Target | Measured In |
+|--------|-------------|--------|-------------|
+| p50 Latency | Median response time | < 50ms | All scenarios |
+| p95 Latency | 95th percentile | < 100ms | All scenarios |
+| p99 Latency | Tail latency (SLO) | < 200ms | All scenarios |
+| Error Rate | Failed requests | < 0.1% | All scenarios |
+| Throughput | Requests/second | No degradation | All scenarios |
 
-### SQLite Schema
+### Prediction Metrics
 
-```sql
-CREATE TABLE runs (
-    run_id TEXT PRIMARY KEY,
-    timestamp TEXT,
-    git_commit TEXT,
-    model_type TEXT,
-    dataset TEXT,
-    horizon INTEGER,
-    config_json TEXT
-);
+| Metric | Description | Target |
+|--------|-------------|--------|
+| RMSE | Root Mean Square Error | < 10% of avg traffic |
+| MAE | Mean Absolute Error | < 5% of avg traffic |
+| MAPE | Mean Absolute Percentage Error | < 15% |
 
-CREATE TABLE metrics (
-    run_id TEXT,
-    metric_name TEXT,
-    metric_value REAL,
-    FOREIGN KEY (run_id) REFERENCES runs(run_id)
-);
-```
+### Cost Metrics
+
+| Metric | Description | Expected Result |
+|--------|-------------|-----------------|
+| K8s Cost | Resource hours × unit cost | Lower at baseline load |
+| Serverless Cost | Invocations × time × unit cost | Higher at sustained load |
+| Hybrid Cost | K8s + Serverless | Optimized across patterns |
 
 ---
 
 ## Validation Milestones
 
-| Milestone | Phase | Criteria | Decision |
-|-----------|-------|----------|----------|
-| **M1** | Phase 0 | LR RMSE computed, outperforms naive | Go/No-Go for prediction approach |
-| **M2** | Phase 1 | Sprint 2 validated against HAProxy | Go/No-Go for live experiments |
-| **M3** | Phase 2 | GRU vs LR comparison complete | Choose primary model |
-| **M4** | Phase 3 | Closed-loop benefits measured | Determine thesis contribution |
-
----
-
-## Immediate Actions (Next 2 Weeks)
-
-### Week 1: Experiment Infrastructure
-
-```bash
-# 1. Create experiment structure
-mkdir -p experiments/{offline-prediction,closed-loop}/{configs,runs}
-mkdir -p ml_models/baselines
-mkdir -p data/{raw,processed}/{clarknet,calgary}
-mkdir -p results/{tables,figures,raw}
-
-# 2. Create experiment logger
-# 3. Download ClarkNet dataset
-# 4. Implement CLF → RPS pipeline
-```
-
-### Week 2: First Results
-
-```bash
-# 1. Run LR vs naive comparison
-# 2. Validate Sprint 2 with HAProxy
-# 3. Add minimal pytest
-# 4. Generate first thesis table
-```
+| Milestone | Phase | Criteria | Proves |
+|-----------|-------|----------|--------|
+| **M1** | Phase 0 | Sprint 2 runs end-to-end | Infrastructure ready |
+| **M2** | Phase 1 | All 4 scenarios executable | Evaluation framework ready |
+| **M3** | Phase 2 | GRU RMSE < 10% | H3 (model adequate) |
+| **M4** | Phase 3 | S4 < S1 AND S4 < S2 on p99 | H1 (hybrid > pure) |
+| **M5** | Phase 3 | S4 < S3 on SLO violations | H2 (predictive > reactive) |
 
 ---
 
 ## Contingency Branches
 
 ```
-                    ┌─── LR works ──► Phase 2 (GRU comparison)
+                    ┌─── S4 beats S1 & S2 ──► H1 PROVEN ✅
                     │
-Phase 0 (MVE-1) ────┤
+Phase 3 (H1) ───────┤
                     │
-                    └─── LR fails ──► Pivot to "prediction difficulty" thesis
+                    └─── S4 ≈ or worse ──► Analyze specific conditions where hybrid helps
                     
-                    ┌─── GRU better ──► Use GRU in Phase 3
+                    ┌─── S4 beats S3 ──► H2 PROVEN ✅
                     │
-Phase 2 (GRU) ──────┼─── GRU ≈ LR ───► Keep LR, GRU as secondary
+Phase 3 (H2) ───────┤
                     │
-                    └─── GRU worse ──► "Why GRU doesn't help" contribution
+                    └─── S4 ≈ S3 ──► "Prediction overhead may not justify benefit under X conditions"
                     
-                    ┌─── Prediction helps ──► Strong positive result
+                    ┌─── GRU >> LR ──► Strong model contribution
                     │
-Phase 3 (Closed) ───┤
+Phase 2 (H3) ───────┼─── GRU ≈ LR ──► "GRU chosen for pattern learning; LR sufficient for simple cases"
                     │
-                    └─── No improvement ──► "Limits of proactive control"
+                    └─── GRU < LR ──► "GRU overfits; simpler models preferred for this domain"
+```
+
+**Key**: Even if H3 shows GRU ≈ LR, the thesis still succeeds if H1 and H2 are proven.
+
+---
+
+## Immediate Actions (Next Week)
+
+### Priority 1: Sprint 2 Validation
+```bash
+cd sprint-2
+
+# 1. Test prediction server
+uv run python -m prediction_engine.prediction_server &
+curl http://localhost:8090/health
+curl -X POST http://localhost:8090/predict -d '{"current_rps": 100}'
+
+# 2. Test with Sprint 1 infrastructure
+cd ../sprint-1 && ./scripts/setup.sh
+cd ../sprint-2
+
+# 3. Test HAProxy weight adjustment
+uv run python -c "
+from intelligent_router.weight_adjuster import HAProxyWeightAdjuster
+adjuster = HAProxyWeightAdjuster()
+print(adjuster.test_connection())
+"
+
+# 4. Execute one routing cycle
+uv run python -m intelligent_router.routing_controller --once
+```
+
+### Priority 2: Scenario Infrastructure
+```bash
+# Create scenario configurations
+mkdir -p experiments/scenarios/{s1-k8s-only,s2-serverless-only,s3-hybrid-reactive,s4-hybrid-predictive}
+
+# Create scenario runner script
+# ./run-scenario.sh [s1|s2|s3|s4] [steady|spike|endurance]
 ```
 
 ---
 
 ## Beads to Create
 
-Based on this plan, create the following beads:
+Based on this plan:
 
-1. **Phase 0: Experiment Infrastructure** (P0, epic)
-2. **Phase 0: CLF to RPS Pipeline** (P0, task)
-3. **Phase 0: LR vs Naive Comparison** (P0, task)
-4. **Phase 1: Sprint 2 Validation** (P0, epic) - existing beads
-5. **Phase 2: GRU Implementation** (P1, epic)
-6. **Phase 3: SLO Monitoring** (P1, epic)
-7. **Phase 4: Thesis Writing** (P2, epic)
+1. **Phase 0: Sprint 2 Validation** (P0, epic) - existing, update notes
+2. **Phase 1: Scenario Infrastructure** (P0, epic)
+   - S1 K8s-only setup (task)
+   - S2 Serverless-only setup (task)
+   - S3 Reactive hybrid setup (task)
+   - Scenario runner script (task)
+3. **Phase 2: GRU Implementation** (P1, epic)
+   - Dataset processing pipeline (task)
+   - GRU training script (task)
+   - Model comparison (task)
+4. **Phase 3: Full Evaluation** (P1, epic)
+   - H1 evaluation (task)
+   - H2 evaluation (task)
+   - Results analysis (task)
+5. **Phase 4: Thesis Writing** (P2, epic)
 
 ---
 
 ## References
 
-- TU Dublin 2025: "Business-Day Cloud: Hybrid K8s-Serverless"
-- ACM ICPE 2023: "Autoscaler Evaluation: A Practitioner's Guideline"
-- Wandb: "Intro to MLOps: ML Experiment Tracking"
-- PMC 2024: "Auto-Scaling Techniques in Cloud Computing"
+- Thesis Proposal: `docs/thesis-proposal/03-methodology.md`
+- Sprint 1 Results: `sprint-1/results/performance-baseline.md`
+- Sprint 2 Code: `sprint-2/` (2,677 lines, validation pending)
+- Algorithm 1: Routing Controller (Thesis Proposal Section 3.4.3.1)
+- Algorithm 2: Cluster Controller (Thesis Proposal Section 3.4.3.2)
