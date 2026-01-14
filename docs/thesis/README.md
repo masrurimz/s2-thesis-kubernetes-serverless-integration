@@ -30,15 +30,16 @@ This research proposes a hybrid system integrating Kubernetes and serverless com
 |---------|-------|----------|--------|
 | 4 | Results and Evaluation | [chapter-4-results.md](chapter-4-results.md) | ✅ Complete |
 | 5 | Discussion | [chapter-5-discussion.md](chapter-5-discussion.md) | ✅ Complete |
-| 6 | Conclusion | _To be written_ | ⏳ Pending |
+| 6 | Conclusion | [chapter-6-conclusion.md](chapter-6-conclusion.md) | ✅ Complete |
 
 ### Appendices
 
-| Appendix | Title | Status |
-|----------|-------|--------|
-| A | Reproducibility Guide | ⏳ Pending |
-| B | Raw Data Tables | Available in `controller/results/evaluations/` |
-| C | Source Code | Available in `controller/` |
+| Appendix | Title | Location | Status |
+|----------|-------|----------|--------|
+| A | Reproducibility Guide | [appendix-a-reproducibility.md](appendix-a-reproducibility.md) | ✅ Complete |
+| B | Algorithm Pseudocode | [appendix-b-algorithms.md](appendix-b-algorithms.md) | ✅ Complete |
+| C | Raw Data Tables | `controller/results/evaluations/` | ✅ Available |
+| D | Source Code | `controller/` | ✅ Available |
 
 ## Evaluation Scenarios
 
