@@ -1,0 +1,37 @@
+# Scenario 1: Kubernetes-Only Baseline
+scenario:
+  id: s1-k8s-only
+  name: "K8s-Only Baseline"
+  description: "All traffic routed to Kubernetes cluster"
+  hypothesis: "H1 - Baseline for comparing hybrid approach"
+
+routing:
+  mode: static
+  weights:
+    k3s: 100
+    knative: 0
+  prediction_enabled: false
+  slo_monitoring_enabled: true
+
+infrastructure:
+  k3s:
+    enabled: true
+    replicas: 3
+  knative:
+    enabled: false
+  haproxy:
+    enabled: true
+    config: "k8s-only.cfg"
+
+metrics:
+  collect:
+    - p50_latency
+    - p95_latency
+    - p99_latency
+    - error_rate
+    - throughput
+    - cpu_usage
+    - memory_usage
+  targets:
+    p99_latency_ms: 200
+    error_rate_percent: 0.1

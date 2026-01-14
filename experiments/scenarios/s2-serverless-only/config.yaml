@@ -1,0 +1,38 @@
+# Scenario 2: Serverless-Only Baseline
+scenario:
+  id: s2-serverless-only
+  name: "Serverless-Only Baseline"
+  description: "All traffic routed to Knative serverless"
+  hypothesis: "H1 - Baseline for comparing hybrid approach"
+
+routing:
+  mode: static
+  weights:
+    k3s: 0
+    knative: 100
+  prediction_enabled: false
+  slo_monitoring_enabled: true
+
+infrastructure:
+  k3s:
+    enabled: false
+  knative:
+    enabled: true
+    min_scale: 0
+    max_scale: 10
+  haproxy:
+    enabled: true
+    config: "serverless-only.cfg"
+
+metrics:
+  collect:
+    - p50_latency
+    - p95_latency
+    - p99_latency
+    - error_rate
+    - throughput
+    - cold_start_count
+    - invocation_cost
+  targets:
+    p99_latency_ms: 200
+    error_rate_percent: 0.1
