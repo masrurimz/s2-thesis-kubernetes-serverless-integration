@@ -21,6 +21,8 @@ class HAProxyWeightAdjuster:
     
     def __init__(self, 
                  socket_path: str = "/tmp/haproxy.sock",
+                 tcp_socket_host: str = "localhost",
+                 tcp_socket_port: int = 9999,
                  backend_name: str = "servers",
                  k3s_server: str = "k3s-cluster",
                  knative_server: str = "serverless-sim",
@@ -30,12 +32,16 @@ class HAProxyWeightAdjuster:
         
         Args:
             socket_path: Path to HAProxy admin socket
+            tcp_socket_host: Host for HAProxy TCP admin socket
+            tcp_socket_port: Port for HAProxy TCP admin socket
             backend_name: HAProxy backend name
             k3s_server: K3s server name in HAProxy config
             knative_server: Knative server name in HAProxy config
             stats_url: HAProxy stats URL for fallback weight monitoring
         """
         self.socket_path = socket_path
+        self.tcp_socket_host = tcp_socket_host
+        self.tcp_socket_port = tcp_socket_port
         self.backend_name = backend_name
         self.k3s_server = k3s_server
         self.knative_server = knative_server
@@ -46,13 +52,16 @@ class HAProxyWeightAdjuster:
         self.retry_attempts = 3
         self.retry_delay = 1.0
         
-        # Test socket connectivity and set fallback mode if needed
-        self.socket_available = self._test_socket_connectivity()
+        # Test socket connectivity (TCP first, then Unix)
+        self.tcp_socket_available = self._test_tcp_socket_connectivity()
+        self.socket_available = self.tcp_socket_available or self._test_socket_connectivity()
         
         logger.info("HAProxyWeightAdjuster initialized",
                    socket_path=socket_path,
+                   tcp_socket=f"{tcp_socket_host}:{tcp_socket_port}",
                    backend=backend_name,
-                   socket_available=self.socket_available)
+                   tcp_socket_available=self.tcp_socket_available,
+                   unix_socket_available=self._test_socket_connectivity())
         
     def _test_socket_connectivity(self) -> bool:
         """Test if HAProxy admin socket is accessible."""
@@ -64,10 +73,21 @@ class HAProxyWeightAdjuster:
             return True
         except Exception:
             return False
+    
+    def _test_tcp_socket_connectivity(self) -> bool:
+        """Test if HAProxy TCP admin socket is accessible."""
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(2.0)
+            sock.connect((self.tcp_socket_host, self.tcp_socket_port))
+            sock.close()
+            return True
+        except Exception:
+            return False
         
-    def _send_command(self, command: str) -> Optional[str]:
+    def _send_command_tcp(self, command: str) -> Optional[str]:
         """
-        Send command to HAProxy admin socket.
+        Send command to HAProxy via TCP socket.
         
         Args:
             command: HAProxy admin command
@@ -76,19 +96,53 @@ class HAProxyWeightAdjuster:
             Command response or None if failed
         """
         try:
-            # Create socket connection
-            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(self.socket_timeout)
-            
-            # Connect and send command
-            sock.connect(self.socket_path)
+            sock.connect((self.tcp_socket_host, self.tcp_socket_port))
             sock.send((command + '\n').encode())
-            
-            # Receive response
             response = sock.recv(4096).decode().strip()
             sock.close()
             
-            logger.debug("HAProxy command sent",
+            logger.debug("HAProxy TCP command sent",
+                        command=command,
+                        response_length=len(response))
+            
+            return response
+            
+        except Exception as e:
+            logger.error("TCP socket command failed", error=str(e))
+            return None
+        
+    def _send_command(self, command: str) -> Optional[str]:
+        """
+        Send command to HAProxy admin socket.
+        Tries TCP socket first, then falls back to Unix socket.
+        
+        Args:
+            command: HAProxy admin command
+            
+        Returns:
+            Command response or None if failed
+        """
+        # Try TCP socket first (preferred for Docker environments)
+        if self.tcp_socket_available:
+            response = self._send_command_tcp(command)
+            if response is not None:
+                return response
+            logger.warning("TCP socket failed, falling back to Unix socket", command=command)
+        
+        # Fall back to Unix socket
+        try:
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            sock.settimeout(self.socket_timeout)
+            
+            sock.connect(self.socket_path)
+            sock.send((command + '\n').encode())
+            
+            response = sock.recv(4096).decode().strip()
+            sock.close()
+            
+            logger.debug("HAProxy Unix socket command sent",
                         command=command,
                         response_length=len(response))
             

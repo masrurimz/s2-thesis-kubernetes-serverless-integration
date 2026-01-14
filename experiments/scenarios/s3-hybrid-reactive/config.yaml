@@ -1,0 +1,46 @@
+# Scenario 3: Hybrid Reactive (Algorithm 1 only, no prediction)
+scenario:
+  id: s3-hybrid-reactive
+  name: "Hybrid Reactive Control"
+  description: "SLO-based routing without prediction (Algorithm 1 only)"
+  hypothesis: "H2 - Control for comparing predictive vs reactive"
+
+routing:
+  mode: reactive
+  weights:
+    k3s: 80
+    knative: 20
+  prediction_enabled: false
+  slo_monitoring_enabled: true
+  algorithm: "algorithm-1-only"
+
+slo_controller:
+  p99_threshold_ms: 200
+  check_interval_sec: 5
+  violation_window_sec: 30
+  weight_adjustment_step: 10
+
+infrastructure:
+  k3s:
+    enabled: true
+    replicas: 3
+  knative:
+    enabled: true
+    min_scale: 0
+    max_scale: 10
+  haproxy:
+    enabled: true
+    config: "hybrid.cfg"
+
+metrics:
+  collect:
+    - p50_latency
+    - p95_latency
+    - p99_latency
+    - error_rate
+    - throughput
+    - slo_violations
+    - weight_changes
+  targets:
+    p99_latency_ms: 200
+    error_rate_percent: 0.1

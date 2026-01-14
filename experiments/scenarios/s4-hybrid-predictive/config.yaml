@@ -1,0 +1,59 @@
+# Scenario 4: Hybrid Predictive (Full System - Algorithm 1 + Algorithm 2)
+scenario:
+  id: s4-hybrid-predictive
+  name: "Hybrid Predictive (Proposed)"
+  description: "Full predictive hybrid system with GRU prediction"
+  hypothesis: "H1 + H2 - Proposed system outperforms all baselines"
+
+routing:
+  mode: predictive
+  weights:
+    k3s: 80
+    knative: 20
+  prediction_enabled: true
+  slo_monitoring_enabled: true
+  algorithm: "algorithm-1-plus-algorithm-2"
+
+prediction:
+  model: "gru"  # or "linear" for sprint 2
+  prediction_horizon_sec: 30
+  retrain_interval_sec: 3600
+  min_confidence: 0.7
+
+slo_controller:
+  p99_threshold_ms: 200
+  check_interval_sec: 5
+  violation_window_sec: 30
+  weight_adjustment_step: 10
+
+infrastructure:
+  k3s:
+    enabled: true
+    replicas: 3
+  knative:
+    enabled: true
+    min_scale: 0
+    max_scale: 10
+  haproxy:
+    enabled: true
+    config: "hybrid.cfg"
+  prediction_server:
+    enabled: true
+    port: 8003
+
+metrics:
+  collect:
+    - p50_latency
+    - p95_latency
+    - p99_latency
+    - error_rate
+    - throughput
+    - prediction_rmse
+    - prediction_confidence
+    - slo_violations
+    - weight_changes
+    - proactive_adjustments
+  targets:
+    p99_latency_ms: 200
+    error_rate_percent: 0.1
+    prediction_rmse_percent: 10

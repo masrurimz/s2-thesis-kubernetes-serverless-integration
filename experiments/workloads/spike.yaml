@@ -1,0 +1,22 @@
+workload:
+  name: spike
+  description: "Sudden traffic spikes to test scaling"
+
+load_profile:
+  type: spike
+  stages:
+    - duration_sec: 60
+      rps: 50
+    - duration_sec: 30
+      rps: 500  # 10x spike
+    - duration_sec: 60
+      rps: 50
+
+k6_config:
+  stages:
+    - duration: "1m"
+      target: 5
+    - duration: "30s"
+      target: 50
+    - duration: "1m"
+      target: 5
