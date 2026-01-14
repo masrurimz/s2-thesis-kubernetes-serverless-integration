@@ -4,6 +4,60 @@ This appendix provides step-by-step instructions to reproduce all experiments an
 
 ---
 
+## A.0 System Components Overview
+
+This section provides a quick reference to all components involved in the experiment infrastructure.
+
+### A.0.1 Core Components
+
+| Component | Location | Port | Description |
+|-----------|----------|------|-------------|
+| **routing_daemon** | `controller/daemon/routing_daemon.py` | 9104 | Main daemon running Algorithm 1 with scenario configs |
+| **GRU prediction server** | `controller/prediction_engine/server.py` | 8090 | Serves load predictions from trained GRU model |
+| **Algorithm1Controller** | `controller/intelligent_router/algorithm1_controller.py` | - | Core SLO-aware routing logic |
+| **SLOMonitor** | `controller/monitoring_v2/slo_monitor.py` | - | Monitors p99 latency and detects violations |
+| **HAProxy weight adjuster** | `controller/intelligent_router/weight_adjuster.py` | 9999 (socket) | Adjusts HAProxy backend weights |
+| **k6_runner** | `controller/workloads/k6_runner.py` | - | Executes k6 load tests programmatically |
+
+### A.0.2 Evaluation Scripts
+
+| Script | Location | Purpose |
+|--------|----------|---------|
+| **H1 Evaluator** | `experiments/evaluations/h1_evaluation.py` | Tests Hybrid > Pure hypothesis |
+| **H2 Evaluator** | `experiments/evaluations/h2_evaluation.py` | Tests Predictive > Reactive hypothesis |
+| **Experiment Logger** | `experiments/experiment_logger.py` | Logs experiment runs and metrics |
+
+### A.0.3 Infrastructure Services
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| HAProxy | 8082 (traffic), 8404 (stats), 9999 (admin) | Traffic routing between K8s and Knative |
+| Prometheus | 9090 | Metrics collection and queries |
+| Grafana | 3000 | Metrics visualization |
+| k3d cluster | 8080 (K8s), 8081 (Knative/Kourier) | Container orchestration |
+
+### A.0.4 Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PROMETHEUS_URL` | `http://localhost:9090` | Prometheus server URL |
+| `ROUTING_DAEMON_URL` | `http://localhost:9104` | Routing daemon API URL |
+| `GRU_SERVER_URL` | `http://localhost:8090` | GRU prediction server URL |
+| `HAPROXY_STATS_URL` | `http://localhost:8404/stats;csv` | HAProxy stats endpoint |
+| `HAPROXY_SOCKET_HOST` | `localhost` | HAProxy admin socket host |
+| `HAPROXY_SOCKET_PORT` | `9999` | HAProxy admin socket port |
+
+### A.0.5 Expected Output Locations
+
+| Output | Location | Format |
+|--------|----------|--------|
+| H1 results | `results/evaluations/h1/` | CSV, JSON, Markdown |
+| H2 results | `results/evaluations/h2/` | CSV, JSON, Markdown |
+| Trained models | `controller/data/models/` | PyTorch `.pt` files |
+| Experiment logs | `logs/` | Structured JSON logs |
+
+---
+
 ## A.1 Prerequisites
 
 ### A.1.1 Hardware Requirements
@@ -475,27 +529,67 @@ echo "set server servers/serverless-sim weight 100" | nc -U /tmp/haproxy.sock
 ```bash
 cd controller
 
-# Start routing controller (reactive mode, no prediction)
-uv run python -m intelligent_router.algorithm1_controller --mode reactive &
+# Start routing daemon in reactive mode (Algorithm 1 without predictions)
+uv run python -m daemon.routing_daemon \
+  --scenario s3-hybrid-reactive \
+  --interval 15 \
+  --prometheus-url http://localhost:9090 \
+  --haproxy-host localhost \
+  --haproxy-port 9999 \
+  --api-port 9104
+
+# In another terminal, verify daemon is running
+curl http://localhost:9104/health
+# Expected: {"status": "healthy", "scenario": "s3-hybrid-reactive", ...}
 
 # Monitor routing decisions
-tail -f logs/routing_decisions.log
+curl http://localhost:9104/status
 ```
+
+**Routing Daemon API Endpoints:**
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/status` | GET | Current weights, decision counts |
+| `/set_scenario` | POST | Change scenario |
+| `/health` | GET | Health check |
+| `/metrics` | GET | Prometheus metrics |
 
 ### A.6.5 Run Scenario S4 (Hybrid-Predictive)
 
 ```bash
 cd controller
 
-# Start prediction server
-uv run python -m prediction_engine.prediction_server --port 8000 &
+# First, start the GRU prediction server (port 8090)
+uv run python -m prediction_engine.server --port 8090 &
 
-# Start routing controller (predictive mode)
-uv run python -m intelligent_router.algorithm1_controller --mode predictive &
+# Verify prediction server is running
+curl http://localhost:8090/health
+# Expected: {"status": "healthy", "model_loaded": true}
 
-# Monitor predictions and routing
-tail -f logs/routing_decisions.log
+# Start routing daemon in predictive mode
+uv run python -m daemon.routing_daemon \
+  --scenario s4-hybrid-predictive \
+  --interval 15 \
+  --prometheus-url http://localhost:9090 \
+  --haproxy-host localhost \
+  --haproxy-port 9999 \
+  --gru-url http://localhost:8090 \
+  --api-port 9104
+
+# Verify GRU integration
+curl http://localhost:9104/health
+# Expected: {"gru_available": true, ...}
 ```
+
+**Scenario Configuration Reference:**
+
+| Scenario | Weights (K8s/Knative) | Algorithm 1 | GRU Predictions |
+|----------|----------------------|-------------|-----------------|
+| `s1-k8s-only` | 100/0 | No (static) | No |
+| `s2-serverless-only` | 0/100 | No (static) | No |
+| `s3-hybrid-reactive` | 80/20 initial | Yes | No |
+| `s4-hybrid-predictive` | 80/20 initial | Yes | Yes |
 
 ### A.6.6 Run Load Tests
 
@@ -540,10 +634,19 @@ print(data)
 ### A.7.1 Run H1 Evaluation (Hybrid > Pure)
 
 ```bash
-cd controller
+cd experiments
 
-# Run H1 evaluation (simulated mode for development)
-uv run python -m experiments.evaluations.h1_evaluation
+# Run H1 evaluation in SIMULATED mode (for development/verification)
+python -m evaluations.h1_evaluation
+
+# Run H1 evaluation on REAL INFRASTRUCTURE
+# Prerequisites:
+# - k3d cluster running with test apps deployed
+# - HAProxy running with weight adjustment enabled
+# - Prometheus scraping all targets
+# - GRU prediction server running (port 8090)
+# - Routing daemon running (port 9104)
+python -m evaluations.h1_evaluation --simulate=False
 
 # Expected output:
 # ======================================================================
@@ -558,15 +661,41 @@ uv run python -m experiments.evaluations.h1_evaluation
 # - results/evaluations/h1/h1_report_YYYYMMDD_HHMMSS.md
 ```
 
+**H1 Programmatic Configuration:**
+
+```python
+from experiments.evaluations.h1_evaluation import H1Evaluator
+from pathlib import Path
+
+evaluator = H1Evaluator(
+    results_dir=Path("results/evaluations/h1"),
+    routing_daemon_url="http://localhost:9104",
+    prometheus_url="http://localhost:9090",
+)
+
+result = evaluator.run_evaluation(
+    scenarios=["s1-k8s-only", "s2-serverless-only", "s4-hybrid-predictive"],
+    workloads=["steady", "spike", "endurance"],
+    repetitions=3,
+    simulate=False,  # Set to True for simulated mode
+)
+
+print(result.summary)
+print(f"H1 Proven: {result.hypothesis_proven}")
+```
+
 **Estimated Time: 5-10 minutes** (simulated) / 2-4 hours (real infrastructure)
 
 ### A.7.2 Run H2 Evaluation (Predictive > Reactive)
 
 ```bash
-cd controller
+cd experiments
 
-# Run H2 evaluation
-uv run python -m experiments.evaluations.h2_evaluation
+# Run H2 evaluation in SIMULATED mode (for development/verification)
+python -m evaluations.h2_evaluation
+
+# Run H2 evaluation on REAL INFRASTRUCTURE
+python -m evaluations.h2_evaluation --simulate=False
 
 # Expected output:
 # ======================================================================
@@ -580,6 +709,47 @@ uv run python -m experiments.evaluations.h2_evaluation
 # - results/evaluations/h2/h2_summary_YYYYMMDD_HHMMSS.json
 # - results/evaluations/h2/h2_report_YYYYMMDD_HHMMSS.md
 ```
+
+**H2 Programmatic Configuration:**
+
+```python
+from experiments.evaluations.h2_evaluation import H2Evaluator
+from pathlib import Path
+
+evaluator = H2Evaluator(
+    results_dir=Path("results/evaluations/h2"),
+    routing_daemon_url="http://localhost:9104",
+    prometheus_url="http://localhost:9090",
+    controller_metrics_url="http://localhost:9104/metrics",
+    k6_duration_sec=300,
+)
+
+result = evaluator.run_evaluation(
+    scenarios=["s3-hybrid-reactive", "s4-hybrid-predictive"],
+    workloads=["spike", "endurance"],  # Focus on dynamic workloads
+    repetitions=3,
+    simulate=False,
+)
+
+print(result.summary)
+print(f"H2 Proven: {result.hypothesis_proven}")
+print(f"Violation Reduction: {result.violation_reduction:.1f}%")
+print(f"Proactive Ratio: {result.proactive_ratio:.1%}")
+```
+
+**H2 Metrics Collected:**
+
+| Metric | Source | Description |
+|--------|--------|-------------|
+| `slo_violations` | Prometheus counter | Count of p99 > 200ms events |
+| `slo_violation_duration_sec` | Prometheus range query | Total time in violation |
+| `proactive_adjustments` | Prometheus counter | PREDICTIVE decisions |
+| `reactive_adjustments` | Prometheus counter | SCALE_OUT decisions |
+| `avg_reaction_time_ms` | Prometheus histogram | Time from violation to adjustment |
+
+**H2 Success Criteria:**
+- SLO violations: >50% reduction (S4 vs S3)
+- Proactive ratio: >50% of total adjustments
 
 ### A.7.3 Run Full Evaluation Suite
 
