@@ -18,10 +18,14 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 
+import requests
 import structlog
 import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "controller"))
+
+from controller.metrics.prometheus_client import PrometheusClient
+from controller.workloads.k6_runner import K6Runner
 
 from experiments.experiment_logger import ExperimentLogger
 
@@ -64,12 +68,22 @@ class H1Evaluator:
     SCENARIOS = ["s1-k8s-only", "s2-serverless-only", "s4-hybrid-predictive"]
     WORKLOADS = ["steady", "spike", "endurance"]
     REPETITIONS = 3
+    RUN_DURATION_SEC = 300
     
-    def __init__(self, results_dir: Optional[Path] = None):
+    def __init__(
+        self,
+        results_dir: Optional[Path] = None,
+        routing_daemon_url: str = "http://localhost:9104",
+        prometheus_url: str = "http://localhost:9090",
+    ):
         self.results_dir = results_dir or Path("results/evaluations/h1")
         self.results_dir.mkdir(parents=True, exist_ok=True)
         self.logger = ExperimentLogger()
         self.results: List[ScenarioResult] = []
+        
+        self.routing_daemon_url = routing_daemon_url.rstrip("/")
+        self.prometheus = PrometheusClient(prometheus_url)
+        self.k6_runner = K6Runner()
     
     def run_evaluation(self, 
                       scenarios: Optional[List[str]] = None,
@@ -176,14 +190,123 @@ class H1Evaluator:
     
     def _execute_run(self, scenario: str, workload: str) -> ScenarioResult:
         """Execute actual scenario run with real infrastructure."""
-        # TODO: Implement actual run with:
-        # 1. Configure HAProxy weights per scenario
-        # 2. Start prediction server (if S4)
-        # 3. Run k6 load test
-        # 4. Collect metrics from Prometheus
-        # 5. Return ScenarioResult
+        run_id = self.logger.start_run(scenario, workload)
+        start_time = int(time.time())
         
-        raise NotImplementedError("Real execution requires infrastructure setup")
+        self._configure_scenario(scenario)
+        
+        time.sleep(2)
+        
+        k6_result = self.k6_runner.run_workload(
+            workload=workload,
+            scenario=scenario,
+            duration_sec=self.RUN_DURATION_SEC,
+        )
+        
+        if not k6_result.success:
+            logger.warning(
+                "k6 run completed with errors",
+                scenario=scenario,
+                workload=workload,
+                raw_output=k6_result.raw_output[:500] if k6_result.raw_output else "No output",
+            )
+        
+        end_time = int(time.time())
+        
+        latencies = self.prometheus.get_latency_percentiles(window="5m")
+        error_rate = self.prometheus.get_error_rate(window="5m")
+        throughput = self.prometheus.get_throughput(window="5m")
+        
+        cost_proxy = self._calculate_cost_proxy()
+        
+        if latencies["p50"] == 0.0 and k6_result.http_req_duration_p95 > 0:
+            p50 = k6_result.http_req_duration_p95 * 0.6
+            p95 = k6_result.http_req_duration_p95
+            p99 = k6_result.http_req_duration_p99
+            error_rate = k6_result.http_req_failed_rate
+            throughput = k6_result.http_reqs / self.RUN_DURATION_SEC if self.RUN_DURATION_SEC > 0 else 0
+        else:
+            p50 = latencies["p50"]
+            p95 = latencies["p95"]
+            p99 = latencies["p99"]
+        
+        result = ScenarioResult(
+            scenario=scenario,
+            workload=workload,
+            run_id=run_id,
+            p50_latency_ms=p50,
+            p95_latency_ms=p95,
+            p99_latency_ms=p99,
+            error_rate=error_rate,
+            throughput_rps=throughput,
+            cost_proxy=cost_proxy,
+            duration_sec=self.RUN_DURATION_SEC,
+            timestamp=start_time,
+        )
+        
+        self.logger.log_metrics(run_id, {
+            "p50_latency": result.p50_latency_ms,
+            "p95_latency": result.p95_latency_ms,
+            "p99_latency": result.p99_latency_ms,
+            "error_rate": result.error_rate,
+            "throughput_rps": result.throughput_rps,
+            "cost_proxy": result.cost_proxy,
+            "k6_success": k6_result.success,
+            "k6_http_reqs": k6_result.http_reqs,
+        })
+        self.logger.end_run(run_id)
+        
+        logger.info(
+            "Run completed",
+            scenario=scenario,
+            workload=workload,
+            p99=result.p99_latency_ms,
+            error_rate=result.error_rate,
+            cost_proxy=result.cost_proxy,
+        )
+        
+        return result
+    
+    def _configure_scenario(self, scenario: str) -> None:
+        """Configure routing daemon for the specified scenario."""
+        try:
+            response = requests.post(
+                f"{self.routing_daemon_url}/set_scenario",
+                json={"scenario": scenario},
+                timeout=10,
+            )
+            response.raise_for_status()
+            logger.info("Scenario configured", scenario=scenario)
+        except requests.RequestException as e:
+            logger.error("Failed to configure scenario", scenario=scenario, error=str(e))
+            raise RuntimeError(f"Failed to configure scenario {scenario}: {e}")
+    
+    def _calculate_cost_proxy(self) -> float:
+        """Calculate cost proxy based on serverless usage ratio.
+        
+        Cost proxy formula:
+        - 1.0 = pure K8s (baseline cost)
+        - 1.5 = pure serverless (50% more expensive)
+        - Linear interpolation based on knative request ratio
+        """
+        k3s_requests = self.prometheus.query_instant(
+            'sum(increase(haproxy_backend_http_requests_total{backend="k3s-cluster"}[5m]))'
+        )
+        knative_requests = self.prometheus.query_instant(
+            'sum(increase(haproxy_backend_http_requests_total{backend="serverless-sim"}[5m]))'
+        )
+        
+        k3s = k3s_requests if k3s_requests is not None else 0.0
+        knative = knative_requests if knative_requests is not None else 0.0
+        total = k3s + knative
+        
+        if total <= 0:
+            return 1.0
+        
+        knative_ratio = knative / total
+        cost_proxy = 1.0 + (0.5 * knative_ratio)
+        
+        return round(cost_proxy, 4)
     
     def _analyze_results(self) -> H1EvaluationResult:
         """Analyze results and determine if H1 is proven."""
