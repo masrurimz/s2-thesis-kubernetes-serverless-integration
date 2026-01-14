@@ -1,0 +1,60 @@
+# k3d cluster configuration for thesis hybrid experiments
+# Reference: https://k3d.io/v5.6.0/usage/configfile/
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: thesis-hybrid
+servers: 1
+agents: 1
+image: rancher/k3s:v1.28.5-k3s1
+kubeAPI:
+  hostIP: "0.0.0.0"
+  hostPort: "6443"
+ports:
+  # K8s service port
+  - port: 8080:80
+    nodeFilters:
+      - loadbalancer
+  # Kourier (Knative gateway)
+  - port: 8081:31080
+    nodeFilters:
+      - loadbalancer
+  # HAProxy (external)
+  - port: 8082:31082
+    nodeFilters:
+      - loadbalancer
+  # HAProxy stats
+  - port: 8404:31404
+    nodeFilters:
+      - loadbalancer
+  # Prometheus
+  - port: 9090:31090
+    nodeFilters:
+      - loadbalancer
+  # Autoscaler metrics
+  - port: 9102:31102
+    nodeFilters:
+      - loadbalancer
+options:
+  k3d:
+    wait: true
+    timeout: "120s"
+    disableLoadbalancer: false
+    disableImageVolume: false
+  k3s:
+    extraArgs:
+      - arg: --disable=traefik
+        nodeFilters:
+          - server:*
+      - arg: --kubelet-arg=eviction-hard=memory.available<100Mi
+        nodeFilters:
+          - server:*
+          - agent:*
+  kubeconfig:
+    updateDefaultKubeconfig: true
+    switchCurrentContext: true
+registries:
+  create:
+    name: k3d-registry.localhost
+    host: "0.0.0.0"
+    hostPort: "5000"

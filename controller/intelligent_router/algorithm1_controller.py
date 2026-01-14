@@ -12,6 +12,11 @@ from typing import Optional, Dict
 import structlog
 
 from monitoring_v2.slo_monitor import SLOMonitor, SLOConfig, SLOStatus
+from intelligent_router.metrics import (
+    slo_violation_total,
+    routing_decision_total,
+    reaction_time_ms,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -61,6 +66,7 @@ class Algorithm1Controller:
         # State tracking
         self.last_adjustment_time: Optional[int] = None
         self.current_weights = {"k3s": 80, "knative": 20}
+        self.violation_detected_time: Optional[float] = None
         
         # Metrics
         self.total_decisions = 0
@@ -98,6 +104,12 @@ class Algorithm1Controller:
         # Check cooldown
         can_adjust = self._can_adjust(current_time)
         
+        # Track violation detection time for reaction_time metric
+        if slo_status.violation_duration_sec > 0 and self.violation_detected_time is None:
+            self.violation_detected_time = time.time()
+        elif slo_status.violation_duration_sec == 0:
+            self.violation_detected_time = None
+        
         # Step 2: Check for sustained SLO violation
         if (slo_status.violation_duration_sec >= self.slo_monitor.config.violation_window_sec
             and can_adjust):
@@ -127,6 +139,16 @@ class Algorithm1Controller:
         """Scale out to serverless due to SLO violation."""
         self.scale_out_count += 1
         
+        # Record Prometheus metrics
+        slo_violation_total.labels(slo_name="p99_latency").inc()
+        routing_decision_total.labels(decision_type="SCALE_OUT").inc()
+        
+        # Track reaction time (time from violation detection to adjustment)
+        if self.violation_detected_time is not None:
+            reaction_ms = (time.time() - self.violation_detected_time) * 1000
+            reaction_time_ms.observe(reaction_ms)
+            self.violation_detected_time = None
+        
         new_knative = min(
             self.config.max_knative_weight,
             self.current_weights["knative"] + self.config.weight_step
@@ -151,6 +173,9 @@ class Algorithm1Controller:
     def _optimize_cost(self, current_time: int, slo_status: SLOStatus) -> RoutingDecision:
         """Increase k3s weight for cost optimization."""
         self.optimize_cost_count += 1
+        
+        # Record Prometheus metrics
+        routing_decision_total.labels(decision_type="OPTIMIZE_COST").inc()
         
         # Use smaller step for cost optimization
         step = self.config.weight_step // 2
@@ -190,6 +215,9 @@ class Algorithm1Controller:
             # Significant increase predicted - proactively scale out
             self.predictive_count += 1
             
+            # Record Prometheus metrics
+            routing_decision_total.labels(decision_type="PREDICTIVE").inc()
+            
             new_knative = min(
                 self.config.max_knative_weight,
                 self.current_weights["knative"] + self.config.weight_step
@@ -217,6 +245,9 @@ class Algorithm1Controller:
     def _maintain(self, slo_status: SLOStatus) -> RoutingDecision:
         """Maintain current weights."""
         self.maintain_count += 1
+        
+        # Record Prometheus metrics
+        routing_decision_total.labels(decision_type="MAINTAIN").inc()
         
         return RoutingDecision(
             weights=self.current_weights.copy(),
