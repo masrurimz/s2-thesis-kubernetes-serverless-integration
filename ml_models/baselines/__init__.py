@@ -1,3 +1,5 @@
-# Baseline Models for Workload Prediction
+"""Baseline prediction models for comparison."""
+from .naive import NaivePredictor
+from .moving_avg import MovingAveragePredictor
 
-Simple baseline models for comparison against GRU.
+__all__ = ["NaivePredictor", "MovingAveragePredictor"]
