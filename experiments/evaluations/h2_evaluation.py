@@ -17,11 +17,15 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 
+import requests
 import structlog
 import sys
 
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from controller.metrics.prometheus_client import PrometheusClient
+from controller.workloads.k6_runner import K6Runner
 from experiment_logger import ExperimentLogger
 
 logger = structlog.get_logger(__name__)
@@ -64,11 +68,30 @@ class H2Evaluator:
     WORKLOADS = ["spike", "endurance"]  # Focus on dynamic workloads
     REPETITIONS = 3
     
-    def __init__(self, results_dir: Optional[Path] = None):
+    DEFAULT_ROUTING_DAEMON_URL = "http://localhost:9104"
+    DEFAULT_PROMETHEUS_URL = "http://localhost:9090"
+    DEFAULT_CONTROLLER_METRICS_URL = "http://localhost:9104/metrics"
+    
+    def __init__(
+        self,
+        results_dir: Optional[Path] = None,
+        routing_daemon_url: str = DEFAULT_ROUTING_DAEMON_URL,
+        prometheus_url: str = DEFAULT_PROMETHEUS_URL,
+        controller_metrics_url: str = DEFAULT_CONTROLLER_METRICS_URL,
+        k6_duration_sec: int = 300,
+    ):
         self.results_dir = results_dir or Path("results/evaluations/h2")
         self.results_dir.mkdir(parents=True, exist_ok=True)
-        self.logger = ExperimentLogger()
+        self.exp_logger = ExperimentLogger()
         self.results: List[H2ScenarioResult] = []
+        
+        self.routing_daemon_url = routing_daemon_url
+        self.prometheus_url = prometheus_url
+        self.controller_metrics_url = controller_metrics_url
+        self.k6_duration_sec = k6_duration_sec
+        
+        self.prometheus_client = PrometheusClient(prometheus_url)
+        self.k6_runner = K6Runner()
     
     def run_evaluation(self,
                       scenarios: Optional[List[str]] = None,
@@ -117,7 +140,7 @@ class H2Evaluator:
     
     def _simulate_run(self, scenario: str, workload: str) -> H2ScenarioResult:
         """Simulate a scenario run for development/testing."""
-        run_id = self.logger.start_run(scenario, workload)
+        run_id = self.exp_logger.start_run(scenario, workload)
         
         # Base metrics - S4 should have fewer violations
         base_metrics = {
@@ -164,20 +187,202 @@ class H2Evaluator:
             timestamp=int(time.time())
         )
         
-        self.logger.log_metrics(run_id, {
+        self.exp_logger.log_metrics(run_id, {
             "slo_violations": result.slo_violations,
             "violation_duration": result.slo_violation_duration_sec,
             "proactive_adjustments": result.proactive_adjustments,
             "reactive_adjustments": result.reactive_adjustments,
             "p99_latency": result.p99_latency_ms
         })
-        self.logger.end_run(run_id)
+        self.exp_logger.end_run(run_id)
         
         return result
     
     def _execute_run(self, scenario: str, workload: str) -> H2ScenarioResult:
-        """Execute actual scenario run."""
-        raise NotImplementedError("Real execution requires infrastructure")
+        """Execute actual scenario run with real infrastructure."""
+        run_id = self.exp_logger.start_run(scenario, workload)
+        
+        try:
+            self._configure_scenario(scenario)
+            baseline_metrics = self._get_controller_metrics_snapshot()
+            start_time = int(time.time())
+            
+            k6_result = self.k6_runner.run_workload(
+                workload=workload,
+                scenario=scenario,
+                duration_sec=self.k6_duration_sec,
+            )
+            
+            if not k6_result.success:
+                logger.warning(
+                    "k6 run failed",
+                    scenario=scenario,
+                    workload=workload,
+                    output=k6_result.raw_output[:500],
+                )
+            
+            end_time = int(time.time())
+            time.sleep(2)
+            
+            final_metrics = self._get_controller_metrics_snapshot()
+            
+            slo_violations = self._calculate_slo_violations(
+                baseline_metrics, final_metrics
+            )
+            proactive_adjustments = self._calculate_routing_decisions(
+                baseline_metrics, final_metrics, "PREDICTIVE"
+            )
+            reactive_adjustments = self._calculate_routing_decisions(
+                baseline_metrics, final_metrics, "SCALE_OUT"
+            )
+            avg_reaction_time_ms = self._calculate_avg_reaction_time(
+                baseline_metrics, final_metrics
+            )
+            
+            slo_violation_duration = self._calculate_violation_duration(
+                start_time, end_time
+            )
+            
+            latencies = self.prometheus_client.get_latency_percentiles(window="5m")
+            p99_latency_ms = latencies.get("p99", k6_result.http_req_duration_p99)
+            error_rate = self.prometheus_client.get_error_rate(window="5m")
+            if error_rate == 0.0:
+                error_rate = k6_result.http_req_failed_rate
+            
+            result = H2ScenarioResult(
+                scenario=scenario,
+                workload=workload,
+                run_id=run_id,
+                slo_violations=slo_violations,
+                slo_violation_duration_sec=slo_violation_duration,
+                proactive_adjustments=proactive_adjustments,
+                reactive_adjustments=reactive_adjustments,
+                avg_reaction_time_ms=avg_reaction_time_ms,
+                p99_latency_ms=p99_latency_ms,
+                error_rate=error_rate,
+                timestamp=int(time.time()),
+            )
+            
+            self.exp_logger.log_metrics(run_id, {
+                "slo_violations": result.slo_violations,
+                "violation_duration": result.slo_violation_duration_sec,
+                "proactive_adjustments": result.proactive_adjustments,
+                "reactive_adjustments": result.reactive_adjustments,
+                "avg_reaction_time_ms": result.avg_reaction_time_ms,
+                "p99_latency_ms": result.p99_latency_ms,
+                "error_rate": result.error_rate,
+            })
+            self.exp_logger.end_run(run_id)
+            
+            logger.info(
+                "Run completed",
+                scenario=scenario,
+                workload=workload,
+                slo_violations=slo_violations,
+                proactive=proactive_adjustments,
+                reactive=reactive_adjustments,
+            )
+            
+            return result
+            
+        except Exception as e:
+            logger.error(
+                "Run failed",
+                scenario=scenario,
+                workload=workload,
+                error=str(e),
+            )
+            self.exp_logger.end_run(run_id, status="failed", notes=str(e))
+            raise
+    
+    def _configure_scenario(self, scenario: str) -> None:
+        """Configure routing daemon for the specified scenario."""
+        url = f"{self.routing_daemon_url}/set_scenario"
+        try:
+            response = requests.post(
+                url,
+                json={"scenario": scenario},
+                timeout=10,
+            )
+            response.raise_for_status()
+            logger.info("Scenario configured", scenario=scenario)
+        except requests.RequestException as e:
+            logger.error(
+                "Failed to configure scenario",
+                scenario=scenario,
+                error=str(e),
+            )
+            raise RuntimeError(f"Failed to configure scenario {scenario}: {e}")
+    
+    def _get_controller_metrics_snapshot(self) -> Dict[str, float]:
+        """Get snapshot of controller metrics for baseline/comparison."""
+        metrics = {}
+        
+        slo_expr = "sum(slo_violation_total) or vector(0)"
+        metrics["slo_violations"] = self.prometheus_client.query_instant(slo_expr) or 0.0
+        
+        for decision_type in ["PREDICTIVE", "SCALE_OUT", "OPTIMIZE_COST", "MAINTAIN"]:
+            expr = f'sum(routing_decision_total{{decision_type="{decision_type}"}}) or vector(0)'
+            metrics[f"routing_{decision_type.lower()}"] = (
+                self.prometheus_client.query_instant(expr) or 0.0
+            )
+        
+        reaction_sum_expr = "sum(reaction_time_ms_sum) or vector(0)"
+        reaction_count_expr = "sum(reaction_time_ms_count) or vector(0)"
+        metrics["reaction_time_sum"] = (
+            self.prometheus_client.query_instant(reaction_sum_expr) or 0.0
+        )
+        metrics["reaction_time_count"] = (
+            self.prometheus_client.query_instant(reaction_count_expr) or 0.0
+        )
+        
+        return metrics
+    
+    def _calculate_slo_violations(
+        self, baseline: Dict[str, float], final: Dict[str, float]
+    ) -> int:
+        """Calculate SLO violations during the run."""
+        delta = final.get("slo_violations", 0) - baseline.get("slo_violations", 0)
+        return max(0, int(delta))
+    
+    def _calculate_routing_decisions(
+        self,
+        baseline: Dict[str, float],
+        final: Dict[str, float],
+        decision_type: str,
+    ) -> int:
+        """Calculate routing decisions of a specific type during the run."""
+        key = f"routing_{decision_type.lower()}"
+        delta = final.get(key, 0) - baseline.get(key, 0)
+        return max(0, int(delta))
+    
+    def _calculate_avg_reaction_time(
+        self, baseline: Dict[str, float], final: Dict[str, float]
+    ) -> float:
+        """Calculate average reaction time from histogram."""
+        sum_delta = (
+            final.get("reaction_time_sum", 0) - baseline.get("reaction_time_sum", 0)
+        )
+        count_delta = (
+            final.get("reaction_time_count", 0) - baseline.get("reaction_time_count", 0)
+        )
+        
+        if count_delta > 0:
+            return sum_delta / count_delta
+        return 0.0
+    
+    def _calculate_violation_duration(self, start_time: int, end_time: int) -> int:
+        """Calculate total duration of SLO violations."""
+        expr = "sum(increase(slo_violation_total[1m])) > 0"
+        data = self.prometheus_client.query_range(
+            expr=expr,
+            start=start_time,
+            end=end_time,
+            step=60,
+        )
+        
+        violation_minutes = sum(1 for _, val in data if val > 0)
+        return violation_minutes * 60
     
     def _analyze_results(self) -> H2EvaluationResult:
         """Analyze results and determine if H2 is proven."""
