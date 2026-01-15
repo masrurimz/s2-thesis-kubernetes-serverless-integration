@@ -71,6 +71,7 @@ class H2Evaluator:
     DEFAULT_ROUTING_DAEMON_URL = "http://localhost:9104"
     DEFAULT_PROMETHEUS_URL = "http://localhost:9090"
     DEFAULT_CONTROLLER_METRICS_URL = "http://localhost:9104/metrics"
+    DEFAULT_HAPROXY_URL = "http://localhost:8082"
     
     def __init__(
         self,
@@ -78,6 +79,7 @@ class H2Evaluator:
         routing_daemon_url: str = DEFAULT_ROUTING_DAEMON_URL,
         prometheus_url: str = DEFAULT_PROMETHEUS_URL,
         controller_metrics_url: str = DEFAULT_CONTROLLER_METRICS_URL,
+        haproxy_url: str = DEFAULT_HAPROXY_URL,
         k6_duration_sec: int = 300,
     ):
         self.results_dir = results_dir or Path("results/evaluations/h2")
@@ -88,6 +90,7 @@ class H2Evaluator:
         self.routing_daemon_url = routing_daemon_url
         self.prometheus_url = prometheus_url
         self.controller_metrics_url = controller_metrics_url
+        self.haproxy_url = haproxy_url.rstrip("/")
         self.k6_duration_sec = k6_duration_sec
         
         self.prometheus_client = PrometheusClient(prometheus_url)
@@ -211,6 +214,7 @@ class H2Evaluator:
                 workload=workload,
                 scenario=scenario,
                 duration_sec=self.k6_duration_sec,
+                target_url=self.haproxy_url,
             )
             
             if not k6_result.success:
@@ -297,21 +301,55 @@ class H2Evaluator:
     
     def _configure_scenario(self, scenario: str) -> None:
         """Configure routing daemon for the specified scenario."""
+        # Scenario weight mappings
+        SCENARIO_WEIGHTS = {
+            "s1-k8s-only": (100, 0),
+            "s2-serverless-only": (0, 100),
+            "s3-hybrid-reactive": (80, 20),
+            "s4-hybrid-predictive": (80, 20),
+        }
+        
+        # Try routing daemon first
         url = f"{self.routing_daemon_url}/set_scenario"
         try:
             response = requests.post(
                 url,
                 json={"scenario": scenario},
-                timeout=10,
+                timeout=5,
             )
             response.raise_for_status()
-            logger.info("Scenario configured", scenario=scenario)
-        except requests.RequestException as e:
-            logger.error(
-                "Failed to configure scenario",
-                scenario=scenario,
-                error=str(e),
-            )
+            logger.info("Scenario configured via daemon", scenario=scenario)
+            return
+        except requests.RequestException:
+            logger.info("Routing daemon not available, configuring HAProxy directly")
+        
+        # Fallback: configure HAProxy weights directly via TCP socket
+        if scenario not in SCENARIO_WEIGHTS:
+            raise ValueError(f"Unknown scenario: {scenario}")
+        
+        k3s_weight, knative_weight = SCENARIO_WEIGHTS[scenario]
+        
+        try:
+            import socket
+            haproxy_admin_host = self.haproxy_url.replace("http://", "").split(":")[0]
+            # Use admin socket port (offset by 10000 for local, or 9999 for docker)
+            admin_port = 19999 if "18082" in self.haproxy_url else 9999
+            
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5.0)
+            sock.connect((haproxy_admin_host, admin_port))
+            
+            # Set weights
+            sock.send(f"set server servers/k3s-cluster weight {k3s_weight}\n".encode())
+            sock.recv(4096)
+            sock.send(f"set server servers/serverless-sim weight {knative_weight}\n".encode())
+            sock.recv(4096)
+            sock.close()
+            
+            logger.info("Scenario configured via HAProxy socket", 
+                       scenario=scenario, k3s=k3s_weight, knative=knative_weight)
+        except Exception as e:
+            logger.error("Failed to configure scenario", scenario=scenario, error=str(e))
             raise RuntimeError(f"Failed to configure scenario {scenario}: {e}")
     
     def _get_controller_metrics_snapshot(self) -> Dict[str, float]:
