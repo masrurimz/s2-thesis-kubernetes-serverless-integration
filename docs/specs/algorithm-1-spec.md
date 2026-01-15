@@ -77,7 +77,7 @@ Procedure:
 | slo_threshold | `controller/monitoring_v2/slo_monitor.py` | `SLOConfig.p99_threshold_ms` (200.0) |
 | window_size | `controller/monitoring_v2/slo_monitor.py` | `SLOConfig.violation_window_sec` (30) |
 | weights_current | `controller/intelligent_router/algorithm1_controller.py` | `Algorithm1Controller.current_weights` |
-| prediction | `controller/prediction_engine/server.py` | `PredictionServer.predict()` response |
+| prediction | `controller/prediction/prediction_server.py` | `POST /predict` response |
 | WEIGHT_STEP | `controller/intelligent_router/algorithm1_controller.py` | `Algorithm1Config.weight_step` (10) |
 | COOLDOWN | `controller/intelligent_router/algorithm1_controller.py` | `Algorithm1Config.cooldown_sec` (15) |
 | HEALTHY_MARGIN | `controller/intelligent_router/algorithm1_controller.py` | `Algorithm1Config.healthy_margin` (0.7) |

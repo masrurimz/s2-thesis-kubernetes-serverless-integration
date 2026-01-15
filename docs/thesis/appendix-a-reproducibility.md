@@ -13,7 +13,7 @@ This section provides a quick reference to all components involved in the experi
 | Component | Location | Port | Description |
 |-----------|----------|------|-------------|
 | **routing_daemon** | `controller/daemon/routing_daemon.py` | 9104 | Main daemon running Algorithm 1 with scenario configs |
-| **GRU prediction server** | `controller/prediction_engine/server.py` | 8090 | Serves load predictions from trained GRU model |
+| **GRU prediction server** | `controller/prediction/prediction_server.py` | 8090 | Serves load predictions from trained GRU model |
 | **Algorithm1Controller** | `controller/intelligent_router/algorithm1_controller.py` | - | Core SLO-aware routing logic |
 | **SLOMonitor** | `controller/monitoring_v2/slo_monitor.py` | - | Monitors p99 latency and detects violations |
 | **HAProxy weight adjuster** | `controller/intelligent_router/weight_adjuster.py` | 9999 (socket) | Adjusts HAProxy backend weights |

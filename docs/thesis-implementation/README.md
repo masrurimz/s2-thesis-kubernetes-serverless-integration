@@ -61,9 +61,9 @@ The thesis demonstrates a novel hybrid architecture that:
 
 ### 4. SLO-Aware Routing
 - **Metric**: 99th percentile tail latency monitoring
-- **Threshold**: 5-second SLO violation detection window
+- **Threshold**: 30-second SLO violation detection window (per `SLOConfig.violation_window_sec`)
 - **Algorithm**: Routing Controller (Algorithm 1 from thesis)
-- **Decision**: Binary routing between K8s and serverless
+- **Decision**: Weighted routing between K8s and serverless (5-95% range)
 
 ### 5. Comprehensive Evaluation
 - **Predictor**: RMSE accuracy measurement
