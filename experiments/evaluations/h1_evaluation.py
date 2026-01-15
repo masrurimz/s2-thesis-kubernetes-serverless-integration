@@ -76,6 +76,7 @@ class H1Evaluator:
         results_dir: Optional[Path] = None,
         routing_daemon_url: str = "http://localhost:9104",
         prometheus_url: str = "http://localhost:9090",
+        haproxy_url: str = "http://localhost:8082",
     ):
         self.results_dir = results_dir or Path("results/evaluations/h1")
         self.results_dir.mkdir(parents=True, exist_ok=True)
@@ -83,6 +84,7 @@ class H1Evaluator:
         self.results: List[ScenarioResult] = []
         
         self.routing_daemon_url = routing_daemon_url.rstrip("/")
+        self.haproxy_url = haproxy_url.rstrip("/")
         self.prometheus = PrometheusClient(prometheus_url)
         self.k6_runner = K6Runner()
     
@@ -202,6 +204,7 @@ class H1Evaluator:
             workload=workload,
             scenario=scenario,
             duration_sec=self.RUN_DURATION_SEC,
+            target_url=self.haproxy_url,
         )
         
         if not k6_result.success:
@@ -270,15 +273,53 @@ class H1Evaluator:
     
     def _configure_scenario(self, scenario: str) -> None:
         """Configure routing daemon for the specified scenario."""
+        # Scenario weight mappings
+        SCENARIO_WEIGHTS = {
+            "s1-k8s-only": (100, 0),
+            "s2-serverless-only": (0, 100),
+            "s3-hybrid-reactive": (80, 20),
+            "s4-hybrid-predictive": (80, 20),
+        }
+        
+        # Try routing daemon first
         try:
             response = requests.post(
                 f"{self.routing_daemon_url}/set_scenario",
                 json={"scenario": scenario},
-                timeout=10,
+                timeout=5,
             )
             response.raise_for_status()
-            logger.info("Scenario configured", scenario=scenario)
-        except requests.RequestException as e:
+            logger.info("Scenario configured via daemon", scenario=scenario)
+            return
+        except requests.RequestException:
+            logger.info("Routing daemon not available, configuring HAProxy directly")
+        
+        # Fallback: configure HAProxy weights directly via TCP socket
+        if scenario not in SCENARIO_WEIGHTS:
+            raise ValueError(f"Unknown scenario: {scenario}")
+        
+        k3s_weight, knative_weight = SCENARIO_WEIGHTS[scenario]
+        
+        try:
+            import socket
+            haproxy_admin_host = self.haproxy_url.replace("http://", "").split(":")[0]
+            # Use admin socket port (offset by 10000 for local, or 9999 for docker)
+            admin_port = 19999 if "18082" in self.haproxy_url else 9999
+            
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5.0)
+            sock.connect((haproxy_admin_host, admin_port))
+            
+            # Set weights
+            sock.send(f"set server servers/k3s-cluster weight {k3s_weight}\n".encode())
+            sock.recv(4096)
+            sock.send(f"set server servers/serverless-sim weight {knative_weight}\n".encode())
+            sock.recv(4096)
+            sock.close()
+            
+            logger.info("Scenario configured via HAProxy socket", 
+                       scenario=scenario, k3s=k3s_weight, knative=knative_weight)
+        except Exception as e:
             logger.error("Failed to configure scenario", scenario=scenario, error=str(e))
             raise RuntimeError(f"Failed to configure scenario {scenario}: {e}")
     
