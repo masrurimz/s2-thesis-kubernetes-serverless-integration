@@ -25,14 +25,14 @@ export let options = {
   },
 };
 
-// Test endpoints
-const HYBRID_ENDPOINT = 'http://localhost:8082';
-const K3S_ENDPOINT = 'http://localhost:8080';
-const KNATIVE_ENDPOINT = 'http://localhost:8081';
+// Test endpoints - use environment variables for flexibility
+const HYBRID_ENDPOINT = __ENV.TARGET_URL || 'http://localhost:8082';
+const K3S_ENDPOINT = __ENV.K3S_URL || 'http://localhost:8080';
+const KNATIVE_ENDPOINT = __ENV.KNATIVE_URL || 'http://localhost:8081';
 
 export default function () {
-  // Test hybrid endpoint (primary test)
-  let hybridResponse = http.get(HYBRID_ENDPOINT);
+  // Test hybrid endpoint (primary test) - use /health endpoint
+  let hybridResponse = http.get(HYBRID_ENDPOINT + '/health');
   
   // Record metrics
   check(hybridResponse, {
