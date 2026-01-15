@@ -249,7 +249,7 @@ class HAProxyWeightAdjuster:
             
     def set_weights(self, k3s_weight: int, knative_weight: int) -> bool:
         """
-        Set backend server weights in HAProxy via HTTP stats interface.
+        Set backend server weights in HAProxy via socket or HTTP.
         
         Args:
             k3s_weight: Weight for K3s backend (0-100)
@@ -277,8 +277,11 @@ class HAProxyWeightAdjuster:
                                 k3s=k3s_weight, knative=knative_weight)
                     return True
                     
-            # Use HTTP stats interface for weight adjustment
-            success = self._set_weights_via_http(k3s_weight, knative_weight)
+            # Try socket first (more reliable), then HTTP as fallback
+            success = self._set_weights_via_socket(k3s_weight, knative_weight)
+            if not success:
+                logger.warning("Socket weight setting failed, trying HTTP")
+                success = self._set_weights_via_http(k3s_weight, knative_weight)
             
             if success:
                 # Verify weights were set correctly
@@ -303,6 +306,35 @@ class HAProxyWeightAdjuster:
                 
         except Exception as e:
             logger.error("Weight adjustment failed", error=str(e))
+            return False
+    
+    def _set_weights_via_socket(self, k3s_weight: int, knative_weight: int) -> bool:
+        """Set weights using HAProxy admin socket (TCP or Unix)."""
+        if not self.socket_available:
+            logger.debug("Socket not available for weight setting")
+            return False
+            
+        try:
+            # Set K3s server weight
+            k3s_cmd = f"set server {self.backend_name}/{self.k3s_server} weight {k3s_weight}"
+            k3s_response = self._send_command(k3s_cmd)
+            if k3s_response is None:
+                logger.error("Failed to set K3s weight via socket", weight=k3s_weight)
+                return False
+            
+            # Set Knative server weight
+            knative_cmd = f"set server {self.backend_name}/{self.knative_server} weight {knative_weight}"
+            knative_response = self._send_command(knative_cmd)
+            if knative_response is None:
+                logger.error("Failed to set Knative weight via socket", weight=knative_weight)
+                return False
+            
+            logger.debug("Weight commands sent via socket successfully",
+                        k3s=k3s_weight, knative=knative_weight)
+            return True
+            
+        except Exception as e:
+            logger.error("Socket weight setting failed", error=str(e))
             return False
             
     def _set_weights_via_http(self, k3s_weight: int, knative_weight: int) -> bool:
