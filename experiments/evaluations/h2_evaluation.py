@@ -21,11 +21,11 @@ import requests
 import structlog
 import sys
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "controller"))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from controller.metrics.prometheus_client import PrometheusClient
-from controller.workloads.k6_runner import K6Runner
+from metrics.prometheus_client import PrometheusClient
+from workloads.k6_runner import K6Runner
 from experiment_logger import ExperimentLogger
 
 logger = structlog.get_logger(__name__)
