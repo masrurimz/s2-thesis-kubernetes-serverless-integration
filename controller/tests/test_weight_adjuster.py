@@ -107,7 +107,7 @@ class TestTCPSocketConnection:
         """Test TCP command when connection refused."""
         with patch.object(HAProxyWeightAdjuster, '_test_socket_connectivity', return_value=False):
             with patch.object(HAProxyWeightAdjuster, '_test_tcp_socket_connectivity', return_value=False):
-                adjuster = HAProxyWeightAdjuster(tcp_socket_port=19999)
+                adjuster = HAProxyWeightAdjuster(tcp_socket_port=65432)
         
         result = adjuster._send_command_tcp("show info")
         assert result is None
