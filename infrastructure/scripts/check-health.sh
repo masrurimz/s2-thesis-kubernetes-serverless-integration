@@ -18,9 +18,9 @@ check_component() {
     local name="$1"
     local url="$2"
     local expected_code="${3:-200}"
-    
+
     echo -n "Checking $name... "
-    
+
     if curl -s -o /dev/null -w "%{http_code}" "$url" | grep -q "$expected_code"; then
         echo -e "${GREEN}✅ UP${NC}"
         return 0
@@ -30,10 +30,18 @@ check_component() {
     fi
 }
 
-check_knative_component() {
-    echo -n "Checking Knative Serverless... "
-    
-    if curl -s -o /dev/null -w "%{http_code}" -H "Host: serverless-sim.default.localhost" "http://localhost:8081" | grep -q "200"; then
+NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' 2>/dev/null || true)
+if [[ -z "$NODE_IP" ]]; then
+    NODE_IP="127.0.0.1"
+fi
+
+K3S_WARM_URL="http://${NODE_IP}:30080/health"
+SERVERLESS_ACTIVATOR_URL="http://${NODE_IP}:30081/health"
+
+check_serverless_component() {
+    echo -n "Checking Serverless Activator... "
+
+    if curl -s -o /dev/null -w "%{http_code}" "$SERVERLESS_ACTIVATOR_URL" | grep -q "200"; then
         echo -e "${GREEN}✅ UP${NC}"
         return 0
     else
@@ -62,17 +70,17 @@ echo "📋 Component Status:"
 echo "-------------------"
 
 # Core components
-check_component "K3s Backend" "http://localhost:8080" || K3S_FAIL=1
-check_knative_component || KNATIVE_FAIL=1
-check_component "HAProxy Router" "http://localhost:8082" || HAPROXY_FAIL=1
-check_component "HAProxy Stats" "http://localhost:8404/stats" || STATS_FAIL=1
+check_component "K3s Backend" "$K3S_WARM_URL" || K3S_FAIL=1
+check_serverless_component || SERVERLESS_FAIL=1
+check_component "HAProxy Router" "http://localhost:18082/health" || HAPROXY_FAIL=1
+check_component "HAProxy Stats" "http://localhost:18404/stats" || STATS_FAIL=1
 
 echo ""
 echo "📊 HAProxy Backend Status:"
 echo "--------------------------"
 
 # Get HAProxy stats for backend validation
-HAPROXY_STATS=$(curl -s "http://localhost:8404/stats;csv" 2>/dev/null)
+HAPROXY_STATS=$(curl -s "http://localhost:18404/stats;csv" 2>/dev/null)
 if [[ -n "$HAPROXY_STATS" ]]; then
     K3S_STATUS=$(echo "$HAPROXY_STATS" | grep "servers,k3s-cluster" | cut -d',' -f18)
     KNATIVE_STATUS=$(echo "$HAPROXY_STATS" | grep "servers,serverless-sim" | cut -d',' -f18)
@@ -146,7 +154,7 @@ echo "----------------------"
 
 # Test response time with a quick request
 echo -n "Testing hybrid endpoint response time... "
-RESPONSE_TIME=$(curl -s -o /dev/null -w "%{time_total}" "http://localhost:8082" 2>/dev/null)
+RESPONSE_TIME=$(curl -s -o /dev/null -w "%{time_total}" "http://localhost:18082/health" 2>/dev/null)
 if [[ -n "$RESPONSE_TIME" ]]; then
     RESPONSE_MS=$(echo "$RESPONSE_TIME * 1000" | bc -l | cut -d'.' -f1)
     echo "${RESPONSE_MS}ms"
@@ -175,7 +183,7 @@ FAILURES=0
 WARNINGS=0
 
 [[ -n "$K3S_FAIL" ]] && ((FAILURES++))
-[[ -n "$KNATIVE_FAIL" ]] && ((FAILURES++))
+[[ -n "$SERVERLESS_FAIL" ]] && ((FAILURES++))
 [[ -n "$HAPROXY_FAIL" ]] && ((FAILURES++))
 [[ -n "$STATS_FAIL" ]] && ((FAILURES++))
 [[ -n "$HAPROXY_METRICS_FAIL" ]] && ((FAILURES++))

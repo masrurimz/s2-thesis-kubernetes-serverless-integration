@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: serverless-activator
+  labels:
+    app: serverless-activator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: serverless-activator
+  template:
+    metadata:
+      labels:
+        app: serverless-activator
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8081"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: serverless-activator
+      containers:
+        - name: serverless-activator
+          image: k3d-registry.localhost:5000/serverless-activator:latest
+          ports:
+            - containerPort: 8081
+              name: http
+          env:
+            - name: TARGET_SERVICE
+              value: "test-app-cold.default.svc.cluster.local:80"
+            - name: DEPLOYMENT_NAME
+              value: "test-app-cold"
+            - name: NAMESPACE
+              value: "default"
+            - name: IDLE_TTL
+              value: "30s"
+          resources:
+            limits:
+              cpu: 50m
+              memory: 32Mi
+            requests:
+              cpu: 10m
+              memory: 16Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 2
+            periodSeconds: 5
