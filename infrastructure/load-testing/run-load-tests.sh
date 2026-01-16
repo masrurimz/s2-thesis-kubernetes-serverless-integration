@@ -39,14 +39,14 @@ check_prerequisites() {
     fi
     
     # Check if system is running
-    if ! curl -s http://localhost:8082 > /dev/null; then
-        log_error "Hybrid system not running on port 8082"
+    if ! curl -s http://localhost:18082 > /dev/null; then
+        log_error "Hybrid system not running on port 18082"
         log_error "Please start the system first: cd ../infrastructure/haproxy && docker-compose up -d"
         exit 1
     fi
     
     # Check if monitoring is available
-    if ! curl -s http://localhost:8404/stats > /dev/null; then
+    if ! curl -s http://localhost:18404/stats > /dev/null; then
         log_warning "HAProxy stats not accessible - some metrics may be limited"
     fi
     
@@ -74,7 +74,7 @@ run_system_baseline() {
     echo -e "\n=== PERFORMANCE BASELINE ===" >> "$RESULTS_DIR/load-test-baseline-$TIMESTAMP.txt"
     for i in {1..5}; do
         echo "Request $i:" >> "$RESULTS_DIR/load-test-baseline-$TIMESTAMP.txt"
-        time curl -s http://localhost:8082 > /dev/null 2>> "$RESULTS_DIR/load-test-baseline-$TIMESTAMP.txt"
+        time curl -s http://localhost:18082 > /dev/null 2>> "$RESULTS_DIR/load-test-baseline-$TIMESTAMP.txt"
     done
     
     log_success "Baseline recorded"
@@ -169,7 +169,7 @@ record_post_test_status() {
     
     # HAProxy stats
     echo -e "\n=== FINAL HAPROXY STATS ===" >> "$RESULTS_DIR/load-test-final-$TIMESTAMP.txt"
-    curl -s "http://localhost:8404/stats;csv" >> "$RESULTS_DIR/load-test-final-$TIMESTAMP.txt" 2>&1 || echo "HAProxy stats not available"
+    curl -s "http://localhost:18404/stats;csv" >> "$RESULTS_DIR/load-test-final-$TIMESTAMP.txt" 2>&1 || echo "HAProxy stats not available"
     
     log_success "Post-test status recorded"
 }

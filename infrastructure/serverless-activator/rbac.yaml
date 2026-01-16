@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: serverless-activator
+  labels:
+    app: serverless-activator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: serverless-activator
+  labels:
+    app: serverless-activator
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments/scale"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: serverless-activator
+  labels:
+    app: serverless-activator
+subjects:
+  - kind: ServiceAccount
+    name: serverless-activator
+    namespace: default
+roleRef:
+  kind: Role
+  name: serverless-activator
+  apiGroup: rbac.authorization.k8s.io

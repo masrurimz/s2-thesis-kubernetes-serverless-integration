@@ -28,10 +28,10 @@ export let options = {
 };
 
 // Test endpoints
-const HYBRID_ENDPOINT = 'http://localhost:8082';
+const HYBRID_ENDPOINT = 'http://localhost:18082';
 const K3S_ENDPOINT = 'http://localhost:8080';
 const KNATIVE_ENDPOINT = 'http://localhost:8081';
-const HAPROXY_STATS = 'http://localhost:8404/stats';
+const HAPROXY_STATS = 'http://localhost:18404/stats';
 
 // Stability tracking
 let consecutiveErrors = 0;
