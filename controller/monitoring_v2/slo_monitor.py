@@ -102,17 +102,17 @@ class SLOMonitor:
             return "MAINTAIN"
     
     def _get_p99_latency(self) -> float:
-        """Query Prometheus for p99 latency, fallback to HAProxy stats."""
-        # Try Prometheus first
-        p99 = self._get_p99_from_prometheus()
-        if p99 > 0:
-            return p99
-        
-        # Fallback to HAProxy stats
+        """Query HAProxy stats for latency, fallback to Prometheus."""
+        # HAProxy is more reliable for our setup - use it first
         if self.config.use_haproxy_fallback:
             p99 = self._get_latency_from_haproxy()
             if p99 > 0:
                 return p99
+        
+        # Fallback to Prometheus if HAProxy fails
+        p99 = self._get_p99_from_prometheus()
+        if p99 > 0:
+            return p99
         
         return self._last_p99
     
