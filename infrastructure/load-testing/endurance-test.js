@@ -27,11 +27,9 @@ export let options = {
   },
 };
 
-// Test endpoints
-const HYBRID_ENDPOINT = 'http://localhost:18082';
-const K3S_ENDPOINT = 'http://localhost:8080';
-const KNATIVE_ENDPOINT = 'http://localhost:8081';
-const HAPROXY_STATS = 'http://localhost:18404/stats';
+// Test endpoints - use environment variables for flexibility
+const HYBRID_ENDPOINT = __ENV.TARGET_URL || 'http://localhost:18082';
+const HAPROXY_STATS = __ENV.HAPROXY_STATS_URL || 'http://localhost:18404/stats';
 
 // Stability tracking
 let consecutiveErrors = 0;
@@ -93,14 +91,12 @@ export default function () {
 function performHealthCheck() {
   console.log(`\n🔍 Health Check at ${Math.floor((Date.now() - testStartTime) / 1000 / 60)} minutes:`);
   
-  // Test individual backends
-  let k3sHealth = http.get(K3S_ENDPOINT);
-  let knativeHealth = http.get(KNATIVE_ENDPOINT, {
-    headers: { 'Host': 'serverless-sim.default.localhost' }
-  });
+  // Test hybrid endpoint health
+  let hybridHealth = http.get(HYBRID_ENDPOINT + '/health');
+  let statsHealth = http.get(HAPROXY_STATS);
   
-  console.log(`  K3s Backend: ${k3sHealth.status === 200 ? '✅' : '❌'} (${k3sHealth.status})`);
-  console.log(`  Knative Backend: ${knativeHealth.status === 200 ? '✅' : '❌'} (${knativeHealth.status})`);
+  console.log(`  Hybrid Endpoint: ${hybridHealth.status === 200 ? '✅' : '❌'} (${hybridHealth.status})`);
+  console.log(`  HAProxy Stats: ${statsHealth.status === 200 ? '✅' : '❌'} (${statsHealth.status})`);
   console.log(`  Max Consecutive Errors: ${maxConsecutiveErrors}`);
 }
 

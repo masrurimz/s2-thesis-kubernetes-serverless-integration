@@ -6,6 +6,10 @@
 
 set -e
 
+# Load centralized configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/../load-config.sh"
+
 if [ $# -ne 2 ]; then
     echo "Usage: $0 <k3s_weight> <serverless_weight>"
     echo "Example: $0 60 40  # 60% k3s, 40% serverless"
@@ -37,4 +41,4 @@ echo "show stat" | docker exec -i $CONTAINER_NAME socat - /tmp/haproxy.sock | gr
 
 echo ""
 echo "Weight adjustment complete!"
-echo "View stats at: http://localhost:8404/stats"
+echo "View stats at: ${HAPROXY_STATS_URL}"

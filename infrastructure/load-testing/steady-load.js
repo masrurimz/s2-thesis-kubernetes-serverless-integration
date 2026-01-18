@@ -27,8 +27,7 @@ export let options = {
 
 // Test endpoints - use environment variables for flexibility
 const HYBRID_ENDPOINT = __ENV.TARGET_URL || 'http://localhost:18082';
-const K3S_ENDPOINT = __ENV.K3S_URL || 'http://localhost:8080';
-const KNATIVE_ENDPOINT = __ENV.KNATIVE_URL || 'http://localhost:8081';
+const HAPROXY_STATS = __ENV.HAPROXY_STATS_URL || 'http://localhost:18404/stats';
 
 export default function () {
   // Test hybrid endpoint (primary test) - use /health endpoint
