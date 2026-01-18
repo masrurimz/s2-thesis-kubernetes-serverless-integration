@@ -37,8 +37,8 @@ export let options = {
     },
     idle_1: {
       executor: 'constant-arrival-rate',
-      rate: 0,
-      timeUnit: '1s',
+      rate: 1,
+      timeUnit: '20s',  // 1 request per 20s = essentially idle
       duration: '20s',
       preAllocatedVUs: 1,
       maxVUs: 1,
@@ -68,8 +68,8 @@ export let options = {
     },
     idle_2: {
       executor: 'constant-arrival-rate',
-      rate: 0,
-      timeUnit: '1s',
+      rate: 1,
+      timeUnit: '20s',
       duration: '20s',
       preAllocatedVUs: 1,
       maxVUs: 1,
@@ -99,8 +99,8 @@ export let options = {
     },
     idle_3: {
       executor: 'constant-arrival-rate',
-      rate: 0,
-      timeUnit: '1s',
+      rate: 1,
+      timeUnit: '20s',
       duration: '20s',
       preAllocatedVUs: 1,
       maxVUs: 1,
