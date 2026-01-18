@@ -4,6 +4,10 @@
 
 set -e
 
+# Load centralized configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/../load-config.sh"
+
 echo "🔍 Sprint 1 Hybrid System Health Check"
 echo "======================================"
 
@@ -30,18 +34,14 @@ check_component() {
     fi
 }
 
-NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' 2>/dev/null || true)
-if [[ -z "$NODE_IP" ]]; then
-    NODE_IP="127.0.0.1"
-fi
-
-K3S_WARM_URL="http://${NODE_IP}:30080/health"
-SERVERLESS_ACTIVATOR_URL="http://${NODE_IP}:30081/health"
+# Use centralized config values (K3D_NODE_IP already detected by load-config.sh)
+K3S_WARM_HEALTH_URL="${K3S_WARM_URL}/health"
+SERVERLESS_ACTIVATOR_HEALTH_URL="${K3S_ACTIVATOR_URL}/health"
 
 check_serverless_component() {
     echo -n "Checking Serverless Activator... "
 
-    if curl -s -o /dev/null -w "%{http_code}" "$SERVERLESS_ACTIVATOR_URL" | grep -q "200"; then
+    if curl -s -o /dev/null -w "%{http_code}" "$SERVERLESS_ACTIVATOR_HEALTH_URL" | grep -q "200"; then
         echo -e "${GREEN}✅ UP${NC}"
         return 0
     else
@@ -56,7 +56,7 @@ check_metrics() {
     
     echo -n "Checking $service metrics... "
     
-    if curl -s "http://localhost:9090/api/v1/query?query=$query" | jq -r '.status' | grep -q "success"; then
+    if curl -s "${PROMETHEUS_URL}/api/v1/query?query=$query" | jq -r '.status' | grep -q "success"; then
         echo -e "${GREEN}✅ OK${NC}"
         return 0
     else
@@ -70,17 +70,17 @@ echo "📋 Component Status:"
 echo "-------------------"
 
 # Core components
-check_component "K3s Backend" "$K3S_WARM_URL" || K3S_FAIL=1
+check_component "K3s Backend" "$K3S_WARM_HEALTH_URL" || K3S_FAIL=1
 check_serverless_component || SERVERLESS_FAIL=1
-check_component "HAProxy Router" "http://localhost:18082/health" || HAPROXY_FAIL=1
-check_component "HAProxy Stats" "http://localhost:18404/stats" || STATS_FAIL=1
+check_component "HAProxy Router" "${HAPROXY_URL}/health" || HAPROXY_FAIL=1
+check_component "HAProxy Stats" "${HAPROXY_STATS_URL}" || STATS_FAIL=1
 
 echo ""
 echo "📊 HAProxy Backend Status:"
 echo "--------------------------"
 
 # Get HAProxy stats for backend validation
-HAPROXY_STATS=$(curl -s "http://localhost:18404/stats;csv" 2>/dev/null)
+HAPROXY_STATS=$(curl -s "${HAPROXY_STATS_CSV_URL}" 2>/dev/null)
 if [[ -n "$HAPROXY_STATS" ]]; then
     K3S_STATUS=$(echo "$HAPROXY_STATS" | grep "servers,k3s-cluster" | cut -d',' -f18)
     KNATIVE_STATUS=$(echo "$HAPROXY_STATS" | grep "servers,serverless-sim" | cut -d',' -f18)
@@ -154,7 +154,7 @@ echo "----------------------"
 
 # Test response time with a quick request
 echo -n "Testing hybrid endpoint response time... "
-RESPONSE_TIME=$(curl -s -o /dev/null -w "%{time_total}" "http://localhost:18082/health" 2>/dev/null)
+RESPONSE_TIME=$(curl -s -o /dev/null -w "%{time_total}" "${HAPROXY_URL}/health" 2>/dev/null)
 if [[ -n "$RESPONSE_TIME" ]]; then
     RESPONSE_MS=$(echo "$RESPONSE_TIME * 1000" | bc -l | cut -d'.' -f1)
     echo "${RESPONSE_MS}ms"

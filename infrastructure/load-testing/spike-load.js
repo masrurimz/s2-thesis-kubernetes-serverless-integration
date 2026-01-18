@@ -29,9 +29,9 @@ export let options = {
   },
 };
 
-// Test endpoints
-const HYBRID_ENDPOINT = 'http://localhost:18082';
-const HAPROXY_STATS = 'http://localhost:18404/stats';
+// Test endpoints - use environment variables for flexibility
+const HYBRID_ENDPOINT = __ENV.TARGET_URL || 'http://localhost:18082';
+const HAPROXY_STATS = __ENV.HAPROXY_STATS_URL || 'http://localhost:18404/stats';
 
 export default function () {
   // Test hybrid endpoint with spike load
