@@ -1,0 +1,112 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+     execution: local
+        script: stress-slo-violation.js
+        output: -
+
+     scenarios: (100.00%) 3 scenarios, 550 max VUs, 2m20s max duration (incl. graceful stop):
+              * warmup: 10.00 iterations/s for 20s (maxVUs: 20-50, gracefulStop: 30s)
+              * spike: 100.00 iterations/s for 1m0s (maxVUs: 200-500, startTime: 20s, gracefulStop: 30s)
+              * cooldown: 20.00 iterations/s for 30s (maxVUs: 30-50, startTime: 1m20s, gracefulStop: 30s)
+
+time="2026-01-18T23:01:46+07:00" level=info msg="\n🔥 SLO Violation Stress Test" source=console
+time="2026-01-18T23:01:46+07:00" level=info msg="============================" source=console
+time="2026-01-18T23:01:46+07:00" level=info msg="Target: http://localhost:18082" source=console
+time="2026-01-18T23:01:46+07:00" level=info msg="Endpoint: /fib?n=30 (CPU-intensive, saturates at 100+ concurrent)" source=console
+time="2026-01-18T23:01:46+07:00" level=info msg="Goal: Trigger SCALE_OUT decisions by exceeding SLO threshold" source=console
+time="2026-01-18T23:01:46+07:00" level=info source=console
+time="2026-01-18T23:01:46+07:00" level=info msg="Phase A (0-20s): Warmup @ 10 RPS" source=console
+time="2026-01-18T23:01:46+07:00" level=info msg="Phase B (20-80s): Spike @ 100 RPS (should saturate K8s)" source=console
+time="2026-01-18T23:01:46+07:00" level=info msg="Phase C (80-110s): Cooldown @ 20 RPS" source=console
+time="2026-01-18T23:01:46+07:00" level=info source=console
+time="2026-01-18T23:01:46+07:00" level=info msg="⚠️ Health check failed: 503" source=console
+
+running (0m01.0s), 000/230 VUs, 10 complete and 0 interrupted iterations
+warmup     [   5% ] 00/20 VUs  01.0s/20s  10.00 iters/s
+spike    • [   0% ] waiting    19.0s     
+cooldown • [   0% ] waiting    1m19.0s   
+
+running (0m02.0s), 000/230 VUs, 20 complete and 0 interrupted iterations
+warmup     [  10% ] 00/20 VUs  02.0s/20s  10.00 iters/s
+spike    • [   0% ] waiting    18.0s     
+cooldown • [   0% ] waiting    1m18.0s   
+
+running (0m03.0s), 000/230 VUs, 30 complete and 0 interrupted iterations
+warmup     [  15% ] 00/20 VUs  03.0s/20s  10.00 iters/s
+spike    • [   0% ] waiting    17.0s     
+cooldown • [   0% ] waiting    1m17.0s   
+
+running (0m04.0s), 000/230 VUs, 40 complete and 0 interrupted iterations
+warmup     [  20% ] 00/20 VUs  04.0s/20s  10.00 iters/s
+spike    • [   0% ] waiting    16.0s     
+cooldown • [   0% ] waiting    1m16.0s   
+
+running (0m05.0s), 000/230 VUs, 50 complete and 0 interrupted iterations
+warmup     [  25% ] 00/20 VUs  05.0s/20s  10.00 iters/s
+spike    • [   0% ] waiting    15.0s     
+cooldown • [   0% ] waiting    1m15.0s   
+
+running (0m06.0s), 000/230 VUs, 60 complete and 0 interrupted iterations
+warmup     [  30% ] 00/20 VUs  06.0s/20s  10.00 iters/s
+spike    • [   0% ] waiting    14.0s     
+cooldown • [   0% ] waiting    1m14.0s   
+
+running (0m07.0s), 000/230 VUs, 70 complete and 0 interrupted iterations
+warmup     [  35% ] 00/20 VUs  07.0s/20s  10.00 iters/s
+spike    • [   0% ] waiting    13.0s     
+cooldown • [   0% ] waiting    1m13.0s   
+
+running (0m08.0s), 000/230 VUs, 80 complete and 0 interrupted iterations
+warmup     [  40% ] 00/20 VUs  08.0s/20s  10.00 iters/s
+spike    • [   0% ] waiting    12.0s     
+cooldown • [   0% ] waiting    1m12.0s   
+
+running (0m09.0s), 000/230 VUs, 90 complete and 0 interrupted iterations
+warmup     [  45% ] 00/20 VUs  09.0s/20s  10.00 iters/s
+spike    • [   0% ] waiting    11.0s     
+cooldown • [   0% ] waiting    1m11.0s   
+
+running (0m10.0s), 000/230 VUs, 100 complete and 0 interrupted iterations
+warmup     [  50% ] 00/20 VUs  10.0s/20s  10.00 iters/s
+spike    • [   0% ] waiting    10.0s     
+cooldown • [   0% ] waiting    1m10.0s   
+
+running (0m11.0s), 000/230 VUs, 110 complete and 0 interrupted iterations
+warmup     [  55% ] 00/20 VUs  11.0s/20s  10.00 iters/s
+spike    • [   0% ] waiting    09.0s     
+cooldown • [   0% ] waiting    1m09.0s   
+
+running (0m12.0s), 000/230 VUs, 120 complete and 0 interrupted iterations
+warmup     [  60% ] 00/20 VUs  12.0s/20s  10.00 iters/s
+spike    • [   0% ] waiting    08.0s     
+cooldown • [   0% ] waiting    1m08.0s   
+
+running (0m13.0s), 000/230 VUs, 130 complete and 0 interrupted iterations
+warmup     [  65% ] 00/20 VUs  13.0s/20s  10.00 iters/s
+spike    • [   0% ] waiting    07.0s     
+cooldown • [   0% ] waiting    1m07.0s   
+
+running (0m14.0s), 000/230 VUs, 140 complete and 0 interrupted iterations
+warmup     [  70% ] 00/20 VUs  14.0s/20s  10.00 iters/s
+spike    • [   0% ] waiting    06.0s     
+cooldown • [   0% ] waiting    1m06.0s   
+
+running (0m15.0s), 000/230 VUs, 150 complete and 0 interrupted iterations
+warmup     [  75% ] 00/20 VUs  15.0s/20s  10.00 iters/s
+spike    • [   0% ] waiting    05.0s     
+cooldown • [   0% ] waiting    1m05.0s   
+
+running (0m16.0s), 000/230 VUs, 160 complete and 0 interrupted iterations
+warmup     [  80% ] 00/20 VUs  16.0s/20s  10.00 iters/s
+spike    • [   0% ] waiting    04.0s     
+cooldown • [   0% ] waiting    1m04.0s   
+
+running (0m17.0s), 000/230 VUs, 170 complete and 0 interrupted iterations
+warmup     [  85% ] 00/20 VUs  17.0s/20s  10.00 iters/s
+spike    • [   0% ] waiting    03.0s     
+cooldown • [   0% ] waiting    1m03.0s   
