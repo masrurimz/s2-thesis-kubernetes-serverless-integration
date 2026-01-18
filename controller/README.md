@@ -2,6 +2,24 @@
 
 Intelligent routing controller for hybrid K8s-Serverless system with workload prediction.
 
+## Configuration
+
+Configuration is managed via `config.py` and `.env`. 
+
+Environment variables in `.env` override defaults:
+
+```bash
+# HAProxy Configuration
+HAPROXY_HOST=localhost
+HAPROXY_SOCKET_PORT=19999
+HAPROXY_STATS_PORT=18404
+HAPROXY_HTTP_PORT=18082
+
+# GRU Prediction Service
+GRU_HOST=localhost
+GRU_PORT=8090
+```
+
 ## Components
 
 | Package | Purpose | Status |

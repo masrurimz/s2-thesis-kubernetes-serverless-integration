@@ -34,6 +34,8 @@ from intelligent_router.algorithm1_controller import Algorithm1Controller, Algor
 from intelligent_router.weight_adjuster import HAProxyWeightAdjuster
 from daemon.gru_client import GRUClient
 
+from config import settings
+
 logger = structlog.get_logger(__name__)
 
 
@@ -503,50 +505,50 @@ def main():
     parser.add_argument(
         "--scenario",
         type=str,
-        default="s3-hybrid-reactive",
-        help="Scenario: s1-k8s-only, s2-serverless-only, s3-hybrid-reactive, s4-hybrid-predictive",
+        default=settings.DEFAULT_SCENARIO,
+        help=f"Scenario (default: {settings.DEFAULT_SCENARIO})",
     )
     parser.add_argument(
         "--interval",
         type=int,
-        default=15,
-        help="Decision interval in seconds (default: 15)",
+        default=settings.DAEMON_DECISION_INTERVAL,
+        help=f"Decision interval in seconds (default: {settings.DAEMON_DECISION_INTERVAL})",
     )
     parser.add_argument(
         "--prometheus-url",
         type=str,
-        default="http://localhost:9090",
-        help="Prometheus server URL",
+        default=settings.PROMETHEUS_URL,
+        help=f"Prometheus server URL (default: {settings.PROMETHEUS_URL})",
     )
     parser.add_argument(
         "--haproxy-host",
         type=str,
-        default="localhost",
-        help="HAProxy admin socket host",
+        default=settings.HAPROXY_HOST,
+        help=f"HAProxy admin socket host (default: {settings.HAPROXY_HOST})",
     )
     parser.add_argument(
         "--haproxy-port",
         type=int,
-        default=9999,
-        help="HAProxy admin socket port",
+        default=settings.HAPROXY_SOCKET_PORT,
+        help=f"HAProxy admin socket port (default: {settings.HAPROXY_SOCKET_PORT})",
     )
     parser.add_argument(
         "--haproxy-stats",
         type=str,
-        default="http://localhost:8404/stats;csv",
-        help="HAProxy stats URL",
+        default=settings.HAPROXY_STATS_URL,
+        help=f"HAProxy stats URL (default: {settings.HAPROXY_STATS_URL})",
     )
     parser.add_argument(
         "--gru-url",
         type=str,
-        default="http://localhost:8090",
-        help="GRU prediction server URL",
+        default=settings.GRU_SERVICE_URL,
+        help=f"GRU prediction server URL (default: {settings.GRU_SERVICE_URL})",
     )
     parser.add_argument(
         "--api-port",
         type=int,
-        default=9104,
-        help="HTTP API port (default: 9104)",
+        default=settings.DAEMON_API_PORT,
+        help=f"HTTP API port (default: {settings.DAEMON_API_PORT})",
     )
     
     args = parser.parse_args()
