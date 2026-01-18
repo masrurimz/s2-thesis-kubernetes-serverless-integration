@@ -39,71 +39,81 @@ This document presents the experimental validation of two key hypotheses:
 
 ## Simulation Architecture
 
-### How the Serverless Simulation Works
+### Design Philosophy
 
-The experiment uses a **Serverless Activator** component that simulates real serverless behavior:
+The hybrid routing system follows a **control-plane / data-plane separation**:
+
+- **Data Plane (HAProxy):** Routes traffic based on weights
+- **Control Plane (Algorithm 1):** Makes routing decisions, adjusts weights
+
+**Default Behavior:** 100% traffic to K8s, serverless enabled ONLY when Algorithm 1 triggers SCALE_OUT.
+
+### Target Architecture (Recommended)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        HAProxy (Router)                              │
-│  Weight: 80% K8s / 20% Serverless (dynamic via Algorithm 1)        │
+│                     HAProxy (Router)                                 │
+│  Default: 100% K8s / 0% Serverless                                  │
+│  SCALE_OUT: Enable serverless, ramp weight (e.g., 80/20 → 60/40)   │
 └─────────────────┬─────────────────────────┬─────────────────────────┘
                   │                         │
                   ▼                         ▼
 ┌─────────────────────────────┐   ┌─────────────────────────────────┐
-│   test-app-warm (K8s)       │   │   Serverless Activator          │
-│   - Always running (warm)   │   │   - Proxy to test-app-cold      │
-│   - 2 replicas              │   │   - Scales 0→1 on request       │
-│   - CPU: 50m-200m           │   │   - Scales 1→0 after IDLE_TTL   │
-│   - Mem: 16Mi-64Mi          │   │   - Exports cold_start metrics  │
-└─────────────────────────────┘   └─────────────┬───────────────────┘
-                                                │
-                                                ▼
-                                  ┌─────────────────────────────────┐
-                                  │   test-app-cold (Serverless)    │
-                                  │   - Starts at 0 replicas        │
-                                  │   - 5s init container delay     │
-                                  │   - Simulates cold start        │
-                                  └─────────────────────────────────┘
+│   test-app-warm (K8s)       │   │   Knative Service (ksvc)        │
+│   - Always running (warm)   │   │   - Native scale-to-zero        │
+│   - 2 replicas              │   │   - Built-in activator          │
+│   - Handles steady-state    │   │   - Cold start = real Knative   │
+│   - CPU: 50m-200m limit     │   │   - Host header routing         │
+└─────────────────────────────┘   └─────────────────────────────────┘
 ```
 
-### Serverless Activator Behavior
+### Current Implementation (Experiment)
 
-| Feature | Implementation | Real Serverless Equivalent |
-|---------|---------------|---------------------------|
-| **Scale to Zero** | Deployment replicas → 0 after IDLE_TTL (30s) | AWS Lambda idle timeout |
-| **Cold Start** | 5s init container + pod scheduling (~7-10s total) | Lambda cold start (100ms-10s) |
-| **Request Buffering** | Activator holds request until pod ready | API Gateway + Lambda |
-| **Auto-scaling** | Deployment 0→1 on first request | Concurrent invocations |
-| **Metrics** | `cold_start_trigger_total`, `cold_start_latency_seconds` | CloudWatch metrics |
+For reproducibility, the experiment uses a **serverless-activator** that simulates Knative behavior:
 
-### Key Components
+| Component | Purpose | Notes |
+|-----------|---------|-------|
+| **test-app-warm** | K8s steady-state backend | Always on, handles baseline |
+| **serverless-activator** | Simulates Knative activator | Scales test-app-cold 0↔1 |
+| **test-app-cold** | Serverless workload | 5s init delay = cold start |
 
-1. **test-app-warm** (K8s steady-state)
-   - Always running with 2 replicas
-   - Handles baseline traffic cost-effectively
-   - Limited CPU causes saturation under spike
+### Why Custom Activator vs Real Knative?
 
-2. **serverless-activator** (Knative-like proxy)
-   - Written in Go, runs in-cluster
-   - Watches `test-app-cold` deployment
-   - Scales up on request, down on idle
-   - Exports Prometheus metrics
-
-3. **test-app-cold** (Serverless workload)
-   - Starts at 0 replicas (scale-to-zero)
-   - 5-second init container simulates cold start
-   - Identical code to test-app-warm
-
-### Why Simulation vs Real Knative?
-
-| Aspect | Simulation | Real Knative |
-|--------|------------|--------------|
-| Cold start control | Exact 5s delay | Variable (100ms-10s) |
+| Aspect | Current (Custom Activator) | Recommended (Real Knative) |
+|--------|---------------------------|---------------------------|
+| Cold start timing | Deterministic 5s | Variable (100ms-10s) |
 | Reproducibility | High | Depends on cluster state |
-| Resource isolation | Same cluster | Same cluster |
-| Metrics | Custom Prometheus | Knative metrics |
-| Complexity | Low | High (CRDs, networking) |
+| Complexity | Lower | Higher (CRDs, Host headers) |
+| Validity | Simulated behavior | Real serverless mechanics |
+| Thesis claim | "Simulates serverless" | "Uses real serverless" |
+
+**Trade-off:** The custom activator provides reproducibility but duplicates Knative's built-in functionality. For production use, real Knative is recommended.
+
+### Algorithm 1 SCALE_OUT Behavior
+
+When Algorithm 1 detects SLO violation or predicts load increase:
+
+```
+1. DETECT:    p99 > 200ms for 30s (or GRU predicts spike)
+2. ENABLE:    Set serverless backend to READY in HAProxy
+3. PRE-WARM:  (Optional) Send synthetic request to trigger activation
+4. RAMP:      Increase serverless weight in steps (95/5 → 85/15 → 75/25...)
+5. MONITOR:   Continue adjusting based on SLO status
+6. SCALE-IN:  When healthy, ramp weights back toward 100/0
+7. DISABLE:   Set serverless backend to MAINT (allows scale-to-zero)
+```
+
+### HAProxy Health Check Consideration
+
+**Important:** HAProxy health checks can prevent Knative scale-to-zero:
+
+```haproxy
+# Current config - checks both backends
+server k3s-cluster ... check inter 5s
+server serverless-sim ... check inter 5s  # ← Can keep Knative warm!
+```
+
+**Recommendation:** Disable serverless backend checks when weight=0, or use `agent-check` for smarter control
 
 ---
 
