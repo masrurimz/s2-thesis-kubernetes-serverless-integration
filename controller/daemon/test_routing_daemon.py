@@ -14,6 +14,7 @@ from daemon.routing_daemon import (
     SCENARIO_CONFIGS,
     ScenarioConfig,
 )
+from config import settings
 from daemon.gru_client import GRUClient, PredictionResult
 from intelligent_router.weight_adjuster import HAProxyWeightAdjuster
 from monitoring_v2.slo_monitor import SLOStatus
@@ -149,6 +150,7 @@ class TestRoutingDaemon:
     
     def test_init_s1_scenario(self, mock_weight_adjuster):
         """Initialize with S1 scenario."""
+        # Use settings defaults for other params
         daemon = RoutingDaemon(scenario="s1-k8s-only")
         
         assert daemon.scenario == Scenario.S1_K8S_ONLY

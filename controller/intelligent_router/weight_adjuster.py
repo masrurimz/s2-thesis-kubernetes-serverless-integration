@@ -13,6 +13,8 @@ from typing import Dict, Optional, Tuple
 import requests
 import structlog
 
+from config import settings
+
 logger = structlog.get_logger(__name__)
 
 
@@ -21,12 +23,12 @@ class HAProxyWeightAdjuster:
     
     def __init__(self, 
                  socket_path: str = "/tmp/haproxy.sock",
-                 tcp_socket_host: str = "localhost",
-                 tcp_socket_port: int = 9999,
+                 tcp_socket_host: str = settings.HAPROXY_HOST,
+                 tcp_socket_port: int = settings.HAPROXY_SOCKET_PORT,
                  backend_name: str = "servers",
                  k3s_server: str = "k3s-cluster",
                  knative_server: str = "serverless-sim",
-                 stats_url: str = "http://localhost:8404/stats;csv"):
+                 stats_url: str = settings.HAPROXY_STATS_URL):
         """
         Initialize HAProxy weight adjuster.
         
@@ -506,11 +508,15 @@ class HAProxyWeightAdjuster:
 
 def main():
     """Test the HAProxy weight adjuster."""
-    adjuster = HAProxyWeightAdjuster()
+    adjuster = HAProxyWeightAdjuster(
+        tcp_socket_host=settings.HAPROXY_HOST,
+        tcp_socket_port=settings.HAPROXY_SOCKET_PORT,
+        stats_url=settings.HAPROXY_STATS_URL
+    )
     
     # Test connection
     if not adjuster.test_connection():
-        print("HAProxy admin socket not available")
+        print(f"HAProxy admin socket not available at {settings.HAPROXY_HOST}:{settings.HAPROXY_SOCKET_PORT}")
         return
         
     # Get current weights

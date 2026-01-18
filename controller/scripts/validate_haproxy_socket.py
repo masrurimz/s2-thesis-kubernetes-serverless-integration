@@ -10,7 +10,9 @@ import socket
 import sys
 import time
 
-def test_tcp_connection(host: str = "localhost", port: int = 9999) -> bool:
+from config import settings
+
+def test_tcp_connection(host: str = settings.HAPROXY_HOST, port: int = settings.HAPROXY_SOCKET_PORT) -> bool:
     """Test TCP socket connection to HAProxy."""
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -42,7 +44,7 @@ def test_tcp_connection(host: str = "localhost", port: int = 9999) -> bool:
         return False
 
 
-def test_weight_adjustment(host: str = "localhost", port: int = 9999) -> bool:
+def test_weight_adjustment(host: str = settings.HAPROXY_HOST, port: int = settings.HAPROXY_SOCKET_PORT) -> bool:
     """Test weight adjustment via TCP socket."""
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
