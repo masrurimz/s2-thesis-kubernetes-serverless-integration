@@ -22,7 +22,9 @@ class SLOConfig:
     violation_window_sec: int = 30  # Window for sustained violation detection
     healthy_margin: float = 0.7  # Multiplier for healthy threshold
     prometheus_url: str = "http://localhost:9090"
+    haproxy_stats_url: str = "http://localhost:18404/stats;csv"
     scrape_interval_sec: int = 15
+    use_haproxy_fallback: bool = True  # Use HAProxy stats if Prometheus fails
 
 
 @dataclass
@@ -100,6 +102,21 @@ class SLOMonitor:
             return "MAINTAIN"
     
     def _get_p99_latency(self) -> float:
+        """Query Prometheus for p99 latency, fallback to HAProxy stats."""
+        # Try Prometheus first
+        p99 = self._get_p99_from_prometheus()
+        if p99 > 0:
+            return p99
+        
+        # Fallback to HAProxy stats
+        if self.config.use_haproxy_fallback:
+            p99 = self._get_latency_from_haproxy()
+            if p99 > 0:
+                return p99
+        
+        return self._last_p99
+    
+    def _get_p99_from_prometheus(self) -> float:
         """Query Prometheus for p99 latency."""
         try:
             query = 'histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[1m])) by (le)) * 1000'
@@ -113,13 +130,44 @@ class SLOMonitor:
             result = response.json()
             if result.get("status") == "success" and result.get("data", {}).get("result"):
                 value = float(result["data"]["result"][0]["value"][1])
-                return value if value > 0 else self._last_p99
+                return value if value > 0 else 0.0
             
-            return self._last_p99
+            return 0.0
             
         except Exception as e:
-            logger.warning("Failed to query p99 latency", error=str(e))
-            return self._last_p99
+            logger.debug("Prometheus query failed", error=str(e))
+            return 0.0
+    
+    def _get_latency_from_haproxy(self) -> float:
+        """Get average response time from HAProxy stats (ttime column)."""
+        try:
+            response = requests.get(self.config.haproxy_stats_url, timeout=5)
+            response.raise_for_status()
+            
+            # Parse CSV - find BACKEND row for 'servers'
+            lines = response.text.strip().split('\n')
+            for line in lines:
+                fields = line.split(',')
+                if len(fields) > 62 and fields[0] == 'servers' and fields[1] == 'BACKEND':
+                    # ttime is column 62 (0-indexed), average total time in ms
+                    ttime = fields[61]  # rtime is response time (backend processing)
+                    ttime_max = fields[93] if len(fields) > 93 else "0"
+                    
+                    if ttime and ttime.isdigit():
+                        # Use max of ttime as proxy for p99
+                        # HAProxy reports average, so we estimate p99 ~ 2x average
+                        avg_time = int(ttime)
+                        max_time = int(ttime_max) if ttime_max.isdigit() else avg_time * 3
+                        # Estimate p99 as weighted between avg and max
+                        estimated_p99 = min(avg_time * 2, max_time)
+                        logger.debug("HAProxy latency", avg=avg_time, max=max_time, p99_est=estimated_p99)
+                        return float(estimated_p99)
+            
+            return 0.0
+            
+        except Exception as e:
+            logger.warning("HAProxy stats query failed", error=str(e))
+            return 0.0
     
     def get_statistics(self) -> Dict:
         """Get monitor statistics."""
