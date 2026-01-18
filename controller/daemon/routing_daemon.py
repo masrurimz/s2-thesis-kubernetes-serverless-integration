@@ -25,7 +25,7 @@ from typing import Dict, List, Optional
 import structlog
 import uvicorn
 from fastapi import FastAPI, HTTPException
-from prometheus_client import Counter, Gauge, Histogram, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import Counter, Gauge, Histogram, generate_latest, CONTENT_TYPE_LATEST, REGISTRY
 from fastapi.responses import Response
 from pydantic import BaseModel
 
@@ -94,29 +94,48 @@ SCENARIO_CONFIGS: Dict[Scenario, ScenarioConfig] = {
 }
 
 
-daemon_decision_total = Counter(
+def _get_or_create_metric(metric_class, name, description, labelnames=None, buckets=None):
+    """Get existing metric or create new one (handles re-import)."""
+    try:
+        if labelnames:
+            if buckets:
+                return metric_class(name, description, labelnames, buckets=buckets)
+            return metric_class(name, description, labelnames)
+        else:
+            if buckets:
+                return metric_class(name, description, buckets=buckets)
+            return metric_class(name, description)
+    except ValueError:
+        return REGISTRY._names_to_collectors.get(name)
+
+daemon_decision_total = _get_or_create_metric(
+    Counter,
     "routing_daemon_decision_total",
     "Total routing decisions by daemon",
     ["scenario", "action"],
 )
 
-daemon_current_weight = Gauge(
+daemon_current_weight = _get_or_create_metric(
+    Gauge,
     "routing_daemon_current_weight",
     "Current routing weight",
     ["backend"],
 )
 
-daemon_prediction_used = Counter(
+daemon_prediction_used = _get_or_create_metric(
+    Counter,
     "routing_daemon_prediction_used",
     "Predictions from GRU used in decisions",
 )
 
-daemon_prediction_failed = Counter(
+daemon_prediction_failed = _get_or_create_metric(
+    Counter,
     "routing_daemon_prediction_failed",
     "Failed prediction requests",
 )
 
-daemon_decision_latency = Histogram(
+daemon_decision_latency = _get_or_create_metric(
+    Histogram,
     "routing_daemon_decision_latency_ms",
     "Decision loop latency in milliseconds",
     buckets=[5, 10, 25, 50, 100, 250, 500, 1000],
