@@ -27,7 +27,7 @@ class HAProxyWeightAdjuster:
                  tcp_socket_port: int = settings.HAPROXY_SOCKET_PORT,
                  backend_name: str = "servers",
                  k3s_server: str = "k3s-cluster",
-                 knative_server: str = "serverless-sim",
+                 knative_server: str = "knative",  # Updated for real Knative
                  stats_url: str = settings.HAPROXY_STATS_URL):
         """
         Initialize HAProxy weight adjuster.
@@ -415,7 +415,7 @@ class HAProxyWeightAdjuster:
         
     def disable_server(self, server: str) -> bool:
         """
-        Disable a backend server (emergency use).
+        Disable a backend server (sets to MAINT state).
         
         Args:
             server: Server name ('k3s' or 'knative')
@@ -428,8 +428,9 @@ class HAProxyWeightAdjuster:
             command = f"disable server {self.backend_name}/{server_name}"
             
             response = self._send_command(command)
-            if response:
-                logger.warning("Server disabled", server=server, response=response)
+            # HAProxy returns empty string on success
+            if response is not None:
+                logger.info("Server disabled", server=server)
                 return True
             else:
                 logger.error("Failed to disable server", server=server)
@@ -441,7 +442,7 @@ class HAProxyWeightAdjuster:
             
     def enable_server(self, server: str) -> bool:
         """
-        Enable a backend server.
+        Enable a backend server (sets to READY state).
         
         Args:
             server: Server name ('k3s' or 'knative')
@@ -454,8 +455,9 @@ class HAProxyWeightAdjuster:
             command = f"enable server {self.backend_name}/{server_name}"
             
             response = self._send_command(command)
-            if response:
-                logger.info("Server enabled", server=server, response=response)
+            # HAProxy returns empty string on success
+            if response is not None:
+                logger.info("Server enabled", server=server)
                 return True
             else:
                 logger.error("Failed to enable server", server=server)
