@@ -1,0 +1,26 @@
+version: "3.8"
+services:
+  haproxy:
+    image: haproxy:2.4-alpine
+    container_name: sprint1-haproxy
+    ports:
+      - "18082:8082"  # Main traffic endpoint (avoid k3d port conflict)
+      - "18404:8404"  # Stats interface
+      - "19999:9999"  # HAProxy admin socket (TCP)
+    volumes:
+      - ./haproxy-knative.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - /tmp:/tmp
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.25"
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - hybrid-network
+
+networks:
+  hybrid-network:
+    driver: bridge

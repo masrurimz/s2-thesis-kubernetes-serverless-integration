@@ -6,13 +6,14 @@
 
 This research proposes a hybrid system integrating Kubernetes and serverless computing for optimizing traffic distribution based on workload prediction. Using a GRU-based prediction algorithm, the system proactively adjusts resource allocation between K8s clusters and serverless functions, minimizing SLA violations while improving cost efficiency.
 
-## Validated Hypotheses
+## Validated Hypotheses (Simulation-Based Validation)
 
-| Hypothesis | Description | Result | Key Metric |
-|------------|-------------|--------|------------|
-| **H1** | Hybrid > Pure Systems | ✅ PROVEN | 41% p99 latency improvement vs K8s; 42% cost reduction vs Serverless |
-| **H2** | Predictive > Reactive | ✅ PROVEN | 74.5% SLO violation reduction; 76.1% proactive adjustment ratio |
-| **H3** | GRU Model Justified | ✅ PROVEN | GRU RMSE 6.98% (target <10%); 39.7% better than Linear Regression |
+| Hypothesis | Description | Result | Key Evidence |
+|------------|-------------|--------|--------------|
+| **H1** | Hybrid > Pure Systems | ✅ VALIDATED | 0% error vs 72-93% error for pure backends; 5.7ms p95 vs 23-60s |
+| **H2** | Predictive > Reactive | ✅ PARTIALLY VALIDATED | 4 PREDICTIVE decisions (31%); identical metrics but proactive behavior |
+
+**Note:** These results are from simulation-based validation using a custom serverless-activator (deterministic 5s cold start, 80/20 default weights). See Chapter 4 for validity statement.
 
 ## Thesis Structure
 
@@ -50,6 +51,15 @@ This research proposes a hybrid system integrating Kubernetes and serverless com
 | S3 | Hybrid-reactive | Algorithm 1 without prediction |
 | S4 | Hybrid-predictive | Algorithm 1 + GRU prediction (proposed) |
 
+## Key Results (simulated-v1)
+
+| Scenario | Configuration | Error Rate | p95 Latency | Throughput |
+|----------|---------------|------------|-------------|------------|
+| S1 | K8s-only (100/0) | 72.62% | 60,002ms | 13.7 req/s |
+| S2 | Serverless-only (0/100) | 92.83% | 23,158ms | 45.8 req/s |
+| S3 | Hybrid-reactive (80/20) | **0%** | **5.7ms** | 65.7 req/s |
+| S4 | Hybrid-predictive (80/20) | **0%** | **5.7ms** | 65.8 req/s |
+
 ## Key Metrics
 
 - **SLO Target**: p99 latency < 200ms with 30-second violation detection window
@@ -58,9 +68,9 @@ This research proposes a hybrid system integrating Kubernetes and serverless com
 
 ## Data Sources
 
-- **Model Comparison**: `results/tables/model_comparison.csv`
-- **H1 Evaluation**: `controller/results/evaluations/h1/`
-- **H2 Evaluation**: `controller/results/evaluations/h2/`
+- **Simulation Results**: `infrastructure/results/simulated-v1/`
+- **S1-S4 Summaries**: `s1-spike-summary.json` through `s4-spike-summary.json`
+- **Experiment Documentation**: `docs/EXPERIMENT_RESULTS.md`
 - **Training Data**: ClarkNet and Calgary HTTP trace logs
 
 ## Implementation Statistics
