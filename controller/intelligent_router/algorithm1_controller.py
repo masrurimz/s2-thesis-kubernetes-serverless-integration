@@ -3,12 +3,14 @@
 Algorithm 1: SLO-Aware Routing Controller
 
 Implements the core routing logic from thesis section 3.4.3.1.
+Updated for real Knative integration with ENABLE/DISABLE backend state management.
 """
 
 import time
 from dataclasses import dataclass
-from typing import Optional, Dict
+from typing import Optional, Dict, Callable
 
+import requests
 import structlog
 
 from monitoring_v2.slo_monitor import SLOMonitor, SLOConfig, SLOStatus
@@ -31,6 +33,12 @@ class Algorithm1Config:
     min_k3s_weight: int = 50  # Minimum k8s weight
     prediction_confidence_threshold: float = 0.7
     load_change_threshold: float = 0.3  # Significant load change
+    # Real Knative integration settings
+    default_k3s_weight: int = 100  # Default: 100% K8s
+    default_knative_weight: int = 0  # Default: 0% serverless (disabled)
+    knative_host: str = "test-app.default.localhost"  # Knative service host header
+    knative_url: str = "http://192.168.156.2:80"  # Kourier gateway URL
+    prewarm_timeout_sec: int = 30  # Timeout for Knative pre-warm request
 
 
 @dataclass
@@ -38,8 +46,9 @@ class RoutingDecision:
     """Output of Algorithm 1 routing decision."""
     weights: Dict[str, int]
     reason: str
-    action: str  # SCALE_OUT, OPTIMIZE_COST, PREDICTIVE, MAINTAIN
+    action: str  # SCALE_OUT, OPTIMIZE_COST, PREDICTIVE, MAINTAIN, ENABLE, DISABLE
     metrics: Dict[str, float]
+    backend_state_changed: bool = False  # True if backend was enabled/disabled
 
 
 class Algorithm1Controller:
@@ -63,10 +72,15 @@ class Algorithm1Controller:
         self.slo_monitor = slo_monitor or SLOMonitor()
         self.config = config or Algorithm1Config()
         
-        # State tracking
+        # State tracking - default 100% K8s, 0% Knative (serverless disabled)
         self.last_adjustment_time: Optional[int] = None
-        self.current_weights = {"k3s": 80, "knative": 20}
+        self.current_weights = {
+            "k3s": self.config.default_k3s_weight,
+            "knative": self.config.default_knative_weight
+        }
         self.violation_detected_time: Optional[float] = None
+        self.serverless_enabled: bool = False  # Knative backend disabled by default
+        self.prewarm_in_progress: bool = False
         
         # Metrics
         self.total_decisions = 0
@@ -136,8 +150,14 @@ class Algorithm1Controller:
         return current_time - self.last_adjustment_time >= self.config.cooldown_sec
     
     def _scale_out(self, current_time: int, slo_status: SLOStatus) -> RoutingDecision:
-        """Scale out to serverless due to SLO violation."""
+        """Scale out to serverless due to SLO violation.
+        
+        For real Knative integration:
+        1. If serverless disabled: ENABLE backend + pre-warm
+        2. Then ramp up weight
+        """
         self.scale_out_count += 1
+        backend_state_changed = False
         
         # Record Prometheus metrics
         slo_violation_total.labels(slo_name="p99_latency").inc()
@@ -149,6 +169,15 @@ class Algorithm1Controller:
             reaction_time_ms.observe(reaction_ms)
             self.violation_detected_time = None
         
+        # Step 1: Enable serverless backend if disabled
+        if not self.serverless_enabled:
+            logger.info("Algorithm 1: Enabling serverless backend for SCALE_OUT")
+            self.serverless_enabled = True
+            backend_state_changed = True
+            # Pre-warm Knative (trigger cold start)
+            self._prewarm_knative()
+        
+        # Step 2: Ramp up serverless weight
         new_knative = min(
             self.config.max_knative_weight,
             self.current_weights["knative"] + self.config.weight_step
@@ -161,45 +190,65 @@ class Algorithm1Controller:
         logger.info("Algorithm 1: SCALE_OUT",
                    p99=slo_status.p99_latency_ms,
                    violation_sec=slo_status.violation_duration_sec,
-                   new_weights=self.current_weights)
+                   new_weights=self.current_weights,
+                   serverless_enabled=self.serverless_enabled)
         
         return RoutingDecision(
             weights=self.current_weights.copy(),
             reason=f"SLO violation ({slo_status.p99_latency_ms:.0f}ms > 200ms) for {slo_status.violation_duration_sec}s",
             action="SCALE_OUT",
-            metrics={"p99": slo_status.p99_latency_ms, "violation_sec": slo_status.violation_duration_sec}
+            metrics={"p99": slo_status.p99_latency_ms, "violation_sec": slo_status.violation_duration_sec},
+            backend_state_changed=backend_state_changed
         )
     
     def _optimize_cost(self, current_time: int, slo_status: SLOStatus) -> RoutingDecision:
-        """Increase k3s weight for cost optimization."""
+        """Increase k3s weight for cost optimization.
+        
+        For real Knative integration:
+        - Ramp down serverless weight
+        - When weight reaches 0, DISABLE backend (allows scale-to-zero)
+        """
         self.optimize_cost_count += 1
+        backend_state_changed = False
         
         # Record Prometheus metrics
         routing_decision_total.labels(decision_type="OPTIMIZE_COST").inc()
         
         # Use smaller step for cost optimization
         step = self.config.weight_step // 2
-        new_k3s = min(95, self.current_weights["k3s"] + step)
+        new_k3s = min(100, self.current_weights["k3s"] + step)  # Can go to 100%
         new_knative = 100 - new_k3s
         
         self.current_weights = {"k3s": new_k3s, "knative": new_knative}
         self.last_adjustment_time = current_time
         
+        # If knative weight is 0, disable serverless backend (allows scale-to-zero)
+        if new_knative == 0 and self.serverless_enabled:
+            logger.info("Algorithm 1: Disabling serverless backend (weight=0, allow scale-to-zero)")
+            self.serverless_enabled = False
+            backend_state_changed = True
+        
         logger.info("Algorithm 1: OPTIMIZE_COST",
                    p99=slo_status.p99_latency_ms,
-                   new_weights=self.current_weights)
+                   new_weights=self.current_weights,
+                   serverless_enabled=self.serverless_enabled)
         
         return RoutingDecision(
             weights=self.current_weights.copy(),
             reason=f"Healthy state ({slo_status.p99_latency_ms:.0f}ms < {200 * self.config.healthy_margin:.0f}ms), optimizing cost",
             action="OPTIMIZE_COST",
-            metrics={"p99": slo_status.p99_latency_ms}
+            metrics={"p99": slo_status.p99_latency_ms},
+            backend_state_changed=backend_state_changed
         )
     
     def _apply_prediction(self, current_time: int, 
                          prediction: Dict,
                          current_load: Optional[float]) -> Optional[RoutingDecision]:
-        """Apply predictive adjustment based on Algorithm 2 output."""
+        """Apply predictive adjustment based on Algorithm 2 output.
+        
+        For real Knative integration:
+        - Enable serverless backend + pre-warm if predicting load spike
+        """
         confidence = prediction.get("confidence", 0)
         predicted_load = prediction.get("predicted_requests", 0)
         
@@ -214,9 +263,17 @@ class Algorithm1Controller:
         if load_change > self.config.load_change_threshold:
             # Significant increase predicted - proactively scale out
             self.predictive_count += 1
+            backend_state_changed = False
             
             # Record Prometheus metrics
             routing_decision_total.labels(decision_type="PREDICTIVE").inc()
+            
+            # Enable serverless backend if disabled (preemptive)
+            if not self.serverless_enabled:
+                logger.info("Algorithm 1: Enabling serverless backend for PREDICTIVE scale out")
+                self.serverless_enabled = True
+                backend_state_changed = True
+                self._prewarm_knative()
             
             new_knative = min(
                 self.config.max_knative_weight,
@@ -231,13 +288,15 @@ class Algorithm1Controller:
                        predicted_load=predicted_load,
                        current_load=current_load,
                        load_change=load_change,
-                       new_weights=self.current_weights)
+                       new_weights=self.current_weights,
+                       serverless_enabled=self.serverless_enabled)
             
             return RoutingDecision(
                 weights=self.current_weights.copy(),
                 reason=f"Predicted {load_change*100:.0f}% load increase (confidence: {confidence:.0%})",
                 action="PREDICTIVE",
-                metrics={"predicted_load": predicted_load, "load_change": load_change, "confidence": confidence}
+                metrics={"predicted_load": predicted_load, "load_change": load_change, "confidence": confidence},
+                backend_state_changed=backend_state_changed
             )
         
         return None
@@ -265,5 +324,71 @@ class Algorithm1Controller:
             "predictive_count": self.predictive_count,
             "maintain_count": self.maintain_count,
             "current_weights": self.current_weights,
-            "last_adjustment": self.last_adjustment_time
+            "last_adjustment": self.last_adjustment_time,
+            "serverless_enabled": self.serverless_enabled
         }
+    
+    def _prewarm_knative(self) -> bool:
+        """Send synthetic request to trigger Knative cold start.
+        
+        This ensures the serverless backend is ready before traffic is routed to it.
+        """
+        if self.prewarm_in_progress:
+            logger.debug("Pre-warm already in progress, skipping")
+            return True
+            
+        self.prewarm_in_progress = True
+        try:
+            logger.info("Pre-warming Knative service",
+                       url=self.config.knative_url,
+                       host=self.config.knative_host)
+            
+            start_time = time.time()
+            response = requests.get(
+                f"{self.config.knative_url}/health",
+                headers={"Host": self.config.knative_host},
+                timeout=self.config.prewarm_timeout_sec
+            )
+            
+            cold_start_ms = (time.time() - start_time) * 1000
+            
+            if response.status_code == 200:
+                logger.info("Knative pre-warm successful",
+                           cold_start_ms=cold_start_ms,
+                           status=response.status_code)
+                return True
+            else:
+                logger.warning("Knative pre-warm returned non-200",
+                              status=response.status_code,
+                              cold_start_ms=cold_start_ms)
+                return False
+                
+        except requests.Timeout:
+            logger.warning("Knative pre-warm timed out",
+                          timeout_sec=self.config.prewarm_timeout_sec)
+            return False
+        except Exception as e:
+            logger.error("Knative pre-warm failed", error=str(e))
+            return False
+        finally:
+            self.prewarm_in_progress = False
+    
+    def is_serverless_enabled(self) -> bool:
+        """Check if serverless backend is currently enabled."""
+        return self.serverless_enabled
+    
+    def force_enable_serverless(self) -> bool:
+        """Force enable serverless backend (for testing/manual control)."""
+        if not self.serverless_enabled:
+            self.serverless_enabled = True
+            self._prewarm_knative()
+            logger.info("Serverless backend force-enabled")
+        return self.serverless_enabled
+    
+    def force_disable_serverless(self) -> bool:
+        """Force disable serverless backend (for testing/manual control)."""
+        if self.serverless_enabled:
+            self.serverless_enabled = False
+            self.current_weights = {"k3s": 100, "knative": 0}
+            logger.info("Serverless backend force-disabled")
+        return not self.serverless_enabled

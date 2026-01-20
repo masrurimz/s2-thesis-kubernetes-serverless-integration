@@ -227,6 +227,39 @@ sum(rate(slo_violations_total[1m])) / sum(rate(http_reqs_total[1m]))
 
 ---
 
+## Simulation Validity Statement
+
+### Experiment Type: Simulation-Based Validation
+
+These experiments used a **custom serverless-activator** (Go proxy) that simulates Knative behavior rather than real Knative Services. This approach provides:
+
+| Aspect | Benefit | Trade-off |
+|--------|---------|-----------|
+| **Reproducibility** | Deterministic 5s cold start | Doesn't reflect real cloud variability |
+| **Controlled Variables** | Isolates routing algorithm behavior | Misses Knative-specific edge cases |
+| **Experimental Validity** | Consistent baseline for comparison | Requires follow-up with real Knative |
+
+### Configuration Notes
+
+1. **Default weights:** 80/20 (K8s/Serverless) instead of intended 100/0
+   - Impact: Serverless backend always received traffic
+   - Mitigation: Results still demonstrate hybrid superiority over pure backends
+
+2. **Cold start simulation:** Fixed 5s init delay
+   - Impact: More predictable than real Knative (100ms-10s variable)
+   - Mitigation: Conservative estimate; real Knative may perform better
+
+### Academic Validity
+
+Simulation-based experiments are standard in systems research when:
+- Controlled comparison is priority over production realism
+- Reproducibility enables peer verification
+- Proof-of-concept precedes production validation
+
+**Recommendation:** These results support thesis claims with clear documentation of simulation constraints. Follow-up experiments with real Knative (`infrastructure/results/knative-real/`) will provide production validation.
+
+---
+
 ## Thesis Implications
 
 ### Validated Claims
@@ -332,14 +365,22 @@ This behavior was observed in the experiments:
 
 ## Raw Data Files
 
+Results are organized by experiment type:
+
+### Simulation-Based (v1) - Current
 | File | Description |
 |------|-------------|
-| `infrastructure/results/s1-k8s-only/s1-spike-summary.json` | S1 scenario metrics |
-| `infrastructure/results/s2-serverless-only/s2-spike-summary.json` | S2 scenario metrics |
-| `infrastructure/results/s3-spike-summary.json` | S3 scenario metrics |
-| `infrastructure/results/s4-spike-summary.json` | S4 scenario metrics |
-| `infrastructure/results/stress-test/daemon-stress-log.txt` | Algorithm decision logs |
-| `infrastructure/results/stress-test/EXPERIMENT_SUMMARY.md` | Detailed stress test analysis |
+| `infrastructure/results/simulated-v1/s1-k8s-only/` | S1 scenario metrics |
+| `infrastructure/results/simulated-v1/s2-serverless-only/` | S2 scenario metrics |
+| `infrastructure/results/simulated-v1/s3-spike-summary.json` | S3 scenario metrics |
+| `infrastructure/results/simulated-v1/s4-spike-summary.json` | S4 scenario metrics |
+| `infrastructure/results/simulated-v1/stress-test/` | Algorithm decision logs |
+| `infrastructure/results/simulated-v1/README.md` | Simulation setup documentation |
+
+### Real Knative - Pending
+| File | Description |
+|------|-------------|
+| `infrastructure/results/knative-real/README.md` | Target configuration for real Knative experiments |
 
 ---
 

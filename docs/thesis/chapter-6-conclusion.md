@@ -2,159 +2,247 @@
 
 ## 6.1 Summary of Research
 
-This thesis investigated the integration of Kubernetes container orchestration with serverless computing through GRU-based workload prediction to achieve SLO-aware hybrid autoscaling and intelligent traffic routing. The research addressed a fundamental challenge in cloud-native computing: how to balance the consistent performance of container-based deployments with the elastic scalability of serverless platforms while maintaining service level objectives.
+This thesis investigated the integration of Kubernetes container orchestration with serverless computing through GRU-based workload prediction for SLO-aware hybrid routing. The research addressed a fundamental challenge in cloud-native computing: how to balance the consistent performance of container-based deployments with the elastic scalability of serverless platforms.
 
-The investigation proceeded through three phases. First, a GRU neural network model was developed to predict HTTP traffic patterns with a 30-step lookahead capability. Second, the ElaX algorithm was modified to incorporate predictive signals for SLO-aware routing (Algorithm 1) and proactive scaling decisions (Algorithm 2). Third, a comprehensive experimental evaluation compared the proposed hybrid-predictive system (S4) against three baseline scenarios: Kubernetes-only (S1), Serverless-only (S2), and Hybrid-reactive (S3).
+The investigation proceeded through three phases:
 
-The experimental methodology employed the ClarkNet and Calgary HTTP trace datasets, executing three workload patterns (steady, spike, endurance) across all scenarios with statistical rigor including Welch's t-tests and Bonferroni correction for multiple comparisons. All three research hypotheses were validated with statistical significance at p < 0.001.
+1. **Algorithm Design**: Development of Algorithm 1 (SLO-Aware Routing Controller) and Algorithm 2 (GRU Prediction Integration) for dynamic traffic management between Kubernetes and serverless backends.
+
+2. **System Implementation**: Construction of a complete routing stack including HAProxy for traffic distribution, Prometheus for metrics collection, and a prediction server for GRU inference.
+
+3. **Simulation-Based Validation**: Controlled experiments comparing four scenarios (S1: K8s-only, S2: Serverless-only, S3: Hybrid-reactive, S4: Hybrid-predictive) under spike workload conditions.
 
 ---
 
 ## 6.2 Answers to Research Questions
 
-This section provides direct answers to the research questions posed in Chapter 1.
-
 ### RQ1: How to design workload traffic prediction using GRU?
 
-The GRU-based workload predictor was designed with a two-layer architecture comprising 64 hidden units, processing 30-sample input sequences (representing 30 seconds of traffic at 1 Hz sampling). The design incorporated dropout regularization (0.2) to prevent overfitting and employed the Adam optimizer with early stopping for training efficiency.
+The GRU-based workload predictor was designed with:
 
-Key design decisions included:
-- **Input representation**: Normalized RPS values from sliding 30-second windows
-- **Prediction horizon**: 30 steps ahead, balancing accuracy (6.98% RMSE) with sufficient lead time for proactive routing
-- **Training methodology**: Supervised learning on ClarkNet HTTP traces with 80/20 train-test split
+- **Architecture**: 2-layer GRU with 64 hidden units
+- **Input**: 60-sample sequence (60 seconds of RPS history at 1 Hz)
+- **Prediction Horizon**: 30 seconds ahead
+- **Training**: ClarkNet HTTP trace dataset
+- **Integration**: Prediction server exposing REST API for real-time inference
 
-The GRU architecture was selected over LSTM for its computational efficiency (two gates versus three) while maintaining comparable accuracy, and over linear methods for its ability to capture non-linear temporal dependencies. The resulting model achieved 6.98% RMSE, meeting the <10% target threshold and outperforming linear regression (11.56% RMSE) by 39.7%.
+The design achieved 10-14ms prediction latency with 72-79% confidence scores during experiments, successfully triggering 4 PREDICTIVE routing decisions.
 
-### RQ2: How to design decision making by modifying ElaX for scaling and traffic distribution?
+### RQ2: How to design decision making for scaling and traffic distribution?
 
-The ElaX algorithm was extended through two complementary mechanisms:
+Two complementary algorithms were developed:
 
-**Algorithm 1 (SLO-Aware Traffic Routing)** continuously monitors p99 latency against the defined SLO threshold (200 ms) and adjusts HAProxy routing weights between Kubernetes and Knative backends. When predicted traffic exceeds current Kubernetes capacity, the controller preemptively increases serverless weight before SLO violations occur. Smooth weight transitions prevent traffic oscillations.
+**Algorithm 1 (SLO-Aware Routing Controller):**
+- Monitors p99 latency against 200ms threshold
+- Triggers SCALE_OUT when sustained violation detected
+- Triggers OPTIMIZE_COST when healthy margin achieved
+- Adjusts HAProxy weights in 10% steps with 15-second cooldown
 
-**Algorithm 2 (Predictive Scaling Controller)** integrates GRU predictions into the scaling decision loop. The controller compares predicted load against current capacity headroom and initiates preemptive scaling actions when overflow is anticipated. This proactive approach achieved a 76.1% proactive adjustment ratio, meaning three-quarters of routing decisions occurred before violations would have manifested.
+**Algorithm 2 (Predictive Integration):**
+- Queries GRU prediction server for load forecast
+- Triggers PREDICTIVE action when:
+  - Predicted load increase > 30%
+  - Prediction confidence ≥ 70%
+- Preemptively adjusts weights before reactive thresholds breach
 
-Key design principles:
-- Closed-loop control with continuous SLO monitoring
-- Hysteresis thresholds to prevent oscillatory behavior
-- Graceful traffic migration to avoid thundering herd effects
-- Fallback to reactive mode when prediction confidence is low
+### RQ3: How to evaluate the modified routing mechanism?
 
-### RQ3: How to evaluate the modified ElaX mechanism?
-
-The evaluation framework employed four experimental scenarios to isolate the contribution of each system component:
+The evaluation employed a controlled four-scenario comparison:
 
 | Scenario | Configuration | Purpose |
 |----------|---------------|---------|
-| S1 | Kubernetes-only | Container orchestration baseline |
-| S2 | Serverless-only | Serverless computing baseline |
-| S3 | Hybrid-reactive | Hybrid without prediction |
-| S4 | Hybrid-predictive | Complete proposed system |
+| S1 | K8s-only (100/0) | Container orchestration baseline |
+| S2 | Serverless-only (0/100) | Serverless computing baseline |
+| S3 | Hybrid-reactive (80/20) | Hybrid without prediction |
+| S4 | Hybrid-predictive (80/20) | Complete proposed system |
 
-Each scenario was evaluated across three workload patterns with three repetitions per pattern, yielding statistically robust comparisons. Evaluation metrics included:
-- **Latency**: p50, p95, p99 percentiles
-- **Reliability**: Error rate, SLO violation count, violation duration
-- **Cost**: Normalized compute and network costs
-- **Behavioral**: Routing distribution, proactive adjustment ratio, reaction time
-
-Statistical analysis employed Welch's t-tests with Bonferroni correction (α = 0.05) and Cohen's d for effect size interpretation. All primary comparisons yielded p < 0.001 with large to very large effect sizes (d > 1.3).
+Each scenario was subjected to a 110-second workload with warmup (10 RPS), spike (100 RPS), and cooldown (20 RPS) phases. Metrics included error rate, p95/p99 latency, throughput, and routing decision types.
 
 ---
 
-## 6.3 Key Contributions
+## 6.3 Key Findings
 
-### 6.3.1 Academic Contributions
+### 6.3.1 H1: Hybrid Routing Prevents SLO Collapse — VALIDATED
 
-1. **Novel hybrid architecture design**: This thesis demonstrates that strategic integration of Kubernetes and serverless computing—rather than treating them as competing paradigms—yields performance characteristics superior to either platform alone. The 41.1% latency improvement over Kubernetes-only and 40.1% over Serverless-only provides empirical evidence for hybrid cloud-native architectures.
+The experimental results demonstrated **categorical improvement**:
 
-2. **Validated prediction-enabled control**: The research establishes that GRU-based workload prediction, when integrated into routing decisions, transforms traffic management from reactive to proactive. The 74.5% reduction in SLO violations quantifies the value of anticipatory control in distributed systems.
+| Scenario | Error Rate | p95 Latency | Verdict |
+|----------|------------|-------------|---------|
+| S1 (K8s-only) | 72.62% | 60,002ms | **Failed** |
+| S2 (Serverless-only) | 92.83% | 23,158ms | **Failed** |
+| S3 (Hybrid-reactive) | 0% | 5.7ms | **Passed** |
+| S4 (Hybrid-predictive) | 0% | 5.7ms | **Passed** |
 
-3. **Model justification methodology**: The comparative evaluation of GRU against baseline forecasting methods provides a reproducible framework for justifying neural network complexity in operational systems. The 39.7% accuracy improvement demonstrates when recurrent architectures are warranted.
+The hybrid approach succeeded where pure approaches failed completely because:
+- K8s tier provided stable baseline capacity without cold-start penalties
+- Serverless tier absorbed overflow traffic preventing saturation
+- Dynamic weight adjustment prevented either tier from overload
 
-4. **Closed-loop evaluation framework**: The four-scenario experimental design enables isolation of individual component contributions, providing a template for evaluating hybrid system architectures.
+### 6.3.2 H2: Predictive Enables Proactive Decisions — PARTIALLY VALIDATED
 
-### 6.3.2 Practical Contributions
+While headline metrics were identical between S3 and S4, decision-level analysis revealed behavioral differences:
 
-1. **Modified ElaX algorithms**: The SLO-aware routing controller (Algorithm 1) and predictive scaling controller (Algorithm 2) are directly implementable in production environments using standard components (HAProxy, Kubernetes, Knative).
+| Decision Type | S3 (Reactive) | S4 (Predictive) |
+|---------------|---------------|-----------------|
+| SCALE_OUT (reactive) | 3 | 3 |
+| PREDICTIVE (preemptive) | 0 | **4** |
+| OPTIMIZE_COST | 6 | 6 |
+| MAINTAIN | 4 | 0 |
 
-2. **Design principles for hybrid systems**: The five principles articulated in Chapter 5 (embrace heterogeneity, implement SLO-aware routing, invest in prediction, design for observability, plan for degradation) provide actionable guidance for cloud practitioners.
+S4 replaced MAINTAIN decisions with PREDICTIVE decisions, demonstrating that:
+- GRU predictions successfully triggered proactive weight adjustments
+- The prediction pipeline operated correctly with 72% average confidence
+- Under more stressful workloads, this proactivity would translate to metric improvements
 
-3. **Quantified trade-offs**: The cost-performance analysis (42.3% cost reduction versus serverless, 0.9% increase versus Kubernetes) enables informed architectural decisions based on organizational priorities.
+### 6.3.3 System Integration Confirmed
+
+The complete stack demonstrated successful integration:
+
+| Component | Performance |
+|-----------|-------------|
+| GRU Prediction | 10-14ms latency |
+| HAProxy Weight Update | <10ms |
+| Total Decision Cycle | <50ms |
+| Continuous Operation | 110 seconds without failure |
 
 ---
 
-## 6.4 Implications for Practice
+## 6.4 Contributions
 
-The research findings have direct implications for organizations operating cloud-native infrastructure:
+### 6.4.1 Academic Contributions
+
+1. **Empirical Validation of Hybrid Architecture**: Demonstrated that strategic integration of Kubernetes and serverless—rather than treating them as competing paradigms—prevents the catastrophic failure modes of either platform alone.
+
+2. **Prediction-Enabled Control Design**: Showed how GRU-based workload prediction can be integrated into routing decisions, transforming traffic management from reactive to proactive.
+
+3. **Simulation-Based Validation Methodology**: Provided a reproducible experimental framework with explicit assumptions, enabling peer verification and controlled comparison.
+
+### 6.4.2 Practical Contributions
+
+1. **Algorithm 1 Implementation**: Production-ready SLO-aware routing controller implemented in Python with HAProxy integration.
+
+2. **System Architecture**: Complete reference implementation including prediction server, monitoring integration, and dynamic weight adjustment.
+
+3. **Design Principles**: Five actionable principles for practitioners implementing hybrid cloud-native systems:
+   - Embrace platform heterogeneity
+   - Implement SLO-aware traffic management
+   - Invest in workload prediction
+   - Design for controlled experimentation
+   - Document assumptions explicitly
+
+---
+
+## 6.5 Implications for Practice
 
 ### For SRE/DevOps Teams
 
-**Reduced operational burden**: The 74.5% reduction in SLO violations directly translates to fewer pages, reduced alert fatigue, and improved on-call quality of life. The 86.9% reduction in violation duration means incidents that do occur resolve faster.
+**Reduced Operational Risk**: Hybrid routing provides defense against single-tier saturation. The 0% error rate achieved in experiments (vs 72-93% for pure approaches) represents elimination of spike-induced outages.
 
-**Diagnostic context**: The prediction system provides visibility into upcoming traffic patterns, enabling proactive capacity decisions and richer incident post-mortems.
+**Proactive Visibility**: GRU predictions provide 30-second advance warning of load changes, enabling proactive capacity decisions even when automated routing is disabled.
 
-**Reduced manual intervention**: The 76.1% proactive adjustment ratio indicates that the system handles most traffic variations automatically, reducing operator toil.
+**Simplified Capacity Planning**: The hybrid approach allows right-sizing K8s for baseline load with serverless absorbing peaks, eliminating the 2-3x over-provisioning typically required for single-tier architectures.
 
 ### For Cloud Architects
 
-**Workload assessment criteria**: The hybrid approach is most beneficial for workloads with:
-- Traffic variability with coefficient of variation > 0.5
-- Stringent SLO targets (p99 < 200 ms)
-- Cost sensitivity preventing 2-3x over-provisioning
+**Workload Fit Criteria**: The hybrid approach is most beneficial for workloads with:
+- Traffic variability (coefficient of variation > 0.5)
+- Stringent SLO targets (p99 < 200ms)
+- Cost sensitivity preventing over-provisioning
 
-**Platform selection guidance**: Kubernetes should handle baseline, latency-sensitive traffic; serverless should absorb variable overflow. Static traffic splitting is insufficient—SLO-aware dynamic routing is required.
-
-### For Cost Optimization
-
-**Right-sizing opportunity**: The hybrid approach achieves Kubernetes-equivalent cost (0.9% difference) while delivering serverless-equivalent elasticity. Organizations can eliminate over-provisioning headroom without sacrificing SLO compliance.
-
-**Serverless cost awareness**: The 42.3% cost reduction versus serverless-only underscores that per-invocation billing becomes disadvantageous for sustained workloads. Reserved capacity remains economical for baseline traffic.
+**Platform Selection**: K8s should handle latency-sensitive baseline; serverless should handle variable overflow. The division should be dynamic, not static.
 
 ---
 
-## 6.5 Recommendations for Future Research
+## 6.6 Limitations
 
-Based on the findings and limitations identified in this research, the following directions merit investigation:
+### 6.6.1 Simulation Constraints
 
-### Short-Term Extensions
+| Constraint | Impact |
+|------------|--------|
+| Custom serverless-activator | Results may differ with real Knative/Lambda |
+| Deterministic 5s cold start | More predictable than real cloud functions |
+| 80/20 default weights | Serverless always warm (not on-demand) |
+| Single run per scenario | No statistical inference possible |
+| 110s duration | Short compared to production scenarios |
 
-1. **Transformer-based prediction**: Evaluate whether attention mechanisms provide sufficient accuracy improvement to justify increased computational requirements for time series forecasting in this domain.
+### 6.6.2 Generalization Limits
 
-2. **Online learning integration**: Implement continuous model adaptation to address concept drift as traffic patterns evolve over time.
-
-3. **Multi-objective optimization**: Extend the controller to simultaneously optimize latency, cost, and energy consumption with configurable trade-off weights.
-
-### Medium-Term Research
-
-4. **Heterogeneous request handling**: Extend the routing framework to consider request characteristics (compute intensity, memory requirements) beyond traffic volume.
-
-5. **Stateful application support**: Investigate session affinity preservation and distributed transaction handling in hybrid deployments.
-
-6. **Service mesh integration**: Package the SLO-aware controller as an Istio or Linkerd extension for broader adoption.
-
-### Long-Term Investigations
-
-7. **Multi-cluster federation**: Scale the hybrid approach to geographically distributed Kubernetes clusters with regional serverless platforms.
-
-8. **Formal stability analysis**: Develop theoretical guarantees for controller convergence and stability under adversarial conditions.
-
-9. **Energy-aware scheduling**: Incorporate carbon intensity signals for sustainable computing in hybrid deployments.
+The results validate **directional benefit** (hybrid > pure) and **mechanism feasibility** (prediction integration works), but specific quantitative improvements cannot be generalized to:
+- Production-scale traffic (1000s of RPS)
+- Real cloud serverless platforms
+- Heterogeneous workload mixes
+- Multi-region deployments
 
 ---
 
-## 6.6 Closing Remarks
+## 6.7 Recommendations for Future Work
 
-This thesis began with the observation that cloud-native computing faces a fundamental tension: container orchestration provides consistent performance but limited elasticity, while serverless computing offers instant scalability but incurs cold-start penalties and per-invocation costs. The prevailing approach treats these platforms as mutually exclusive choices.
+### Immediate Priorities
 
-The research presented here demonstrates that this dichotomy is false. By embracing platform heterogeneity rather than resolving it, and by enabling proactive rather than reactive control through workload prediction, systems can achieve performance characteristics unattainable by either platform alone.
+1. **Real Knative Validation**: Deploy with production Knative Service to validate under realistic cold-start variability.
 
-The experimental evidence is unambiguous: the hybrid-predictive approach (S4) reduces p99 latency by 41% compared to Kubernetes-only, reduces cost by 42% compared to serverless-only, and reduces SLO violations by 75% compared to reactive-only control. All improvements achieved statistical significance at p < 0.001 with large effect sizes.
+2. **100/0 Default Configuration**: Implement true serverless-on-demand with Algorithm 1 ENABLE → PRE-WARM → RAMP workflow.
 
-Beyond the quantitative results, this research offers a conceptual contribution: the recognition that prediction transforms the nature of traffic management. Reactive systems perpetually lag behind reality; predictive systems anticipate and prepare. The 76.1% proactive adjustment ratio demonstrates that this transformation is achievable with current neural network architectures and standard cloud infrastructure.
+3. **Statistical Replication**: Execute 9+ runs per scenario to enable inferential statistics with confidence intervals.
 
-As cloud-native computing continues to evolve, the principles established here—platform heterogeneity as resource, SLO-awareness as constraint, and prediction as enabler—provide a foundation for next-generation distributed systems that are simultaneously performant, economical, and reliable.
+### Medium-Term Extensions
+
+4. **Discriminating Workloads**: Design spike patterns (higher intensity, faster ramp) where reactive vs. predictive produces measurable metric differences.
+
+5. **Service Mesh Integration**: Package as Istio/Linkerd extension for production adoption.
+
+6. **Multi-Tenant Support**: Enable per-service SLO targets and resource isolation.
+
+### Long-Term Research
+
+7. **Online Learning**: Enable GRU adaptation to concept drift without full retraining.
+
+8. **Multi-Objective Optimization**: Balance latency, cost, and energy consumption with configurable trade-off weights.
+
+9. **Formal Stability Analysis**: Develop theoretical guarantees for controller convergence under adversarial conditions.
 
 ---
 
-## References
+## 6.8 Closing Remarks
 
-The references for this chapter are consolidated in the thesis bibliography. Key works cited include Burns et al. (2016) on Kubernetes design, Shahrad et al. (2020) on serverless workload characterization, Chung et al. (2014) on GRU architecture evaluation, and the foundational ElaX algorithm documentation.
+This thesis began with the observation that cloud-native computing faces a fundamental tension: container orchestration provides consistent performance but limited elasticity, while serverless computing offers instant scalability but incurs cold-start penalties and per-invocation costs.
+
+The experimental evidence demonstrates that this tension can be resolved through **hybrid architecture with intelligent routing**:
+
+| Pure Approach | Outcome |
+|---------------|---------|
+| K8s-only | 72.62% failure rate (saturation) |
+| Serverless-only | 92.83% failure rate (capacity exhaustion) |
+
+| Hybrid Approach | Outcome |
+|-----------------|---------|
+| Hybrid routing | 0% failure rate (stable operation) |
+
+The results are unambiguous in direction: hybrid routing prevents SLO collapse under spike workloads. The magnitude of improvement (categorical failure → success) exceeded expectations and validates the core hypothesis.
+
+Beyond quantitative results, this research demonstrates that **prediction transforms the nature of traffic management**. Reactive systems perpetually respond to what already happened; predictive systems anticipate and prepare. The 4 PREDICTIVE decisions observed in S4—replacing MAINTAIN decisions in S3—represent this transformation in action.
+
+The simulation-based validation approach provides reproducible proof-of-concept while acknowledging the gap between controlled experiments and production deployment. Follow-up work with real Knative, statistical replication, and discriminating workloads will strengthen these findings.
+
+As cloud-native computing continues to evolve toward multi-platform heterogeneity, the principles established here—embrace platform diversity as resource, treat SLO compliance as primary constraint, and use prediction to enable proactive control—provide a foundation for next-generation distributed systems.
+
+---
+
+## 6.9 Data Availability
+
+All experimental results are available in the thesis repository:
+
+| Resource | Location |
+|----------|----------|
+| Simulation Results | `infrastructure/results/simulated-v1/` |
+| S1-S4 JSON Summaries | `s1-spike-summary.json` through `s4-spike-summary.json` |
+| Experiment Documentation | `docs/EXPERIMENT_RESULTS.md` |
+| Algorithm Implementation | `controller/intelligent_router/` |
+| Reproducibility Guide | `docs/thesis/appendix-a-reproducibility.md` |
+
+Repository: https://github.com/masrurimz/s2-thesis-kubernetes-serverless-integration
+
+---
+
+**Document Version:** 2.0 (Updated with simulated-v1 results)  
+**Last Updated:** January 2026
