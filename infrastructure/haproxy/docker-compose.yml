@@ -8,8 +8,7 @@ services:
       - "18404:8404"  # Stats interface
       - "19999:9999"  # HAProxy admin socket (TCP)
     volumes:
-      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
-      - /tmp:/tmp
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro,z
     deploy:
       resources:
         limits:
@@ -19,8 +18,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
-      - hybrid-network
+      - k3d-thesis-hybrid
 
 networks:
-  hybrid-network:
-    driver: bridge
+  k3d-thesis-hybrid:
+    external: true
