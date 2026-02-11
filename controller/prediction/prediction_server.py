@@ -68,6 +68,9 @@ async def lifespan(app: FastAPI):
         Path("data/models/gru_model.pt"),
         Path(__file__).parent.parent / "data/models/gru_model.pt",
         Path("/app/models/gru_model.pt"),
+        Path("data/models/gru_model.joblib"),
+        Path(__file__).parent.parent / "data/models/gru_model.joblib",
+        Path("/app/models/gru_model.joblib"),
     ]
     
     model_loader = None

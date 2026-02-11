@@ -317,12 +317,11 @@ class ProcessManager:
     ) -> ManagedProcess:
         """Start the GRU prediction server."""
         cmd = [
-            "uv", "run", "python", "-m", "daemon.gru_server",
-            "--port", str(port),
+            "uv", "run", "python", "-m", "prediction.prediction_server",
         ]
         
-        if model_path:
-            cmd.extend(["--model", model_path])
+        # Note: prediction_server uses hardcoded port 8090 via uvicorn.run()
+        # The port parameter is kept for API compatibility but not passed as arg
         
         config = ProcessConfig(
             name="gru-server",
