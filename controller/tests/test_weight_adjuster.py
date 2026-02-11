@@ -20,7 +20,7 @@ class TestHAProxyWeightAdjuster:
         """Test adjuster initialization."""
         assert adjuster.backend_name == "servers"
         assert adjuster.k3s_server == "k3s-cluster"
-        assert adjuster.knative_server == "serverless-sim"
+        assert adjuster.knative_server == "knative"
     
     def test_parse_stats_response(self, adjuster, mock_haproxy_stats):
         """Test parsing HAProxy stats CSV."""

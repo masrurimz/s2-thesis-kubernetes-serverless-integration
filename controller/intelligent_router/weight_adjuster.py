@@ -48,6 +48,10 @@ class HAProxyWeightAdjuster:
         self.k3s_server = k3s_server
         self.knative_server = knative_server
         self.stats_url = stats_url
+
+        # Accept both legacy and real-cluster HAProxy server names.
+        self.k3s_server_aliases = {self.k3s_server, "k3s", "k3s-cluster"}
+        self.knative_server_aliases = {self.knative_server, "knative", "serverless-sim"}
         
         # Connection settings
         self.socket_timeout = 5.0
@@ -229,16 +233,17 @@ class HAProxyWeightAdjuster:
                 fields = line.split(',')
                 if len(fields) < 19:  # Ensure we have enough fields
                     continue
-                    
+
                 pxname = fields[0]  # Proxy name
                 svname = fields[1]  # Server name
                 weight = fields[18] # Weight field
-                
+
                 if pxname == self.backend_name:
-                    if svname == self.k3s_server:
-                        weights['k3s'] = int(weight) if weight.isdigit() else 0
-                    elif svname == self.knative_server:
-                        weights['knative'] = int(weight) if weight.isdigit() else 0
+                    parsed_weight = self._parse_weight(weight)
+                    if svname in self.k3s_server_aliases:
+                        weights['k3s'] = parsed_weight
+                    elif svname in self.knative_server_aliases:
+                        weights['knative'] = parsed_weight
                         
             if 'k3s' in weights and 'knative' in weights:
                 return weights
@@ -248,6 +253,12 @@ class HAProxyWeightAdjuster:
         except Exception as e:
             logger.error("Failed to parse stats response", error=str(e))
             return None
+
+    @staticmethod
+    def _parse_weight(weight: str) -> int:
+        """Extract numeric weight from HAProxy stat fields."""
+        token = (weight or "").strip().split('/')[0]
+        return int(token) if token.isdigit() else 0
             
     def set_weights(self, k3s_weight: int, knative_weight: int) -> bool:
         """
@@ -493,11 +504,11 @@ class HAProxyWeightAdjuster:
                 pxname = fields[0]  # Proxy name
                 svname = fields[1]  # Server name
                 status_field = fields[17]  # Status field
-                
+
                 if pxname == self.backend_name:
-                    if svname == self.k3s_server:
+                    if svname in self.k3s_server_aliases:
                         status['k3s'] = status_field
-                    elif svname == self.knative_server:
+                    elif svname in self.knative_server_aliases:
                         status['knative'] = status_field
                         
             logger.debug("Server status retrieved", status=status)

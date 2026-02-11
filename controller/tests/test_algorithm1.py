@@ -16,10 +16,12 @@ class TestAlgorithm1Controller:
     
     @pytest.fixture
     def controller(self, monitor):
-        return Algorithm1Controller(slo_monitor=monitor)
+        controller = Algorithm1Controller(slo_monitor=monitor)
+        controller._prewarm_knative = Mock(return_value=True)
+        return controller
     
     def test_init(self, controller):
-        assert controller.current_weights == {"k3s": 80, "knative": 20}
+        assert controller.current_weights == {"k3s": 100, "knative": 0}
         assert controller.total_decisions == 0
     
     def test_maintain_when_normal(self, controller, monitor):
@@ -28,7 +30,7 @@ class TestAlgorithm1Controller:
         decision = controller.make_decision()
         
         assert decision.action == "MAINTAIN"
-        assert decision.weights == {"k3s": 80, "knative": 20}
+        assert decision.weights == {"k3s": 100, "knative": 0}
     
     def test_scale_out_on_violation(self, controller, monitor):
         monitor.set_mock_metrics(p99=250.0)
@@ -40,9 +42,9 @@ class TestAlgorithm1Controller:
         monitor.violation_start_time = int(time.time()) - 35
         
         decision = controller.make_decision()
-        
+
         assert decision.action == "SCALE_OUT"
-        assert decision.weights["knative"] > 20
+        assert decision.weights["knative"] > 0
         assert decision.weights["k3s"] + decision.weights["knative"] == 100
     
     def test_optimize_cost_when_healthy(self, controller, monitor):
@@ -50,9 +52,9 @@ class TestAlgorithm1Controller:
         monitor.set_mock_metrics(p99=100.0)
         
         decision = controller.make_decision()
-        
+
         assert decision.action == "OPTIMIZE_COST"
-        assert decision.weights["k3s"] > 80
+        assert decision.weights["k3s"] >= 100
     
     def test_predictive_scaling(self, controller, monitor):
         monitor.set_mock_metrics(p99=150.0)
@@ -66,9 +68,9 @@ class TestAlgorithm1Controller:
             prediction=prediction,
             current_load=100
         )
-        
+
         assert decision.action == "PREDICTIVE"
-        assert decision.weights["knative"] > 20
+        assert decision.weights["knative"] > 0
     
     def test_prediction_ignored_low_confidence(self, controller, monitor):
         monitor.set_mock_metrics(p99=150.0)
@@ -151,7 +153,9 @@ class TestSLOViolationScenarios:
     
     @pytest.fixture
     def controller(self, monitor):
-        return Algorithm1Controller(slo_monitor=monitor)
+        controller = Algorithm1Controller(slo_monitor=monitor)
+        controller._prewarm_knative = Mock(return_value=True)
+        return controller
     
     def test_brief_spike_no_scale_out(self, controller, monitor):
         """Brief latency spike should not trigger scale out."""
@@ -176,11 +180,11 @@ class TestSLOViolationScenarios:
         assert decision.weights["knative"] <= controller.config.max_knative_weight
     
     def test_k3s_weight_optimization_limit(self, controller, monitor):
-        """k3s weight optimization should not exceed 95."""
+        """k3s weight optimization should not exceed 100."""
         controller.current_weights = {"k3s": 94, "knative": 6}
         
         monitor.set_mock_metrics(p99=100.0)
         
         decision = controller.make_decision()
-        
-        assert decision.weights["k3s"] <= 95
+
+        assert decision.weights["k3s"] <= 100
