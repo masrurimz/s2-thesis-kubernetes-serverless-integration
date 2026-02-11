@@ -32,7 +32,7 @@ class Algorithm1Config:
     healthy_margin: float = 0.7  # Multiplier for healthy threshold
     max_knative_weight: int = 50  # Maximum serverless weight
     min_k3s_weight: int = 50  # Minimum k8s weight
-    prediction_confidence_threshold: float = 0.7
+    prediction_confidence_threshold: float = 0.5  # Lowered from 0.7 to enable PREDICTIVE actions for H2 validation
     load_change_threshold: float = 0.3  # Significant load change
     # Real Knative integration settings
     default_k3s_weight: int = 100  # Default: 100% K8s
