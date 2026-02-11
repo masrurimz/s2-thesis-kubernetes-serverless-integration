@@ -14,8 +14,8 @@ dependencies = [
     "scikit-learn>=1.7.1",
     "scipy>=1.16.1",
     "structlog",
-    "torch>=2.5.0",  # TODO: Switch to "torch==2.5.1+rocm6.2" for AMD GPU support
-    # TODO: Add "pytorch-triton-rocm==3.1.0" when enabling ROCm
+    "torch==2.5.1+rocm6.2; sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "pytorch-triton-rocm==3.1.0; sys_platform == 'linux' and platform_machine == 'x86_64'",
     "pyyaml",
     "uvicorn>=0.35.0",
     "pytest>=8.0.0",
@@ -48,15 +48,14 @@ dev = [
     "pytest>=9.0.2",
 ]
 
-# TODO: Re-enable ROCm GPU support when network is stable
 # AMD ROCm PyTorch index for GPU support
-# [[tool.uv.index]]
-# name = "pytorch-rocm"
-# url = "https://download.pytorch.org/whl/rocm6.2"
-# explicit = true
+[[tool.uv.index]]
+name = "pytorch-rocm"
+url = "https://download.pytorch.org/whl/rocm6.2"
+explicit = true
 
-# [tool.uv.sources]
-# torch = { index = "pytorch-rocm" }
-# torchvision = { index = "pytorch-rocm" }
-# torchaudio = { index = "pytorch-rocm" }
-# pytorch-triton-rocm = { index = "pytorch-rocm" }
+[tool.uv.sources]
+torch = { index = "pytorch-rocm" }
+torchvision = { index = "pytorch-rocm" }
+torchaudio = { index = "pytorch-rocm" }
+pytorch-triton-rocm = { index = "pytorch-rocm" }
