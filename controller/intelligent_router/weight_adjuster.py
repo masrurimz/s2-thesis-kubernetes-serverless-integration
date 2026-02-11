@@ -8,7 +8,7 @@ admin socket interface for intelligent routing decisions.
 
 import socket
 import time
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import requests
 import structlog
@@ -68,6 +68,78 @@ class HAProxyWeightAdjuster:
                    backend=backend_name,
                    tcp_socket_available=self.tcp_socket_available,
                    unix_socket_available=self._test_socket_connectivity())
+
+    @staticmethod
+    def _is_command_error(response: Optional[str]) -> bool:
+        """Detect HAProxy command errors from response text."""
+        if response is None:
+            return True
+        lowered = response.lower()
+        return "no such" in lowered or "unknown" in lowered or "error" in lowered
+
+    def _get_candidate_server_names(self, server: str) -> List[str]:
+        """Return prioritized candidate names for a logical backend server."""
+        aliases = self.k3s_server_aliases if server == 'k3s' else self.knative_server_aliases
+        configured = self.k3s_server if server == 'k3s' else self.knative_server
+
+        candidates: List[str] = []
+
+        active = self._discover_active_server_names().get(server)
+        if active:
+            candidates.append(active)
+
+        candidates.append(configured)
+        candidates.extend(sorted(aliases))
+
+        deduped: List[str] = []
+        seen = set()
+        for name in candidates:
+            if name and name not in seen:
+                deduped.append(name)
+                seen.add(name)
+
+        return deduped
+
+    def _discover_active_server_names(self) -> Dict[str, str]:
+        """Discover actual backend server names from live HAProxy stats output."""
+        response = self._send_command("show stat")
+        if not response:
+            return {}
+
+        discovered: Dict[str, str] = {}
+        for line in response.strip().split('\n'):
+            if not line or line.startswith('#'):
+                continue
+
+            fields = line.split(',')
+            if len(fields) < 2:
+                continue
+
+            pxname = fields[0]
+            svname = fields[1]
+            if pxname != self.backend_name:
+                continue
+
+            if svname in self.k3s_server_aliases:
+                discovered['k3s'] = svname
+            elif svname in self.knative_server_aliases:
+                discovered['knative'] = svname
+
+        return discovered
+
+    def _send_server_command_with_aliases(self, command_template: str, server: str) -> bool:
+        """Try server command across aliases until one succeeds."""
+        for server_name in self._get_candidate_server_names(server):
+            command = command_template.format(server_name=server_name)
+            response = self._send_command(command)
+            if not self._is_command_error(response):
+                return True
+
+            logger.debug("Server command alias failed",
+                        command=command,
+                        response=response)
+
+        return False
         
     def _test_socket_connectivity(self) -> bool:
         """Test if HAProxy admin socket is accessible."""
@@ -326,19 +398,23 @@ class HAProxyWeightAdjuster:
         if not self.socket_available:
             logger.debug("Socket not available for weight setting")
             return False
-            
+
         try:
             # Set K3s server weight
-            k3s_cmd = f"set server {self.backend_name}/{self.k3s_server} weight {k3s_weight}"
-            k3s_response = self._send_command(k3s_cmd)
-            if k3s_response is None:
+            k3s_ok = self._send_server_command_with_aliases(
+                f"set server {self.backend_name}/{{server_name}} weight {k3s_weight}",
+                'k3s',
+            )
+            if not k3s_ok:
                 logger.error("Failed to set K3s weight via socket", weight=k3s_weight)
                 return False
-            
+
             # Set Knative server weight
-            knative_cmd = f"set server {self.backend_name}/{self.knative_server} weight {knative_weight}"
-            knative_response = self._send_command(knative_cmd)
-            if knative_response is None:
+            knative_ok = self._send_server_command_with_aliases(
+                f"set server {self.backend_name}/{{server_name}} weight {knative_weight}",
+                'knative',
+            )
+            if not knative_ok:
                 logger.error("Failed to set Knative weight via socket", weight=knative_weight)
                 return False
             
@@ -355,12 +431,15 @@ class HAProxyWeightAdjuster:
         try:
             # HAProxy stats admin interface URL
             stats_admin_url = self.stats_url.replace(";csv", "")
-            
+
+            k3s_name = self._get_candidate_server_names('k3s')[0]
+            knative_name = self._get_candidate_server_names('knative')[0]
+
             # HAProxy expects format: action=set&s=backend/server&weight=value
             # Set K3s server weight
             k3s_params = {
                 "action": "set",
-                "s": f"{self.backend_name}/{self.k3s_server}",
+                "s": f"{self.backend_name}/{k3s_name}",
                 "weight": str(k3s_weight)
             }
             
@@ -371,10 +450,10 @@ class HAProxyWeightAdjuster:
                            response=k3s_response.text[:200])
                 return False
                 
-            # Set Knative server weight  
+            # Set Knative server weight
             knative_params = {
                 "action": "set",
-                "s": f"{self.backend_name}/{self.knative_server}",
+                "s": f"{self.backend_name}/{knative_name}",
                 "weight": str(knative_weight)
             }
             
@@ -435,12 +514,11 @@ class HAProxyWeightAdjuster:
             True if server disabled successfully
         """
         try:
-            server_name = self.k3s_server if server == 'k3s' else self.knative_server
-            command = f"disable server {self.backend_name}/{server_name}"
-            
-            response = self._send_command(command)
-            # HAProxy returns empty string on success
-            if response is not None:
+            success = self._send_server_command_with_aliases(
+                f"disable server {self.backend_name}/{{server_name}}",
+                server,
+            )
+            if success:
                 logger.info("Server disabled", server=server)
                 return True
             else:
@@ -462,12 +540,11 @@ class HAProxyWeightAdjuster:
             True if server enabled successfully
         """
         try:
-            server_name = self.k3s_server if server == 'k3s' else self.knative_server
-            command = f"enable server {self.backend_name}/{server_name}"
-            
-            response = self._send_command(command)
-            # HAProxy returns empty string on success
-            if response is not None:
+            success = self._send_server_command_with_aliases(
+                f"enable server {self.backend_name}/{{server_name}}",
+                server,
+            )
+            if success:
                 logger.info("Server enabled", server=server)
                 return True
             else:
