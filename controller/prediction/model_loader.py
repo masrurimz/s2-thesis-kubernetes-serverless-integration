@@ -93,6 +93,7 @@ class GRUModelLoader:
         self.is_loaded: bool = False
         self.model_path: Optional[Path] = None
         self.model_type: str = "unknown"
+        self.model_expected_features: Optional[int] = None
         
         if TORCH_AVAILABLE:
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -172,6 +173,7 @@ class GRUModelLoader:
         
         self.config = GRUConfig(**metadata['config'])
         self.model = data['model']
+        self.model_expected_features = getattr(self.model, "n_features_in_", None)
         self.scaler_mean = metadata['scaler_mean']
         self.scaler_std = metadata['scaler_std']
         self.rmse = metadata.get('rmse')
@@ -223,7 +225,18 @@ class GRUModelLoader:
                     X = torch.FloatTensor(current_seq).reshape(1, -1, 1).to(self.device)
                     pred_norm = self.model(X).cpu().numpy()[0]
             else:
-                X = current_seq.reshape(1, -1)
+                expected_features = self.model_expected_features or len(current_seq)
+
+                if len(current_seq) > expected_features:
+                    adjusted_seq = current_seq[-expected_features:]
+                elif len(current_seq) < expected_features:
+                    pad_len = expected_features - len(current_seq)
+                    pad_value = current_seq[0] if len(current_seq) > 0 else 0.0
+                    adjusted_seq = np.concatenate((np.full(pad_len, pad_value), current_seq))
+                else:
+                    adjusted_seq = current_seq
+
+                X = adjusted_seq.reshape(1, -1)
                 pred_norm = self.model.predict(X)[0]
             
             pred_denorm = float(self._denormalize(pred_norm))

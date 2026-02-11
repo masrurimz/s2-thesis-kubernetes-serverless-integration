@@ -19,6 +19,7 @@ from intelligent_router.metrics import (
     routing_decision_total,
     reaction_time_ms,
 )
+from config import settings
 
 logger = structlog.get_logger(__name__)
 
@@ -37,7 +38,7 @@ class Algorithm1Config:
     default_k3s_weight: int = 100  # Default: 100% K8s
     default_knative_weight: int = 0  # Default: 0% serverless (disabled)
     knative_host: str = "test-app.default.localhost"  # Knative service host header
-    knative_url: str = "http://192.168.156.2:80"  # Kourier gateway URL
+    knative_url: str = "http://localhost:8081"  # Kourier gateway URL (k3d mapped port)
     prewarm_timeout_sec: int = 30  # Timeout for Knative pre-warm request
 
 
