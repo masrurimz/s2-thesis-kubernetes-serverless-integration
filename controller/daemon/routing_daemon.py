@@ -237,8 +237,10 @@ class RoutingDaemon:
         self._start_time = time.time()
         self._last_decision_time: Optional[float] = None
         self._decision_count = 0
-        
+
         self._load_history: deque = deque(maxlen=60)
+        self._last_total_requests: Optional[int] = None
+        self._last_total_requests_ts: Optional[float] = None
         
         logger.info(
             "RoutingDaemon initialized",
@@ -277,6 +279,7 @@ class RoutingDaemon:
     
     def _update_load_history(self) -> None:
         """Update load history from Prometheus (simplified)."""
+        # Primary source: Prometheus request rate query.
         try:
             import requests
             query = 'sum(rate(http_requests_total[1m]))'
@@ -290,8 +293,45 @@ class RoutingDaemon:
                 if data.get("status") == "success" and data.get("data", {}).get("result"):
                     value = float(data["data"]["result"][0]["value"][1])
                     self._load_history.append(value)
+                    return
         except Exception as e:
             logger.debug("Failed to update load history", error=str(e))
+
+        # Fallback source: HAProxy cumulative request counter converted to req/s.
+        # This keeps predictive mode functional when Prometheus is unreachable.
+        try:
+            response = self.weight_adjuster._send_command("show stat")
+            if not response:
+                return
+
+            total_requests: Optional[int] = None
+            for line in response.strip().split('\n'):
+                if not line or line.startswith('#'):
+                    continue
+
+                fields = line.split(',')
+                if len(fields) < 8:
+                    continue
+
+                if fields[0] == self.weight_adjuster.backend_name and fields[1] == 'BACKEND':
+                    if fields[7].isdigit():
+                        total_requests = int(fields[7])
+                        break
+
+            if total_requests is None:
+                return
+
+            now = time.time()
+            if self._last_total_requests is not None and self._last_total_requests_ts is not None:
+                delta_reqs = total_requests - self._last_total_requests
+                delta_t = max(0.001, now - self._last_total_requests_ts)
+                if delta_reqs >= 0:
+                    self._load_history.append(delta_reqs / delta_t)
+
+            self._last_total_requests = total_requests
+            self._last_total_requests_ts = now
+        except Exception as e:
+            logger.debug("Failed HAProxy fallback load history update", error=str(e))
     
     def _execute_decision_loop(self) -> None:
         """Execute single decision loop iteration."""
