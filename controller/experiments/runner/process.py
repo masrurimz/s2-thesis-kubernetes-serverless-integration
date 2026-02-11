@@ -19,6 +19,8 @@ from typing import Optional, List, Dict
 import httpx
 import structlog
 
+from config import settings
+
 logger = structlog.get_logger(__name__)
 
 
@@ -270,7 +272,7 @@ class ProcessManager:
     def start_daemon(
         self,
         scenario: str,
-        prometheus_url: str = "http://192.168.156.2:30090",
+        prometheus_url: str = None,
         haproxy_host: str = "localhost",
         haproxy_port: int = 19999,
         interval: int = 10,
@@ -278,6 +280,9 @@ class ProcessManager:
         gru_url: Optional[str] = None,
     ) -> ManagedProcess:
         """Start the routing daemon."""
+        # Use settings default if not provided
+        prometheus_url = prometheus_url or settings.PROMETHEUS_URL
+        
         cmd = [
             "uv", "run", "python", "-m", "daemon.routing_daemon",
             "--scenario", scenario,

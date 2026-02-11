@@ -1,0 +1,178 @@
+<frozen runpy>:128: RuntimeWarning: 'daemon.routing_daemon' found in sys.modules after import of package 'daemon', but prior to execution of 'daemon.routing_daemon'; this may result in unpredictable behaviour
+2026-02-11 10:32:32 [info     ] SLOMonitor initialized         threshold_ms=200.0 violation_window=30
+2026-02-11 10:32:32 [info     ] Algorithm1Controller initialized cooldown=10 weight_step=10
+2026-02-11 10:32:32 [info     ] HAProxyWeightAdjuster initialized backend=servers socket_path=/tmp/haproxy.sock tcp_socket=localhost:19999 tcp_socket_available=True unix_socket_available=False
+2026-02-11 10:32:32 [info     ] GRUClient initialized          base_url=http://localhost:8090
+2026-02-11 10:32:32 [info     ] RoutingDaemon initialized      decision_interval=10 description='Algorithm 1 with GRU predictions (Algorithm 2)' scenario=s4-hybrid-predictive use_algorithm=True use_predictions=True
+2026-02-11 10:32:32 [info     ] Starting routing daemon        interval=10 scenario=s4-hybrid-predictive
+2026-02-11 10:32:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2887
+2026-02-11 10:32:32 [debug    ] Current weights retrieved via socket weights={'k3s': 100, 'knative': 0}
+2026-02-11 10:32:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2887
+2026-02-11 10:32:32 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 80' response_length=0
+2026-02-11 10:32:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2883
+2026-02-11 10:32:32 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 20' response_length=0
+2026-02-11 10:32:32 [debug    ] Weight commands sent via socket successfully k3s=80 knative=20
+2026-02-11 10:32:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2885
+2026-02-11 10:32:32 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-02-11 10:32:32 [info     ] Weights updated successfully via HTTP new={'k3s': 80, 'knative': 20} previous={'k3s': 100, 'knative': 0}
+2026-02-11 10:32:32 [info     ] Initial weights applied        k3s=80 knative=20
+2026-02-11 10:32:37 [debug    ] Failed to update load history  error="HTTPConnectionPool(host='192.168.156.2', port=30090): Max retries exceeded with url: /api/v1/query?query=sum%28rate%28http_requests_total%5B1m%5D%29%29 (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x7f983c48d6a0>, 'Connection to 192.168.156.2 timed out. (connect timeout=5)'))"
+2026-02-11 10:32:37 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2892
+2026-02-11 10:32:37 [debug    ] HAProxy latency                avg=22724 max=60219 p99_est=45448
+2026-02-11 10:32:37 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2891
+2026-02-11 10:32:37 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-02-11 10:32:37 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2891
+2026-02-11 10:32:37 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 100' response_length=0
+2026-02-11 10:32:37 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2895
+2026-02-11 10:32:37 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 0' response_length=0
+2026-02-11 10:32:37 [debug    ] Weight commands sent via socket successfully k3s=100 knative=0
+2026-02-11 10:32:38 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2891
+2026-02-11 10:32:38 [debug    ] Current weights retrieved via socket weights={'k3s': 100, 'knative': 0}
+2026-02-11 10:32:38 [info     ] Weights updated successfully via HTTP new={'k3s': 100, 'knative': 0} previous={'k3s': 80, 'knative': 20}
+2026-02-11 10:32:38 [info     ] Weights updated                action=MAINTAIN reason='Within acceptable range, maintaining current weights' weights={'k3s': 100, 'knative': 0}
+2026-02-11 10:32:38 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=5513.84 p99=45448.0
+2026-02-11 10:32:53 [debug    ] Failed to update load history  error="HTTPConnectionPool(host='192.168.156.2', port=30090): Max retries exceeded with url: /api/v1/query?query=sum%28rate%28http_requests_total%5B1m%5D%29%29 (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x7f983c45f950>, 'Connection to 192.168.156.2 timed out. (connect timeout=5)'))"
+2026-02-11 10:32:53 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2885
+2026-02-11 10:32:53 [debug    ] HAProxy latency                avg=7946 max=60219 p99_est=15892
+2026-02-11 10:32:53 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=5017.79 p99=15892.0
+2026-02-11 10:33:08 [debug    ] Failed to update load history  error="HTTPConnectionPool(host='192.168.156.2', port=30090): Max retries exceeded with url: /api/v1/query?query=sum%28rate%28http_requests_total%5B1m%5D%29%29 (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x7f983c489d90>, 'Connection to 192.168.156.2 timed out. (connect timeout=5)'))"
+2026-02-11 10:33:08 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2878
+2026-02-11 10:33:08 [debug    ] HAProxy latency                avg=4649 max=60219 p99_est=9298
+2026-02-11 10:33:08 [info     ] Algorithm 1: Enabling serverless backend for SCALE_OUT
+2026-02-11 10:33:08 [info     ] Pre-warming Knative service    host=test-app.default.localhost url=http://192.168.156.2:80
+2026-02-11 10:33:38 [warning  ] Knative pre-warm timed out     timeout_sec=30
+2026-02-11 10:33:38 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 90, 'knative': 10} p99=9298.0 serverless_enabled=True violation_sec=31
+2026-02-11 10:33:38 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2869
+2026-02-11 10:33:38 [debug    ] Current weights retrieved via socket weights={'k3s': 100, 'knative': 0}
+2026-02-11 10:33:38 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2869
+2026-02-11 10:33:38 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 90' response_length=0
+2026-02-11 10:33:38 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2865
+2026-02-11 10:33:38 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 10' response_length=0
+2026-02-11 10:33:38 [debug    ] Weight commands sent via socket successfully k3s=90 knative=10
+2026-02-11 10:33:38 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2867
+2026-02-11 10:33:38 [debug    ] Current weights retrieved via socket weights={'k3s': 90, 'knative': 10}
+2026-02-11 10:33:38 [info     ] Weights updated successfully via HTTP new={'k3s': 90, 'knative': 10} previous={'k3s': 100, 'knative': 0}
+2026-02-11 10:33:38 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (9298ms > 200ms) for 31s' weights={'k3s': 90, 'knative': 10}
+2026-02-11 10:33:38 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=35545.44 p99=9298.0
+2026-02-11 10:33:53 [debug    ] Failed to update load history  error="HTTPConnectionPool(host='192.168.156.2', port=30090): Max retries exceeded with url: /api/v1/query?query=sum%28rate%28http_requests_total%5B1m%5D%29%29 (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x7f983c47a250>, 'Connection to 192.168.156.2 timed out. (connect timeout=5)'))"
+2026-02-11 10:33:53 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2867
+2026-02-11 10:33:53 [debug    ] HAProxy latency                avg=252 max=60219 p99_est=504
+2026-02-11 10:33:53 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 80, 'knative': 20} p99=504.0 serverless_enabled=True violation_sec=76
+2026-02-11 10:33:53 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2866
+2026-02-11 10:33:53 [debug    ] Current weights retrieved via socket weights={'k3s': 90, 'knative': 10}
+2026-02-11 10:33:53 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2866
+2026-02-11 10:33:53 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 80' response_length=0
+2026-02-11 10:33:53 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2866
+2026-02-11 10:33:53 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 20' response_length=0
+2026-02-11 10:33:53 [debug    ] Weight commands sent via socket successfully k3s=80 knative=20
+2026-02-11 10:33:54 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2866
+2026-02-11 10:33:54 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-02-11 10:33:54 [info     ] Weights updated successfully via HTTP new={'k3s': 80, 'knative': 20} previous={'k3s': 90, 'knative': 10}
+2026-02-11 10:33:54 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (504ms > 200ms) for 76s' weights={'k3s': 80, 'knative': 20}
+2026-02-11 10:33:54 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=5514.21 p99=504.0
+2026-02-11 10:34:09 [debug    ] Failed to update load history  error="HTTPConnectionPool(host='192.168.156.2', port=30090): Max retries exceeded with url: /api/v1/query?query=sum%28rate%28http_requests_total%5B1m%5D%29%29 (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x7f983c47a580>, 'Connection to 192.168.156.2 timed out. (connect timeout=5)'))"
+2026-02-11 10:34:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2870
+2026-02-11 10:34:09 [debug    ] HAProxy latency                avg=200 max=60219 p99_est=400
+2026-02-11 10:34:09 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 70, 'knative': 30} p99=400.0 serverless_enabled=True violation_sec=92
+2026-02-11 10:34:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2869
+2026-02-11 10:34:09 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-02-11 10:34:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2869
+2026-02-11 10:34:09 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 70' response_length=0
+2026-02-11 10:34:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2869
+2026-02-11 10:34:09 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 30' response_length=0
+2026-02-11 10:34:09 [debug    ] Weight commands sent via socket successfully k3s=70 knative=30
+2026-02-11 10:34:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2869
+2026-02-11 10:34:09 [debug    ] Current weights retrieved via socket weights={'k3s': 70, 'knative': 30}
+2026-02-11 10:34:09 [info     ] Weights updated successfully via HTTP new={'k3s': 70, 'knative': 30} previous={'k3s': 80, 'knative': 20}
+2026-02-11 10:34:09 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (400ms > 200ms) for 92s' weights={'k3s': 70, 'knative': 30}
+2026-02-11 10:34:09 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=5512.39 p99=400.0
+2026-02-11 10:34:24 [debug    ] Failed to update load history  error="HTTPConnectionPool(host='192.168.156.2', port=30090): Max retries exceeded with url: /api/v1/query?query=sum%28rate%28http_requests_total%5B1m%5D%29%29 (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x7f983c47a8b0>, 'Connection to 192.168.156.2 timed out. (connect timeout=5)'))"
+2026-02-11 10:34:24 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2872
+2026-02-11 10:34:24 [debug    ] HAProxy latency                avg=199 max=60219 p99_est=398
+2026-02-11 10:34:25 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: X has 30 features, but LinearRegression is expecting 14 features as in'
+2026-02-11 10:34:25 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: X has 30 features, but LinearRegression is expecting 14 features as in'
+2026-02-11 10:34:25 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 60, 'knative': 40} p99=398.0 serverless_enabled=True violation_sec=107
+2026-02-11 10:34:25 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2871
+2026-02-11 10:34:25 [debug    ] Current weights retrieved via socket weights={'k3s': 70, 'knative': 30}
+2026-02-11 10:34:25 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2871
+2026-02-11 10:34:25 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 60' response_length=0
+2026-02-11 10:34:25 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2868
+2026-02-11 10:34:25 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 40' response_length=0
+2026-02-11 10:34:25 [debug    ] Weight commands sent via socket successfully k3s=60 knative=40
+2026-02-11 10:34:25 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2869
+2026-02-11 10:34:25 [debug    ] Current weights retrieved via socket weights={'k3s': 60, 'knative': 40}
+2026-02-11 10:34:25 [info     ] Weights updated successfully via HTTP new={'k3s': 60, 'knative': 40} previous={'k3s': 70, 'knative': 30}
+2026-02-11 10:34:25 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (398ms > 200ms) for 107s' weights={'k3s': 60, 'knative': 40}
+2026-02-11 10:34:25 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=5820.74 p99=398.0
+2026-02-11 10:34:40 [debug    ] Failed to update load history  error="HTTPConnectionPool(host='192.168.156.2', port=30090): Max retries exceeded with url: /api/v1/query?query=sum%28rate%28http_requests_total%5B1m%5D%29%29 (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x7f983c47a690>, 'Connection to 192.168.156.2 timed out. (connect timeout=5)'))"
+2026-02-11 10:34:40 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2875
+2026-02-11 10:34:40 [debug    ] HAProxy latency                avg=199 max=60219 p99_est=398
+2026-02-11 10:34:40 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: X has 30 features, but LinearRegression is expecting 14 features as in'
+2026-02-11 10:34:40 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: X has 30 features, but LinearRegression is expecting 14 features as in'
+2026-02-11 10:34:40 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=398.0 serverless_enabled=True violation_sec=123
+2026-02-11 10:34:40 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2871
+2026-02-11 10:34:40 [debug    ] Current weights retrieved via socket weights={'k3s': 60, 'knative': 40}
+2026-02-11 10:34:40 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2874
+2026-02-11 10:34:40 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 50' response_length=0
+2026-02-11 10:34:40 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2871
+2026-02-11 10:34:40 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 50' response_length=0
+2026-02-11 10:34:40 [debug    ] Weight commands sent via socket successfully k3s=50 knative=50
+2026-02-11 10:34:41 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2874
+2026-02-11 10:34:41 [debug    ] Current weights retrieved via socket weights={'k3s': 50, 'knative': 50}
+2026-02-11 10:34:41 [info     ] Weights updated successfully via HTTP new={'k3s': 50, 'knative': 50} previous={'k3s': 60, 'knative': 40}
+2026-02-11 10:34:41 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (398ms > 200ms) for 123s' weights={'k3s': 50, 'knative': 50}
+2026-02-11 10:34:41 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=5822.98 p99=398.0
+2026-02-11 10:34:56 [debug    ] Failed to update load history  error="HTTPConnectionPool(host='192.168.156.2', port=30090): Max retries exceeded with url: /api/v1/query?query=sum%28rate%28http_requests_total%5B1m%5D%29%29 (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x7f983c47aad0>, 'Connection to 192.168.156.2 timed out. (connect timeout=5)'))"
+2026-02-11 10:34:56 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2877
+2026-02-11 10:34:56 [debug    ] HAProxy latency                avg=200 max=60219 p99_est=400
+2026-02-11 10:34:56 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: X has 30 features, but LinearRegression is expecting 14 features as in'
+2026-02-11 10:34:56 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: X has 30 features, but LinearRegression is expecting 14 features as in'
+2026-02-11 10:34:56 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=400.0 serverless_enabled=True violation_sec=139
+2026-02-11 10:34:56 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=5315.76 p99=400.0
+2026-02-11 10:35:11 [debug    ] Failed to update load history  error="HTTPConnectionPool(host='192.168.156.2', port=30090): Max retries exceeded with url: /api/v1/query?query=sum%28rate%28http_requests_total%5B1m%5D%29%29 (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x7f983c47a7a0>, 'Connection to 192.168.156.2 timed out. (connect timeout=5)'))"
+2026-02-11 10:35:11 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2874
+2026-02-11 10:35:11 [debug    ] HAProxy latency                avg=221 max=60219 p99_est=442
+2026-02-11 10:35:12 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: X has 30 features, but LinearRegression is expecting 14 features as in'
+2026-02-11 10:35:12 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: X has 30 features, but LinearRegression is expecting 14 features as in'
+2026-02-11 10:35:12 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=442.0 serverless_enabled=True violation_sec=154
+2026-02-11 10:35:12 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=5314.85 p99=442.0
+2026-02-11 10:35:27 [debug    ] Failed to update load history  error="HTTPConnectionPool(host='192.168.156.2', port=30090): Max retries exceeded with url: /api/v1/query?query=sum%28rate%28http_requests_total%5B1m%5D%29%29 (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x7f983c47a580>, 'Connection to 192.168.156.2 timed out. (connect timeout=5)'))"
+2026-02-11 10:35:27 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2874
+2026-02-11 10:35:27 [debug    ] HAProxy latency                avg=305 max=60219 p99_est=610
+2026-02-11 10:35:27 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: X has 30 features, but LinearRegression is expecting 14 features as in'
+2026-02-11 10:35:27 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: X has 30 features, but LinearRegression is expecting 14 features as in'
+2026-02-11 10:35:27 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=610.0 serverless_enabled=True violation_sec=170
+2026-02-11 10:35:27 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=5317.53 p99=610.0
+2026-02-11 10:35:42 [debug    ] Failed to update load history  error="HTTPConnectionPool(host='192.168.156.2', port=30090): Max retries exceeded with url: /api/v1/query?query=sum%28rate%28http_requests_total%5B1m%5D%29%29 (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x7f983c47a250>, 'Connection to 192.168.156.2 timed out. (connect timeout=5)'))"
+2026-02-11 10:35:42 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2874
+2026-02-11 10:35:42 [debug    ] HAProxy latency                avg=480 max=60219 p99_est=960
+2026-02-11 10:35:42 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: X has 30 features, but LinearRegression is expecting 14 features as in'
+2026-02-11 10:35:42 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: X has 30 features, but LinearRegression is expecting 14 features as in'
+2026-02-11 10:35:42 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=960.0 serverless_enabled=True violation_sec=185
+2026-02-11 10:35:42 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=5316.67 p99=960.0
+2026-02-11 10:35:57 [debug    ] Failed to update load history  error="HTTPConnectionPool(host='192.168.156.2', port=30090): Max retries exceeded with url: /api/v1/query?query=sum%28rate%28http_requests_total%5B1m%5D%29%29 (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x7f983c47a140>, 'Connection to 192.168.156.2 timed out. (connect timeout=5)'))"
+2026-02-11 10:35:57 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2874
+2026-02-11 10:35:57 [debug    ] HAProxy latency                avg=966 max=60219 p99_est=1932
+2026-02-11 10:35:57 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: X has 30 features, but LinearRegression is expecting 14 features as in'
+2026-02-11 10:35:57 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: X has 30 features, but LinearRegression is expecting 14 features as in'
+2026-02-11 10:35:57 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=1932.0 serverless_enabled=True violation_sec=200
+2026-02-11 10:35:57 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=5318.54 p99=1932.0
+2026-02-11 10:36:13 [debug    ] Failed to update load history  error="HTTPConnectionPool(host='192.168.156.2', port=30090): Max retries exceeded with url: /api/v1/query?query=sum%28rate%28http_requests_total%5B1m%5D%29%29 (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x7f983c47a030>, 'Connection to 192.168.156.2 timed out. (connect timeout=5)'))"
+2026-02-11 10:36:13 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2868
+2026-02-11 10:36:13 [debug    ] HAProxy latency                avg=1644 max=60219 p99_est=3288
+2026-02-11 10:36:13 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: X has 30 features, but LinearRegression is expecting 14 features as in'
+2026-02-11 10:36:13 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: X has 30 features, but LinearRegression is expecting 14 features as in'
+2026-02-11 10:36:13 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=3288.0 serverless_enabled=True violation_sec=216
+2026-02-11 10:36:13 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=5318.55 p99=3288.0
+2026-02-11 10:36:28 [debug    ] Failed to update load history  error="HTTPConnectionPool(host='192.168.156.2', port=30090): Max retries exceeded with url: /api/v1/query?query=sum%28rate%28http_requests_total%5B1m%5D%29%29 (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x7f983c479bf0>, 'Connection to 192.168.156.2 timed out. (connect timeout=5)'))"
+2026-02-11 10:36:28 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2870
+2026-02-11 10:36:28 [debug    ] HAProxy latency                avg=1644 max=60219 p99_est=3288
+2026-02-11 10:36:28 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: X has 30 features, but LinearRegression is expecting 14 features as in'
+2026-02-11 10:36:28 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: X has 30 features, but LinearRegression is expecting 14 features as in'
+2026-02-11 10:36:28 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=3288.0 serverless_enabled=True violation_sec=231
+2026-02-11 10:36:28 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=5317.84 p99=3288.0
+2026-02-11 10:36:33 [info     ] Received shutdown signal
+2026-02-11 10:36:33 [info     ] Stopping routing daemon...
+2026-02-11 10:36:33 [info     ] Received shutdown signal
+2026-02-11 10:36:33 [info     ] Stopping routing daemon...
+2026-02-11 10:36:33 [info     ] Routing daemon stopped

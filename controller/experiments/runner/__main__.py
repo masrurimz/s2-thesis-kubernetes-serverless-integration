@@ -25,6 +25,7 @@ import httpx
 import structlog
 
 from .process import ProcessManager
+from config import settings
 
 logger = structlog.get_logger(__name__)
 
@@ -130,15 +131,17 @@ class ExperimentRunner:
         self,
         haproxy_url: str = "http://localhost:18082",
         haproxy_socket: str = "localhost:19999",
-        prometheus_url: str = "http://192.168.156.2:30090",
-        knative_url: str = "http://192.168.156.2:80",
+        prometheus_url: str = None,
+        knative_url: str = None,
         knative_host: str = "test-app.default.localhost",
     ):
         self.haproxy_url = haproxy_url
         self.haproxy_socket_host, self.haproxy_socket_port = haproxy_socket.split(":")
         self.haproxy_socket_port = int(self.haproxy_socket_port)
-        self.prometheus_url = prometheus_url
-        self.knative_url = knative_url
+        self.prometheus_url = prometheus_url or settings.PROMETHEUS_URL
+        # Use K3S_NODE_IP from config for Knative URL, defaulting to localhost
+        knative_host_ip = settings.K3S_NODE_IP if settings.K3S_NODE_IP != "127.0.0.1" else "localhost"
+        self.knative_url = knative_url or f"http://{knative_host_ip}:8081"
         self.knative_host = knative_host
     
     def preflight_check(self) -> bool:

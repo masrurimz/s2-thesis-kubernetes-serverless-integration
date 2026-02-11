@@ -27,9 +27,9 @@ LOAD_TEST="$SCRIPT_DIR/stress.js"
 HAPROXY_URL="http://localhost:18082"
 HAPROXY_STATS="http://localhost:18404/stats"
 HAPROXY_SOCKET="localhost:19999"
-KNATIVE_URL="http://192.168.156.2:80"
+KNATIVE_URL="http://localhost:8081"
 KNATIVE_HOST="test-app.default.localhost"
-PROMETHEUS_URL="http://192.168.156.2:30090"
+PROMETHEUS_URL="http://localhost:9090"
 
 # K8s deployment
 K8S_DEPLOYMENT="test-app-warm"
