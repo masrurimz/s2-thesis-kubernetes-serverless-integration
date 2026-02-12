@@ -21,29 +21,32 @@ This directory contains all evidence, raw data, and reproduction scripts for the
 | `protocol/THREATS_TO_VALIDITY.md` | Explicit limitations and biases |
 | `results/processed/` | Tables, statistics, figures |
 | `appendices/` | Detailed logs and excerpts |
+| `results/reports/INCONSISTENCIES.md` | Known data inconsistencies and explanations |
 
 ---
 
 ## Validation Summary
 
-### ✅ Mechanisms Validated
+### ✅ Mechanisms Validated (H1, H2 — Mechanism-Level)
 
 | Mechanism | Status | Evidence |
 |-----------|--------|----------|
-| GRU Prediction | ✅ | 6.01% RMSE < 10% target |
-| Weight Shifting | ✅ | 100/0 → 50/50 documented |
-| SLO Monitoring | ✅ | Violations detected correctly |
-| PREDICTIVE Action | ✅ | Triggered before violation |
-| Hybrid Routing | ✅ | Serverless engages under load |
+| GRU Prediction (H3) | ✅ | 6.01% RMSE < 10% target |
+| Weight Shifting (H1) | ✅ | 100/0 → 50/50 documented |
+| SLO Monitoring (H1) | ✅ | Violations detected correctly |
+| PREDICTIVE Action (H2) | ✅ | Triggered before violation |
+| Hybrid Routing (H1) | ✅ | Serverless engages under load |
 
-### ⚠️ Performance Superiority (Environment-Limited)
+**Note:** H1 and H2 are validated at the **mechanism level** — each component behaves correctly in isolation and integration. Performance superiority over baselines was not demonstrated due to environment constraints (see below).
+
+### ⚠️ Performance Superiority — Honest Limitation
 
 | Comparison | Result | Reason |
 |------------|--------|--------|
 | S4 vs S1 (p99) | Not significant | S1 localhost routing bias |
 | S4 vs S3 (violations) | No difference | Insufficient load |
 
-**Important:** The lack of statistical significance is an **environment limitation**, not a design flaw. The k3d single-node cluster's localhost routing gives S1 an artificial advantage.
+**This is a genuine limitation, not a hedged claim.** The k3d single-node cluster routes S1 traffic via localhost, giving it an artificial latency advantage that a real multi-node deployment would not have. At 100 RPS the system was never stressed enough for predictive routing to show measurable benefit over reactive. These results are reported transparently; they do **not** invalidate the mechanism validation above but they do mean we cannot claim performance superiority from this experimental environment.
 
 ---
 
@@ -107,7 +110,8 @@ thesis/
 │   │   ├── phase_b/
 │   │   └── gru_training/
 │   ├── processed/             # Tables, statistics
-│   └── figures/               # Thesis-ready plots
+│   ├── figures/               # Thesis-ready plots
+│   └── reports/               # Analysis reports & inconsistency notes
 ├── scripts/                   # Reproduction scripts
 ├── config/                    # Environment configs
 └── appendices/                # Detailed excerpts
