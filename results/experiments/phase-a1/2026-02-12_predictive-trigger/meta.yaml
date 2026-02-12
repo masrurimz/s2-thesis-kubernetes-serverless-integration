@@ -1,0 +1,23 @@
+id: phase-a1.predictive-trigger.2026-02-12
+date: 2026-02-12
+phase: phase-a1
+category: mechanism-validation
+scenarios: [s4-hybrid-predictive]
+workload:
+  type: ramp
+  phases:
+    - {name: baseline, rps: 20, duration_sec: 60}
+    - {name: ramp, rps_start: 20, rps_end: 100, duration_sec: 60}
+    - {name: peak, rps: 100, duration_sec: 120}
+claims:
+  supports: [H1, H2, H3]
+  notes:
+    - "First PREDICTIVE action triggered at p99=146ms (healthy state)"
+    - "GRU predicted 47% load increase, confidence 72%"
+    - "18 total decisions: 8 MAINTAIN, 7 SCALE_OUT, 2 OPTIMIZE_COST, 1 PREDICTIVE"
+    - "Weight progression: 100/0 → 50/50 → 55/45 → 50/50"
+reproduce:
+  - "HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python -m prediction.prediction_server"
+  - "HSA_OVERRIDE_GFX_VERSION=11.0.0 PREDICTION_CONFIDENCE_THRESHOLD=0.6 uv run python -m daemon.routing_daemon --scenario s4-hybrid-predictive"
+  - "k6 run infrastructure/load-tests/ramp.js"
+status: complete

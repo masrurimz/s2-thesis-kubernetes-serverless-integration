@@ -1,0 +1,16 @@
+id: gru.training-synthetic.2026-02-10
+date: 2026-02-10
+phase: model-training
+category: gru-prediction
+model: GRU (PyTorch, 128 hidden units, 60-step sequence)
+training_data: synthetic (diurnal + bursty patterns)
+claims:
+  supports: [H3]
+  notes:
+    - "GRU RMSE 6.01% on synthetic test set (target <10%)"
+    - "Trained on SYNTHETIC data, NOT real ClarkNet/Calgary traces"
+    - "ClarkNet/Calgary used only for baseline model comparison (not GRU training)"
+    - "Live inference latency ~40ms, confidence 0.72-0.88"
+reproduce:
+  - "cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python -m prediction.train_gru"
+status: complete

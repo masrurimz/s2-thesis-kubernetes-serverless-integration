@@ -1,0 +1,16 @@
+id: cost.proxy-analysis.2026-02-11
+date: 2026-02-11
+phase: phase-b
+category: cost-analysis
+scenarios: [s1-k8s-only, s2-serverless-only, s3-hybrid-reactive, s4-hybrid-predictive]
+providers: [AWS, GCP, Azure]
+time_periods: [1-hour, 1-day, 1-month]
+claims:
+  supports: [H1]
+  notes:
+    - "Proxy-based estimates, NOT real billing data"
+    - "S4 is 19% more expensive than S1 but 33% cheaper than S2 (AWS monthly)"
+    - "S4 is 6% cheaper than S3 — predictive routing reduces serverless invocations"
+reproduce:
+  - "cd controller && uv run python -m cost_analysis.analyze"
+status: complete

@@ -4,369 +4,216 @@ Agent instructions for this repository.
 
 ## Project Overview
 
-This is a Kubernetes & Serverless Integration thesis research project that implements a **hybrid k3s-serverless architecture** with intelligent traffic routing based on workload prediction and SLO monitoring.
-
-### Research Focus
+This is a **completed** Master's thesis research project implementing a hybrid k3s-serverless architecture with intelligent traffic routing based on GRU workload prediction and SLO monitoring.
 
 **Thesis Title**: "Decision Making and Elastic Scalability Management in Heterogeneous Cloud Environments Based on Workload Prediction"
 
-The project implements a novel hybrid approach that intelligently routes traffic between cost-effective Kubernetes clusters and infinitely-scalable serverless functions using GRU neural networks and formal SLO monitoring.
+**Current Status**: All 5 sprints complete. Experiments ran. Writing thesis document.
 
-### Architecture Evolution
+---
 
-The project follows an **incremental 5-sprint methodology** optimized for LLM-assisted development:
+## Repository Map
 
-| Sprint | Focus | Status |
-|--------|-------|--------|
-| **Sprint 1** | Basic hybrid foundation (k3s + Knative serverless) | ✅ Complete |
-| **Sprint 2** | Automated load prediction with linear regression | ✅ Complete |
-| **Sprint 3** | SLO-aware routing with 99th percentile latency monitoring | ✅ Complete |
-| **Sprint 4** | GRU neural network integration with real HTTP trace data | ✅ Complete |
-| **Sprint 5** | Complete ElaX algorithm implementation with formal evaluation | ✅ Complete |
+| Directory | Purpose | Rule |
+|-----------|---------|------|
+| `results/` | **Single source of truth for ALL experiment evidence** — raw data, processed outputs, figures, claims, reports | If it's experiment output, it lives here. Nowhere else. |
+| `results/claims/` | Claims-to-evidence mapping + inconsistency tracking | Every thesis claim must trace to raw data here |
+| `results/experiments/` | Experiment bundles (one folder per experiment run/batch) | Each bundle: `meta.yaml` + `raw/` + `report.md` |
+| `results/models/` | ML model training results | Same bundle convention |
+| `results/cost/` | Cost analysis results | Same bundle convention |
+| `thesis/` | **Narrative only** — thesis text, protocol, appendices | Links INTO `results/` for evidence. Never stores raw data. |
+| `thesis/protocol/` | Preregistered experiment design + threats to validity | Update only to document new limitations |
+| `controller/` | Main controller code (prediction, routing, daemon, monitoring) | Active codebase |
+| `scripts/` | Thin wrappers delegating to `thesis/scripts/` | Don't duplicate; delegate |
+| `data/` | Datasets (ClarkNet, Calgary traces, synthetic) | Large files tracked via `.gitattributes` |
+| `infrastructure/` | k3d configs, HAProxy, load testing | Deployment configs |
+| `docs/` | Getting started, architecture docs | Points to `results/` for evidence |
+| `archived/` | Legacy sprint artifacts, deprecated code | **Read-only. Never add new work here.** |
+| `experiments/` | Experiment configurations | Config files only |
+| `ml_models/` | Model training scripts | GRU training code |
 
-### Key Components
+**Key documents to read first:**
+- `results/README.md` — Evidence registry and experiment index
+- `results/claims/CLAIMS_TO_EVIDENCE.md` — Every claim mapped to raw data
+- `results/claims/INCONSISTENCIES.md` — Tracked inconsistencies
+- `thesis/protocol/THREATS_TO_VALIDITY.md` — Known limitations
 
-- **Hybrid Traffic Router**: HAProxy with intelligent weight adjustment
-- **Workload Predictor**: Evolution from linear regression → GRU neural networks
-- **SLO Monitor**: Algorithm 1 implementation with tail latency tracking
-- **Cost Optimizer**: Real-time cost analysis and optimization
-- **Evaluation Framework**: RMSE accuracy and formal thesis validation
+---
 
-### Key Research Elements
+## Results Structure (Experiment Bundle Convention)
 
-#### Datasets
-- **ClarkNet HTTP Traces**: 4M+ requests for real workload patterns
-- **Calgary HTTP Traces**: Complementary dataset for validation
-- **Synthetic Load**: Generated patterns for controlled testing
+Every experiment is a **self-contained folder** under `results/experiments/`, `results/models/`, or `results/cost/`. This is the core organizational pattern.
 
-#### Algorithms
-- **Algorithm 1**: Thesis routing controller with 5-second SLO violation detection
-- **ElaX Algorithm**: Base algorithm modified for hybrid environments
-- **GRU Neural Networks**: 30-second workload prediction with RMSE <10%
+### Bundle Structure
 
-#### Evaluation Metrics
-- **Prediction Accuracy**: RMSE measurement on real HTTP trace data
-- **SLO Compliance**: 99th percentile latency <200ms target
-- **Cost Optimization**: Hybrid vs pure k3s vs pure serverless analysis
-- **Response Time**: Algorithm 1 detection and reaction speed
+```
+results/experiments/<phase>/<YYYY-MM-DD_short-slug>/
+  meta.yaml       # REQUIRED: id, date, scenarios, workload, claims, reproduce, status
+  raw/            # REQUIRED: unmodified experiment outputs (JSON, CSV, logs)
+  processed/      # OPTIONAL: aggregated tables, statistics
+  figures/        # OPTIONAL: generated plots
+  report.md       # REQUIRED: one interpretation doc per experiment (no spin)
+```
+
+### meta.yaml Required Fields
+
+```yaml
+id: phase-b.replicated.2026-02-12      # Unique, never changes
+date: 2026-02-12                        # When experiment ran
+phase: phase-b                          # Which thesis phase
+scenarios: [s1-k8s-only, s4-hybrid-predictive]  # Which scenarios
+workload: {rps: 100, duration_sec: 300} # Load parameters
+claims: {supports: [H1, H2]}           # Which hypotheses this relates to
+reproduce: ["uv run python ..."]        # Exact reproduction command(s)
+status: complete                        # complete | partial | failed
+```
+
+### Adding a New Experiment
+
+1. Create folder: `results/experiments/<phase>/<YYYY-MM-DD_slug>/`
+2. Add `meta.yaml` + `raw/` data + `report.md`
+3. Add row to registry table in `results/README.md`
+4. Update `results/claims/CLAIMS_TO_EVIDENCE.md` if it supports a thesis claim
+5. That's it. No other files to edit.
+
+---
+
+## Repository Invariants
+
+### 1. Single Source of Truth
+
+- **All experiment evidence lives in `results/` only.** No raw data, reports, or summaries in `thesis/`, `docs/`, `controller/results/`, or anywhere else.
+- **`thesis/` is narrative.** It links to `results/` paths for evidence. It never stores data.
+- **One report per experiment.** Each experiment bundle has exactly one `report.md`. Don't create parallel summaries elsewhere.
+- **Before creating a new doc, search for an existing one.** Update in-place; don't create a parallel version.
+
+### 2. Evidence Integrity
+
+- **No summary claims without evidence mapping.** Any statement containing "validated", "significant", "outperforms", or "all hypotheses" MUST be backed by a corresponding entry in `results/claims/CLAIMS_TO_EVIDENCE.md` with raw-data path + reproduction command.
+- **Distinguish mechanism validation from performance superiority.** This project validates mechanisms (✅) but could not demonstrate performance superiority due to environment constraints (⚠️). Never conflate these.
+- **If evidence conflicts, log it.** Add entry to `results/claims/INCONSISTENCIES.md` and correct the claim. Don't silently fix.
+- **Claims language**: Use "mechanism validated" (correct) not "hypothesis proven" (overclaim).
+
+### 3. Artifact Hygiene
+
+- **No empty placeholder directories.** Don't create dirs without content. No `.keep` or `.gitkeep` files.
+- **No large binaries in git** unless explicitly whitelisted in `.gitattributes`. Models (`.pt`), large datasets, PDFs — prefer generated artifacts + pointer stubs.
+- **No ephemeral outputs in git.** Logs, `/tmp/` files, daemon outputs → excerpt relevant parts into reports, don't commit raw.
+- **`.gitignore` must cover**: `*.log`, `__pycache__/`, `.venv/`, `/tmp/`, `*.pyc`, large generated outputs.
+- **No duplicate reports.** If you find yourself writing a second summary of the same experiment, you're doing it wrong. Update the existing `report.md` in the experiment bundle.
+
+### 4. Results Flow
+
+1. Run experiment → script outputs to `controller/results/` or similar working dir
+2. Create experiment bundle folder under `results/experiments/<phase>/`
+3. Move raw outputs into `raw/`, write `meta.yaml` and `report.md`
+4. Update `results/claims/CLAIMS_TO_EVIDENCE.md` with path + reproduction command
+5. If discrepancy found → update `results/claims/INCONSISTENCIES.md`
+6. Never skip steps 4-5
+
+### Lesson Learned: What Went Wrong Before
+
+> Previous structure used `thesis/results/` as canonical + `results/` as working space + `thesis/appendices/` for reports. This caused:
+> - 15+ duplicate .md files saying the same thing differently
+> - Real per-run data hidden in `controller/results/phase_b/` never promoted
+> - Old stress test data mislabeled as Phase B results in `thesis/results/raw/phase_b/`
+> - Reports contradicting each other (one said "ALL HYPOTHESES VALIDATED", another said "not significant")
+> - Nobody could answer "what data do we actually have?" without reading every file
+>
+> **The fix:** One canonical location (`results/`), one doc per experiment (bundle convention), no narrative in evidence directories.
+
+---
 
 ## Development Commands
 
-### Quick Start
-
-```bash
-# Create k3s cluster
-k3d cluster create demo-hybrid --agents 1 --port "8080:80@loadbalancer"
-
-# Deploy test application
-kubectl create deployment test-app --image=nginx:alpine
-kubectl expose deployment test-app --port=80 --target-port=80
-
-# Create serverless simulation
-docker run -d --name serverless-sim -p 8081:80 nginx:alpine
-
-# Setup traffic router (HAProxy)
-docker run -d --name traffic-router -p 8082:8082 -v /tmp/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg haproxy:alpine
-```
-
-### Controller Commands
+### Controller
 
 ```bash
 cd controller
 uv sync                                                    # Install deps
 uv run python -m prediction.prediction_server &            # Start prediction API
-uv run python -m intelligent_router.routing_controller &   # Start routing
+uv run python -m daemon.routing_daemon --scenario s4 &     # Start routing daemon
 uv run python -m pytest                                    # Run tests
 ```
 
-### Monitoring & Metrics
+### Infrastructure
 
 ```bash
-# Prometheus metrics
-curl http://localhost:9090/api/v1/query?query=http_requests_total
-
-# HAProxy stats
-curl http://localhost:8404/stats
-
-# System monitoring
-kubectl top nodes
-kubectl top pods
+k3d cluster create demo-hybrid --agents 1 --port "8080:80@loadbalancer"
+kubectl create deployment test-app --image=nginx:alpine
+kubectl expose deployment test-app --port=80 --target-port=80
 ```
 
-## Documentation Structure
+### Reproduction (see `thesis/README.md` for full details)
 
-- `docs/getting-started/`: Prerequisites, quick start, architecture deep dive
-- `docs/incremental-development/`: Agile sprint methodology and phase docs
-- `controller/`: Main controller code (prediction, routing, autoscaler, monitoring)
-- `archived/`: Legacy sprint directories and earlier experiments
-
-## Hardware Constraints
-
-- **Full Development**: 8+ cores, 32GB RAM
-- **Resource-Constrained Testing**: 4+ cores, 8GB RAM (6GB usable)
+```bash
+cd controller
+HSA_OVERRIDE_GFX_VERSION=11.0.0 \
+  uv run python ../scripts/run_phase_b_experiments.py --phase full --runs 5 --duration 300
+```
 
 ---
 
 ## Issue Tracking
 
 This project uses **bd (beads)** for issue tracking.
-Run `bd prime` for workflow context, or install hooks (`bd hooks install`) for auto-injection.
-
-**Quick reference:**
-- `bd ready` - Find unblocked work
-- `bd create "Title" --type task --priority 2` - Create issue
-- `bd close <id>` - Complete work
-- `bd sync` - Sync with git (run at session end)
-
-For full workflow details: `bd prime`
-
----
-
-## 🧠 LLM Workflow Standards
-
-### 🔑 Core Principles
-
-- **NO HIGH-LEVEL BULLSHIT** – Show real code, not vague suggestions.
-- **Terse, expert-level, casual communication** – Get to the point.
-- **Anticipate needs** – Offer solutions they haven't asked for yet.
-- **LLM-AWARE DEVELOPMENT** – Use burst implementation + validation cycles, not human time estimates.
-
----
-
-### 📋 Task Management
-
-- Use `bd` for multi-session work with complex dependencies.
-- Use `TodoWrite` / `TodoRead` for single-session linear tasks.
-- Break tasks into concrete, actionable items.
-- **LLM Planning**: Estimate in "execution blocks" (15-30 min) not hours/days.
-- **Context Batching**: Group related tasks by domain/component for parallel execution.
-
----
-
-### 🔍 Search & Analysis
-
-- Use `Task` tool for multi-round open-ended investigation.
-- **Batch** search operations (esp. Bash) to minimize latency.
-- Prefer `rg` (ripgrep) over `grep`, `fd` over `find`, etc.
-- Read and diff multiple files at once where analysis demands it.
-
----
-
-### 🧬 Code Changes
-
-- Match existing code patterns – review similar files before adding new logic.
-- Add comments only where the logic isn't self-evident.
-- Don't touch unrelated files – surgical edits only.
-
----
-
-### 🗃️ Git Workflow
-
-- Commit at _logical checkpoints_ with clear commit messages.
-- Format commit messages: `feat:`, `fix:`, `refactor:`, `chore:`, etc. + short summary
-- Do **not** squash – user will squash and rename commits later.
-- Never push unless explicitly instructed.
-- Don't run deployment scripts unless told to.
-
----
-
-### 📁 File Ops
-
-- CREATE markdown files to document implemented logic.
-- ALWAYS edit existing files if possible.
-- NEVER delete MongoDB data without explicit confirmation.
-
----
-
-### 🛠️ Tool Usage
-
-- Batch all independent operations into single calls.
-- Use absolute paths.
-- Parallelize wherever possible: `&` in Bash, `xargs -P`, background jobs.
-- Use optimized tools (`rg`, `fd`, etc.) over slower legacy ones.
-- **LLM Optimization**: Create 5-10 related files simultaneously in burst implementation.
-- **Validation Cycles**: Plan explicit human testing phases between implementation bursts.
-
----
-
-### 💬 Response Style
-
-- Lead with the solution. Explain later, only if necessary.
-- Show only relevant code (a few lines before/after).
-- Reference files with format: `path/to/file.ts:42`
-- Split large responses cleanly.
-- No fluff. No filler.
-
----
-
-### 🚫 What NOT to Do
-
-- ❌ Don't update Git config
-- ❌ Don't push to remote unless told to
-- ❌ Don't deploy unless told to
-- ❌ Don't touch unrelated DB entries
-- ❌ Don't use human time estimates (hours/days) for LLM-capable tasks
-- ❌ Don't plan sequential tasks that can be executed in parallel batches
-
----
-
-## 🚀 LLM Development Guidelines
-
-### Core LLM Approach
-
-- **Execution Blocks**: 15-30 minute focused implementation bursts
-- **Context Batching**: Group related tasks (configs, docs, scripts) together
-- **Burst + Validate**: Implementation → Human Testing → Feedback → Next Burst
-- **Parallel Creation**: Generate 5-10 related files simultaneously
-
-### LLM Strengths (Leverage)
-
-- Configuration generation (YAML, JSON, configs)
-- Pattern-based implementation following existing conventions
-- Documentation created simultaneously with code
-- Parallel execution of related tasks
-
-### LLM Limitations (Account For)
-
-- Complex multi-system debugging requires human feedback
-- Integration validation needs real-world testing
-- Performance optimization requires iterative measurement
-- Domain expertise and business logic validation
-
-### Estimation Framework
-
-- **Simple**: 1 execution block (single component, docs, scripts)
-- **Medium**: 2-3 execution blocks (multi-component integration)
-- **Complex**: Multiple burst + validation cycles (system-wide changes)
-
-Always plan with LLM reality: Sprint 1 = 1 day actual (not 5 days traditional)
-
----
-
-## 🤝 User-LLM Validation Collaboration
-
-### Role Separation
-
-**LLM Role**:
-- Code validation, syntax checking, import testing
-- Analysis of user feedback and error messages
-- Configuration generation and pattern implementation
-- Documentation updates and logic verification
-
-**User Role**:
-- Execute long-running services (servers, monitoring, prediction engines)
-- Integration testing and performance measurement
-- Manual verification of system behavior
-- Resource management and process monitoring
-
-### Handoff Protocol
-
-**Phase 1 (LLM Implementation)**:
-- LLM provides specific commands for user execution
-- Clear step-by-step instructions with expected outputs
-- Error handling guidance and troubleshooting steps
-
-**Phase 2 (User Execution)**:
-- User executes services and reports results
-- Captures logs, error messages, and performance metrics
-- Tests integration points and validates behavior
-
-**Phase 3 (Collaborative Analysis)**:
-- User reports findings back to LLM with specific details
-- LLM analyzes feedback and provides next steps
-- Iterative refinement based on real-world testing
-
----
-
-## 📦 UV Package Management Usage
-
-### Core UV Commands
 
 ```bash
-# Project setup and dependency management
-uv sync                    # Install dependencies from pyproject.toml
-uv lock                    # Update dependency lock file
-uv add package-name        # Add new dependency
-uv remove package-name     # Remove dependency
-
-# Script execution patterns
-uv run script.py                    # Run Python script
-uv run -m module.name              # Run module directly
-uv run prediction-server           # Run defined script from pyproject.toml
-```
-
-### Common Patterns
-
-- **Development**: `uv run` for all script execution
-- **Testing**: `uv run -m pytest` or `uv run test-script`
-- **Services**: Use project scripts for long-running services
-- **Environment**: `uv sync` before each development session
-
----
-
-## 🔄 Subagent Context Management
-
-### When to Use Subagents
-
-- **Large File Updates**: Multi-file documentation, extensive refactoring
-- **Extensive Research**: Multi-round system architecture analysis
-- **Context-Heavy Tasks**: When main conversation context approaches limits
-
-### Delegation Patterns
-
-```
-Research Subagents → Summary report for main conversation
-Implementation Subagents → Ready-to-execute implementation plan
-Analysis Subagents → Specific optimization recommendations
+bd prime          # Workflow context
+bd ready          # Find unblocked work
+bd create "Title" --type task --priority 2   # Create issue
+bd close <id>     # Complete work
+bd sync           # Sync with git (run at session end)
 ```
 
 ---
 
-## ✅ Sprint Validation Workflow
+## LLM Workflow Standards
 
-### Validation Phase Structure
+### Core Principles
 
-**Phase 1: Code Validation (LLM)**
-```bash
-uv run -m intelligent_router.prediction_engine  # Import test
-uv run -m pytest tests/test_prediction.py       # Unit tests
-```
+- **Terse, expert-level communication.** Lead with solution.
+- **Burst + validate cycles.** Implementation → human testing → feedback → next burst.
+- **Surgical edits only.** Don't touch unrelated files. Match existing patterns.
 
-**Phase 2: Service Execution (User)**
-```bash
-uv run prediction-server --port 8000 &
-uv run routing-controller --interval 30 &
-```
+### Task Management
 
-**Phase 3: Performance Analysis (Collaborative)**
-```bash
-curl http://localhost:9090/api/v1/query?query=prediction_accuracy
-kubectl top pods
-docker stats
-```
+- `bd` for multi-session work with dependencies
+- `TodoWrite` for single-session linear tasks
+- Estimate in execution blocks (15-30 min), not hours/days
 
-## Landing the Plane (Session Completion)
+### Git Workflow
 
-**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
+- Commit at logical checkpoints: `feat:`, `fix:`, `refactor:`, `chore:` prefix
+- Do not squash — user squashes later
+- Never push unless explicitly told to
 
-**MANDATORY WORKFLOW:**
+### What NOT to Do
 
-1. **File issues for remaining work** - Create issues for anything that needs follow-up
-2. **Run quality gates** (if code changed) - Tests, linters, builds
-3. **Update issue status** - Close finished work, update in-progress items
-4. **PUSH TO REMOTE** - This is MANDATORY:
-   ```bash
-   git pull --rebase
-   bd sync
-   git push
-   git status  # MUST show "up to date with origin"
-   ```
-5. **Clean up** - Clear stashes, prune remote branches
-6. **Verify** - All changes committed AND pushed
-7. **Hand off** - Provide context for next session
+- ❌ Create duplicate reports/docs (search first, update in-place)
+- ❌ Commit large binaries without `.gitattributes` entry
+- ❌ Make summary claims without evidence mapping
+- ❌ Add files to `archived/` (it's read-only legacy)
+- ❌ Create empty placeholder directories
+- ❌ Push to remote unless told to
+- ❌ Deploy unless told to
 
-**CRITICAL RULES:**
-- Work is NOT complete until `git push` succeeds
-- NEVER stop before pushing - that leaves work stranded locally
-- NEVER say "ready to push when you are" - YOU must push
-- If push fails, resolve and retry until it succeeds
+---
+
+## Hardware Constraints
+
+- **Full Development**: 8+ cores, 32GB RAM
+- **Resource-Constrained Testing**: 4+ cores, 8GB RAM (6GB usable)
+- **AMD GPU**: Set `HSA_OVERRIDE_GFX_VERSION=11.0.0` for ROCm
+
+---
+
+## Session Completion
+
+When ending a work session:
+
+1. File issues for remaining work (`bd create`)
+2. Run quality gates if code changed (`uv run -m pytest`)
+3. Update issue status (`bd close`, `bd update`)
+4. Push: `git pull --rebase && bd sync && git push`
+5. Verify: `git status` shows up-to-date with origin

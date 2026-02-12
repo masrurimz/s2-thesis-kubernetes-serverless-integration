@@ -1,0 +1,17 @@
+id: phase-b.calibration.2026-02-12
+date: 2026-02-12
+phase: phase-b
+category: calibration
+scenarios: [s1-k8s-only, s3-hybrid-reactive]
+workload:
+  tool: curl-parallel
+  rps_levels: [50, 100, 150]
+  duration_sec: 180
+claims:
+  supports: []
+  notes:
+    - "Goldilocks load selected: 50 RPS (but actual Phase B experiments used 100 RPS)"
+    - "S1 stressed at all levels (p99 374-547ms), S3 handled all levels (p99 137-168ms)"
+reproduce:
+  - "cd controller && uv run python ../thesis/scripts/run_phase_b_experiments.py --phase calibration --rps-levels 50,100,150"
+status: complete
