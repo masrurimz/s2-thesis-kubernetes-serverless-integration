@@ -82,34 +82,49 @@ The literature study phase focuses on understanding:
 
 ### Datasets
 
-Two real HTTP trace datasets are used for training and evaluation:
+**Primary Training Data: Synthetic Workload Patterns**
 
-**Table 3-1: Dataset Request Examples**
+For GRU model training, synthetic traffic patterns were generated to represent common cloud workload characteristics:
+- Diurnal cycles (daily traffic patterns)
+- Bursty spikes (flash crowd events)
+- Gradual ramps (organic growth)
+- Baseline noise (random fluctuations)
+
+**Reference Data: Real HTTP Traces**
+
+ClarkNet and Calgary HTTP trace datasets were used for baseline model comparison and validation purposes:
+
+**Table 3-1: Reference Dataset Characteristics**
+
+| Dataset | Requests | Time Period | Source | Usage |
+|---------|----------|-------------|--------|-------|
+| ClarkNet | ~2M | Aug-Sep 1995 | ClarkNet WWW Server | Baseline comparison |
+| Calgary | ~2M | Oct 1994 | University of Calgary CS | Pattern validation |
+
+**Table 3-2: Dataset Request Examples**
 
 | Dataset | Request Example |
 |---------|-----------------|
 | University of Calgary | `local - - [24/Oct/1994:13:41:41 -0600] "GET index.html HTTP/1.0" 200 150` |
 | ClarkNet | `204.249.225.59 - - [28/Aug/1995:00:00:34 -0400] "GET /pub/rmharris/catalogs/dawsocat/intro.html HTTP/1.0" 200 3542` |
 
-### Dataset Characteristics
-
-| Dataset | Requests | Time Period | Source |
-|---------|----------|-------------|--------|
-| ClarkNet | ~2M | Aug-Sep 1995 | ClarkNet WWW Server |
-| Calgary | ~2M | Oct 1994 | University of Calgary CS |
-
 ### Data Processing Pipeline
 
+**Synthetic Data Generation:**
+```
+Pattern Definition → Traffic Simulation → RPS Time Series → Sliding Windows → Train/Val/Test Split
+```
+
+**Real Trace Processing (for baseline comparison):**
 ```
 Raw HTTP Logs → CLF Parsing → Timestamp Extraction → RPS Aggregation → Time Series
 ```
 
 **Processing Steps:**
-1. Parse Combined Log Format (CLF) entries
-2. Extract timestamp for each request
-3. Aggregate to requests-per-second (RPS)
-4. Create sliding window sequences for GRU training
-5. Split into train/validation/test sets (70/15/15)
+1. Generate synthetic traffic patterns with known characteristics
+2. Create sliding window sequences (60-second input windows)
+3. Split into train/validation/test sets (70/15/15)
+4. For comparison: Process ClarkNet/Calgary traces using same pipeline
 
 ---
 
@@ -318,12 +333,16 @@ until forever
 - **Violation Timer**: 5 seconds (consecutive violations before rerouting)
 - **Compliance Timer**: 5 seconds (consecutive compliance before returning to K8s)
 
-#### 3.4.3.2 Cluster Controller
+#### 3.4.3.2 Cluster Controller (Future Work)
 
-The cluster controller manages Kubernetes resource scaling based on predicted workload:
+**Note:** Algorithm 2 (Cluster Controller for K8s resource scaling) was proposed but not implemented in this research. The implemented system focuses on **traffic routing** (Algorithm 1) between fixed-capacity K8s and elastic serverless backends, rather than dynamic K8s cluster scaling.
+
+**Proposed approach** (for future implementation):
+
+The cluster controller would manage Kubernetes resource scaling based on predicted workload:
 
 ```pseudocode
-Algorithm 2: Cluster Controller
+Algorithm 2: Cluster Controller (Proposed)
 ────────────────────────────────────────────────────────────────
 
 Variables:
@@ -354,6 +373,8 @@ repeat:
 until forever
 ```
 
+**Implementation scope:** This research implements Algorithm 1 (routing controller) only. Algorithm 2 requires integration with Kubernetes HPA (Horizontal Pod Autoscaler) or VPA (Vertical Pod Autoscaler), which is left for future work.
+
 ---
 
 ## 3.5 Evaluation Plan (Rencana Evaluasi)
@@ -370,6 +391,10 @@ until forever
 
 3. **MAPE (Mean Absolute Percentage Error)**
    $$MAPE = \frac{100\%}{n}\sum_{i=1}^{n}\left|\frac{y_i - \hat{y}_i}{y_i}\right|$$
+
+**Percentage Metrics:**
+- RMSE% = (RMSE / mean(y)) × 100%
+- MAE% = (MAE / mean(y)) × 100%
 
 **Target Performance:**
 - RMSE < 10% of average traffic

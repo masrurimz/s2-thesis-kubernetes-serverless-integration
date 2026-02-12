@@ -35,6 +35,13 @@
 - **Issue:** PHASE_B_HONEST_ASSESSMENT.md claims "S3: 0 violations, S4: 0 violations" at 100 RPS. Raw data shows S3: 4/5 runs had violations, S4: 5/5 runs had violations.
 - **Resolution:** Old report was wrong. Updated in consolidated report.
 
+### 8. Outlier Runs (Stale Prometheus Data)
+- **Issue:** S1-run2 (p99=9.9ms, 190 RPS), S2-run5 (p99=9.9ms, 201 RPS), S3-run5 (p99=10.0ms, 84 RPS) have impossibly low p99 latency.
+- **Root Cause:** Prometheus metrics likely reset/stale during these runs. Normal HAProxy p99 range: 200-900ms.
+- **Resolution:** Exclusion criteria defined (p99<15ms OR throughput>150RPS). Statistics recomputed with clean data (n=4/4/4/5). Both versions reported transparently.
+- **Impact:** Excluding outliers increases S1/S2/S3 mean p99 (more honest baselines), reduces variance, but doesn't change statistical significance outcomes.
+- **Documentation:** `results/experiments/phase-b/2026-02-12_replicated-20runs/EXCLUSION_CRITERIA.md`
+
 ---
 
 ## Acknowledged Limitations (Not Resolved)

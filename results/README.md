@@ -15,7 +15,7 @@ Rules:
 | Hypothesis | Mechanism Validated? | Superiority Demonstrated? | Stats Done? | Notes |
 |------------|---------------------|--------------------------|-------------|-------|
 | **H1** (Hybrid > Pure) | ✅ Weight shifting, serverless engagement | ⚠️ Not established | ✅ Welch t-test | k3d localhost bias; high p99 variance |
-| **H2** (Predictive > Reactive) | ✅ PREDICTIVE triggered pre-violation | ⚠️ Not demonstrated | ✅ | PREDICTIVE=0 in Phase B; only triggered in A1 ramp |
+| **H2** (Predictive > Reactive) | ✅ PREDICTIVE triggered pre-violation | ⚠️ Not demonstrated | ✅ | GRU server not running in Phase B (gru_predictions_used=0); mechanism validated in A1 ramp |
 | **H3** (GRU adequate) | ✅ 6.01% RMSE, 40ms latency | N/A | ✅ | Trained on synthetic, not real traces |
 
 ---

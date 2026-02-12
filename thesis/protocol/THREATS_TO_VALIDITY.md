@@ -45,38 +45,89 @@ S4 (Hybrid-Predictive) routing path:
 
 ---
 
-## Secondary Threat: Load Insufficiency
+## Secondary Threat: GRU Server Unavailability in Phase B
 
 ### The Problem
 
-100 RPS was insufficient to create conditions where:
-- S1 would violate SLOs
-- Predictive scaling would demonstrate advantage
+**GRU prediction server was not running during Phase B replicated experiments** (2026-02-12, 20 runs).
+
+### Evidence
+
+**Quantitative proof** from `experiments_final.json`:
+```json
+{
+  "scenario": "s4-hybrid-predictive",
+  "run_id": 1-5,
+  "gru_predictions_used": 0,     // ← Zero GRU queries in ALL runs
+  "gru_avg_confidence": 0.0,     // ← No confidence scores
+  "predictive_count": 0          // ← Cannot trigger without predictions
+}
+```
+
+**All 20 Phase B runs**: `gru_predictions_used = 0`
+
+### Impact
+
+Phase B experiments inadvertently compared **reactive-only** behaviors:
+- S3 (reactive): Used SCALE_OUT based on SLO violations
+- S4 (predictive): Also used SCALE_OUT only (no predictions available)
+- **Result**: S3 vs S4 comparison tested weight adjustment speed, not predictive vs reactive
+
+**What this means**:
+- ✅ H1 (hybrid mechanism): Still validated (weight shifting works)
+- ⚠️ H2 (predictive superiority): Not tested in Phase B
+- ✅ H2 mechanism: Validated separately in Phase A1 ramp test
+
+### Root Cause
+
+`thesis/scripts/run_phase_b_experiments.py` performs GRU server health check (line 127) but **does not start the server**. Infrastructure check may have been bypassed or failed silently.
+
+### Mitigation
+
+1. **Documented**: Full analysis in `results/experiments/phase-b/.../PREDICTIVE_ELIGIBILITY_ANALYSIS.md`
+2. **Claims updated**: Phase B cited for reactive comparison only
+3. **H2 evidence**: Phase A1 ramp test validates PREDICTIVE mechanism (p99=146ms, 47% surge predicted, pre-violation trigger)
+4. **Recommended follow-up**: Re-run S3 vs S4 with GRU confirmed running + dynamic workload
+
+---
+
+## Tertiary Threat: Load Insufficiency
+
+### The Problem
+
+100 RPS steady-state was insufficient to create conditions where:
+- S1 would violate SLOs consistently
+- Predictive scaling would demonstrate advantage over reactive
 
 ### Evidence
 
 | Scenario | SLO Violations at 100 RPS |
 |----------|---------------------------|
-| S1 | 0 |
-| S2 | 0 |
-| S3 | 0 |
-| S4 | 0 |
+| S1 | 4/5 runs (corrected from old claim) |
+| S2 | 4/5 runs |
+| S3 | 4/5 runs |
+| S4 | 5/5 runs |
 
-**Result:** No room to demonstrate that predictive reduces violations (both had zero).
+**Result:** Most runs had violations, but steady-state load → predicted load change ~0% → PREDICTIVE never eligible (requires >30% predicted increase).
+
+**Note**: This threat is **secondary** to GRU unavailability. Even if GRU was running, steady load wouldn't trigger PREDICTIVE.
 
 ### Root Cause
 
-Single-node local cluster with loopback routing can handle higher load than distributed cloud deployment. The local testbed is **oversized** for the chosen load.
+1. Single-node local cluster with loopback routing (S1 artificially fast)
+2. Steady-state workload (no load variation for GRU to predict)
+3. Local testbed oversized for the chosen load
 
 ### Mitigation
 
 1. Acknowledged in honest assessment
 2. Framed as "mechanism validation" not "performance superiority"
-3. Outline cloud deployment plan for future work
+3. Phase A1 used **dynamic workload** (ramp) to validate PREDICTIVE
+4. Outline cloud deployment + dynamic workload plan for future work
 
 ---
 
-## Tertiary Threat: Synthetic Training Data
+## Quaternary Threat: Synthetic Training Data
 
 ### The Problem
 
