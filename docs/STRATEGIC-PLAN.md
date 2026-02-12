@@ -148,8 +148,7 @@ For each scenario [S1, S2, S3, S4]:
 ## Project Structure
 
 ```
-├── AGENTS.md                    # LLM workflow
-├── CLAUDE.md                    # Project context
+├── AGENTS.md                    # Project context + agent instructions
 ├── experiments/                 # Experiment tracking
 │   ├── scenarios/              # S1, S2, S3, S4 configurations
 │   ├── workloads/              # steady, spike, endurance configs
