@@ -46,15 +46,21 @@
 ## H3: GRU Prediction Adequacy
 
 ### Claim 6: RMSE below 10% target
-- **Evidence:** `results/models/gru/2026-02-10_training-synthetic/report.md`
-- **Raw Data:** Training logs, model artifact at `controller/data/models/gru_model.pt`
-- **Results:**
-  - Test RMSE = 6.01% (target <10%) ✅
+- **Evidence (synthetic):** `results/models/gru/2026-02-10_training-synthetic/report.md`
+- **Evidence (real traces):** `results/models/gru/2026-02-13_training-clarknet-calgary/report.md`
+- **Raw Data (synthetic):** Training logs, model artifact at `controller/data/models/gru_model.pt`
+- **Raw Data (real):** `results/models/gru/2026-02-13_training-clarknet-calgary/raw/training_results.json`, model at `controller/data/models/gru_model_real.pt`
+- **Results (synthetic):**
+  - Test RMSE% = 6.01% (target <10%) ✅
   - Test MAE% = 4.91% (target <5%) ✅
   - MAPE ≈ 4.91% (estimated) ✅
-- **Reproduce:** `cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python -m prediction.train_gru`
-- **Note:** Trained on synthetic data, validated against ClarkNet/Calgary baselines
-- **Status:** ✅ Fully Validated
+- **Results (real — ClarkNet 5-min, best):**
+  - Test RMSE% = 17.78% (target <10%) ❌
+  - Test MAE% = 14.48% (target <5%) ❌
+  - MAPE = 18.74% ❌
+- **Reproduce (real):** `cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python -c "import sys; sys.path.insert(0,'../ml_models'); from train_gru_real import main; main()"`
+- **Note:** GRU outperforms baselines on real data (baseline MAPE ~65% vs GRU 18.74%) but does not meet original thresholds. Gap is expected: real traces have non-stationarity and irregular bursts absent in synthetic data.
+- **Status:** ⚠️ Partially validated — mechanism works, thresholds not met on real data
 
 ### Claim 7: Live prediction latency acceptable
 - **Evidence:** `results/experiments/phase-a1/2026-02-12_predictive-trigger/report.md`
@@ -75,7 +81,8 @@
 | Mechanism | Weight shifting | phase-a1/predictive-trigger | ✅ |
 | Mechanism | Serverless engagement | phase-a1/predictive-trigger | ✅ |
 | Mechanism | PREDICTIVE trigger | phase-a1/predictive-trigger | ✅ |
-| Mechanism | GRU inference | models/gru/training-synthetic | ✅ |
+| Mechanism | GRU inference (synthetic) | models/gru/training-synthetic | ✅ |
+| Mechanism | GRU inference (real traces) | models/gru/training-clarknet-calgary | ⚠️ Mechanism works, targets not met |
 | Superiority | S4 outperforms S1 | phase-b/replicated-20runs | ⚠️ Not established |
 | Superiority | S4 fewer violations than S3 | phase-b/replicated-20runs | ⚠️ Not demonstrated |
 
@@ -112,8 +119,9 @@ HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python ../thesis/scripts/run_phase_b_expe
 
 ## Training Data Note
 
-- GRU trained on **synthetic data** (generated traffic patterns)
-- NOT on ClarkNet/Calgary as proposed in thesis methodology Section 3.2
-- ClarkNet/Calgary parquets in `data/processed/` used for **baseline model comparison only**
+- GRU originally trained on **synthetic data** → RMSE% 6.01%, MAE% 4.91% ✅
+- GRU retrained on **real ClarkNet/Calgary traces** (2026-02-13) → best RMSE% 17.78%, MAE% 14.48% ❌
+- ClarkNet provides usable signal at 5-min+ aggregation; Calgary too sparse for GRU
+- Real-data results are a known limitation to acknowledge in thesis
 
 **Last Updated:** 2026-02-13
