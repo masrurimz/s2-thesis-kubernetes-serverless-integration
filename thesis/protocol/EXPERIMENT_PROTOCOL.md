@@ -190,14 +190,14 @@ Start
 
 ### Phase A Complete When:
 - [x] H3 evidence documented
-- [ ] At least 1 live experiment run
-- [ ] Prometheus metrics successfully collected
-- [ ] Comparison table generated (even if preliminary)
+- [x] At least 1 live experiment run
+- [x] Prometheus metrics successfully collected
+- [x] Comparison table generated (even if preliminary)
 
 ### Phase B Complete When:
-- [ ] 3+ replicates per scenario
-- [ ] Statistical tests performed
-- [ ] 95% CIs reported
+- [x] 3+ replicates per scenario (20 runs executed)
+- [x] Statistical tests performed (Welch's t-test, Mann-Whitney U)
+- [x] 95% CIs reported
 - [ ] Thesis-ready results chapter written
 
 ---
@@ -207,10 +207,11 @@ Start
 | Phase | Status | Next Action |
 |-------|--------|-------------|
 | A0 | ✅ Complete | Evidence documented |
-| A1 | 🔄 Ready | Run live experiment now |
-| B0-B4 | ⏳ Pending | Decide after A1 results |
+| A1 | ✅ Complete | PREDICTIVE triggered, metrics collected |
+| B0-B4 | ✅ Complete | 20 runs across 4 scenarios, stats computed |
 
 ---
 
 **Plan created:** 2026-02-12  
-**Next milestone:** Phase A1 live experiment
+**Experiments completed:** 2026-02-13  
+**Next milestone:** Thesis results chapter write-up

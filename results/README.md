@@ -1,6 +1,11 @@
 # Results
 
-Final thesis results - tables, figures, and raw data.
+Working experiment outputs and raw data from validation runs.
+
+> **Canonical thesis results** live in `thesis/results/` (raw logs, processed stats, figures, reports).
+> This directory contains working outputs from experiment scripts.
+> Old sprint artifacts (Sprint 1–5) have been moved to `archived/`.
+> Duplicate reports have been removed; see `thesis/results/reports/` for analysis documents.
 
 ## Structure
 
@@ -53,3 +58,9 @@ python scripts/generate_tables.py
 # Generate all figures
 python scripts/generate_figures.py
 ```
+
+## See Also
+
+- **`thesis/results/`** — Canonical results (raw, processed, figures, reports)
+- **`thesis/results/reports/INCONSISTENCIES.md`** — Known data inconsistencies
+- **`archived/`** — Old sprint artifacts and earlier experiments
