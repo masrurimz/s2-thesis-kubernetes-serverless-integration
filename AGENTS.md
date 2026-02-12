@@ -1,6 +1,111 @@
 # AGENTS.md
 
-Agent instructions for this repository. For project overview and research context, see [CLAUDE.md](./CLAUDE.md).
+Agent instructions for this repository.
+
+## Project Overview
+
+This is a Kubernetes & Serverless Integration thesis research project that implements a **hybrid k3s-serverless architecture** with intelligent traffic routing based on workload prediction and SLO monitoring.
+
+### Research Focus
+
+**Thesis Title**: "Decision Making and Elastic Scalability Management in Heterogeneous Cloud Environments Based on Workload Prediction"
+
+The project implements a novel hybrid approach that intelligently routes traffic between cost-effective Kubernetes clusters and infinitely-scalable serverless functions using GRU neural networks and formal SLO monitoring.
+
+### Architecture Evolution
+
+The project follows an **incremental 5-sprint methodology** optimized for LLM-assisted development:
+
+| Sprint | Focus | Status |
+|--------|-------|--------|
+| **Sprint 1** | Basic hybrid foundation (k3s + Knative serverless) | ✅ Complete |
+| **Sprint 2** | Automated load prediction with linear regression | ✅ Complete |
+| **Sprint 3** | SLO-aware routing with 99th percentile latency monitoring | ✅ Complete |
+| **Sprint 4** | GRU neural network integration with real HTTP trace data | ✅ Complete |
+| **Sprint 5** | Complete ElaX algorithm implementation with formal evaluation | ✅ Complete |
+
+### Key Components
+
+- **Hybrid Traffic Router**: HAProxy with intelligent weight adjustment
+- **Workload Predictor**: Evolution from linear regression → GRU neural networks
+- **SLO Monitor**: Algorithm 1 implementation with tail latency tracking
+- **Cost Optimizer**: Real-time cost analysis and optimization
+- **Evaluation Framework**: RMSE accuracy and formal thesis validation
+
+### Key Research Elements
+
+#### Datasets
+- **ClarkNet HTTP Traces**: 4M+ requests for real workload patterns
+- **Calgary HTTP Traces**: Complementary dataset for validation
+- **Synthetic Load**: Generated patterns for controlled testing
+
+#### Algorithms
+- **Algorithm 1**: Thesis routing controller with 5-second SLO violation detection
+- **ElaX Algorithm**: Base algorithm modified for hybrid environments
+- **GRU Neural Networks**: 30-second workload prediction with RMSE <10%
+
+#### Evaluation Metrics
+- **Prediction Accuracy**: RMSE measurement on real HTTP trace data
+- **SLO Compliance**: 99th percentile latency <200ms target
+- **Cost Optimization**: Hybrid vs pure k3s vs pure serverless analysis
+- **Response Time**: Algorithm 1 detection and reaction speed
+
+## Development Commands
+
+### Quick Start
+
+```bash
+# Create k3s cluster
+k3d cluster create demo-hybrid --agents 1 --port "8080:80@loadbalancer"
+
+# Deploy test application
+kubectl create deployment test-app --image=nginx:alpine
+kubectl expose deployment test-app --port=80 --target-port=80
+
+# Create serverless simulation
+docker run -d --name serverless-sim -p 8081:80 nginx:alpine
+
+# Setup traffic router (HAProxy)
+docker run -d --name traffic-router -p 8082:8082 -v /tmp/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg haproxy:alpine
+```
+
+### Controller Commands
+
+```bash
+cd controller
+uv sync                                                    # Install deps
+uv run python -m prediction.prediction_server &            # Start prediction API
+uv run python -m intelligent_router.routing_controller &   # Start routing
+uv run python -m pytest                                    # Run tests
+```
+
+### Monitoring & Metrics
+
+```bash
+# Prometheus metrics
+curl http://localhost:9090/api/v1/query?query=http_requests_total
+
+# HAProxy stats
+curl http://localhost:8404/stats
+
+# System monitoring
+kubectl top nodes
+kubectl top pods
+```
+
+## Documentation Structure
+
+- `docs/getting-started/`: Prerequisites, quick start, architecture deep dive
+- `docs/incremental-development/`: Agile sprint methodology and phase docs
+- `controller/`: Main controller code (prediction, routing, autoscaler, monitoring)
+- `archived/`: Legacy sprint directories and earlier experiments
+
+## Hardware Constraints
+
+- **Full Development**: 8+ cores, 32GB RAM
+- **Resource-Constrained Testing**: 4+ cores, 8GB RAM (6GB usable)
+
+---
 
 ## Issue Tracking
 
