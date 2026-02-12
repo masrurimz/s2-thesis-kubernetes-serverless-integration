@@ -1,0 +1,22 @@
+id: phase-b.replicated.2026-02-12
+date: 2026-02-12
+phase: phase-b
+category: replicated-runs
+scenarios: [s1-k8s-only, s2-serverless-only, s3-hybrid-reactive, s4-hybrid-predictive]
+workload:
+  tool: curl-parallel
+  rps: 100
+  duration_sec: 300
+  runs_per_scenario: 5
+  total_runs: 20
+  order: randomized
+claims:
+  supports: [H1, H2]
+  notes:
+    - "H1: S4 vs S1 p99 — p=0.2255 NOT significant"
+    - "H2: S4 vs S3 violations — both scenarios had violations, no meaningful difference"
+    - "PREDICTIVE action count = 0 in ALL 20 runs"
+    - "Environment limitation: k3d localhost bias"
+reproduce:
+  - "cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python ../thesis/scripts/run_phase_b_experiments.py --phase full --runs 5 --duration 300"
+status: complete

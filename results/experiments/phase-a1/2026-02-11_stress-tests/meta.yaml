@@ -1,0 +1,19 @@
+id: phase-a1.stress-tests.2026-02-11
+date: 2026-02-11
+phase: phase-a1
+category: stress-tests
+scenarios: [s3-hybrid-reactive, s4-hybrid-predictive]
+workload:
+  tool: k6
+  vus_max: 1000
+  duration_sec: 210
+  type: saturation-test
+claims:
+  supports: [H1]
+  notes:
+    - "Intentional saturation test — NOT controlled experiment"
+    - "S3: 84% failure rate at 1000 VUs, S4: 0% failure at 200 VUs"
+    - "validation_20260211_232450.json was previously mislabeled as Phase B data"
+reproduce:
+  - "k6 run infrastructure/load-tests/stress.js"
+status: complete

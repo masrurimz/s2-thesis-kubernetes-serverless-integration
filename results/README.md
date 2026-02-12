@@ -1,66 +1,77 @@
-# Results
+# Results — Evidence Registry
 
-Working experiment outputs and raw data from validation runs.
+**Single source of truth for all experiment evidence.**
 
-> **Canonical thesis results** live in `thesis/results/` (raw logs, processed stats, figures, reports).
-> This directory contains working outputs from experiment scripts.
-> Old sprint artifacts (Sprint 1–5) have been moved to `archived/`.
-> Duplicate reports have been removed; see `thesis/results/reports/` for analysis documents.
+Rules:
+1. Every experiment is a self-contained bundle: `meta.yaml` + `raw/` + `report.md`
+2. Every thesis claim traces to raw data via `claims/CLAIMS_TO_EVIDENCE.md`
+3. One report per experiment. No duplicate summaries.
+4. Raw data is never edited.
 
-## Structure
+---
 
-```
-results/
-├── tables/            # LaTeX-ready tables
-│   ├── h1-comparison.tex    # S4 vs S1/S2 comparison
-│   ├── h2-comparison.tex    # S4 vs S3 comparison
-│   └── prediction-accuracy.tex  # RMSE/MAE/MAPE
-├── figures/           # Publication-quality figures
-│   ├── latency-distribution.pdf
-│   ├── cost-comparison.pdf
-│   └── prediction-timeseries.pdf
-└── raw/               # Raw experiment data
-    └── YYYYMMDD-HHMM_scenario_workload.json
-```
+## Hypothesis Coverage
 
-## Key Tables (Mapping to Thesis Chapters)
+| Hypothesis | Mechanism Validated? | Superiority Demonstrated? | Stats Done? | Notes |
+|------------|---------------------|--------------------------|-------------|-------|
+| **H1** (Hybrid > Pure) | ✅ Weight shifting, serverless engagement | ⚠️ Not established | ✅ Welch t-test | k3d localhost bias; high p99 variance |
+| **H2** (Predictive > Reactive) | ✅ PREDICTIVE triggered pre-violation | ⚠️ Not demonstrated | ✅ | PREDICTIVE=0 in Phase B; only triggered in A1 ramp |
+| **H3** (GRU adequate) | ✅ 6.01% RMSE, 40ms latency | N/A | ✅ | Trained on synthetic, not real traces |
 
-| Table | Chapter | Content |
-|-------|---------|---------|
-| `prediction-accuracy.tex` | 4.1 | GRU vs LR vs baselines (H3) |
-| `h1-comparison.tex` | 4.2 | Hybrid vs Pure approaches (H1) |
-| `h2-comparison.tex` | 4.3 | Predictive vs Reactive (H2) |
+---
 
-## Target Metrics (Thesis 3.5.2)
+## Experiment Registry
 
-### Performance Targets
+| ID | Phase | Category | Date | Scenarios | Bundle Path |
+|----|-------|----------|------|-----------|-------------|
+| `phase-a1.stress-tests.2026-02-11` | A1 | Stress Tests | 2026-02-11 | S3, S4 | `experiments/phase-a1/2026-02-11_stress-tests/` |
+| `phase-a1.predictive-trigger.2026-02-12` | A1 | Mechanism Validation | 2026-02-12 | S4 | `experiments/phase-a1/2026-02-12_predictive-trigger/` |
+| `phase-b.calibration.2026-02-12` | B | Calibration | 2026-02-12 | S1, S3 | `experiments/phase-b/2026-02-12_calibration/` |
+| `phase-b.replicated.2026-02-12` | B | Replicated Runs | 2026-02-12 | S1-S4 | `experiments/phase-b/2026-02-12_replicated-20runs/` |
+| `gru.training-synthetic.2026-02-10` | — | Model Training | 2026-02-10 | — | `models/gru/2026-02-10_training-synthetic/` |
+| `cost.proxy-analysis.2026-02-11` | B | Cost Analysis | 2026-02-11 | S1-S4 | `cost/2026-02-11_proxy-analysis/` |
 
-| Metric | Target |
-|--------|--------|
-| p50 Latency | < 50ms |
-| p95 Latency | < 100ms |
-| p99 Latency | < 200ms (SLO) |
-| Error Rate | < 0.1% |
+---
 
-### Prediction Targets
+## Quick Links
 
-| Metric | Target |
-|--------|--------|
-| RMSE | < 10% of avg traffic |
-| MAE | < 5% of avg traffic |
+- **Claims audit trail:** [`claims/CLAIMS_TO_EVIDENCE.md`](claims/CLAIMS_TO_EVIDENCE.md)
+- **Known issues:** [`claims/INCONSISTENCIES.md`](claims/INCONSISTENCIES.md)
+- **Experiment protocol:** [`../thesis/protocol/EXPERIMENT_PROTOCOL.md`](../thesis/protocol/EXPERIMENT_PROTOCOL.md)
+- **Threats to validity:** [`../thesis/protocol/THREATS_TO_VALIDITY.md`](../thesis/protocol/THREATS_TO_VALIDITY.md)
 
-## Generating Results
+---
 
+## How to Add a New Experiment
+
+1. Create folder: `experiments/<phase>/<YYYY-MM-DD_slug>/`
+2. Add `meta.yaml` (see any existing bundle for template)
+3. Put raw outputs in `raw/`
+4. Write `report.md` (raw artifacts first, then interpretation)
+5. Add a row to the registry table above
+6. Update `claims/CLAIMS_TO_EVIDENCE.md` if it supports a hypothesis
+
+---
+
+## Reproduction
+
+### Full Phase B
 ```bash
-# Generate all thesis tables
-python scripts/generate_tables.py
-
-# Generate all figures
-python scripts/generate_figures.py
+cd controller
+HSA_OVERRIDE_GFX_VERSION=11.0.0 \
+  uv run python ../thesis/scripts/run_phase_b_experiments.py --phase full --runs 5 --duration 300
 ```
 
-## See Also
+### GRU Training
+```bash
+cd controller
+HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python -m prediction.train_gru
+```
 
-- **`thesis/results/`** — Canonical results (raw, processed, figures, reports)
-- **`thesis/results/reports/INCONSISTENCIES.md`** — Known data inconsistencies
-- **`archived/`** — Old sprint artifacts and earlier experiments
+### Live Validation
+```bash
+cd controller
+HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python -m prediction.prediction_server &
+HSA_OVERRIDE_GFX_VERSION=11.0.0 PREDICTION_CONFIDENCE_THRESHOLD=0.6 \
+  uv run python -m daemon.routing_daemon --scenario s4-hybrid-predictive
+```
