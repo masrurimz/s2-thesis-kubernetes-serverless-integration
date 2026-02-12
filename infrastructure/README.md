@@ -10,7 +10,7 @@ Hybrid K8s-Serverless platform infrastructure for thesis evaluation.
 | `haproxy/` | Traffic router configuration | HAProxy |
 | `serverless/` | Serverless function deployment | Knative |
 | `monitoring/` | Metrics and observability | Prometheus |
-| `load-testing/` | Performance testing scripts | k6 |
+| `load-tests/` | Performance testing scripts | k6 |
 | `scripts/` | Automation and management | Bash |
 
 ## Architecture
@@ -50,13 +50,13 @@ cd infrastructure
 
 ```bash
 # Run steady load test (50 RPS, 3 min)
-./load-testing/run-load-tests.sh steady
+./load-tests/run-load-tests.sh steady
 
 # Run spike test (50→200→50 RPS)
-./load-testing/run-load-tests.sh spike
+./load-tests/run-load-tests.sh spike
 
 # Run endurance test (25 RPS, 30 min)
-./load-testing/run-load-tests.sh endurance
+./load-tests/run-load-tests.sh endurance
 ```
 
 ## Validated Performance (Baseline)
