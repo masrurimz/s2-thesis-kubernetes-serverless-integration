@@ -1,0 +1,20 @@
+id: gru.training-clarknet-calgary.2026-02-13
+date: 2026-02-13
+phase: model-training
+category: gru-prediction
+model: GRU (PyTorch, 128 hidden, 2 layers, dropout 0.2)
+training_data: real HTTP traces (ClarkNet 7-day, Calgary 14/30-day)
+claims:
+  supports: [H3]
+  notes:
+    - "Trained on REAL ClarkNet and Calgary traces at multiple resolutions (1-min, 5-min, 10-min)"
+    - "Best result: ClarkNet 5-min — RMSE% 17.78%, MAE% 14.48%, MAPE 18.74%"
+    - "ClarkNet 10-min — RMSE% 17.92%, MAE% 14.81%, MAPE 18.99%"
+    - "ClarkNet 1-min — RMSE% 26.64%, MAE% 21.27%, MAPE 30.88%"
+    - "Calgary traces too sparse (mean ~1 RPS/min) for meaningful GRU prediction"
+    - "Real trace RMSE% (17.78%) exceeds synthetic RMSE% (6.01%) — expected due to higher noise and non-stationarity"
+    - "Does NOT meet original targets (RMSE <10%, MAE <5%) on real data"
+    - "Validates GRU mechanism works on real traces but with reduced accuracy vs synthetic"
+reproduce:
+  - "cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python -c \"import sys; sys.path.insert(0,'../ml_models'); from train_gru_real import main; main()\""
+status: complete

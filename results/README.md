@@ -16,7 +16,7 @@ Rules:
 |------------|---------------------|--------------------------|-------------|-------|
 | **H1** (Hybrid > Pure) | ✅ Weight shifting, serverless engagement | ⚠️ Not established | ✅ Welch t-test | k3d localhost bias; high p99 variance |
 | **H2** (Predictive > Reactive) | ✅ PREDICTIVE triggered pre-violation | ⚠️ Not demonstrated | ✅ | GRU server not running in Phase B (gru_predictions_used=0); mechanism validated in A1 ramp |
-| **H3** (GRU adequate) | ✅ 6.01% RMSE, 40ms latency | N/A | ✅ | Trained on synthetic, not real traces |
+| **H3** (GRU adequate) | ✅ 6.01% RMSE (synthetic), ⚠️ 17.78% RMSE (real ClarkNet) | N/A | ✅ | Synthetic meets targets; real traces do not (<10% RMSE). GRU still outperforms baselines on real data. |
 
 ---
 
@@ -29,7 +29,9 @@ Rules:
 | `phase-b.calibration.2026-02-12` | B | Calibration | 2026-02-12 | S1, S3 | `experiments/phase-b/2026-02-12_calibration/` |
 | `phase-b.replicated.2026-02-12` | B | Replicated Runs | 2026-02-12 | S1-S4 | `experiments/phase-b/2026-02-12_replicated-20runs/` |
 | `gru.training-synthetic.2026-02-10` | — | Model Training | 2026-02-10 | — | `models/gru/2026-02-10_training-synthetic/` |
+| `gru.training-clarknet-calgary.2026-02-13` | — | Model Training | 2026-02-13 | — | `models/gru/2026-02-13_training-clarknet-calgary/` |
 | `cost.proxy-analysis.2026-02-11` | B | Cost Analysis | 2026-02-11 | S1-S4 | `cost/2026-02-11_proxy-analysis/` |
+| `phase-c.dynamic-workload.2026-02-13` | C | Dynamic Workload | 2026-02-13 | S3, S4 | `experiments/phase-c/2026-02-13_dynamic-workload/` |
 
 ---
 
