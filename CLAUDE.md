@@ -21,10 +21,10 @@ The project follows an **incremental 5-sprint methodology** optimized for LLM-as
 | Sprint | Focus | Status | Duration |
 |--------|-------|--------|----------|
 | **Sprint 1** | Basic hybrid foundation (k3s + Knative serverless) | ✅ Complete | 1 day |
-| **Sprint 2** | Automated load prediction with linear regression | 🔧 Validation needed | 1-2 days |
-| **Sprint 3** | SLO-aware routing with 99th percentile latency monitoring | ⏳ Pending | 2-3 days |
-| **Sprint 4** | GRU neural network integration with real HTTP trace data | ⏳ Pending | 3-5 days |
-| **Sprint 5** | Complete ElaX algorithm implementation with formal evaluation | ⏳ Pending | 2-3 days |
+| **Sprint 2** | Automated load prediction with linear regression | ✅ Complete | 1-2 days |
+| **Sprint 3** | SLO-aware routing with 99th percentile latency monitoring | ✅ Complete | 2-3 days |
+| **Sprint 4** | GRU neural network integration with real HTTP trace data | ✅ Complete | 3-5 days |
+| **Sprint 5** | Complete ElaX algorithm implementation with formal evaluation | ✅ Complete | 2-3 days |
 
 **Total Project Duration**: 2-3 weeks (not months) with LLM assistance
 
@@ -58,22 +58,14 @@ docker run -d --name serverless-sim -p 8081:80 nginx:alpine
 docker run -d --name traffic-router -p 8082:8082 -v /tmp/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg haproxy:alpine
 ```
 
-### Sprint-Specific Commands
+### Controller Commands
 
-**Sprint 1** (Basic Hybrid):
 ```bash
-cd sprint-1
-./scripts/setup.sh           # Deploy full stack
-./scripts/check-health.sh    # Verify all components
-./scripts/teardown.sh        # Clean up
-```
-
-**Sprint 2** (Intelligent Routing):
-```bash
-cd sprint-2
+cd controller
 uv sync                                                    # Install deps
-uv run python -m prediction_engine.prediction_server &     # Start prediction API
+uv run python -m prediction.prediction_server &            # Start prediction API
 uv run python -m intelligent_router.routing_controller &   # Start routing
+uv run python -m pytest                                    # Run tests
 ```
 
 ### Monitoring & Metrics
@@ -103,9 +95,9 @@ kubectl top pods
 - `docs/incremental-development/phase-2-prediction.md`: Linear regression automation
 - `docs/incremental-development/phase-3-slo-monitoring.md`: Algorithm 1 + SLO monitoring
 
-### Sprint Directories
-- `sprint-1/`: Complete - Basic hybrid infrastructure
-- `sprint-2/`: Validation needed - Intelligent routing + prediction engine
+### Project Directories
+- `controller/`: Main controller code (prediction, routing, autoscaler, monitoring)
+- `archived/`: Legacy sprint directories and earlier experiments
 
 ## Hardware Constraints
 
