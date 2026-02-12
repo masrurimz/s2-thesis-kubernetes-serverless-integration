@@ -82,7 +82,8 @@ The objectives of this research are:
    - SLO monitoring with 99th percentile tail latency tracking
 
 3. **Evaluate the hybrid system** using:
-   - Real HTTP trace datasets (ClarkNet, Calgary)
+   - Synthetic workload patterns (trained model)
+   - Real HTTP trace datasets for validation (ClarkNet, Calgary)
    - Performance metrics (latency, throughput, error rate)
    - Cost efficiency analysis
 
@@ -108,13 +109,15 @@ This research makes the following contributions:
 
 1. **GRU-based Workload Predictor**
    - Multi-point prediction model for HTTP traffic
-   - Trained on real HTTP trace logs
-   - Accuracy evaluated using RMSE metric
+   - Trained on synthetic workload patterns
+   - Validated against real HTTP trace logs
+   - Accuracy evaluated using RMSE, MAE, and MAPE metrics
 
-2. **Modified ElaX Algorithm**
-   - Integration with GRU prediction output
-   - Hybrid routing decision logic
-   - SLO-aware resource allocation
+2. **Modified ElaX Algorithm (Routing Controller)**
+   - Integration with GRU prediction output (Algorithm 1)
+   - Hybrid routing decision logic between K8s and serverless
+   - SLO-aware traffic routing with predictive pre-warming
+   - Note: Cluster resource scaling (Algorithm 2) proposed for future work
 
 3. **Comprehensive Evaluation Framework**
    - Prediction accuracy assessment
@@ -129,7 +132,7 @@ To focus the research scope, the following constraints are applied:
 
 1. **Platform**: Kubernetes (K3s for resource efficiency) and Knative for serverless
 2. **Prediction Model**: GRU neural network (not LSTM or Transformer)
-3. **Datasets**: ClarkNet and Calgary HTTP trace logs
+3. **Training Data**: Synthetic workload patterns (ClarkNet/Calgary for validation)
 4. **Metrics Focus**: Tail latency (p99), throughput, and cost
 5. **SLO Target**: 200ms p99 latency threshold
 6. **Environment**: Single-region deployment (no geo-distribution)

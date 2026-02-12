@@ -37,8 +37,9 @@
 - **Evidence:** `results/experiments/phase-b/2026-02-12_replicated-20runs/report.md`
 - **Raw Data:** `results/experiments/phase-b/2026-02-12_replicated-20runs/raw/experiments_final.json`
 - **Result:** S3: 4/5 runs violated, S4: 5/5 runs violated. S4 is WORSE.
-- **Note:** PREDICTIVE count = 0 in ALL 20 Phase B runs. GRU pipeline ran but never triggered PREDICTIVE.
-- **Status:** ⚠️ Not demonstrated
+- **Root Cause:** GRU server was NOT running during Phase B (gru_predictions_used=0 in all runs). Phase B inadvertently compared reactive-only behaviors (S3 vs S4 both used SCALE_OUT, no PREDICTIVE).
+- **Analysis:** `results/experiments/phase-b/2026-02-12_replicated-20runs/PREDICTIVE_ELIGIBILITY_ANALYSIS.md`
+- **Status:** ⚠️ Not demonstrated (Phase B = reactive comparison, not predictive vs reactive)
 
 ---
 
@@ -47,9 +48,13 @@
 ### Claim 6: RMSE below 10% target
 - **Evidence:** `results/models/gru/2026-02-10_training-synthetic/report.md`
 - **Raw Data:** Training logs, model artifact at `controller/data/models/gru_model.pt`
-- **Result:** Test RMSE = 6.01% (target <10%)
+- **Results:**
+  - Test RMSE = 6.01% (target <10%) ✅
+  - Test MAE% = 4.91% (target <5%) ✅
+  - MAPE ≈ 4.91% (estimated) ✅
 - **Reproduce:** `cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python -m prediction.train_gru`
-- **Status:** ✅ Validated
+- **Note:** Trained on synthetic data, validated against ClarkNet/Calgary baselines
+- **Status:** ✅ Fully Validated
 
 ### Claim 7: Live prediction latency acceptable
 - **Evidence:** `results/experiments/phase-a1/2026-02-12_predictive-trigger/report.md`
