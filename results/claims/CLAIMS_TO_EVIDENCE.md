@@ -74,6 +74,25 @@
 
 ---
 
+## Testbed Validity & Scenario Design Decisions
+
+### Claim 9 (Testbed): HPA works correctly on k3d
+- **Evidence:** `results/experiments/validation/2026-02-13_infrastructure-validation/report.md` — T2: scale 2→10 under load, 10→2 after cooldown
+- **Reproduce:** See Commands Used in report.md (T2 section)
+- **Status:** ✅ Validated — S1 can use native HPA as baseline
+
+### Claim 10 (Design Decision): HPA and kubectl scale are mutually exclusive
+- **Evidence:** `results/experiments/validation/2026-02-13_infrastructure-validation/report.md` — T3: HPA reverts kubectl scale changes
+- **Reproduce:** See Commands Used in report.md (T3 section)
+- **Status:** ✅ Validated — S3/S4 must delete HPA; Algorithm 2 owns replicas via kubectl scale
+
+### Claim 11 (Testbed): Knative KPA autoscaling works on k3d
+- **Evidence:** `results/experiments/validation/2026-02-13_infrastructure-validation/report.md` — T4: scale 1→7 under CPU-heavy load, scale-to-zero after 60s
+- **Reproduce:** See Commands Used in report.md (T4 section)
+- **Status:** ✅ Validated — S2 viable as Knative-only baseline
+
+---
+
 ## Summary
 
 | Type | Claim | Bundle | Status |
@@ -85,6 +104,9 @@
 | Mechanism | GRU inference (real traces) | models/gru/training-clarknet-calgary | ⚠️ Mechanism works, targets not met |
 | Superiority | S4 outperforms S1 | phase-b/replicated-20runs | ⚠️ Not established |
 | Superiority | S4 fewer violations than S3 | phase-b/replicated-20runs | ⚠️ Not demonstrated |
+| Testbed | HPA works on k3d | validation/infrastructure-validation | ✅ |
+| Design Decision | HPA vs kubectl scale exclusive | validation/infrastructure-validation | ✅ |
+| Testbed | Knative KPA works on k3d | validation/infrastructure-validation | ✅ |
 
 ---
 

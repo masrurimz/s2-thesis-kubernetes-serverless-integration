@@ -207,6 +207,8 @@ Algorithm 2 is integrated into the live routing daemon and executes real Kuberne
 
 This design intentionally leverages the complementary strengths of the platforms: Knative provides rapid burst absorption (instant overflow), while Kubernetes provides cost-efficient steady capacity once replicas are ready.
 
+This coordination is active only in hybrid scenarios (S3 and S4). In baseline scenarios, S1 relies on HPA for native Kubernetes autoscaling without routing changes, and S2 relies on Knative KPA for serverless autoscaling without Kubernetes involvement.
+
 **Control-Loop Integration:**
 
 The daemon runs a **15-second control loop**. Algorithm 2 is executed in the same loop after Algorithm 1's routing decision, using the latest prediction and system state:
@@ -217,9 +219,11 @@ Observe metrics → Predict (GRU) → Algorithm 1: shift traffic immediately if 
                                → If K8s ready+healthy: Algorithm 1 shifts traffic back to K8s
 ```
 
+**Reactive vs Predictive Modes:** Algorithm 2 operates in two modes depending on the scenario. In **reactive mode** (S3), the scaling signal is the mean observed RPS over the last 30 seconds ($x_{obs}$), computed from HAProxy request counters. In **predictive mode** (S4), the signal is the GRU 30-second-ahead forecast ($x_{pred}$). Both modes use the identical resource model ($R = \alpha \cdot x + \beta$) and identical parameters ($\alpha$, $\beta$, $\gamma$, $R_{min}$, $R_{max}$, cooldowns), ensuring that any performance difference between S3 and S4 is attributable solely to the prediction signal.
+
 **Kubernetes Scaling Mechanism:**
 
-Scaling is performed by invoking `kubectl scale deployment/<name> --replicas=<R_target>`. This approach is chosen because it is deterministic, directly reproducible, and provides an explicit audit trail in controller logs. It avoids dependence on cluster autoscalers (HPA/VPA) that may introduce hidden policies.
+Scaling is performed by invoking `kubectl scale deployment/<name> --replicas=<R_target>`. This approach is chosen because it is deterministic, directly reproducible, and provides an explicit audit trail in controller logs. Infrastructure validation (Phase A0, Section 3.5.3) confirmed that Kubernetes HPA overrides manual `kubectl scale` commands after its stabilization window (~5 minutes), making the two mechanisms mutually exclusive. Therefore, Algorithm 2 requires HPA to be deleted from the target Deployment before it can safely control replicas. This mutual exclusion is enforced in the per-run reset procedure: S1 uses HPA as the native baseline, while S3 and S4 delete HPA and rely exclusively on Algorithm 2 for replica scaling.
 
 **Safety Checks and Anti-Oscillation Rules:**
 

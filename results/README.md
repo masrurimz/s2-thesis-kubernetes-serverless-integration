@@ -32,6 +32,7 @@ Rules:
 | `gru.training-clarknet-calgary.2026-02-13` | — | Model Training | 2026-02-13 | — | `models/gru/2026-02-13_training-clarknet-calgary/` |
 | `cost.proxy-analysis.2026-02-11` | B | Cost Analysis | 2026-02-11 | S1-S4 | `cost/2026-02-11_proxy-analysis/` |
 | `phase-c.dynamic-workload.2026-02-13` | C | Dynamic Workload | 2026-02-13 | S3, S4 | `experiments/phase-c/2026-02-13_dynamic-workload/` |
+| `validation.infrastructure.2026-02-13` | Validation | Infrastructure Validation | 2026-02-13 | T0–T4 | `experiments/validation/2026-02-13_infrastructure-validation/` |
 
 ---
 
