@@ -5,7 +5,7 @@ metadata:
   labels:
     app: test-app-warm
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: test-app-warm
@@ -21,7 +21,7 @@ spec:
       containers:
         - name: test-app-warm
           image: k3d-registry.localhost:5000/test-app:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
               name: http
@@ -30,10 +30,14 @@ spec:
               value: "K8s-Warm"
             - name: PORT
               value: "8080"
+            - name: GOMAXPROCS
+              value: "1"
+            - name: WORK_DURATION_MS
+              value: "5"
           resources:
             requests:
-              cpu: 200m
-              memory: 32Mi
+              cpu: 100m
+              memory: 64Mi
             limits:
               cpu: 500m
               memory: 128Mi

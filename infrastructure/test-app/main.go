@@ -13,13 +13,14 @@ import (
 )
 
 var (
-	backendName = getEnv("BACKEND_NAME", "unknown")
+	backendName        = getEnv("BACKEND_NAME", "unknown")
+	defaultWorkDurMs   = getEnvInt("WORK_DURATION_MS", 5)
 
 	httpRequestDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    "http_request_duration_seconds",
 			Help:    "HTTP request duration in seconds",
-			Buckets: []float64{0.01, 0.05, 0.1, 0.2, 0.5, 1},
+			Buckets: []float64{0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.2, 0.5, 1, 2, 5},
 		},
 		[]string{"method", "path", "status"},
 	)
@@ -41,6 +42,15 @@ func init() {
 func getEnv(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {
 		return v
+	}
+	return fallback
+}
+
+func getEnvInt(key string, fallback int) int {
+	if v := os.Getenv(key); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			return n
+		}
 	}
 	return fallback
 }
@@ -104,13 +114,37 @@ func fibHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func workHandler(w http.ResponseWriter, r *http.Request) {
+	durationMs := defaultWorkDurMs
+	if d := r.URL.Query().Get("duration_ms"); d != "" {
+		if n, err := strconv.Atoi(d); err == nil && n > 0 && n <= 5000 {
+			durationMs = n
+		}
+	}
+
+	start := time.Now()
+	deadline := start.Add(time.Duration(durationMs) * time.Millisecond)
+	for time.Now().Before(deadline) {
+		// busy-loop: deterministic CPU burn
+	}
+	actual := time.Since(start)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"duration_ms":        durationMs,
+		"actual_duration_ms": actual.Milliseconds(),
+		"backend":            backendName,
+	})
+}
+
 func main() {
 	port := getEnv("PORT", "8080")
 
 	http.HandleFunc("/health", instrumentHandler("/health", healthHandler))
 	http.HandleFunc("/fib", instrumentHandler("/fib", fibHandler))
+	http.HandleFunc("/work", instrumentHandler("/work", workHandler))
 	http.Handle("/metrics", promhttp.Handler())
 
-	log.Printf("Starting server on :%s (backend: %s)", port, backendName)
+	log.Printf("Starting server on :%s (backend: %s, work_duration_ms: %d)", port, backendName, defaultWorkDurMs)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
