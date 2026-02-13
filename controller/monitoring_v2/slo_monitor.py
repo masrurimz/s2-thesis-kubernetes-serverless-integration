@@ -139,28 +139,26 @@ class SLOMonitor:
             return 0.0
     
     def _get_latency_from_haproxy(self) -> float:
-        """Get average response time from HAProxy stats (ttime column)."""
+        """Get response time from HAProxy stats (rtime column)."""
         try:
             response = requests.get(self.config.haproxy_stats_url, timeout=5)
             response.raise_for_status()
             
             # Parse CSV - find BACKEND row for 'servers'
+            # Column indices (0-based): qtime=58, ctime=59, rtime=60, ttime=61
+            # rtime_max=92, ttime_max=93
             lines = response.text.strip().split('\n')
             for line in lines:
                 fields = line.split(',')
-                if len(fields) > 62 and fields[0] == 'servers' and fields[1] == 'BACKEND':
-                    # ttime is column 62 (0-indexed), average total time in ms
-                    ttime = fields[61]  # rtime is response time (backend processing)
-                    ttime_max = fields[93] if len(fields) > 93 else "0"
+                if len(fields) > 93 and fields[0] == 'servers' and fields[1] == 'BACKEND':
+                    rtime = fields[60]       # rtime: avg backend response time (ms)
+                    rtime_max = fields[92]   # rtime_max: max backend response time (ms)
                     
-                    if ttime and ttime.isdigit():
-                        # Use max of ttime as proxy for p99
-                        # HAProxy reports average, so we estimate p99 ~ 2x average
-                        avg_time = int(ttime)
-                        max_time = int(ttime_max) if ttime_max.isdigit() else avg_time * 3
-                        # Estimate p99 as weighted between avg and max
+                    if rtime and rtime.isdigit():
+                        avg_time = int(rtime)
+                        max_time = int(rtime_max) if rtime_max.isdigit() else avg_time * 3
                         estimated_p99 = min(avg_time * 2, max_time)
-                        logger.debug("HAProxy latency", avg=avg_time, max=max_time, p99_est=estimated_p99)
+                        logger.debug("HAProxy latency", avg_rtime=avg_time, max_rtime=max_time, p99_est=estimated_p99)
                         return float(estimated_p99)
             
             return 0.0
