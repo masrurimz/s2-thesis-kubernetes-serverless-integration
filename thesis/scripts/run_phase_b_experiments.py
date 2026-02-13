@@ -1,78 +1,153 @@
 #!/usr/bin/env python3
 """
-Phase B: Scientific Validation - Following Oracle Recommendations
+Phase B: Replicated Comparison with Trace-Driven Workload.
 
-Implements proper experimental design per oracle guidance:
-- P1: Workload calibration (Goldilocks load)
-- P2: Replicated experiments (5 runs × 4 scenarios, randomized)
-- P3: Statistical analysis (Welch t-test, bootstrap CI, Cohen's d)
-- P4: Cost proxy integration
+Implements the experiment protocol from thesis Section 3.5.4:
+- k6 ClarkNet trace-driven replay (ramping-arrival-rate, 30s stages)
+- Per-run scenario reset (HPA/KPA/Algorithm 2 management)
+- Time-window Prometheus metric export (query_range)
+- Algorithm 2 replica scaling metrics
+- k6 handleSummary JSON as primary metric source
+- Statistical analysis (Welch, Mann-Whitney U, bootstrap CI, Cohen's d)
 
 Usage:
-    cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 \
-        uv run python ../scripts/run_phase_b_experiments.py \
-        --phase calibration --rps-levels 50,100,150,200
-    
-    cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 \
-        uv run python ../scripts/run_phase_b_experiments.py \
-        --phase experiments --runs 5 --duration 300
+    cd controller && uv run python ../thesis/scripts/run_phase_b_experiments.py \\
+        --phase full --runs 5
+
+    cd controller && uv run python ../thesis/scripts/run_phase_b_experiments.py \\
+        --phase experiments --runs 5 --seed 42
 """
 
 import argparse
 import json
+import os
 import random
-import statistics
+import shutil
 import subprocess
 import sys
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
+import numpy as np
 import requests
 import structlog
-import numpy as np
-from scipy import stats
+from scipy import stats as scipy_stats
 
 logger = structlog.get_logger(__name__)
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "controller"))
+SCRIPT_DIR = Path(__file__).resolve().parent  # thesis/scripts/
+PROJECT_ROOT = SCRIPT_DIR.parent.parent       # repo root
+CONTROLLER_DIR = PROJECT_ROOT / "controller"
 
+# Tool paths (mise-managed)
+K6_PATH = os.environ.get(
+    "K6_PATH",
+    str(Path.home() / ".local/share/mise/installs/k6/1.6.0/k6-v1.6.0-linux-amd64/k6"),
+)
+KUBECTL_PATH = os.environ.get(
+    "KUBECTL_PATH",
+    str(Path.home() / ".local/share/mise/installs/kubectl/1.35.0/kubectl"),
+)
+
+# Infrastructure defaults
+K6_SCRIPT = PROJECT_ROOT / "infrastructure" / "load-tests" / "clarknet_replay.js"
+K6_STAGES = PROJECT_ROOT / "data" / "trace-replay" / "clarknet_k6_stages.json"
+REPLAY_MANIFEST = PROJECT_ROOT / "data" / "trace-replay" / "clarknet_replay_manifest.json"
+
+HAPROXY_HOST = "localhost"
+HAPROXY_SOCKET_PORT = 19999
+HAPROXY_STATS_URL = "http://localhost:18404/stats;csv"
+PROMETHEUS_URL = "http://localhost:9090"
+GRU_URL = "http://localhost:8090"
+DAEMON_API = "http://localhost:9104"
+TARGET_URL = "http://localhost:18082"
+DAEMON_API_PORT = 9104
+DEPLOYMENT = "test-app-warm"
+NAMESPACE = "default"
+
+SCENARIOS = ["s1-k8s-only", "s2-serverless-only", "s3-hybrid-reactive", "s4-hybrid-predictive"]
+
+WARMUP_SEC = 30
+COOLDOWN_SEC = 60
+INTER_RUN_PAUSE_SEC = 15
+
+
+# ---------------------------------------------------------------------------
+# Data classes
+# ---------------------------------------------------------------------------
 
 @dataclass
 class ExperimentResult:
-    """Single experiment run result."""
+    """Single experiment run result — all fields per methodology Tables 3-4..3-7."""
     scenario: str
     run_id: int
-    rps: int
-    duration_sec: int
-    
-    # Primary metrics
-    p50_latency_ms: float
-    p95_latency_ms: float
-    p99_latency_ms: float
-    error_rate: float
-    throughput_rps: float
-    
-    # SLO metrics
-    slo_violation_count: int
-    slo_violation_duration_sec: float
-    
-    # Decision metrics
-    maintain_count: int
-    scale_out_count: int
-    predictive_count: int
-    optimize_cost_count: int
-    
+    timestamp: str
+
+    # k6 primary metrics (Table 3-4)
+    p50_latency_ms: float = 0.0
+    p95_latency_ms: float = 0.0
+    p99_latency_ms: float = 0.0
+    error_rate: float = 0.0
+    throughput_rps: float = 0.0
+    total_requests: int = 0
+    slo_violations_k6: int = 0
+
+    # Prometheus corroboration
+    prom_p99_latency_ms: float = 0.0
+
+    # Routing / control-plane metrics (Table 3-5)
+    maintain_count: int = 0
+    scale_out_count: int = 0
+    predictive_count: int = 0
+    optimize_cost_count: int = 0
+    weight_change_count: int = 0
+    time_in_serverless_pct: float = 0.0
+    prediction_usage_rate: float = 0.0
+
+    # Algorithm 2 replica scaling metrics (Table 3-6)
+    scale_up_events: int = 0
+    scale_down_events: int = 0
+    scale_up_success: int = 0
+    scale_down_success: int = 0
+    desired_replicas_final: int = 0
+    available_replicas_final: int = 0
+
+    # Cost proxy metrics (Table 3-7)
+    k8s_weight_time_product: float = 0.0
+    serverless_weight_time_product: float = 0.0
+
     # GRU metrics (S4 only)
-    gru_predictions_used: int
-    gru_avg_confidence: float
-    
-    # Cost proxy
-    k8s_weight_time_product: float  # Sum of (weight × seconds)
-    serverless_weight_time_product: float
-    
+    gru_predictions_used: int = 0
+    gru_predictions_failed: int = 0
+
+    # Run metadata
+    duration_sec: int = 0
+    t_start: float = 0.0
+    t_end: float = 0.0
+    k6_summary_path: str = ""
+    daemon_log_path: str = ""
+    prom_export_path: str = ""
+
+    # Raw Prometheus time-series paths (stored per-run)
+    replica_timeline_path: str = ""
+
+
+@dataclass
+class RunManifest:
+    """Per-run configuration snapshot for reproducibility."""
+    scenario: str
+    run_id: int
+    run_order_idx: int
+    random_seed: int
+    git_commit: str
+    k6_script: str
+    k6_stages_json: str
+    replay_manifest: dict
+    daemon_config: dict
+    scaling_config: dict
     timestamp: str
 
 
@@ -82,615 +157,928 @@ class StatisticalComparison:
     baseline_scenario: str
     comparison_scenario: str
     metric: str
-    
     baseline_mean: float
     comparison_mean: float
     difference: float
     percent_change: float
-    
-    # Statistical tests
     welch_t_stat: float
     welch_p_value: float
-    
-    # Bootstrap CI (95%)
+    mannwhitney_u_stat: float
+    mannwhitney_p_value: float
     ci_lower: float
     ci_upper: float
-    
-    # Effect size
     cohens_d: float
     effect_size_interpretation: str
+    n_baseline: int
+    n_comparison: int
 
 
-class ExperimentRunner:
-    """Runs thesis experiments following oracle recommendations."""
-    
-    def __init__(self, results_dir: str = "results/phase_b"):
-        self.results_dir = Path(results_dir)
-        self.results_dir.mkdir(parents=True, exist_ok=True)
-        self.prometheus_url = "http://localhost:9090"
-        self.daemon_api = "http://localhost:9104"
-        
-    def check_infrastructure(self) -> bool:
-        """Check if all required services are running."""
-        checks = {
-            "prometheus": False,
-            "prediction_server": False,
-            "haproxy": False,
-        }
-        
-        try:
-            # Check Prometheus
-            resp = requests.get(f"{self.prometheus_url}/-/healthy", timeout=5)
-            checks["prometheus"] = resp.status_code == 200
-            
-            # Check prediction server
-            resp = requests.get("http://localhost:8090/health", timeout=5)
-            checks["prediction_server"] = resp.status_code == 200
-            
-            # Check HAProxy
-            resp = requests.get("http://localhost:18404/stats", timeout=5)
-            checks["haproxy"] = resp.status_code == 200
-            
-        except Exception as e:
-            logger.error("infrastructure_check_failed", error=str(e))
-        
-        all_ready = all(checks.values())
-        if not all_ready:
-            logger.error("infrastructure_not_ready", **checks)
-        else:
-            logger.info("infrastructure_ready", **checks)
-        
-        return all_ready
-    
-    def query_prometheus(self, expr: str, window: str = "1m") -> Optional[float]:
-        """Query Prometheus for a metric."""
-        try:
-            resp = requests.get(
-                f"{self.prometheus_url}/api/v1/query",
-                params={"query": expr},
-                timeout=10
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            
-            if data.get("status") == "success":
-                results = data.get("data", {}).get("result", [])
-                if results:
-                    return float(results[0].get("value", [0, 0])[1])
-        except Exception as e:
-            logger.warning("prometheus_query_failed", expr=expr, error=str(e))
-        
-        return None
-    
-    def get_latency_percentiles(self) -> Dict[str, float]:
-        """Get p50, p95, p99 latency from Prometheus."""
-        percentiles = {}
-        for name, quantile in [("p50", 0.50), ("p95", 0.95), ("p99", 0.99)]:
-            expr = (
-                f"histogram_quantile({quantile}, "
-                f"sum(rate(http_request_duration_seconds_bucket[1m])) by (le)) * 1000"
-            )
-            value = self.query_prometheus(expr)
-            percentiles[name] = value if value is not None else 0.0
-        return percentiles
-    
-    def get_error_rate(self) -> float:
-        """Get error rate percentage."""
-        expr = (
-            "sum(rate(http_requests_total{status=~\"5..\"}[1m])) / "
-            "sum(rate(http_requests_total[1m])) * 100"
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _run_cmd(cmd: List[str], timeout: int = 30, **kwargs) -> subprocess.CompletedProcess:
+    """Run a command with timeout, return CompletedProcess."""
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, **kwargs)
+
+
+def _kubectl(args: List[str], timeout: int = 15) -> subprocess.CompletedProcess:
+    """Run kubectl with standard args."""
+    return _run_cmd([KUBECTL_PATH, "-n", NAMESPACE] + args, timeout=timeout)
+
+
+def _git_commit_hash() -> str:
+    try:
+        r = _run_cmd(["git", "rev-parse", "--short", "HEAD"], timeout=5)
+        return r.stdout.strip() if r.returncode == 0 else "unknown"
+    except Exception:
+        return "unknown"
+
+
+def _prom_query(expr: str) -> Optional[float]:
+    """Instant Prometheus query."""
+    try:
+        r = requests.get(f"{PROMETHEUS_URL}/api/v1/query", params={"query": expr}, timeout=10)
+        r.raise_for_status()
+        data = r.json()
+        if data.get("status") == "success":
+            results = data.get("data", {}).get("result", [])
+            if results:
+                return float(results[0]["value"][1])
+    except Exception as e:
+        logger.debug("prom_query_failed", expr=expr[:80], error=str(e))
+    return None
+
+
+def _prom_query_range(expr: str, start: float, end: float, step: str = "15s") -> List[Tuple[float, float]]:
+    """Prometheus query_range → list of (timestamp, value)."""
+    try:
+        r = requests.get(
+            f"{PROMETHEUS_URL}/api/v1/query_range",
+            params={"query": expr, "start": start, "end": end, "step": step},
+            timeout=30,
         )
-        value = self.query_prometheus(expr)
-        return value if value is not None else 0.0
-    
-    def get_throughput(self) -> float:
-        """Get throughput in RPS."""
-        expr = "sum(rate(http_requests_total[1m]))"
-        value = self.query_prometheus(expr)
-        return value if value is not None else 0.0
-    
-    def start_daemon(self, scenario: str, threshold: float = 0.6) -> Optional[subprocess.Popen]:
-        """Start routing daemon for a scenario."""
-        cmd = [
-            "python", "-m", "daemon.routing_daemon",
-            "--scenario", scenario,
-            "--haproxy-host", "localhost",
-            "--haproxy-port", "19999",
-            "--haproxy-stats", "http://localhost:18404/stats;csv",
-            "--gru-url", "http://localhost:8090",
-            "--interval", "15"
-        ]
-        
-        env = {
-            "HSA_OVERRIDE_GFX_VERSION": "11.0.0",
-            "PREDICTION_CONFIDENCE_THRESHOLD": str(threshold),
+        r.raise_for_status()
+        data = r.json()
+        if data.get("status") == "success":
+            results = data.get("data", {}).get("result", [])
+            if results:
+                return [(float(v[0]), float(v[1])) for v in results[0]["values"]]
+    except Exception as e:
+        logger.debug("prom_query_range_failed", expr=expr[:80], error=str(e))
+    return []
+
+
+# ---------------------------------------------------------------------------
+# Infrastructure preflight  (s2-omz)
+# ---------------------------------------------------------------------------
+
+class PreflightChecker:
+    """Validates cluster and service readiness before experiments."""
+
+    def check_all(self) -> Tuple[bool, Dict[str, bool]]:
+        checks = {
+            "k6_binary": Path(K6_PATH).exists(),
+            "kubectl_binary": Path(KUBECTL_PATH).exists(),
+            "k6_script": K6_SCRIPT.exists(),
+            "k6_stages": K6_STAGES.exists(),
+            "prometheus": self._check_http(f"{PROMETHEUS_URL}/-/healthy"),
+            "haproxy_stats": self._check_http(HAPROXY_STATS_URL.replace(";csv", "")),
+            "gru_server": self._check_http(f"{GRU_URL}/health"),
+            "cluster_nodes": self._check_nodes(),
+            "target_deployment": self._check_deployment(),
+            "knative_serving": self._check_knative(),
         }
-        
+        all_ok = all(checks.values())
+        for name, ok in checks.items():
+            status = "✅" if ok else "❌"
+            logger.info("preflight", check=name, status=status)
+        return all_ok, checks
+
+    @staticmethod
+    def _check_http(url: str) -> bool:
         try:
-            # Get absolute path to controller directory
-            script_dir = Path(__file__).parent
-            controller_dir = script_dir.parent / "controller"
-            
-            proc = subprocess.Popen(
-                cmd,
-                cwd=str(controller_dir),
-                env={**dict(subprocess.os.environ), **env},
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-            
-            # Wait for daemon to start
-            time.sleep(5)
-            
-            # Verify daemon is running
-            resp = requests.get(f"{self.daemon_api}/health", timeout=5)
-            if resp.status_code == 200:
-                logger.info("daemon_started", scenario=scenario, pid=proc.pid)
-                return proc
-            else:
-                logger.error("daemon_failed_to_start", scenario=scenario)
-                proc.terminate()
-                proc.wait()
-                return None
-                
-        except Exception as e:
-            logger.error("daemon_start_error", scenario=scenario, error=str(e))
-            return None
-    
-    def stop_daemon(self, proc: subprocess.Popen) -> None:
-        """Stop routing daemon."""
-        if proc:
-            proc.terminate()
-            proc.wait()
-            time.sleep(3)  # Cool down
-            logger.info("daemon_stopped", pid=proc.pid)
-    
-    def get_daemon_status(self) -> Optional[Dict]:
-        """Get current daemon status."""
-        try:
-            resp = requests.get(f"{self.daemon_api}/status", timeout=5)
-            if resp.status_code == 200:
-                return resp.json()
-        except Exception as e:
-            logger.warning("daemon_status_failed", error=str(e))
-        return None
-    
-    def run_load_test(self, rps: int, duration_sec: int) -> None:
-        """Generate load using parallel curl requests."""
-        logger.info("starting_load_test", rps=rps, duration_sec=duration_sec)
-        
-        start_time = time.time()
-        batch_size = min(rps, 100)
-        
-        while time.time() - start_time < duration_sec:
-            # Spawn parallel curl processes
-            procs = []
-            for _ in range(batch_size):
-                proc = subprocess.Popen(
-                    [
-                        "curl", "-s", "-o", "/dev/null",
-                        "-H", "Host: test-app.default.127.0.0.1.sslip.io",
-                        "http://localhost:18082/health"
-                    ],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
-                )
-                procs.append(proc)
-            
-            # Wait for batch to complete
-            for proc in procs:
-                try:
-                    proc.wait(timeout=5)
-                except subprocess.TimeoutExpired:
-                    proc.kill()
-            
-            # Rate limiting
-            time.sleep(max(0, 1.0 - (time.time() - start_time) % 1.0))
-        
-        logger.info("load_test_complete")
-    
-    def run_single_experiment(
-        self,
-        scenario: str,
-        run_id: int,
-        rps: int,
-        duration_sec: int
-    ) -> Optional[ExperimentResult]:
-        """Run a single experiment."""
-        
-        logger.info("running_experiment",
-                   scenario=scenario, run_id=run_id, rps=rps, duration_sec=duration_sec)
-        
-        # Start daemon
-        daemon_proc = self.start_daemon(scenario)
-        if not daemon_proc:
-            return None
-        
-        try:
-            # Get initial status
-            initial_status = self.get_daemon_status()
-            
-            # Run load test
-            self.run_load_test(rps, duration_sec)
-            
-            # Get final status
-            final_status = self.get_daemon_status()
-            
-            # Get Prometheus metrics
-            latencies = self.get_latency_percentiles()
-            error_rate = self.get_error_rate()
-            throughput = self.get_throughput()
-            
-            # Calculate SLO violations (p99 > 200ms)
-            slo_violations = latencies["p99"] > 200.0
-            
-            result = ExperimentResult(
-                scenario=scenario,
-                run_id=run_id,
-                rps=rps,
-                duration_sec=duration_sec,
-                p50_latency_ms=latencies["p50"],
-                p95_latency_ms=latencies["p95"],
-                p99_latency_ms=latencies["p99"],
-                error_rate=error_rate,
-                throughput_rps=throughput,
-                slo_violation_count=1 if slo_violations else 0,
-                slo_violation_duration_sec=0.0,  # Would need time-series data
-                maintain_count=final_status.get("maintain_count", 0) if final_status else 0,
-                scale_out_count=final_status.get("scale_out_count", 0) if final_status else 0,
-                predictive_count=final_status.get("predictive_count", 0) if final_status else 0,
-                optimize_cost_count=final_status.get("optimize_cost_count", 0) if final_status else 0,
-                gru_predictions_used=0,
-                gru_avg_confidence=0.0,
-                k8s_weight_time_product=0.0,
-                serverless_weight_time_product=0.0,
-                timestamp=datetime.now().isoformat()
-            )
-            
-            logger.info("experiment_complete",
-                       scenario=scenario,
-                       run_id=run_id,
-                       p99=result.p99_latency_ms,
-                       error_rate=result.error_rate)
-            
-            return result
-            
-        finally:
-            self.stop_daemon(daemon_proc)
-    
-    def run_calibration(
-        self,
-        rps_levels: List[int],
-        scenarios: List[str] = ["s1-k8s-only", "s3-hybrid-reactive"],
-        duration_sec: int = 180
-    ) -> List[ExperimentResult]:
-        """P1: Workload calibration per oracle recommendations."""
-        
-        logger.info("starting_calibration", rps_levels=rps_levels, scenarios=scenarios)
-        
-        results = []
-        
-        for scenario in scenarios:
-            for rps in rps_levels:
-                logger.info("calibrating", scenario=scenario, rps=rps)
-                
-                result = self.run_single_experiment(scenario, 0, rps, duration_sec)
-                if result:
-                    results.append(result)
-                
-                time.sleep(10)  # Cool down
-        
-        return results
-    
-    def analyze_calibration(self, results: List[ExperimentResult]) -> Dict:
-        """Analyze calibration results and recommend Goldilocks load."""
-        
-        # Find S1 results
-        s1_results = [r for r in results if r.scenario == "s1-k8s-only"]
-        
-        # Find Goldilocks: S1 stressed but not critical
-        candidates = [
-            r for r in s1_results
-            if r.p99_latency_ms > 200 and r.p99_latency_ms < 1000 and r.error_rate < 0.1
-        ]
-        
-        if candidates:
-            # Pick the lowest RPS that causes stress
-            goldilocks = min(candidates, key=lambda r: r.rps)
+            return requests.get(url, timeout=5).status_code == 200
+        except Exception:
+            return False
+
+    @staticmethod
+    def _check_nodes() -> bool:
+        r = _kubectl(["get", "nodes", "-o", "json"])
+        if r.returncode != 0:
+            return False
+        data = json.loads(r.stdout)
+        for node in data.get("items", []):
+            for cond in node.get("status", {}).get("conditions", []):
+                if cond.get("type") == "Ready" and cond.get("status") != "True":
+                    return False
+        return True
+
+    @staticmethod
+    def _check_deployment() -> bool:
+        r = _kubectl(["get", f"deployment/{DEPLOYMENT}", "-o", "json"])
+        return r.returncode == 0
+
+    @staticmethod
+    def _check_knative() -> bool:
+        r = _kubectl(["get", "ksvc", "-o", "json"], timeout=10)
+        return r.returncode == 0
+
+
+# ---------------------------------------------------------------------------
+# Per-run scenario reset  (s2-rsg, s2-5xb)
+# ---------------------------------------------------------------------------
+
+class ScenarioResetter:
+    """Implements per-run reset procedure per methodology Section 3.5.4(B)."""
+
+    def reset(self, scenario: str) -> bool:
+        logger.info("scenario_reset_start", scenario=scenario)
+
+        if scenario == "s1-k8s-only":
+            ok = self._reset_s1()
+        elif scenario == "s2-serverless-only":
+            ok = self._reset_s2()
+        elif scenario in ("s3-hybrid-reactive", "s4-hybrid-predictive"):
+            ok = self._reset_s3_s4()
         else:
-            # Default to middle RPS level
-            goldilocks = s1_results[len(s1_results) // 2] if s1_results else None
-        
-        return {
-            "goldilocks_rps": goldilocks.rps if goldilocks else 100,
-            "goldilocks_p99": goldilocks.p99_latency_ms if goldilocks else 0,
-            "goldilocks_error_rate": goldilocks.error_rate if goldilocks else 0,
-            "all_results": [asdict(r) for r in results],
-            "analysis_timestamp": datetime.now().isoformat(),
+            logger.error("unknown_scenario", scenario=scenario)
+            return False
+
+        if ok:
+            # Reset HAProxy weights to scenario baseline
+            self._reset_haproxy_weights(scenario)
+            logger.info("scenario_reset_complete", scenario=scenario)
+        return ok
+
+    def _reset_s1(self) -> bool:
+        """S1: ensure HPA, delete any manual scaling artifacts."""
+        # Delete HPA if it exists (clean slate), then recreate
+        _kubectl(["delete", "hpa", DEPLOYMENT, "--ignore-not-found"])
+        time.sleep(2)
+        r = _kubectl([
+            "autoscale", f"deployment/{DEPLOYMENT}",
+            "--cpu-percent=30", "--min=2", "--max=10",
+        ])
+        if r.returncode != 0:
+            logger.error("hpa_create_failed", stderr=r.stderr.strip())
+            return False
+
+        # Wait for HPA to have metrics (not <unknown>)
+        for _ in range(20):
+            time.sleep(3)
+            hr = _kubectl(["get", "hpa", DEPLOYMENT, "-o", "json"])
+            if hr.returncode == 0:
+                hpa = json.loads(hr.stdout)
+                conditions = hpa.get("status", {}).get("conditions", [])
+                current = hpa.get("status", {}).get("currentMetrics", [])
+                # HPA ready when currentReplicas > 0
+                if hpa.get("status", {}).get("currentReplicas", 0) > 0:
+                    logger.info("hpa_ready", replicas=hpa["status"]["currentReplicas"])
+                    return True
+        logger.warning("hpa_metrics_timeout")
+        return True  # Proceed anyway; HPA may still work
+
+    def _reset_s2(self) -> bool:
+        """S2: ensure Knative KPA is active, wait for scale-to-zero."""
+        # Knative annotations should already be set; verify pods are zero
+        for attempt in range(12):
+            r = _kubectl(["get", "pods", "-l", "serving.knative.dev/service=test-app", "-o", "json"])
+            if r.returncode == 0:
+                pods = json.loads(r.stdout).get("items", [])
+                running = [p for p in pods if p.get("status", {}).get("phase") == "Running"]
+                if len(running) == 0:
+                    logger.info("knative_scaled_to_zero")
+                    return True
+                logger.debug("knative_pods_still_running", count=len(running))
+            time.sleep(10)
+        logger.warning("knative_scale_to_zero_timeout")
+        return True  # Proceed anyway
+
+    def _reset_s3_s4(self) -> bool:
+        """S3/S4: delete HPA, scale to baseline, wait ready."""
+        # Delete HPA
+        _kubectl(["delete", "hpa", DEPLOYMENT, "--ignore-not-found"])
+        time.sleep(2)
+
+        # Scale to baseline replicas
+        r = _kubectl(["scale", f"deployment/{DEPLOYMENT}", "--replicas=2"])
+        if r.returncode != 0:
+            logger.error("scale_baseline_failed", stderr=r.stderr.strip())
+            return False
+
+        # Wait for readyReplicas == 2
+        for _ in range(30):
+            time.sleep(2)
+            dr = _kubectl(["get", f"deployment/{DEPLOYMENT}", "-o", "json"])
+            if dr.returncode == 0:
+                dep = json.loads(dr.stdout)
+                available = dep.get("status", {}).get("availableReplicas", 0) or 0
+                if available == 2:
+                    logger.info("baseline_replicas_ready", replicas=2)
+                    return True
+        logger.warning("baseline_replicas_timeout")
+        return True
+
+    @staticmethod
+    def _reset_haproxy_weights(scenario: str) -> None:
+        """Reset HAProxy weights via admin socket."""
+        weight_map = {
+            "s1-k8s-only": (100, 0),
+            "s2-serverless-only": (0, 100),
+            "s3-hybrid-reactive": (80, 20),
+            "s4-hybrid-predictive": (80, 20),
         }
-    
-    def run_replicated_experiments(
-        self,
-        scenarios: List[str],
-        goldilocks_rps: int,
-        num_runs: int,
-        duration_sec: int
-    ) -> List[ExperimentResult]:
-        """P2: Replicated experiments with randomized order per oracle."""
-        
-        logger.info("starting_replicated_experiments",
-                   scenarios=scenarios,
-                   runs=num_runs,
-                   rps=goldilocks_rps)
-        
-        # Create experiment schedule
-        schedule = []
-        for scenario in scenarios:
-            for run_id in range(1, num_runs + 1):
-                schedule.append((scenario, run_id))
-        
-        # Randomize order per oracle recommendation
-        random.shuffle(schedule)
-        
-        logger.info("experiment_schedule", schedule=[f"{s}-{r}" for s, r in schedule])
-        
-        results = []
-        
-        for scenario, run_id in schedule:
-            logger.info("running_scheduled_experiment",
-                       scenario=scenario, run_id=run_id,
-                       progress=f"{len(results)+1}/{len(schedule)}")
-            
-            result = self.run_single_experiment(
-                scenario, run_id, goldilocks_rps, duration_sec
-            )
-            
-            if result:
-                results.append(result)
-                # Save incremental results
-                self.save_results(results, "experiments_intermediate.json")
-            
-            time.sleep(15)  # Cool down between runs
-        
-        return results
-    
-    def calculate_statistics(
+        k3s_w, kn_w = weight_map.get(scenario, (100, 0))
+        import socket
+        try:
+            for server, weight in [("k3s-cluster", k3s_w), ("knative", kn_w)]:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(5)
+                sock.connect((HAPROXY_HOST, HAPROXY_SOCKET_PORT))
+                sock.send(f"set server servers/{server} weight {weight}\n".encode())
+                sock.recv(4096)
+                sock.close()
+            logger.info("haproxy_weights_reset", k3s=k3s_w, knative=kn_w)
+        except Exception as e:
+            logger.warning("haproxy_weight_reset_failed", error=str(e))
+
+
+# ---------------------------------------------------------------------------
+# Daemon management  (s2-i72 fix: log to files, not PIPE)
+# ---------------------------------------------------------------------------
+
+class DaemonManager:
+    """Start/stop the routing daemon with proper IO handling."""
+
+    def start(self, scenario: str, log_path: Path) -> Optional[subprocess.Popen]:
+        cmd = [
+            sys.executable, "-m", "daemon.routing_daemon",
+            "--scenario", scenario,
+            "--haproxy-host", HAPROXY_HOST,
+            "--haproxy-port", str(HAPROXY_SOCKET_PORT),
+            "--haproxy-stats", HAPROXY_STATS_URL,
+            "--gru-url", GRU_URL,
+            "--interval", "15",
+            "--api-port", str(DAEMON_API_PORT),
+        ]
+        env = {**os.environ, "HSA_OVERRIDE_GFX_VERSION": "11.0.0"}
+
+        log_file = open(log_path, "w")
+        proc = subprocess.Popen(
+            cmd,
+            cwd=str(CONTROLLER_DIR),
+            env=env,
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+        )
+        # Store file handle for cleanup
+        proc._log_file = log_file  # type: ignore[attr-defined]
+
+        # Wait for daemon API to become available
+        for _ in range(20):
+            time.sleep(1)
+            try:
+                r = requests.get(f"{DAEMON_API}/health", timeout=3)
+                if r.status_code == 200:
+                    logger.info("daemon_started", scenario=scenario, pid=proc.pid)
+                    return proc
+            except Exception:
+                pass
+
+        logger.error("daemon_failed_to_start", scenario=scenario)
+        self.stop(proc)
+        return None
+
+    @staticmethod
+    def stop(proc: Optional[subprocess.Popen]) -> None:
+        if proc is None:
+            return
+        proc.terminate()
+        try:
+            proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+        if hasattr(proc, "_log_file"):
+            proc._log_file.close()  # type: ignore[attr-defined]
+        logger.info("daemon_stopped")
+
+    @staticmethod
+    def get_status() -> Optional[Dict]:
+        try:
+            r = requests.get(f"{DAEMON_API}/status", timeout=5)
+            if r.status_code == 200:
+                return r.json()
+        except Exception:
+            pass
+        return None
+
+
+# ---------------------------------------------------------------------------
+# k6 runner  (s2-5l9, s2-gk8)
+# ---------------------------------------------------------------------------
+
+class K6Runner:
+    """Run k6 ClarkNet trace replay and capture output."""
+
+    def run(self, scenario: str, run_id: int, results_dir: Path) -> Optional[Dict]:
+        """Execute k6 and return parsed handleSummary JSON."""
+        k6_results_dir = results_dir / "k6"
+        k6_results_dir.mkdir(parents=True, exist_ok=True)
+
+        cmd = [
+            K6_PATH, "run",
+            "--out", "json=/dev/null",  # disable verbose json streaming
+            "-e", f"TARGET_URL={TARGET_URL}",
+            "-e", f"SCENARIO={scenario}",
+            "-e", f"RUN_ID={run_id}",
+            "-e", f"RESULTS_DIR={k6_results_dir}",
+            str(K6_SCRIPT),
+        ]
+
+        logger.info("k6_start", scenario=scenario, run_id=run_id)
+
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=1800,  # 30 min max
+            cwd=str(PROJECT_ROOT),
+        )
+
+        if result.returncode != 0:
+            logger.error("k6_failed", returncode=result.returncode, stderr=result.stderr[:500])
+            return None
+
+        # Parse handleSummary JSON from stdout
+        try:
+            summary = json.loads(result.stdout)
+            logger.info("k6_complete", scenario=scenario, run_id=run_id,
+                       p99=summary.get("metrics", {}).get("p99_latency_ms"))
+            return summary
+        except json.JSONDecodeError:
+            logger.error("k6_stdout_parse_failed", stdout=result.stdout[:300])
+            return None
+
+
+# ---------------------------------------------------------------------------
+# Metric exporter  (s2-3mc, s2-dx8)
+# ---------------------------------------------------------------------------
+
+class MetricExporter:
+    """Export time-series metrics from Prometheus for a run window."""
+
+    # Queries aligned with thesis Tables 3-4..3-7
+    QUERIES = {
+        # Performance (corroboration)
+        "prom_p99_ms": 'histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[1m])) by (le)) * 1000',
+        "prom_rps": 'sum(rate(http_requests_total[1m]))',
+        # Routing daemon
+        "daemon_decisions": 'routing_daemon_decision_total',
+        "daemon_weight_k3s": 'routing_daemon_current_weight{backend="k3s"}',
+        "daemon_weight_knative": 'routing_daemon_current_weight{backend="knative"}',
+        "daemon_predictions_used": 'routing_daemon_prediction_used',
+        "daemon_predictions_failed": 'routing_daemon_prediction_failed',
+        # Algorithm 2 replica scaling
+        "k8s_desired_replicas": 'k8s_deployment_desired_replicas',
+        "k8s_available_replicas": 'k8s_deployment_available_replicas',
+        "k8s_scale_up_success": 'k8s_scaling_events_total{direction="up",result="success"}',
+        "k8s_scale_up_fail": 'k8s_scaling_events_total{direction="up",result="fail"}',
+        "k8s_scale_down_success": 'k8s_scaling_events_total{direction="down",result="success"}',
+        "k8s_scale_down_fail": 'k8s_scaling_events_total{direction="down",result="fail"}',
+    }
+
+    def export_run(self, t_start: float, t_end: float, output_dir: Path) -> Dict[str, Any]:
+        """Export all metrics for [t_start, t_end] window. Returns summary dict."""
+        output_dir.mkdir(parents=True, exist_ok=True)
+        series = {}
+
+        for name, expr in self.QUERIES.items():
+            ts = _prom_query_range(expr, t_start, t_end, step="15s")
+            series[name] = ts
+
+        # Save raw time-series
+        export_path = output_dir / "prometheus_export.json"
+        with open(export_path, "w") as f:
+            json.dump({k: [(t, v) for t, v in vs] for k, vs in series.items()}, f, indent=2)
+
+        # Derive summary values
+        summary = self._summarize(series, t_start, t_end)
+        summary["export_path"] = str(export_path)
+        return summary
+
+    def _summarize(self, series: Dict, t_start: float, t_end: float) -> Dict[str, Any]:
+        """Derive scalar summary from time-series."""
+        duration = max(1, t_end - t_start)
+
+        def _last_val(key: str) -> float:
+            ts = series.get(key, [])
+            return ts[-1][1] if ts else 0.0
+
+        def _mean_val(key: str) -> float:
+            ts = series.get(key, [])
+            return np.mean([v for _, v in ts]) if ts else 0.0
+
+        def _counter_delta(key: str) -> float:
+            ts = series.get(key, [])
+            if len(ts) < 2:
+                return 0.0
+            return max(0, ts[-1][1] - ts[0][1])
+
+        # Weight time products (integral via trapezoidal)
+        k3s_wt = self._weight_time_integral(series.get("daemon_weight_k3s", []))
+        kn_wt = self._weight_time_integral(series.get("daemon_weight_knative", []))
+
+        # Time in serverless = fraction of time knative weight > 0
+        kn_series = series.get("daemon_weight_knative", [])
+        time_in_serverless = sum(1 for _, v in kn_series if v > 0) / max(1, len(kn_series))
+
+        # Weight change count
+        k3s_ts = series.get("daemon_weight_k3s", [])
+        weight_changes = sum(1 for i in range(1, len(k3s_ts)) if k3s_ts[i][1] != k3s_ts[i-1][1])
+
+        return {
+            "prom_p99_ms": _mean_val("prom_p99_ms"),
+            "scale_up_success": int(_counter_delta("k8s_scale_up_success")),
+            "scale_down_success": int(_counter_delta("k8s_scale_down_success")),
+            "scale_up_fail": int(_counter_delta("k8s_scale_up_fail")),
+            "scale_down_fail": int(_counter_delta("k8s_scale_down_fail")),
+            "desired_replicas_final": int(_last_val("k8s_desired_replicas")),
+            "available_replicas_final": int(_last_val("k8s_available_replicas")),
+            "predictions_used": int(_counter_delta("daemon_predictions_used")),
+            "predictions_failed": int(_counter_delta("daemon_predictions_failed")),
+            "k8s_weight_time": k3s_wt,
+            "kn_weight_time": kn_wt,
+            "time_in_serverless_pct": time_in_serverless * 100,
+            "weight_change_count": weight_changes,
+        }
+
+    @staticmethod
+    def _weight_time_integral(ts: List[Tuple[float, float]]) -> float:
+        """Trapezoidal integration of weight × time."""
+        if len(ts) < 2:
+            return 0.0
+        total = 0.0
+        for i in range(1, len(ts)):
+            dt = ts[i][0] - ts[i-1][0]
+            avg_w = (ts[i][1] + ts[i-1][1]) / 2
+            total += avg_w * dt
+        return total
+
+
+# ---------------------------------------------------------------------------
+# Statistical analysis  (s2-sm0)
+# ---------------------------------------------------------------------------
+
+class StatisticalAnalyzer:
+    """Welch t-test, Mann-Whitney U, bootstrap CI, Cohen's d, outlier detection."""
+
+    OUTLIER_P99_FLOOR_MS = 15.0  # p99 < 15ms is measurement artifact
+
+    def detect_outliers(self, results: List[ExperimentResult]) -> Tuple[List[ExperimentResult], List[ExperimentResult]]:
+        """Returns (clean, excluded) results."""
+        clean, excluded = [], []
+        for r in results:
+            if r.p99_latency_ms < self.OUTLIER_P99_FLOOR_MS:
+                excluded.append(r)
+                logger.warning("outlier_detected", scenario=r.scenario, run_id=r.run_id,
+                             p99=r.p99_latency_ms, reason="p99 < 15ms")
+            else:
+                clean.append(r)
+        return clean, excluded
+
+    def compare(
         self,
         results: List[ExperimentResult],
-        baseline: str = "s1-k8s-only",
-        comparison: str = "s4-hybrid-predictive",
-        metric: str = "p99_latency_ms"
+        baseline: str,
+        comparison: str,
+        metric: str,
     ) -> StatisticalComparison:
-        """P3: Statistical analysis per oracle (Welch t-test, bootstrap CI, Cohen's d)."""
-        
-        baseline_results = [getattr(r, metric) for r in results if r.scenario == baseline]
-        comparison_results = [getattr(r, metric) for r in results if r.scenario == comparison]
-        
-        if not baseline_results or not comparison_results:
-            raise ValueError(f"Insufficient data for {baseline} vs {comparison}")
-        
-        # Welch's t-test (doesn't assume equal variances)
-        t_stat, p_value = stats.ttest_ind(
-            comparison_results, baseline_results, equal_var=False
-        )
-        
-        # Bootstrap 95% CI
-        n_bootstrap = 10000
-        differences = []
-        for _ in range(n_bootstrap):
-            baseline_sample = np.random.choice(baseline_results, size=len(baseline_results), replace=True)
-            comparison_sample = np.random.choice(comparison_results, size=len(comparison_results), replace=True)
-            differences.append(np.mean(comparison_sample) - np.mean(baseline_sample))
-        
-        ci_lower, ci_upper = np.percentile(differences, [2.5, 97.5])
-        
-        # Cohen's d effect size
-        pooled_std = np.sqrt(
-            (np.std(baseline_results, ddof=1) ** 2 + np.std(comparison_results, ddof=1) ** 2) / 2
-        )
-        cohens_d = (np.mean(comparison_results) - np.mean(baseline_results)) / pooled_std if pooled_std > 0 else 0
-        
-        # Interpret effect size
-        if abs(cohens_d) < 0.2:
-            effect_interp = "negligible"
-        elif abs(cohens_d) < 0.5:
-            effect_interp = "small"
-        elif abs(cohens_d) < 0.8:
-            effect_interp = "medium"
+        baseline_vals = [getattr(r, metric) for r in results if r.scenario == baseline]
+        comp_vals = [getattr(r, metric) for r in results if r.scenario == comparison]
+
+        if not baseline_vals or not comp_vals:
+            raise ValueError(f"Insufficient data for {baseline} vs {comparison} on {metric}")
+
+        # Welch's t-test
+        t_stat, t_p = scipy_stats.ttest_ind(comp_vals, baseline_vals, equal_var=False)
+
+        # Mann-Whitney U
+        try:
+            u_stat, u_p = scipy_stats.mannwhitneyu(comp_vals, baseline_vals, alternative="two-sided")
+        except ValueError:
+            u_stat, u_p = 0.0, 1.0
+
+        # Bootstrap 95% CI (10000 resamples)
+        diffs = []
+        rng = np.random.default_rng(seed=42)
+        for _ in range(10000):
+            bs = rng.choice(baseline_vals, size=len(baseline_vals), replace=True)
+            cs = rng.choice(comp_vals, size=len(comp_vals), replace=True)
+            diffs.append(np.mean(cs) - np.mean(bs))
+        ci_lo, ci_hi = np.percentile(diffs, [2.5, 97.5])
+
+        # Cohen's d
+        pooled_std = np.sqrt((np.std(baseline_vals, ddof=1) ** 2 + np.std(comp_vals, ddof=1) ** 2) / 2)
+        d = (np.mean(comp_vals) - np.mean(baseline_vals)) / pooled_std if pooled_std > 0 else 0.0
+
+        if abs(d) < 0.2:
+            interp = "negligible"
+        elif abs(d) < 0.5:
+            interp = "small"
+        elif abs(d) < 0.8:
+            interp = "medium"
         else:
-            effect_interp = "large"
-        
+            interp = "large"
+
+        base_mean = float(np.mean(baseline_vals))
+        comp_mean = float(np.mean(comp_vals))
+
         return StatisticalComparison(
             baseline_scenario=baseline,
             comparison_scenario=comparison,
             metric=metric,
-            baseline_mean=np.mean(baseline_results),
-            comparison_mean=np.mean(comparison_results),
-            difference=np.mean(comparison_results) - np.mean(baseline_results),
-            percent_change=(np.mean(comparison_results) - np.mean(baseline_results)) / np.mean(baseline_results) * 100,
-            welch_t_stat=t_stat,
-            welch_p_value=p_value,
-            ci_lower=ci_lower,
-            ci_upper=ci_upper,
-            cohens_d=cohens_d,
-            effect_size_interpretation=effect_interp
+            baseline_mean=base_mean,
+            comparison_mean=comp_mean,
+            difference=comp_mean - base_mean,
+            percent_change=((comp_mean - base_mean) / base_mean * 100) if base_mean != 0 else 0,
+            welch_t_stat=float(t_stat),
+            welch_p_value=float(t_p),
+            mannwhitney_u_stat=float(u_stat),
+            mannwhitney_p_value=float(u_p),
+            ci_lower=float(ci_lo),
+            ci_upper=float(ci_hi),
+            cohens_d=float(d),
+            effect_size_interpretation=interp,
+            n_baseline=len(baseline_vals),
+            n_comparison=len(comp_vals),
         )
-    
-    def generate_report(
+
+
+# ---------------------------------------------------------------------------
+# Main experiment runner
+# ---------------------------------------------------------------------------
+
+class ExperimentRunner:
+    """Orchestrates Phase B experiments per methodology Section 3.5."""
+
+    def __init__(self, output_dir: str = "results/experiments/phase-b"):
+        self.output_dir = Path(output_dir)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.preflight = PreflightChecker()
+        self.resetter = ScenarioResetter()
+        self.daemon = DaemonManager()
+        self.k6 = K6Runner()
+        self.exporter = MetricExporter()
+        self.analyzer = StatisticalAnalyzer()
+
+    def run_single(
         self,
-        calibration: Dict,
-        experiments: List[ExperimentResult],
-        h1_stats: StatisticalComparison,
-        h2_stats: StatisticalComparison
-    ) -> str:
-        """Generate thesis-ready results report."""
-        
-        report = f"""# Phase B: Scientific Validation Results
+        scenario: str,
+        run_id: int,
+        run_order_idx: int,
+        seed: int,
+    ) -> Optional[ExperimentResult]:
+        """Execute a single experiment run with full protocol."""
+        run_dir = self.output_dir / f"{scenario}_run{run_id}"
+        run_dir.mkdir(parents=True, exist_ok=True)
 
-**Date:** {datetime.now().isoformat()}
+        logger.info("run_start", scenario=scenario, run_id=run_id, order=run_order_idx)
 
-## P1: Workload Calibration
+        # (B) Per-run reset
+        if not self.resetter.reset(scenario):
+            logger.error("reset_failed", scenario=scenario)
+            return None
 
-Goldilocks Load: **{calibration['goldilocks_rps']} RPS**
-- S1 (K8s-only) p99: {calibration['goldilocks_p99']:.1f}ms
-- S1 error rate: {calibration['goldilocks_error_rate']:.2%}
+        # Start daemon (S1/S2 still need daemon for metrics even if no algorithm)
+        daemon_log = run_dir / "daemon.log"
+        daemon_proc = self.daemon.start(scenario, daemon_log)
+        if daemon_proc is None:
+            return None
 
-## P2: Replicated Experiments
+        try:
+            # Save manifest  (s2-20e)
+            manifest = RunManifest(
+                scenario=scenario,
+                run_id=run_id,
+                run_order_idx=run_order_idx,
+                random_seed=seed,
+                git_commit=_git_commit_hash(),
+                k6_script=str(K6_SCRIPT),
+                k6_stages_json=str(K6_STAGES),
+                replay_manifest=json.loads(REPLAY_MANIFEST.read_text()) if REPLAY_MANIFEST.exists() else {},
+                daemon_config={
+                    "interval": 15, "haproxy_host": HAPROXY_HOST,
+                    "haproxy_port": HAPROXY_SOCKET_PORT, "gru_url": GRU_URL,
+                },
+                scaling_config={"alpha": 0.01, "beta": 1.0, "buffer": 1.2,
+                               "min_replicas": 1, "max_replicas": 10},
+                timestamp=datetime.now().isoformat(),
+            )
+            with open(run_dir / "manifest.json", "w") as f:
+                json.dump(asdict(manifest), f, indent=2)
 
-- Scenarios: S1, S2, S3, S4
-- Runs per scenario: {len([e for e in experiments if e.scenario == 's1-k8s-only'])}
-- Duration per run: {experiments[0].duration_sec if experiments else 0}s
-- Total experiments: {len(experiments)}
+            # (C.warm-up) 30s idle warm-up
+            logger.info("warmup_start", seconds=WARMUP_SEC)
+            time.sleep(WARMUP_SEC)
 
-## P3: Statistical Analysis
+            # Record t_start
+            t_start = time.time()
 
-### H1: Hybrid > Pure (S4 vs S1 on p99 latency)
+            # (C.2) Execute k6 trace replay
+            k6_summary = self.k6.run(scenario, run_id, run_dir)
 
-| Metric | Value |
-|--------|-------|
-| S1 Mean | {h1_stats.baseline_mean:.1f}ms |
-| S4 Mean | {h1_stats.comparison_mean:.1f}ms |
-| Difference | {h1_stats.difference:+.1f}ms ({h1_stats.percent_change:+.1f}%) |
-| Welch t-stat | {h1_stats.welch_t_stat:.3f} |
-| p-value | {h1_stats.welch_p_value:.4f} |
-| 95% CI | [{h1_stats.ci_lower:+.1f}, {h1_stats.ci_upper:+.1f}] |
-| Cohen's d | {h1_stats.cohens_d:.3f} ({h1_stats.effect_size_interpretation}) |
+            # (C.3) Post-k6 cooldown to capture delayed scaling effects
+            logger.info("cooldown_start", seconds=COOLDOWN_SEC)
+            time.sleep(COOLDOWN_SEC)
 
-**Conclusion:** {'Significant' if h1_stats.welch_p_value < 0.05 else 'Not significant'} improvement
+            # Record t_end
+            t_end = time.time()
 
-### H2: Predictive > Reactive (S4 vs S3 on SLO violations)
+            # Get daemon status before stopping
+            daemon_status = self.daemon.get_status() or {}
 
-| Metric | Value |
-|--------|-------|
-| S3 Mean | {h2_stats.baseline_mean:.2f} |
-| S4 Mean | {h2_stats.comparison_mean:.2f} |
-| Difference | {h2_stats.difference:+.2f} ({h2_stats.percent_change:+.1f}%) |
-| Welch t-stat | {h2_stats.welch_t_stat:.3f} |
-| p-value | {h2_stats.welch_p_value:.4f} |
-| 95% CI | [{h2_stats.ci_lower:+.2f}, {h2_stats.ci_upper:+.2f}] |
-| Cohen's d | {h2_stats.cohens_d:.3f} ({h2_stats.effect_size_interpretation}) |
+            # (D) Export Prometheus metrics for [t_start, t_end]
+            prom_summary = self.exporter.export_run(t_start, t_end, run_dir / "prometheus")
 
-**Conclusion:** {'Significant' if h2_stats.welch_p_value < 0.05 else 'Not significant'} reduction in violations
+            # Find k6 summary file
+            k6_files = list((run_dir / "k6").glob("clarknet_replay_*.json")) if (run_dir / "k6").exists() else []
+            k6_summary_path = str(k6_files[0]) if k6_files else ""
 
-## Summary
+            # Build result
+            k6m = k6_summary.get("metrics", {}) if k6_summary else {}
+            replay_manifest = json.loads(REPLAY_MANIFEST.read_text()) if REPLAY_MANIFEST.exists() else {}
 
-{'✅' if h1_stats.welch_p_value < 0.05 and h1_stats.difference < 0 else '⚠️'} **H1 (Hybrid > Pure):** {h1_stats.effect_size_interpretation} effect size
-{'✅' if h2_stats.welch_p_value < 0.05 and h2_stats.difference < 0 else '⚠️'} **H2 (Predictive > Reactive):** {h2_stats.effect_size_interpretation} effect size
-✅ **H3 (GRU Adequacy):** 6.01% RMSE < 10% target
+            result = ExperimentResult(
+                scenario=scenario,
+                run_id=run_id,
+                timestamp=datetime.now().isoformat(),
+                # k6 primary metrics
+                p50_latency_ms=k6m.get("p50_latency_ms", 0),
+                p95_latency_ms=k6m.get("p95_latency_ms", 0),
+                p99_latency_ms=k6m.get("p99_latency_ms", 0),
+                error_rate=k6m.get("error_rate", 0),
+                throughput_rps=k6m.get("actual_rps", 0),
+                total_requests=k6m.get("total_requests", 0),
+                slo_violations_k6=k6m.get("slo_violations", 0),
+                # Prometheus corroboration
+                prom_p99_latency_ms=prom_summary.get("prom_p99_ms", 0),
+                # Routing metrics
+                maintain_count=daemon_status.get("maintain_count", 0),
+                scale_out_count=daemon_status.get("scale_out_count", 0),
+                predictive_count=daemon_status.get("predictive_count", 0),
+                optimize_cost_count=daemon_status.get("optimize_cost_count", 0),
+                weight_change_count=prom_summary.get("weight_change_count", 0),
+                time_in_serverless_pct=prom_summary.get("time_in_serverless_pct", 0),
+                # Algorithm 2
+                scale_up_events=prom_summary.get("scale_up_success", 0) + prom_summary.get("scale_up_fail", 0),
+                scale_down_events=prom_summary.get("scale_down_success", 0) + prom_summary.get("scale_down_fail", 0),
+                scale_up_success=prom_summary.get("scale_up_success", 0),
+                scale_down_success=prom_summary.get("scale_down_success", 0),
+                desired_replicas_final=prom_summary.get("desired_replicas_final", 0),
+                available_replicas_final=prom_summary.get("available_replicas_final", 0),
+                # Cost proxy
+                k8s_weight_time_product=prom_summary.get("k8s_weight_time", 0),
+                serverless_weight_time_product=prom_summary.get("kn_weight_time", 0),
+                # GRU
+                gru_predictions_used=prom_summary.get("predictions_used", 0),
+                gru_predictions_failed=prom_summary.get("predictions_failed", 0),
+                # Run metadata
+                duration_sec=replay_manifest.get("duration_sec", 1200),
+                t_start=t_start,
+                t_end=t_end,
+                k6_summary_path=k6_summary_path,
+                daemon_log_path=str(daemon_log),
+                prom_export_path=prom_summary.get("export_path", ""),
+                replica_timeline_path=str(run_dir / "prometheus" / "prometheus_export.json"),
+            )
 
-"""
-        return report
-    
-    def save_results(self, results: List[ExperimentResult], filename: str) -> None:
-        """Save results to JSON file."""
-        output_path = self.results_dir / filename
-        with open(output_path, "w") as f:
-            json.dump([asdict(r) for r in results], f, indent=2)
-        logger.info("results_saved", path=str(output_path))
+            # Save result
+            with open(run_dir / "result.json", "w") as f:
+                json.dump(asdict(result), f, indent=2)
 
+            logger.info("run_complete", scenario=scenario, run_id=run_id,
+                       p99=result.p99_latency_ms, error_rate=result.error_rate)
+            return result
 
-def main():
-    parser = argparse.ArgumentParser(description="Phase B: Scientific Validation")
-    parser.add_argument(
-        "--phase",
-        choices=["calibration", "experiments", "analysis", "full"],
-        default="full",
-        help="Which phase to run"
-    )
-    parser.add_argument("--rps-levels", type=str, default="50,100,150,200",
-                       help="Comma-separated RPS levels for calibration")
-    parser.add_argument("--runs", type=int, default=5,
-                       help="Number of runs per scenario")
-    parser.add_argument("--duration", type=int, default=300,
-                       help="Duration per experiment in seconds")
-    parser.add_argument("--goldilocks-rps", type=int, default=None,
-                       help="Skip calibration and use this RPS")
-    
-    args = parser.parse_args()
-    
-    runner = ExperimentRunner()
-    
-    # Check infrastructure
-    if not runner.check_infrastructure():
-        print("❌ Infrastructure not ready. Please start required services.")
-        return 1
-    
-    goldilocks_rps = args.goldilocks_rps
-    calibration_results = []
-    experiment_results = []
-    
-    # P1: Calibration
-    if args.phase in ["calibration", "full"] and goldilocks_rps is None:
-        print("\n" + "=" * 80)
-        print("P1: WORKLOAD CALIBRATION")
-        print("=" * 80)
-        
-        rps_levels = [int(r) for r in args.rps_levels.split(",")]
-        calibration_results = runner.run_calibration(rps_levels)
-        
-        calibration_analysis = runner.analyze_calibration(calibration_results)
-        goldilocks_rps = calibration_analysis["goldilocks_rps"]
-        
-        # Save calibration results
-        output_path = runner.results_dir / "calibration_analysis.json"
-        with open(output_path, "w") as f:
-            json.dump(calibration_analysis, f, indent=2)
-        
-        print(f"\n✅ Calibration complete. Goldilocks load: {goldilocks_rps} RPS")
-    
-    if goldilocks_rps is None:
-        goldilocks_rps = 100  # Default
-    
-    # P2: Replicated Experiments
-    if args.phase in ["experiments", "full"]:
-        print("\n" + "=" * 80)
-        print("P2: REPLICATED EXPERIMENTS")
-        print("=" * 80)
-        
-        scenarios = ["s1-k8s-only", "s2-serverless-only", 
-                     "s3-hybrid-reactive", "s4-hybrid-predictive"]
-        
-        experiment_results = runner.run_replicated_experiments(
-            scenarios, goldilocks_rps, args.runs, args.duration
-        )
-        
-        runner.save_results(experiment_results, "experiments_final.json")
-        
-        print(f"\n✅ Experiments complete. {len(experiment_results)} runs completed.")
-    
-    # P3: Statistical Analysis
-    if args.phase in ["analysis", "full"] and experiment_results:
-        print("\n" + "=" * 80)
-        print("P3: STATISTICAL ANALYSIS")
-        print("=" * 80)
-        
-        # H1: S4 vs S1 (p99 latency)
-        h1_stats = runner.calculate_statistics(
-            experiment_results, "s1-k8s-only", "s4-hybrid-predictive", "p99_latency_ms"
-        )
-        
-        # H2: S4 vs S3 (SLO violations)
-        h2_stats = runner.calculate_statistics(
-            experiment_results, "s3-hybrid-reactive", "s4-hybrid-predictive", "slo_violation_count"
-        )
-        
-        # Generate report
-        calibration_analysis = runner.analyze_calibration(calibration_results) if calibration_results else {
-            "goldilocks_rps": goldilocks_rps,
-            "goldilocks_p99": 0,
-            "goldilocks_error_rate": 0,
+        finally:
+            self.daemon.stop(daemon_proc)
+
+    def run_replicated(
+        self,
+        scenarios: List[str],
+        num_runs: int,
+        seed: int,
+    ) -> List[ExperimentResult]:
+        """Phase B replicated experiments with randomized order."""
+        schedule = [(s, r) for s in scenarios for r in range(1, num_runs + 1)]
+        rng = random.Random(seed)
+        rng.shuffle(schedule)
+
+        # Save schedule
+        schedule_doc = {
+            "seed": seed,
+            "num_runs": num_runs,
+            "scenarios": scenarios,
+            "order": [{"scenario": s, "run_id": r, "idx": i} for i, (s, r) in enumerate(schedule)],
+            "timestamp": datetime.now().isoformat(),
         }
-        
-        report = runner.generate_report(calibration_analysis, experiment_results, h1_stats, h2_stats)
-        
-        # Save report
-        report_path = runner.results_dir / "phase_b_report.md"
+        with open(self.output_dir / "experiment_schedule.json", "w") as f:
+            json.dump(schedule_doc, f, indent=2)
+
+        logger.info("experiment_schedule", total=len(schedule), seed=seed)
+
+        results = []
+        for idx, (scenario, run_id) in enumerate(schedule):
+            logger.info("run_progress", current=idx + 1, total=len(schedule),
+                       scenario=scenario, run_id=run_id)
+
+            result = self.run_single(scenario, run_id, idx, seed)
+            if result:
+                results.append(result)
+                # Save incremental
+                self._save_results(results, "results_intermediate.json")
+
+            # Inter-run pause
+            if idx < len(schedule) - 1:
+                logger.info("inter_run_pause", seconds=INTER_RUN_PAUSE_SEC)
+                time.sleep(INTER_RUN_PAUSE_SEC)
+
+        self._save_results(results, "results_final.json")
+        return results
+
+    def run_analysis(self, results: List[ExperimentResult]) -> str:
+        """Statistical analysis + report generation."""
+        clean, excluded = self.analyzer.detect_outliers(results)
+
+        if excluded:
+            logger.warning("outliers_excluded", count=len(excluded))
+            with open(self.output_dir / "excluded_runs.json", "w") as f:
+                json.dump([asdict(r) for r in excluded], f, indent=2)
+
+        comparisons = []
+        pairs = [
+            ("s1-k8s-only", "s4-hybrid-predictive", "p99_latency_ms"),
+            ("s3-hybrid-reactive", "s4-hybrid-predictive", "slo_violations_k6"),
+            ("s1-k8s-only", "s3-hybrid-reactive", "p99_latency_ms"),
+            ("s3-hybrid-reactive", "s4-hybrid-predictive", "p99_latency_ms"),
+        ]
+
+        for baseline, comp, metric in pairs:
+            try:
+                stat = self.analyzer.compare(clean, baseline, comp, metric)
+                comparisons.append(stat)
+            except ValueError as e:
+                logger.warning("comparison_skipped", error=str(e))
+
+        # Save comparisons
+        with open(self.output_dir / "statistical_analysis.json", "w") as f:
+            json.dump([asdict(c) for c in comparisons], f, indent=2)
+
+        # Generate report
+        report = self._generate_report(clean, excluded, comparisons)
+        report_path = self.output_dir / "report.md"
         with open(report_path, "w") as f:
             f.write(report)
-        
-        print("\n" + report)
-        print(f"\n✅ Analysis complete. Report saved to {report_path}")
-    
+
+        logger.info("analysis_complete", report=str(report_path))
+        return report
+
+    def _save_results(self, results: List[ExperimentResult], filename: str) -> None:
+        path = self.output_dir / filename
+        with open(path, "w") as f:
+            json.dump([asdict(r) for r in results], f, indent=2)
+
+    def _generate_report(
+        self,
+        clean: List[ExperimentResult],
+        excluded: List[ExperimentResult],
+        comparisons: List[StatisticalComparison],
+    ) -> str:
+        lines = [
+            f"# Phase B: Replicated Comparison Results",
+            f"",
+            f"**Date:** {datetime.now().isoformat()}",
+            f"**Git:** {_git_commit_hash()}",
+            f"**Runs:** {len(clean)} clean, {len(excluded)} excluded",
+            f"",
+            f"## Per-Scenario Summary",
+            f"",
+            f"| Scenario | n | p50 (ms) | p95 (ms) | p99 (ms) | Error% | RPS | SLO Violations | Scale-Up | Scale-Down |",
+            f"|----------|---|----------|----------|----------|--------|-----|----------------|----------|------------|",
+        ]
+
+        for s in SCENARIOS:
+            rs = [r for r in clean if r.scenario == s]
+            if not rs:
+                continue
+            n = len(rs)
+            p50 = np.mean([r.p50_latency_ms for r in rs])
+            p95 = np.mean([r.p95_latency_ms for r in rs])
+            p99 = np.mean([r.p99_latency_ms for r in rs])
+            err = np.mean([r.error_rate for r in rs])
+            rps = np.mean([r.throughput_rps for r in rs])
+            slo = sum(r.slo_violations_k6 for r in rs)
+            su = sum(r.scale_up_events for r in rs)
+            sd = sum(r.scale_down_events for r in rs)
+            lines.append(
+                f"| {s} | {n} | {p50:.1f} | {p95:.1f} | {p99:.1f} | {err:.3f} | {rps:.1f} | {slo} | {su} | {sd} |"
+            )
+
+        lines.extend(["", "## Statistical Comparisons", ""])
+
+        for c in comparisons:
+            sig = "✅ Significant" if c.welch_p_value < 0.05 else "⚠️ Not significant"
+            lines.extend([
+                f"### {c.comparison_scenario} vs {c.baseline_scenario} ({c.metric})",
+                f"",
+                f"| Metric | Value |",
+                f"|--------|-------|",
+                f"| Baseline mean | {c.baseline_mean:.2f} (n={c.n_baseline}) |",
+                f"| Comparison mean | {c.comparison_mean:.2f} (n={c.n_comparison}) |",
+                f"| Difference | {c.difference:+.2f} ({c.percent_change:+.1f}%) |",
+                f"| Welch t-stat | {c.welch_t_stat:.3f} |",
+                f"| Welch p-value | {c.welch_p_value:.4f} |",
+                f"| Mann-Whitney U | {c.mannwhitney_u_stat:.1f} |",
+                f"| Mann-Whitney p | {c.mannwhitney_p_value:.4f} |",
+                f"| 95% CI | [{c.ci_lower:+.2f}, {c.ci_upper:+.2f}] |",
+                f"| Cohen's d | {c.cohens_d:.3f} ({c.effect_size_interpretation}) |",
+                f"| Verdict | {sig} |",
+                f"",
+            ])
+
+        if excluded:
+            lines.extend(["## Excluded Runs", ""])
+            for r in excluded:
+                lines.append(f"- {r.scenario} run {r.run_id}: p99={r.p99_latency_ms:.1f}ms (< 15ms threshold)")
+
+        return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+def main():
+    parser = argparse.ArgumentParser(description="Phase B: Replicated Comparison Experiments")
+    parser.add_argument("--phase", choices=["preflight", "experiments", "analysis", "full"], default="full")
+    parser.add_argument("--runs", type=int, default=5, help="Runs per scenario")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for run order")
+    parser.add_argument("--output", type=str, default=None, help="Output directory")
+    parser.add_argument("--scenarios", type=str, default=None,
+                       help="Comma-separated scenario list (default: all 4)")
+    parser.add_argument("--results-file", type=str, default=None,
+                       help="Path to results JSON for analysis-only mode")
+    args = parser.parse_args()
+
+    datestamp = datetime.now().strftime("%Y-%m-%d")
+    output_dir = args.output or f"results/experiments/phase-b/{datestamp}_clarknet-replay"
+    scenarios = args.scenarios.split(",") if args.scenarios else SCENARIOS
+
+    runner = ExperimentRunner(output_dir=str(PROJECT_ROOT / output_dir))
+
+    # Preflight
+    if args.phase in ("preflight", "full"):
+        print("\n" + "=" * 70)
+        print("PREFLIGHT CHECKS")
+        print("=" * 70)
+        ok, checks = runner.preflight.check_all()
+        if not ok:
+            failed = [k for k, v in checks.items() if not v]
+            print(f"\n❌ Preflight failed: {failed}")
+            if args.phase == "full":
+                return 1
+        else:
+            print("\n✅ All preflight checks passed")
+
+    # Experiments
+    results = []
+    if args.phase in ("experiments", "full"):
+        print("\n" + "=" * 70)
+        print(f"PHASE B EXPERIMENTS — {args.runs} runs × {len(scenarios)} scenarios")
+        print(f"Seed: {args.seed}  |  Output: {output_dir}")
+        print("=" * 70)
+
+        results = runner.run_replicated(scenarios, args.runs, args.seed)
+        print(f"\n✅ {len(results)} runs completed")
+
+    # Analysis
+    if args.phase in ("analysis", "full"):
+        if not results and args.results_file:
+            with open(args.results_file) as f:
+                raw = json.load(f)
+            results = [ExperimentResult(**r) for r in raw]
+
+        if results:
+            print("\n" + "=" * 70)
+            print("STATISTICAL ANALYSIS")
+            print("=" * 70)
+            report = runner.run_analysis(results)
+            print("\n" + report)
+        else:
+            print("❌ No results to analyze")
+
     return 0
 
 
