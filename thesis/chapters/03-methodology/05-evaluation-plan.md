@@ -37,22 +37,26 @@ The model is evaluated on both synthetic test data (primary accuracy assessment)
 
 #### Evaluation Scenarios
 
-Four scenarios are defined to isolate the contribution of each system component. Algorithm 2 (replica scaling) is active only when GRU prediction is enabled, to preserve a clear interpretation of predictive control.
+Four scenarios are defined with strict variable isolation: each consecutive pair differs by exactly one mechanism, enabling clean attribution of performance differences. All scenarios route traffic through HAProxy to eliminate data-path confounds. Algorithm 2 (replica scaling) operates in two modes: **reactive** (using observed load $x_{obs}$) and **predictive** (using GRU-predicted load $x_{pred}$), with identical parameters ($\alpha, \beta, \gamma, R_{min}, R_{max}$, cooldowns) in both modes.
 
 **Table 3-3: Evaluation Scenarios**
 
-| Scenario | Name | Routing (HAProxy) | Algorithm 1 | Algorithm 2 (Replica Scaling) | GRU Prediction |
-|----------|------|-------------------|-------------|-------------------------------|----------------|
-| S1 | K8s-Only (Static) | 100% K8s | No | No (fixed replicas) | No |
-| S2 | Serverless-Only | 100% Knative | No | N/A | No |
-| S3 | Hybrid Reactive | Dynamic weights | Yes | No (fixed replicas) | No |
-| S4 | Hybrid Predictive + Scaling | Dynamic weights | Yes | Yes (`kubectl scale`) | Yes |
+| Scenario | Name | Routing | Algorithm 1 | Algorithm 2 (Scaling) | Scaling Signal | GRU |
+|----------|------|---------|-------------|----------------------|----------------|-----|
+| S1 | K8s-Only Static | 100% K8s, Knative weight=0 | Off | Off (fixed replicas) | — | Off |
+| S2 | K8s Reactive Scaling | 100% K8s, Knative weight=0 | Off | On (reactive mode) | $x_{obs}$ | Off |
+| S3 | Hybrid Reactive | Dynamic K8s↔Knative | On (reactive only) | On (reactive mode) | $x_{obs}$ | Off |
+| S4 | Hybrid Predictive | Dynamic K8s↔Knative | On (predictive enabled) | On (predictive mode) | $x_{pred}$ | On |
 
-**Scenario Comparisons:**
+Where $x_{obs}$ = mean observed RPS over the last 30 seconds (matching the GRU prediction horizon), and $x_{pred}$ = GRU 30-second-ahead forecast.
 
-- **S3 vs S4** evaluates the benefit of prediction + replica scaling beyond reactive routing alone.
-- **S1 vs S4** evaluates the end-to-end benefit of the hybrid predictive architecture relative to Kubernetes static provisioning.
-- **S2** provides a serverless baseline to contextualize tail latency and cold-start behavior.
+**Scenario Comparisons (One Variable per Pair):**
+
+- **S1 vs S2**: Isolates the **value of autoscaling** — both are K8s-only; only difference is Algorithm 2 reactive scaling ON vs OFF.
+- **S2 vs S3**: Isolates the **value of hybrid routing** — both use reactive replica scaling; only difference is Algorithm 1 + Knative overflow ON vs OFF.
+- **S3 vs S4**: Isolates the **value of GRU prediction** — both use hybrid routing and replica scaling; only difference is reactive signal ($x_{obs}$) vs predictive signal ($x_{pred}$) and the PREDICTIVE trigger in Algorithm 1.
+
+**Configuration Lock (ensuring S3 vs S4 isolation):** S3 and S4 use identical Algorithm 2 parameters, weight step sizes, SLO thresholds, cooldowns, and control intervals. The only configuration change is the prediction source and the PREDICTIVE branch enable flag in Algorithm 1.
 
 ### 3.5.3 Evaluation Phases
 
