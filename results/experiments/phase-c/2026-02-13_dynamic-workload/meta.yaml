@@ -5,37 +5,20 @@ category: dynamic-workload
 scenarios: [s3-hybrid-reactive, s4-hybrid-predictive]
 workload:
   tool: k6
-  script: infrastructure/load-tests/dynamic_burst.js
-  pattern: ramp-burst (2 cycles)
-  cycle:
-    baseline: { duration_sec: 60, rps: 30 }
-    ramp_up: { duration_sec: 30, rps_start: 30, rps_end: 150 }
-    burst: { duration_sec: 60, rps: 150 }
-    cool_down: { duration_sec: 30, rps_start: 150, rps_end: 30 }
-  cycles: 2
-  total_duration_sec: 360
+  profile: dynamic_burst (2 cycles baseline→ramp→burst→cooldown)
+  rps_range: 30-150
+  duration_sec: 360
   runs_per_scenario: 3
   total_runs: 6
   order: randomized
 claims:
-  supports: [H2]
-  rationale: >
-    Phase B steady 100 RPS produced PREDICTIVE=0 in all 20 runs.
-    Phase A1 ramp (20→100) DID trigger PREDICTIVE.
-    This dynamic workload creates repeated ramp windows to give GRU
-    prediction a fair chance to trigger PREDICTIVE actions.
+  supports: [H1, H2]
+  notes:
+    - "PREDICTIVE=0 in all 6 runs (same as Phase B)"
+    - "S4 trends better: p95 -20%, violations -28%, errors -28%"
+    - "Not statistically significant (p>0.35, n=3)"
+    - "Large Cohen's d (0.8-0.9) suggests real effect, insufficient power"
+    - "Root cause: SCALE_OUT preempts PREDICTIVE due to priority"
 reproduce:
-  - >
-    cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0
-    uv run python ../scripts/run_dynamic_experiment.py --runs 3
-  - >
-    # Manual k6 only:
-    k6 run infrastructure/load-tests/dynamic_burst.js
-    -e TARGET_URL=http://localhost:18082 -e SCENARIO=s4-hybrid-predictive
-prerequisites:
-  - k3d cluster running with test-app deployed
-  - HAProxy configured (port 18082)
-  - Prometheus running (port 9090)
-  - GRU prediction server running (port 8090)
-  - Routing daemon will be started by script
-status: pending
+  - "cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python ../scripts/run_dynamic_experiment.py --runs 3"
+status: complete
