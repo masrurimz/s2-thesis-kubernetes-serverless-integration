@@ -8,14 +8,14 @@ spec:
   template:
     metadata:
       annotations:
-        autoscaling.knative.dev/min-scale: "0"
+        autoscaling.knative.dev/min-scale: "1"
         autoscaling.knative.dev/max-scale: "10"
-        autoscaling.knative.dev/target: "100"
+        autoscaling.knative.dev/target: "10"
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
         prometheus.io/path: "/metrics"
     spec:
-      containerConcurrency: 100
+      containerConcurrency: 10
       containers:
         - image: k3d-registry.localhost:5000/test-app:latest
           ports:
@@ -23,13 +23,17 @@ spec:
           env:
             - name: BACKEND_NAME
               value: "Knative Serverless"
+            - name: GOMAXPROCS
+              value: "1"
+            - name: WORK_DURATION_MS
+              value: "5"
           resources:
             requests:
-              cpu: 50m
-              memory: 16Mi
-            limits:
-              cpu: 200m
+              cpu: 100m
               memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 128Mi
           readinessProbe:
             httpGet:
               path: /health
