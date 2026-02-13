@@ -9,7 +9,7 @@ Cost analysis was performed using proxy estimates based on published cloud prici
 | Scenario | K8s Cost | Serverless Cost | Total | vs S1 | vs S2 |
 |----------|----------|-----------------|-------|-------|-------|
 | S1 (K8s-only) | $141.12 | $0.00 | $162.85 | — | −44% |
-| S2 (Serverless-only) | $0.00 | $267.84 | $289.57 | +78% | — |
+| S2 (Knative-Only (KPA)) | $0.00 | $267.84 | $289.57 | +78% | — |
 | S3 (Hybrid Reactive) | $141.12 | $42.77 | $205.62 | +26% | −29% |
 | S4 (Hybrid Predictive) | $141.12 | $30.46 | $193.31 | +19% | −33% |
 
@@ -18,7 +18,7 @@ Cost analysis was performed using proxy estimates based on published cloud prici
 | Scenario | AWS | GCP | Azure |
 |----------|-----|-----|-------|
 | S1 (K8s-only) | $162.85 | $149.22 | $90.12 |
-| S2 (Serverless-only) | $289.57 | $320.57 | $280.20 |
+| S2 (Knative-Only (KPA)) | $289.57 | $320.57 | $280.20 |
 | S3 (Hybrid Reactive) | $205.62 | $198.14 | $131.59 |
 | S4 (Hybrid Predictive) | $193.31 | $184.50 | $119.67 |
 

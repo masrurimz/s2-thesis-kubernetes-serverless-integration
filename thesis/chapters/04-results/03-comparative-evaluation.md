@@ -1,6 +1,6 @@
 ## 4.3 Comparative Evaluation
 
-The comparative evaluation spans two experimental phases: Phase B (20 replicated runs under steady-state load) and Phase C (6 runs under dynamic burst workload). Both phases compare the four deployment scenarios: S1 (K8s-only), S2 (Serverless-only), S3 (Hybrid Reactive), and S4 (Hybrid Predictive).
+The comparative evaluation spans two experimental phases: Phase B (20 replicated runs under steady-state load) and Phase C (6 runs under dynamic burst workload). Both phases compare the four deployment scenarios: S1 (K8s-only), S2 (Knative-Only (KPA)), S3 (Hybrid Reactive), and S4 (Hybrid Predictive).
 
 ### 4.3.1 Phase B: Replicated Experiments (20 Runs)
 
@@ -20,7 +20,7 @@ The comparative evaluation spans two experimental phases: Phase B (20 replicated
 
 † Excluded: stale Prometheus data (C1: p99 < 20ms, C2: throughput > 150 RPS)
 
-**Table 4.9: S2 (Serverless-only) Per-Run Results**
+**Table 4.9: S2 (Knative-Only (KPA)) Per-Run Results**
 
 | Run | p50 (ms) | p95 (ms) | p99 (ms) | Throughput (RPS) | Violations | Error Rate |
 |-----|----------|----------|----------|------------------|------------|------------|
@@ -89,7 +89,7 @@ The exclusion criteria are defensible because: (a) they were specified based on 
 | Scenario | n | p99 Mean (ms) | p99 Std (ms) | Throughput Mean (RPS) | Violation Rate |
 |----------|---|---------------|-------------|----------------------|----------------|
 | S1 (K8s-only) | 4 | 647.32 | 206.35 | 70.35 | 100% (4/4) |
-| S2 (Serverless-only) | 4 | 518.38 | 176.55 | 74.30 | 100% (4/4) |
+| S2 (Knative-Only (KPA)) | 4 | 518.38 | 176.55 | 74.30 | 100% (4/4) |
 | S3 (Hybrid Reactive) | 4 | 462.47 | 296.94 | 75.80 | 100% (4/4) |
 | S4 (Hybrid Predictive) | 4 | 334.93 | 50.81 | 85.40 | 100% (4/4) |
 

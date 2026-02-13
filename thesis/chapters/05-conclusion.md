@@ -32,13 +32,13 @@ Two algorithms were designed by extending the ElaX framework for heterogeneous c
 
 Traffic distribution is implemented through weight-based routing via HAProxy, dynamically adjusting the Kubernetes-to-serverless split from 100/0 (all K8s) through intermediate states to 50/50 (maximum serverless engagement). The predictive pre-warming mechanism was validated in Phase A1, where PREDICTIVE triggered at p99=146ms (healthy state) upon detecting a predicted 47% workload surge with 72% confidence, successfully pre-positioning serverless capacity before SLO violation.
 
-**Algorithm 2 — Cluster Controller** (proposed, not implemented): A horizontal scaling formula R = αx + β was proposed for integrating with Kubernetes HPA to dynamically adjust replica counts based on predicted demand. This algorithm remains at the design stage and is documented as future work.
+**Algorithm 2 — Cluster Controller** (integrated into routing daemon): A horizontal scaling formula R = αx + β is integrated into the routing daemon for real-time Kubernetes replica scaling, operating in reactive mode (S3, using observed load) or predictive mode (S4, using GRU forecast).
 
 *(Evidence: `results/experiments/phase-a1/2026-02-12_predictive-trigger/`)*
 
 ### RQ3: How to evaluate the modified ElaX mechanism?
 
-A comprehensive evaluation framework was designed spanning three experimental phases across four scenarios (S1: K8s-only, S2: Serverless-only, S3: Hybrid Reactive, S4: Hybrid Predictive):
+A comprehensive evaluation framework was designed spanning three experimental phases across four scenarios (S1: K8s-only, S2: Knative-Only (KPA), S3: Hybrid Reactive, S4: Hybrid Predictive):
 
 - **Phase A1** (mechanism validation): Confirmed that weight shifting, serverless engagement, SLO monitoring, and predictive pre-warming all function correctly under controlled ramp conditions.
 - **Phase B** (comparative evaluation): 20 replicated experiment runs (5 per scenario) with randomized execution order and 300-second duration at 100 RPS steady-state load. Robust statistical analysis applied: Welch's t-test, Mann-Whitney U, bootstrap confidence intervals, and Cohen's d effect sizes.
