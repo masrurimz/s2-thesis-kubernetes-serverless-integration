@@ -23,9 +23,10 @@ class K6Runner:
         "steady": "steady-load.js",
         "spike": "spike-load.js",
         "endurance": "endurance-test.js",
+        "clarknet_replay": "clarknet_replay.js",
     }
 
-    def __init__(self, scripts_dir: str = "infrastructure/load-testing"):
+    def __init__(self, scripts_dir: str = "infrastructure/load-tests"):
         self.scripts_dir = Path(scripts_dir)
         if not self.scripts_dir.is_absolute():
             project_root = Path(__file__).parent.parent.parent
