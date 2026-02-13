@@ -7,7 +7,7 @@
 - **Cluster:** k3d v5.x, k3s v1.28.5+k3s1
 - **Nodes:** 2 (1 server + 1 agent), 16 CPU / 30 GB RAM each
 - **Tools:** k6 v1.6.0, Knative Serving with Kourier, HAProxy
-- **Workload target:** `test-app-warm` — 2 replicas, 25m CPU request, 50m CPU limit
+- **Workload target:** `test-app-warm` — 2 replicas, 200m CPU request, 500m CPU limit (upgraded from 25m/50m after T7 capacity testing)
 
 ## Test Results
 

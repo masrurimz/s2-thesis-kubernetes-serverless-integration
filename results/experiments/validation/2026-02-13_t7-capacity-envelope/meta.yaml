@@ -1,0 +1,18 @@
+id: validation.t7-capacity-envelope.2026-02-13
+date: 2026-02-13
+phase: validation
+scenarios: [baseline-k8s]
+workload:
+  type: ramping-arrival-rate
+  endpoints: [/health, /fib?n=25]
+  health_rps_range: [50, 3000]
+  fib_rps_range: [10, 500]
+  replicas: 2
+claims:
+  supports: [testbed-capacity]
+reproduce:
+  - "K6=/home/zahid/.local/share/mise/installs/k6/1.6.0/k6-v1.6.0-linux-amd64/k6"
+  - "$K6 run infrastructure/load-tests/t7-capacity-health.js"
+  - "$K6 run infrastructure/load-tests/t7-capacity-fib.js"
+  - "$K6 run infrastructure/load-tests/t7-fib-slo-finder.js"
+status: complete
