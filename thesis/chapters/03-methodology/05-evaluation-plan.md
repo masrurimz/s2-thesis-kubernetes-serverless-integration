@@ -37,28 +37,44 @@ The model is evaluated on both synthetic test data (primary accuracy assessment)
 
 #### Evaluation Scenarios
 
-Four scenarios are defined with strict variable isolation: each consecutive pair differs by exactly one mechanism, enabling clean attribution of performance differences. All scenarios route traffic through HAProxy to eliminate data-path confounds. Algorithm 2 (replica scaling) operates in two modes: **reactive** (using observed load $x_{obs}$) and **predictive** (using GRU-predicted load $x_{pred}$), with identical parameters ($\alpha, \beta, \gamma, R_{min}, R_{max}$, cooldowns) in both modes.
+Four scenarios are defined to compare platform-native autoscaling baselines against the custom hybrid control plane, and to isolate the value of GRU prediction within the hybrid architecture. All scenarios route traffic through HAProxy to eliminate data-path confounds. S1 and S2 use platform-native autoscaling (HPA and KPA respectively); S3 and S4 use the custom control plane (Algorithms 1+2).
 
 **Table 3-3: Evaluation Scenarios**
 
-| Scenario | Name | Routing | Algorithm 1 | Algorithm 2 (Scaling) | Scaling Signal | GRU |
-|----------|------|---------|-------------|----------------------|----------------|-----|
-| S1 | K8s-Only Static | 100% K8s, Knative weight=0 | Off | Off (fixed replicas) | — | Off |
-| S2 | K8s Reactive Scaling | 100% K8s, Knative weight=0 | Off | On (reactive mode) | $x_{obs}$ | Off |
-| S3 | Hybrid Reactive | Dynamic K8s↔Knative | On (reactive only) | On (reactive mode) | $x_{obs}$ | Off |
-| S4 | Hybrid Predictive | Dynamic K8s↔Knative | On (predictive enabled) | On (predictive mode) | $x_{pred}$ | On |
+| Scenario | Name | Routing | Autoscaling | Scaling Signal | GRU |
+|----------|------|---------|-------------|----------------|-----|
+| S1 | K8s + HPA Baseline | 100% K8s, Knative weight=0 | HPA (native CPU-based) | CPU utilization | Off |
+| S2 | Knative-Only (KPA) | 100% Knative via HAProxy | KPA (concurrency-based, scale-to-zero) | Request concurrency | Off |
+| S3 | Hybrid Reactive | Dynamic K8s↔Knative | Algorithm 1 (routing) + Algorithm 2 (replicas, reactive) | $x_{obs}$ | Off |
+| S4 | Hybrid Predictive | Dynamic K8s↔Knative | Algorithm 1 (routing) + Algorithm 2 (replicas, predictive) | $x_{pred}$ | On |
 
-Where $x_{obs}$ = mean observed RPS over the last 30 seconds (matching the GRU prediction horizon), and $x_{pred}$ = GRU 30-second-ahead forecast.
+Where $x_{obs}$ = mean observed RPS over the last 30 seconds and $x_{pred}$ = GRU 30-second-ahead forecast.
 
-**Scenario Comparisons (One Variable per Pair):**
+**Scenario Comparisons:**
 
-- **S1 vs S2**: Isolates the **value of autoscaling** — both are K8s-only; only difference is Algorithm 2 reactive scaling ON vs OFF.
-- **S2 vs S3**: Isolates the **value of hybrid routing** — both use reactive replica scaling; only difference is Algorithm 1 + Knative overflow ON vs OFF.
-- **S3 vs S4**: Isolates the **value of GRU prediction** — both use hybrid routing and replica scaling; only difference is reactive signal ($x_{obs}$) vs predictive signal ($x_{pred}$) and the PREDICTIVE trigger in Algorithm 1.
+- **S1 vs S2**: Compares **platform-native autoscaling baselines** — Kubernetes HPA (CPU-based, persistent pods) versus Knative KPA (concurrency-based, scale-to-zero). This establishes the performance envelope of each platform operating independently.
+- **S3 vs S1/S2**: Evaluates whether the **hybrid reactive control plane** (Algorithm 1 routing + Algorithm 2 scaling) improves over either baseline alone, by combining Kubernetes steady-state capacity with serverless burst absorption.
+- **S3 vs S4**: Isolates the **value of GRU prediction** — both use hybrid routing and Algorithm 2 scaling; the only difference is the scaling signal: reactive ($x_{obs}$) versus predictive ($x_{pred}$) and the PREDICTIVE trigger in Algorithm 1.
 
-**Configuration Lock (ensuring S3 vs S4 isolation):** S3 and S4 use identical Algorithm 2 parameters, weight step sizes, SLO thresholds, cooldowns, and control intervals. The only configuration change is the prediction source and the PREDICTIVE branch enable flag in Algorithm 1.
+**Autoscaler Mutual Exclusion Constraint:** Infrastructure validation (Section 3.5.3, Phase A0) confirmed that Kubernetes HPA and direct replica scaling via `kubectl scale` conflict: HPA overrides manual replica changes after its stabilization window (~5 minutes). Therefore, S3 and S4 require HPA to be deleted before Algorithm 2 can safely control replicas. This constraint is enforced in the per-run reset procedure (Section 3.5.4).
 
 ### 3.5.3 Evaluation Phases
+
+#### Phase A0: Infrastructure and Autoscaler Validation (Validasi Infrastruktur)
+
+Pre-experiment validation tests to confirm that testbed mechanisms function correctly and to inform scenario design decisions:
+
+- **T0 (Cluster Health):** Verify all nodes Ready, metrics-server operational, Prometheus targets active, data-plane reachable to both K8s and Knative backends.
+- **T1 (Load Generation):** Confirm k6 `constant-arrival-rate` and `ramping-arrival-rate` executors reach target rates with <2% errors.
+- **T2 (HPA Validation):** Create HPA for the test application, drive CPU load, observe scale-up and scale-down. Validates that HPA functions correctly on k3d for the S1 baseline.
+- **T3 (HPA vs kubectl scale):** Test whether HPA and manual `kubectl scale` coexist or conflict on the same Deployment. This test directly determines the scaling architecture for S3/S4.
+- **T4 (KPA Validation):** Verify Knative KPA scales from zero under load and returns to zero after idle. Measure cold start latency. Validates the S2 baseline.
+
+**Key validated findings:**
+- HPA scales 2→10 replicas in ~45 seconds under CPU load; scales down in ~7.5 minutes (T2).
+- HPA overrides `kubectl scale` after its 5-minute stabilization window (T3). **This mandates that S3/S4 delete HPA before Algorithm 2 can operate.**
+- KPA cold start: ~1.2 seconds. Scale-up 1→7 pods under concurrent load; scale-to-zero ~60 seconds after idle (T4).
+- KPA uses concurrency-based scaling, requiring workloads with meaningful processing time (not just lightweight health checks) to trigger scaling (T4).
 
 #### Phase A1: Mechanism Validation (Validasi Mekanisme)
 
@@ -127,9 +143,12 @@ Stress the system with controlled, repeatable bursts to quantify responsiveness 
 
 Before each run:
 
-1. **Reset HAProxy weights** to baseline (e.g., 100/0 for S1; scenario-defined initial weights for S3/S4).
-2. **Reset Kubernetes replicas:** scale to fixed baseline (e.g., 1 replica for S1/S3; 1 replica for S4 with Algorithm 2 active).
-3. **Reset Knative:** ensure minScale = 0 and no active requests; wait until Knative pods scale to zero.
+1. **Reset autoscaler state (scenario-dependent):**
+   - **S1 (HPA):** Ensure HPA exists with target CPU utilization (30%), minReplicas=2, maxReplicas=10. Wait for HPA to report metrics (avoids `<unknown>` targets). Do not use `kubectl scale` — HPA controls replicas.
+   - **S2 (Knative KPA):** Ensure Knative service has minScale=0, maxScale=10. Wait until Knative pods scale to zero (no active requests).
+   - **S3/S4 (Algorithm 2):** **Delete HPA** for the target Deployment if present. Scale to baseline replicas via `kubectl scale` (e.g., 2 replicas). This ensures Algorithm 2 is the sole replica controller.
+2. **Reset HAProxy weights** to scenario baseline (100/0 for S1; 0/100 for S2; scenario-defined for S3/S4).
+3. **Reset routing daemon state:** restart with scenario-specific flags (Algorithm 1/2 enabled/disabled, GRU on/off).
 4. **Clear/rotate logs:** routing daemon log, prediction server log, HAProxy log, k6 output path.
 5. **Warm-up period:** 30 seconds idle to stabilize Prometheus scraping and avoid initialization noise.
 
@@ -216,7 +235,7 @@ Cost analysis uses proxy estimation based on published pricing from AWS, GCP, an
 
 The experimental evaluation is subject to the following known threats, documented proactively:
 
-1. **Localhost routing bias (Critical):** The k3d single-node testbed runs all components (HAProxy, K3s, Knative) on localhost, creating an artificial advantage for the K8s-only scenario (S1) where traffic never traverses a real network. This limits the interpretability of absolute performance comparisons between scenarios.
+1. **Localhost routing bias (Critical):** The k3d single-node testbed runs all components (HAProxy, K3s, Knative) on localhost, eliminating network latency between components. This limits the interpretability of absolute performance comparisons between scenarios, as production deployments would incur real network overhead. Additionally, the k3d environment uses Docker containers as cluster nodes, which may exhibit different resource scheduling behavior compared to bare-metal or cloud VM nodes.
 
 2. **Trace age and representativeness:** ClarkNet and Calgary are historical traces (1994–1995). They represent realistic temporal variability but may not match modern application semantics (TLS, dynamic content, microservices).
 
@@ -231,3 +250,5 @@ The experimental evaluation is subject to the following known threats, documente
 7. **GRU server availability:** The prediction server must be confirmed running before S4 experiments to ensure the predictive mechanism is active. Infrastructure health checks are performed at experiment start.
 
 8. **Sample size:** With $n = 5$ runs per scenario, statistical power is limited for detecting moderate effect sizes. Results are interpreted as mechanism validation rather than definitive superiority claims.
+
+9. **Autoscaler mutual exclusion:** HPA and Algorithm 2 cannot coexist on the same Deployment (validated in Phase A0). This means S1 (HPA) and S3/S4 (Algorithm 2) use fundamentally different scaling mechanisms, which may confound direct performance comparisons between native and custom autoscaling approaches.
