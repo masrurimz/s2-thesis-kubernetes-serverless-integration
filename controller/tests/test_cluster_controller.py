@@ -1,6 +1,5 @@
 """Tests for Algorithm 2: Cluster Controller."""
 import pytest
-from unittest.mock import patch, Mock
 
 from scaling.cluster_controller import ClusterController, ScalingConfig, ScalingDecision
 
@@ -55,10 +54,19 @@ class TestEvaluate:
             config=ScalingConfig(alpha=0.01, beta=1.0),
             initial_replicas=1,
         )
-        decision = ctrl.evaluate(predicted_load=500)
+        decision = ctrl.evaluate(predicted_load=500, current_replicas=1)
         assert decision.action == "SCALE_UP"
         assert decision.target_replicas > 1
-        assert ctrl.current_replicas == decision.target_replicas
+
+    def test_scale_up_backward_compat(self):
+        """evaluate() without current_replicas falls back to internal state."""
+        ctrl = ClusterController(
+            config=ScalingConfig(alpha=0.01, beta=1.0),
+            initial_replicas=1,
+        )
+        decision = ctrl.evaluate(predicted_load=500)
+        assert decision.action == "SCALE_UP"
+        assert decision.current_replicas == 1
 
     def test_scale_down(self):
         ctrl = ClusterController(
@@ -66,19 +74,22 @@ class TestEvaluate:
             initial_replicas=8,
         )
         # Low load → target much less than 8 * 0.8
-        decision = ctrl.evaluate(predicted_load=50)
+        decision = ctrl.evaluate(predicted_load=50, current_replicas=8)
         assert decision.action == "SCALE_DOWN"
-        assert ctrl.current_replicas == decision.target_replicas
 
     def test_maintain(self):
         ctrl = ClusterController(
             config=ScalingConfig(alpha=0.01, beta=1.0),
-            initial_replicas=2,
+            initial_replicas=3,
         )
-        # Load that produces ~2 replicas → MAINTAIN
-        decision = ctrl.evaluate(predicted_load=100)
+        # R = 0.01*100 + 1.0 = 2.0, buffered = 2.4, ceil = 3 → target=3 == current → MAINTAIN
+        decision = ctrl.evaluate(predicted_load=100, current_replicas=3)
         assert decision.action == "MAINTAIN"
-        assert ctrl.current_replicas == 2  # Unchanged
+
+    def test_does_not_mutate_internal_state(self):
+        ctrl = ClusterController(initial_replicas=1)
+        ctrl.evaluate(predicted_load=500, current_replicas=1)
+        assert ctrl.current_replicas == 1  # Not mutated
 
     def test_history_tracking(self):
         ctrl = ClusterController(initial_replicas=1)
@@ -99,34 +110,3 @@ class TestEvaluate:
         s = str(d)
         assert "SCALE_UP" in s
         assert "500" in s
-
-
-class TestFetchPredictionAndEvaluate:
-    @patch("scaling.cluster_controller.requests.post")
-    def test_success(self, mock_post):
-        mock_resp = Mock()
-        mock_resp.json.return_value = {
-            "predicted_requests": 500,
-            "confidence": 0.9,
-            "horizon_values": [500],
-            "latency_ms": 5.0,
-        }
-        mock_resp.raise_for_status = Mock()
-        mock_post.return_value = mock_resp
-
-        ctrl = ClusterController(initial_replicas=1)
-        decision = ctrl.fetch_prediction_and_evaluate([100, 120, 130])
-
-        assert decision is not None
-        assert decision.predicted_load == 500.0
-        mock_post.assert_called_once()
-
-    @patch("scaling.cluster_controller.requests.post")
-    def test_prediction_failure_returns_none(self, mock_post):
-        mock_post.side_effect = Exception("connection refused")
-
-        ctrl = ClusterController(initial_replicas=1)
-        decision = ctrl.fetch_prediction_and_evaluate([100, 120, 130])
-
-        assert decision is None
-        assert len(ctrl.history) == 0

@@ -33,6 +33,8 @@ from monitoring_v2.slo_monitor import SLOMonitor, SLOConfig
 from intelligent_router.algorithm1_controller import Algorithm1Controller, Algorithm1Config
 from intelligent_router.weight_adjuster import HAProxyWeightAdjuster
 from daemon.gru_client import GRUClient
+from scaling.cluster_controller import ClusterController, ScalingConfig
+from scaling.k8s_scaler import K8sScaler
 
 from config import settings
 
@@ -141,6 +143,25 @@ daemon_decision_latency = _get_or_create_metric(
     buckets=[5, 10, 25, 50, 100, 250, 500, 1000],
 )
 
+k8s_scaling_events_total = _get_or_create_metric(
+    Counter,
+    "k8s_scaling_events_total",
+    "K8s replica scaling events",
+    ["direction", "result"],
+)
+
+k8s_desired_replicas = _get_or_create_metric(
+    Gauge,
+    "k8s_deployment_desired_replicas",
+    "Desired replica count for K8s deployment",
+)
+
+k8s_available_replicas = _get_or_create_metric(
+    Gauge,
+    "k8s_deployment_available_replicas",
+    "Available replica count for K8s deployment",
+)
+
 
 class StatusResponse(BaseModel):
     """Status response model."""
@@ -241,6 +262,16 @@ class RoutingDaemon:
         self._load_history: deque = deque(maxlen=60)
         self._last_total_requests: Optional[int] = None
         self._last_total_requests_ts: Optional[float] = None
+
+        # Algorithm 2: K8s replica scaling (S3/S4 only)
+        if self.scenario_config.use_algorithm:
+            self.k8s_scaler = K8sScaler()
+            self.cluster_controller = ClusterController(config=ScalingConfig())
+        else:
+            self.k8s_scaler = None
+            self.cluster_controller = None
+        self._last_scale_up_ts: Optional[float] = None
+        self._last_scale_down_ts: Optional[float] = None
         
         logger.info(
             "RoutingDaemon initialized",
@@ -392,6 +423,17 @@ class RoutingDaemon:
             action=decision.action,
         ).inc()
         
+        # Readiness gate: block OPTIMIZE_COST (increases K8s traffic)
+        # if K8s pods are not fully ready
+        if (decision.action == "OPTIMIZE_COST"
+                and self.k8s_scaler is not None
+                and not self.k8s_scaler.is_ready()):
+            logger.warning(
+                "Blocking traffic return: K8s not ready (available != desired)",
+                original_action=decision.action,
+            )
+            decision = self.algorithm_controller._maintain(slo_status)
+        
         if decision.weights != self.current_weights:
             success = self.weight_adjuster.set_weights_with_retry(
                 decision.weights["k3s"],
@@ -412,6 +454,9 @@ class RoutingDaemon:
             else:
                 logger.error("Failed to apply weight update", weights=decision.weights)
         
+        # Algorithm 2: K8s replica scaling (S3/S4 only)
+        self._execute_algorithm2(slo_status, prediction, current_load)
+        
         latency_ms = (time.perf_counter() - start_time) * 1000
         daemon_decision_latency.observe(latency_ms)
         
@@ -422,6 +467,60 @@ class RoutingDaemon:
             latency_ms=round(latency_ms, 2),
         )
     
+    def _execute_algorithm2(
+        self,
+        slo_status,
+        prediction: Optional[Dict],
+        current_load: Optional[float],
+    ) -> None:
+        """Run Algorithm 2 K8s replica scaling (S3/S4 only)."""
+        if self.k8s_scaler is None or self.cluster_controller is None:
+            return
+
+        dep_status = self.k8s_scaler.get_deployment_status()
+        if dep_status is None:
+            return
+
+        k8s_desired_replicas.set(dep_status.spec_replicas)
+        k8s_available_replicas.set(dep_status.available_replicas)
+
+        # Determine scaling signal:
+        # S4 (predictive) → use GRU prediction, fallback to observed load
+        # S3 (reactive)   → use observed load (mean of history)
+        x_obs = float(sum(self._load_history) / len(self._load_history)) if self._load_history else 0.0
+        scaling_signal = x_obs
+
+        if (self.scenario_config.use_predictions
+                and prediction is not None
+                and prediction.get("confidence", 0) >= 0.5):
+            scaling_signal = float(prediction["predicted_requests"])
+
+        scaling_decision = self.cluster_controller.evaluate(
+            scaling_signal, dep_status.spec_replicas
+        )
+
+        now = time.time()
+        healthy_threshold = self.slo_monitor.config.p99_threshold_ms * self.algorithm_controller.config.healthy_margin
+
+        if scaling_decision.action == "SCALE_UP":
+            if self._last_scale_up_ts is None or (now - self._last_scale_up_ts) >= 30:
+                success = self.k8s_scaler.scale(scaling_decision.target_replicas)
+                k8s_scaling_events_total.labels(
+                    direction="up", result="success" if success else "fail"
+                ).inc()
+                if success:
+                    self._last_scale_up_ts = now
+
+        elif scaling_decision.action == "SCALE_DOWN":
+            if (self._last_scale_down_ts is None or (now - self._last_scale_down_ts) >= 60) \
+                    and slo_status.p99_latency_ms < healthy_threshold:
+                success = self.k8s_scaler.scale(scaling_decision.target_replicas)
+                k8s_scaling_events_total.labels(
+                    direction="down", result="success" if success else "fail"
+                ).inc()
+                if success:
+                    self._last_scale_down_ts = now
+
     def run(self) -> None:
         """Main loop - runs until shutdown."""
         self._running = True
@@ -434,6 +533,10 @@ class RoutingDaemon:
         )
         
         self._apply_initial_weights()
+
+        # HPA guard: warn if HPA exists for target deployment (S3/S4 only)
+        if self.k8s_scaler is not None and self.k8s_scaler.check_hpa_conflict():
+            logger.error("HPA detected — Algorithm 2 scaling may conflict with HPA")
         
         api_thread = threading.Thread(target=self._run_api_server, daemon=True)
         api_thread.start()
