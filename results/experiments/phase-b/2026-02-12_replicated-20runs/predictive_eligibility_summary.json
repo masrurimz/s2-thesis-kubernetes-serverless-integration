@@ -1,0 +1,35 @@
+{
+  "analysis": "predictive_eligibility_phase_b",
+  "date": "2026-02-13",
+  "total_runs": 20,
+  "s4_runs": 5,
+  "total_s4_ticks": 103,
+  "predictive_actions": 0,
+  "gru_predictions_used": 0,
+  "thresholds": {
+    "p99_slo_ms": 200.0,
+    "healthy_margin": 0.7,
+    "healthy_threshold_ms": 140.0,
+    "violation_window_sec": 30,
+    "prediction_confidence_threshold": 0.5,
+    "load_change_threshold": 0.3,
+    "cooldown_sec": 15,
+    "decision_interval_sec": 15
+  },
+  "blockers": {
+    "primary": "GRU server not running (gru_predictions_used=0 in all runs)",
+    "secondary": "Steady 100 RPS workload \u2192 0% load change (threshold: 30%)",
+    "tertiary": "Decision priority preemption (SCALE_OUT and OPTIMIZE_COST checked first)"
+  },
+  "condition_eligibility_pct": {
+    "gru_available": 0,
+    "history_sufficient": 80,
+    "prediction_success": 0,
+    "confidence_above_threshold": 0,
+    "load_increase_above_threshold": 0,
+    "not_preempted": 15,
+    "all_conditions_met": 0
+  },
+  "root_cause": "GRU server not running + steady workload produces no predicted increase",
+  "mechanism_validated_in": "Phase A1 ramp test (2026-02-12)"
+}
