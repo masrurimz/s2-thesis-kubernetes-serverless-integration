@@ -13,10 +13,10 @@ This is a proof-of-concept that:
 - Does NOT execute kubectl commands (mechanism validation only)
 """
 
+import math
 from dataclasses import dataclass, field
 from typing import Optional, List
 
-import requests
 import structlog
 
 from config import settings
@@ -78,45 +78,53 @@ class ClusterController:
         return self.config.alpha * predicted_load + self.config.beta
 
     def compute_target_replicas(self, predicted_load: float) -> int:
-        """Compute target replicas: R * buffer, clamped to [min, max]."""
+        """Compute target replicas: ceil(R * buffer), clamped to [min, max]."""
         raw = self.compute_required_resources(predicted_load)
         buffered = raw * self.config.buffer
-        clamped = max(self.config.min_replicas, min(self.config.max_replicas, int(buffered + 0.5)))
+        clamped = max(self.config.min_replicas, min(self.config.max_replicas, math.ceil(buffered)))
         return clamped
 
-    def evaluate(self, predicted_load: float) -> ScalingDecision:
+    def evaluate(self, predicted_load: float, current_replicas: Optional[int] = None) -> ScalingDecision:
         """
         Run one Algorithm 2 cycle given a predicted load value.
 
+        Args:
+            predicted_load: Predicted (or observed) request rate.
+            current_replicas: Actual replica count from K8s. Falls back to
+                internal state if not provided (backward compat).
+
         Returns a ScalingDecision (logged, not executed).
         """
+        if current_replicas is None:
+            current_replicas = self.current_replicas
+
         required = self.compute_required_resources(predicted_load)
         target = self.compute_target_replicas(predicted_load)
 
-        if target > self.current_replicas:
+        if target > current_replicas:
             action = "SCALE_UP"
             reason = (
                 f"Predicted load {predicted_load:.0f} req/s requires "
-                f"{target} replicas (currently {self.current_replicas})"
+                f"{target} replicas (currently {current_replicas})"
             )
-        elif target < self.current_replicas * self.config.scale_down_threshold:
+        elif target < current_replicas * self.config.scale_down_threshold:
             action = "SCALE_DOWN"
             reason = (
                 f"Predicted load {predicted_load:.0f} req/s needs only "
-                f"{target} replicas (currently {self.current_replicas})"
+                f"{target} replicas (currently {current_replicas})"
             )
         else:
             action = "MAINTAIN"
             reason = (
                 f"Target {target} within threshold of "
-                f"current {self.current_replicas}"
+                f"current {current_replicas}"
             )
 
         decision = ScalingDecision(
             predicted_load=predicted_load,
             required_resources=required,
             target_replicas=target,
-            current_replicas=self.current_replicas,
+            current_replicas=current_replicas,
             action=action,
             reason=reason,
         )
@@ -127,51 +135,11 @@ class ClusterController:
             predicted_load=predicted_load,
             required_resources=round(required, 3),
             target_replicas=target,
-            current_replicas=self.current_replicas,
+            current_replicas=current_replicas,
             alpha=self.config.alpha,
             beta=self.config.beta,
             buffer=self.config.buffer,
         )
 
-        # Simulate applying the decision (update internal state)
-        if action != "MAINTAIN":
-            self.current_replicas = target
-
         self.history.append(decision)
         return decision
-
-    def fetch_prediction_and_evaluate(
-        self, recent_history: List[float], horizon: int = 5
-    ) -> Optional[ScalingDecision]:
-        """
-        Full Algorithm 2 cycle: fetch GRU prediction, then evaluate.
-
-        Args:
-            recent_history: Recent request counts for prediction input.
-            horizon: Prediction horizon steps.
-
-        Returns:
-            ScalingDecision or None if prediction fetch fails.
-        """
-        try:
-            resp = requests.post(
-                self.prediction_url,
-                json={"history": recent_history, "horizon": horizon},
-                timeout=5,
-            )
-            resp.raise_for_status()
-            data = resp.json()
-        except Exception as e:
-            logger.warning("algorithm2_prediction_fetch_failed", error=str(e))
-            return None
-
-        predicted_load = float(data["predicted_requests"])
-        confidence = data.get("confidence", 0.0)
-
-        logger.debug(
-            "algorithm2_prediction_received",
-            predicted_load=predicted_load,
-            confidence=confidence,
-        )
-
-        return self.evaluate(predicted_load)
