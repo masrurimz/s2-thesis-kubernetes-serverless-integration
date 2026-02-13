@@ -36,9 +36,9 @@ export const options = {
             stages: stages,
         },
     },
+    summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(99)'],
     thresholds: {
-        'http_req_duration': ['p(95)<2000'],
-        'http_req_duration': ['p(99)<5000'],
+        'http_req_duration': ['p(95)<2000', 'p(99)<5000'],
         'http_req_failed': ['rate<0.10'],
     },
 };
