@@ -232,7 +232,7 @@ Scaling is performed by invoking `kubectl scale deployment/<name> --replicas=<R_
 - **Scale-down hysteresis:** scale-down only if target is below 80% of current capacity for a sustained window.
 - **Readiness verification:** traffic returns to Kubernetes only after `availableReplicas == desiredReplicas` and HAProxy backend health checks show Kubernetes endpoints as UP.
 
-**Algorithm 2: Integrated Prediction-Based Cluster Controller**
+**Algorithm 2: Integrated Cluster Controller (Reactive and Predictive Modes)**
 
 ```pseudocode
 Algorithm 2: Integrated Cluster Controller (K8s Replica Scaling)
@@ -246,7 +246,9 @@ Constants:
   SCALE_DOWN_HYSTERESIS ← 0.8
   SCALE_UP_COOLDOWN ← 30 seconds
   SCALE_DOWN_COOLDOWN ← 60 seconds
-  READINESS_TIMEOUT ← 120 seconds
+
+Configuration:
+  mode ∈ {REACTIVE, PREDICTIVE}    // S3 = REACTIVE, S4 = PREDICTIVE
 
 State:
   last_scale_up_time ← null
@@ -254,24 +256,29 @@ State:
 
 repeat every CONTROL_INTERVAL:
 
-  // Inputs
-  x_pred, conf ← GRU.predict_next_30s()
+  // Step 1: Determine scaling signal based on mode
   R_current ← K8s.get_deployment_replicas()
   p99 ← SLOMonitor.p99()
 
-  // Compute target replicas
-  if conf is available:
-    R_raw ← α × x_pred + β
-    R_target ← clamp(ceil(R_raw × γ), MIN_REPLICAS, MAX_REPLICAS)
-  else:
-    R_target ← R_current
+  if mode = REACTIVE:
+    x ← HAProxy.mean_rps(window=30s)          // observed RPS over last 30s
+  else if mode = PREDICTIVE:
+    x_pred, conf ← GRU.predict_next_30s()
+    if conf < CONFIDENCE_THRESHOLD:
+      x ← HAProxy.mean_rps(window=30s)        // fallback to observed if low confidence
+    else:
+      x ← x_pred
 
-  // Scale-up decision
+  // Step 2: Compute target replicas (identical formula for both modes)
+  R_raw ← α × x + β
+  R_target ← clamp(ceil(R_raw × γ), MIN_REPLICAS, MAX_REPLICAS)
+
+  // Step 3: Scale-up decision
   if R_target > R_current AND cooldown_passed(last_scale_up_time, SCALE_UP_COOLDOWN):
     kubectl scale deployment/app --replicas=R_target
     last_scale_up_time ← now
 
-  // Scale-down decision (conservative)
+  // Step 4: Scale-down decision (conservative)
   else if R_target < R_current × SCALE_DOWN_HYSTERESIS
           AND cooldown_passed(last_scale_down_time, SCALE_DOWN_COOLDOWN)
           AND p99 < SLO_THRESHOLD × HEALTHY_MARGIN:
@@ -280,6 +287,8 @@ repeat every CONTROL_INTERVAL:
 
 until shutdown
 ```
+
+The only difference between S3 and S4 is the source of `x` in Step 1: S3 always uses observed RPS, while S4 uses the GRU forecast (with fallback to observed if confidence is below threshold). Steps 2–4 are identical, ensuring that any performance difference between S3 and S4 is attributable solely to the prediction signal.
 
 **Coordination with Algorithm 1:**
 

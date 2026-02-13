@@ -52,7 +52,7 @@ What this research does **not** demonstrate is statistically significant perform
 
 ### 4.6.5 Comparison with the ElaX Framework
 
-The original ElaX algorithm by Yang et al. (2019) proposed a two-layer decision framework for elastic provisioning. This research extends ElaX in three ways: (a) integration of machine learning (GRU) prediction into the routing layer, enabling proactive decisions rather than purely reactive scaling; (b) adaptation for heterogeneous backends (K8s + serverless) rather than homogeneous container scaling; and (c) introduction of SLO-aware decision logic with configurable thresholds and confidence gating. Algorithm 2 (cluster controller) was proposed as a proof-of-concept design but was not fully implemented or experimentally evaluated, which represents a scope limitation relative to the original research plan.
+The original ElaX algorithm by Yang et al. (2019) proposed a two-layer decision framework for elastic provisioning. This research extends ElaX in three ways: (a) integration of machine learning (GRU) prediction into the routing layer, enabling proactive decisions rather than purely reactive scaling; (b) adaptation for heterogeneous backends (K8s + serverless) rather than homogeneous container scaling; and (c) introduction of SLO-aware decision logic with configurable thresholds and confidence gating. Algorithm 2 (cluster controller) is integrated into the routing daemon for real-time replica scaling, though its independent contribution was not isolated in the experimental evaluation.
 
 ### 4.6.6 Defensible Position
 
