@@ -1,0 +1,18 @@
+id: validation.t6-gru-daemon.2026-02-13
+date: 2026-02-13
+phase: validation
+scenarios: [s1-k8s-only, s2-serverless-only, s3-hybrid-reactive, s4-hybrid-predictive]
+workload: {type: no-load-validation, rps: 0, duration_sec: 0}
+claims:
+  supports: []
+  validates: [gru-prediction-server, routing-daemon-4-modes, algorithm1-controller]
+reproduce:
+  - "cd controller && uv run python -m prediction.prediction_server &"
+  - "curl -s http://localhost:8090/health"
+  - "curl -s -X POST http://localhost:8090/predict -H 'Content-Type: application/json' -d '{\"history\": [50,52,...,62], \"horizon\": 5}'"
+  - "cd controller && uv run python -m daemon.routing_daemon --scenario s1-k8s-only"
+  - "cd controller && uv run python -m daemon.routing_daemon --scenario s2-serverless-only"
+  - "cd controller && uv run python -m daemon.routing_daemon --scenario s3-hybrid-reactive"
+  - "cd controller && uv run python -m daemon.routing_daemon --scenario s4-hybrid-predictive"
+  - "curl -s http://localhost:9104/health && curl -s http://localhost:9104/status"
+status: complete

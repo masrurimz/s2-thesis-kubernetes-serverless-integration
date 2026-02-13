@@ -1,0 +1,36 @@
+<frozen runpy>:128: RuntimeWarning: 'daemon.routing_daemon' found in sys.modules after import of package 'daemon', but prior to execution of 'daemon.routing_daemon'; this may result in unpredictable behaviour
+2026-02-13 15:56:34 [info     ] SLOMonitor initialized         threshold_ms=200.0 violation_window=30
+2026-02-13 15:56:34 [info     ] Algorithm1Controller initialized cooldown=15 weight_step=10
+2026-02-13 15:56:34 [info     ] HAProxyWeightAdjuster initialized backend=servers socket_path=/tmp/haproxy.sock tcp_socket=localhost:19999 tcp_socket_available=True unix_socket_available=False
+2026-02-13 15:56:34 [info     ] GRUClient initialized          base_url=http://localhost:8090
+2026-02-13 15:56:34 [info     ] RoutingDaemon initialized      decision_interval=15 description='Algorithm 1 reactive routing without predictions' scenario=s3-hybrid-reactive use_algorithm=True use_predictions=False
+2026-02-13 15:56:34 [info     ] Starting routing daemon        interval=15 scenario=s3-hybrid-reactive
+2026-02-13 15:56:34 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2865
+2026-02-13 15:56:34 [debug    ] Current weights retrieved via socket weights={'k3s': 0, 'knative': 100}
+2026-02-13 15:56:34 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2862
+2026-02-13 15:56:34 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 80' response_length=0
+2026-02-13 15:56:34 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2864
+2026-02-13 15:56:34 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 20' response_length=0
+2026-02-13 15:56:34 [debug    ] Weight commands sent via socket successfully k3s=80 knative=20
+2026-02-13 15:56:34 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2864
+2026-02-13 15:56:34 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-02-13 15:56:34 [info     ] Weights updated successfully via HTTP new={'k3s': 80, 'knative': 20} previous={'k3s': 0, 'knative': 100}
+2026-02-13 15:56:34 [info     ] Initial weights applied        k3s=80 knative=20
+2026-02-13 15:56:34 [debug    ] HAProxy latency                avg=3194 max=60385 p99_est=6388
+2026-02-13 15:56:34 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2860
+2026-02-13 15:56:34 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-02-13 15:56:34 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2862
+2026-02-13 15:56:34 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 100' response_length=0
+2026-02-13 15:56:34 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2862
+2026-02-13 15:56:34 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 0' response_length=0
+2026-02-13 15:56:34 [debug    ] Weight commands sent via socket successfully k3s=100 knative=0
+2026-02-13 15:56:35 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2860
+2026-02-13 15:56:35 [debug    ] Current weights retrieved via socket weights={'k3s': 100, 'knative': 0}
+2026-02-13 15:56:35 [info     ] Weights updated successfully via HTTP new={'k3s': 100, 'knative': 0} previous={'k3s': 80, 'knative': 20}
+2026-02-13 15:56:35 [info     ] Weights updated                action=MAINTAIN reason='Within acceptable range, maintaining current weights' weights={'k3s': 100, 'knative': 0}
+2026-02-13 15:56:35 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=531.42 p99=6388.0
+2026-02-13 15:56:50 [debug    ] HAProxy latency                avg=3009 max=60385 p99_est=6018
+2026-02-13 15:56:50 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=5.74 p99=6018.0
+2026-02-13 15:56:58 [info     ] Received shutdown signal
+2026-02-13 15:56:58 [info     ] Stopping routing daemon...
+2026-02-13 15:56:58 [info     ] Routing daemon stopped
