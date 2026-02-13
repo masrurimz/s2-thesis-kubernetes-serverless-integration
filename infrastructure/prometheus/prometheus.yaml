@@ -24,7 +24,13 @@ scrape_configs:
   # HAProxy metrics via haproxy_exporter
   - job_name: 'haproxy'
     static_configs:
-      - targets: ['localhost:9101']
+      - targets: ['172.19.0.1:9101']
+    scrape_interval: 15s
+
+  # Routing daemon metrics (Algorithm 1/2, weights, scaling events)
+  - job_name: 'routing-daemon'
+    static_configs:
+      - targets: ['172.19.0.1:9104']
     scrape_interval: 15s
 
   # Kubernetes API server
