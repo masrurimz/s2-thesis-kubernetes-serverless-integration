@@ -63,3 +63,28 @@ Some Phase B runs (S1-run2, S2-run5, S3-run5) show p99~10ms and anomalously high
 
 ### 6. 15+ Duplicate Report Files
 Previous documentation had the same results reported in 3-5 different files with different numbers. Resolved by consolidating into experiment bundle convention (one report.md per experiment).
+
+## 2026-02-14: Three Critical Bugs Invalidate Previous Phase B Data
+
+### Bug 1: SLO Monitor Using Wrong HAProxy Column (ttime vs rtime)
+- **Discovery**: Session 2026-02-14, investigating constant SCALE_OUT in Phase B runs
+- **Root Cause**: `slo_monitor.py` read `fields[61]` (ttime = total connection time including keepalive) instead of `fields[60]` (rtime = backend response time)
+- **Impact**: p99 estimates 7000-10000ms when actual response time was 1-2ms. ALL S3/S4 runs in previous Phase B showed 84+ SCALE_OUT decisions regardless of actual system health.
+- **Fix**: Commit `18558ff` — changed to rtime (fields[60]) and rtime_max (fields[92])
+- **Affected Data**: `results/experiments/phase-b/2026-02-12_replicated-20runs/` and Phase C data
+
+### Bug 2: Algorithm 1 Priority Order Reversed
+- **Discovery**: Same session, after fixing Bug 1, PREDICTIVE still unreachable
+- **Root Cause**: Code checked OPTIMIZE_COST (Priority 3) before PREDICTIVE (Priority 2), so when system was healthy, OPTIMIZE_COST always fired first, preventing PREDICTIVE evaluation
+- **Impact**: PREDICTIVE could never trigger in healthy state — which is exactly when it should trigger
+- **Fix**: Commit `c6f3e0b` — swapped priority order to match thesis (SCALE_OUT → PREDICTIVE → OPTIMIZE_COST → MAINTAIN)
+- **Affected Data**: Same as Bug 1
+
+### Bug 3: Prometheus Not Scraping Routing Daemon
+- **Discovery**: Same session, daemon metrics empty in Prometheus export
+- **Root Cause**: Prometheus (inside k3d) had no scrape target for daemon at port 9104
+- **Fix**: Commit `e6c4506` — added routing-daemon scrape job targeting 172.19.0.1:9104
+- **Affected Data**: All previous experiments missing daemon Prometheus metrics
+
+### Resolution
+Previous Phase B (2026-02-12) and Phase C data should be treated as **invalidated** for Algorithm 1 decision analysis. k6 latency metrics remain valid (they measure end-to-end, not affected by daemon bugs). New Phase B experiments running 2026-02-14 with all three bugs fixed.
