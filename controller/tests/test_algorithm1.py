@@ -73,11 +73,11 @@ class TestAlgorithm1Controller:
         assert decision.weights["knative"] > 0
     
     def test_prediction_ignored_low_confidence(self, controller, monitor):
-        monitor.set_mock_metrics(p99=150.0)
+        monitor.set_mock_metrics(p99=150.0)  # Above healthy_margin (140ms), below SLO (200ms)
         
         prediction = {
             "predicted_requests": 200,
-            "confidence": 0.5  # Below threshold
+            "confidence": 0.3  # Below threshold (0.5)
         }
         
         decision = controller.make_decision(
@@ -85,6 +85,7 @@ class TestAlgorithm1Controller:
             current_load=100
         )
         
+        # Low confidence → PREDICTIVE skipped; p99 > healthy → OPTIMIZE_COST skipped → MAINTAIN
         assert decision.action == "MAINTAIN"
     
     def test_cooldown_respected(self, controller, monitor):

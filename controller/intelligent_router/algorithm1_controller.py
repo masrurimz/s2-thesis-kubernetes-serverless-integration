@@ -125,23 +125,23 @@ class Algorithm1Controller:
         elif slo_status.violation_duration_sec == 0:
             self.violation_detected_time = None
         
-        # Step 2: Check for sustained SLO violation
+        # Priority 1: Check for sustained SLO violation
         if (slo_status.violation_duration_sec >= self.slo_monitor.config.violation_window_sec
             and can_adjust):
             return self._scale_out(current_time, slo_status)
         
-        # Step 3: Check for healthy state (optimize cost)
-        healthy_threshold = self.slo_monitor.config.p99_threshold_ms * self.config.healthy_margin
-        if slo_status.p99_latency_ms < healthy_threshold and can_adjust:
-            return self._optimize_cost(current_time, slo_status)
-        
-        # Step 4: Use prediction if available
+        # Priority 2: Use prediction if available (before cost optimization)
         if prediction and can_adjust:
             decision = self._apply_prediction(current_time, prediction, current_load)
             if decision:
                 return decision
         
-        # Step 5: No change
+        # Priority 3: Check for healthy state (optimize cost)
+        healthy_threshold = self.slo_monitor.config.p99_threshold_ms * self.config.healthy_margin
+        if slo_status.p99_latency_ms < healthy_threshold and can_adjust:
+            return self._optimize_cost(current_time, slo_status)
+        
+        # Priority 4: No change
         return self._maintain(slo_status)
     
     def _can_adjust(self, current_time: int) -> bool:
