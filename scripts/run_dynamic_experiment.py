@@ -91,7 +91,7 @@ class DynamicExperimentRunner:
 
     # ── Infrastructure checks ─────────────────────────────
 
-    def check_infrastructure(self, scenario: str) -> bool:
+    def check_infrastructure(self, scenario: str, skip_daemon: bool = False) -> bool:
         """Check all required services are running."""
         checks = {}
 
@@ -100,7 +100,7 @@ class DynamicExperimentRunner:
             "prometheus": f"{self.prometheus_url}/-/healthy",
         }
 
-        if scenario in ("s3-hybrid-reactive", "s4-hybrid-predictive"):
+        if not skip_daemon and scenario in ("s3-hybrid-reactive", "s4-hybrid-predictive"):
             endpoints["daemon"] = f"{self.daemon_api}/health"
 
         if scenario == "s4-hybrid-predictive":
@@ -126,6 +126,8 @@ class DynamicExperimentRunner:
     def start_daemon(self, scenario: str) -> Optional[subprocess.Popen]:
         """Start routing daemon for scenario."""
         cmd = [
+            "uv",
+            "run",
             "python",
             "-m",
             "daemon.routing_daemon",
@@ -444,7 +446,7 @@ class DynamicExperimentRunner:
                 run_id=run_id,
             )
 
-            if not self.check_infrastructure(scenario):
+            if not self.check_infrastructure(scenario, skip_daemon=manage_daemon):
                 logger.error("skipping_run", scenario=scenario, run_id=run_id)
                 continue
 
