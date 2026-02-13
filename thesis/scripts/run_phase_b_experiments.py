@@ -483,7 +483,7 @@ class K6Runner:
     """Run k6 ClarkNet trace replay and capture output."""
 
     def run(self, scenario: str, run_id: int, results_dir: Path) -> Optional[Dict]:
-        """Execute k6 and return parsed handleSummary JSON."""
+        """Execute k6 and return parsed metrics dict."""
         k6_results_dir = results_dir / "k6"
         k6_results_dir.mkdir(parents=True, exist_ok=True)
 
@@ -511,15 +511,49 @@ class K6Runner:
             logger.error("k6_failed", returncode=result.returncode, stderr=result.stderr[:500])
             return None
 
-        # Parse handleSummary JSON from stdout
-        try:
-            summary = json.loads(result.stdout)
-            logger.info("k6_complete", scenario=scenario, run_id=run_id,
-                       p99=summary.get("metrics", {}).get("p99_latency_ms"))
-            return summary
-        except json.JSONDecodeError:
-            logger.error("k6_stdout_parse_failed", stdout=result.stdout[:300])
+        # k6 handleSummary saves the detailed JSON to k6_results_dir.
+        # Read the saved file (stdout contains k6 banner + summary text).
+        k6_files = sorted(k6_results_dir.glob("clarknet_replay_*.json"))
+        if not k6_files:
+            logger.error("k6_no_output_file", dir=str(k6_results_dir))
             return None
+
+        try:
+            with open(k6_files[-1]) as f:
+                raw = json.load(f)
+            summary = self._extract_metrics(raw, scenario, run_id)
+            logger.info("k6_complete", scenario=scenario, run_id=run_id,
+                       p99=summary.get("metrics", {}).get("p99_latency_ms"),
+                       total_requests=summary.get("metrics", {}).get("total_requests"))
+            return summary
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error("k6_parse_failed", error=str(e), file=str(k6_files[-1]))
+            return None
+
+    @staticmethod
+    def _extract_metrics(raw: Dict, scenario: str, run_id: int) -> Dict:
+        """Extract structured metrics from raw k6 handleSummary JSON."""
+        m = raw.get("metrics", {})
+        dur = m.get("http_req_duration", {}).get("values", {})
+        reqs = m.get("http_reqs", {}).get("values", {})
+        errs = m.get("errors", {})
+        slo = m.get("slo_violations", {}).get("values", {})
+
+        return {
+            "scenario": scenario,
+            "run_id": run_id,
+            "metrics": {
+                "p50_latency_ms": dur.get("med", 0),
+                "p95_latency_ms": dur.get("p(95)", 0),
+                "p99_latency_ms": dur.get("p(99)", dur.get("p(95)", 0)),
+                "avg_latency_ms": dur.get("avg", 0),
+                "max_latency_ms": dur.get("max", 0),
+                "error_rate": errs.get("rate", 0) if isinstance(errs, dict) else 0,
+                "total_requests": reqs.get("count", 0),
+                "actual_rps": reqs.get("rate", 0),
+                "slo_violations": slo.get("count", 0),
+            },
+        }
 
 
 # ---------------------------------------------------------------------------
