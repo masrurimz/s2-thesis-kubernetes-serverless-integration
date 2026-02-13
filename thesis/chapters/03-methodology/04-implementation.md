@@ -55,22 +55,34 @@ The model consists of two stacked GRU layers with decreasing hidden dimensions (
 
 **Prediction Server:** The trained model is served via a FastAPI prediction server that accepts recent RPS history as input and returns both the predicted load value and a confidence score. The confidence score is computed from prediction variance and serves as a gating mechanism—the routing controller only acts on predictions exceeding a configurable confidence threshold (default: 0.5).
 
-### 3.4.2 Resource Allocation Model
+### 3.4.2 Resource Allocation Model (Model Alokasi Sumber Daya)
 
-A linear resource allocation model translates predicted workload into required compute resources:
+A linear resource allocation model translates predicted workload into required Kubernetes resources. This model is used **online** by the routing daemon to compute replica scaling targets that are applied to the Kubernetes deployment in real time.
 
 $$R = \alpha \cdot x + \beta$$
 
 Where:
 
-- $R$: Required resources (expressed as replica count or CPU millicores)
-- $x$: Predicted traffic (requests per second)
-- $\alpha$: Resource-per-request coefficient (how many additional resources each RPS requires)
-- $\beta$: Base resource overhead (minimum resources needed at zero load)
+- $R$: required Kubernetes capacity (expressed as **target replica count** for the primary deployment)
+- $x$: predicted traffic intensity (requests per second), produced by the GRU predictor for the next 30 seconds
+- $\alpha$: resource-per-request coefficient (replicas per RPS)
+- $\beta$: base replica overhead (minimum replicas at near-zero traffic)
+
+**Online Usage in the Live System:**
+
+At each control interval (15 seconds), the daemon obtains: (1) current observed load from HAProxy/Prometheus, (2) predicted load 30 seconds ahead from the GRU server, and (3) current replica state from Kubernetes. Algorithm 2 then computes a target replica count:
+
+$$R_{target} = \text{clamp}\left(\lceil (\alpha \cdot x_{pred} + \beta) \cdot \gamma \rceil, R_{min}, R_{max}\right)$$
+
+where $\gamma$ is a safety buffer (e.g., 1.2 for +20% headroom), and $R_{min}$, $R_{max}$ are fixed bounds to prevent extreme scaling. The computed target is **enforced** by issuing Kubernetes scaling commands (Section 3.4.3.2).
 
 **Coefficient Derivation (OLS):**
 
-The coefficients $\alpha$ and $\beta$ are derived using Ordinary Least Squares (OLS) regression on historical workload-to-resource mapping data:
+The coefficients $\alpha$ and $\beta$ are obtained using Ordinary Least Squares (OLS) regression on calibration data collected from the same application and testbed:
+
+1. Fix replicas to known values $R \in \{1, 2, \ldots, k\}$.
+2. For each $R$, run a short steady workload sweep and record the sustainable throughput before crossing a latency SLO guardrail (p99 ≤ 200 ms).
+3. Fit a linear model: $R \approx \alpha x + \beta$.
 
 ```python
 from sklearn.linear_model import LinearRegression
@@ -82,7 +94,7 @@ alpha = model.coef_[0]   # Resource per request coefficient
 beta = model.intercept_   # Base resource overhead
 ```
 
-This model is used by Algorithm 2 (Cluster Controller) to compute scaling targets from GRU predictions.
+The calibration dataset, fitted coefficients, and chosen SLO guardrail are stored as experiment artifacts for reproducibility.
 
 ### 3.4.3 Online Controllers
 
@@ -185,52 +197,86 @@ The maximum serverless weight is capped at 50% to ensure the Kubernetes backend 
 
 **Knative Pre-warming:** When serverless is first enabled (either by SCALE_OUT or PREDICTIVE), the controller sends a synthetic health-check request to the Knative service endpoint to trigger cold start initialization. This reduces the latency penalty when actual traffic begins routing to the serverless backend.
 
-#### 3.4.3.2 Algorithm 2: Cluster Controller (Proof-of-Concept)
+#### 3.4.3.2 Algorithm 2: Cluster Controller (Terintegrasi pada Routing Daemon)
 
-Algorithm 2 addresses cluster-level resource scaling by computing required Kubernetes replica counts from predicted workload using the linear resource model. This algorithm is implemented as a proof-of-concept to demonstrate architectural feasibility; it is not integrated into the live experiment pipeline and is not subjected to full experimental evaluation.
+Algorithm 2 is integrated into the live routing daemon and executes real Kubernetes scaling actions. The hybrid design uses **two coordinated control actions**:
 
-**Algorithm 2: Prediction-Based Cluster Controller (Proposed)**
+1. **Algorithm 1 (Routing Controller)** performs **immediate traffic shedding** by shifting a portion of traffic to the serverless (Knative) backend when a surge is detected or an SLO violation occurs.
+2. **Algorithm 2 (Cluster Controller)** performs **capacity restoration** by scaling Kubernetes replicas so that the Kubernetes backend can absorb the workload again.
+3. Once Kubernetes is scaled, ready, and healthy, **Algorithm 1 gradually returns traffic** from serverless back to Kubernetes, allowing Knative to scale down to zero.
+
+This design intentionally leverages the complementary strengths of the platforms: Knative provides rapid burst absorption (instant overflow), while Kubernetes provides cost-efficient steady capacity once replicas are ready.
+
+**Control-Loop Integration:**
+
+The daemon runs a **15-second control loop**. Algorithm 2 is executed in the same loop after Algorithm 1's routing decision, using the latest prediction and system state:
+
+```text
+Observe metrics → Predict (GRU) → Algorithm 1: shift traffic immediately if needed
+                               → Algorithm 2: scale K8s replicas toward predicted demand
+                               → If K8s ready+healthy: Algorithm 1 shifts traffic back to K8s
+```
+
+**Kubernetes Scaling Mechanism:**
+
+Scaling is performed by invoking `kubectl scale deployment/<name> --replicas=<R_target>`. This approach is chosen because it is deterministic, directly reproducible, and provides an explicit audit trail in controller logs. It avoids dependence on cluster autoscalers (HPA/VPA) that may introduce hidden policies.
+
+**Safety Checks and Anti-Oscillation Rules:**
+
+- **Cooldown:** minimum 30 seconds between scale-up actions, 60 seconds for scale-down.
+- **Bounds:** replicas clamped to $[R_{min}, R_{max}]$.
+- **Scale-down hysteresis:** scale-down only if target is below 80% of current capacity for a sustained window.
+- **Readiness verification:** traffic returns to Kubernetes only after `availableReplicas == desiredReplicas` and HAProxy backend health checks show Kubernetes endpoints as UP.
+
+**Algorithm 2: Integrated Prediction-Based Cluster Controller**
 
 ```pseudocode
-Algorithm 2: Cluster Controller (Proof-of-Concept)
+Algorithm 2: Integrated Cluster Controller (K8s Replica Scaling)
 ────────────────────────────────────────────────────────────────
 
 Constants:
-  ALPHA ← 0.01           // replicas per request/s
-  BETA ← 1.0             // base replicas (minimum)
-  BUFFER ← 1.2           // 20% capacity buffer
+  CONTROL_INTERVAL ← 15 seconds
+  BUFFER γ ← 1.2
   MIN_REPLICAS ← 1
   MAX_REPLICAS ← 10
-  SCALE_DOWN_THRESHOLD ← 0.8
-  PREDICTION_INTERVAL ← 30 seconds
+  SCALE_DOWN_HYSTERESIS ← 0.8
+  SCALE_UP_COOLDOWN ← 30 seconds
+  SCALE_DOWN_COOLDOWN ← 60 seconds
+  READINESS_TIMEOUT ← 120 seconds
 
-Variables:
-  current_replicas ← 1
+State:
+  last_scale_up_time ← null
+  last_scale_down_time ← null
 
-repeat every PREDICTION_INTERVAL:
+repeat every CONTROL_INTERVAL:
 
-  // Step 1: Get prediction
-  predicted_load ← GRUPredictor.predict()
+  // Inputs
+  x_pred, conf ← GRU.predict_next_30s()
+  R_current ← K8s.get_deployment_replicas()
+  p99 ← SLOMonitor.p99()
 
-  // Step 2: Calculate required resources
-  required ← ALPHA × predicted_load + BETA
+  // Compute target replicas
+  if conf is available:
+    R_raw ← α × x_pred + β
+    R_target ← clamp(ceil(R_raw × γ), MIN_REPLICAS, MAX_REPLICAS)
+  else:
+    R_target ← R_current
 
-  // Step 3: Apply buffer and clamp
-  target ← clamp(required × BUFFER, MIN_REPLICAS, MAX_REPLICAS)
+  // Scale-up decision
+  if R_target > R_current AND cooldown_passed(last_scale_up_time, SCALE_UP_COOLDOWN):
+    kubectl scale deployment/app --replicas=R_target
+    last_scale_up_time ← now
 
-  // Step 4: Scaling decision
-  if target > current_replicas then
-    action ← SCALE_UP
-    // Would execute: kubectl scale deployment --replicas=target
-  else if target < current_replicas × SCALE_DOWN_THRESHOLD then
-    action ← SCALE_DOWN
-  else
-    action ← MAINTAIN
-  end if
-
-  current_replicas ← target  // Simulate applying decision
+  // Scale-down decision (conservative)
+  else if R_target < R_current × SCALE_DOWN_HYSTERESIS
+          AND cooldown_passed(last_scale_down_time, SCALE_DOWN_COOLDOWN)
+          AND p99 < SLO_THRESHOLD × HEALTHY_MARGIN:
+    kubectl scale deployment/app --replicas=R_target
+    last_scale_down_time ← now
 
 until shutdown
 ```
 
-**Implementation scope:** The proof-of-concept implementation computes scaling decisions and logs them with a full audit trail, but does not execute actual `kubectl scale` commands. Integration with Kubernetes HPA (Horizontal Pod Autoscaler) or VPA (Vertical Pod Autoscaler) is left for future work. The implementation includes 14 unit tests validating the computation logic, scaling boundaries, and decision categorization.
+**Coordination with Algorithm 1:**
+
+When Kubernetes scaling completes (replicas ready and endpoints healthy) and p99 latency is within the healthy margin, Algorithm 1 enters OPTIMIZE_COST mode and gradually increases Kubernetes weight (10% steps) until Knative weight reaches 0%. This creates a closed-loop behavior: serverless absorbs bursts immediately → Kubernetes scales to meet predicted demand → traffic returns to Kubernetes once capacity is available → serverless returns to zero for cost efficiency.

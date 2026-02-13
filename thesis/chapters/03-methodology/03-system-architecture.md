@@ -2,7 +2,7 @@
 
 ### 3.3.1 Hybrid Architecture Overview
 
-The proposed system integrates three subsystems: an offline training pipeline, an online prediction and control plane, and a hybrid execution infrastructure. The architecture follows a two-layer design inspired by the ElaX algorithm framework (Yang et al., 2019), where Algorithm 1 governs traffic routing between execution platforms and Algorithm 2 manages cluster-level resource scaling.
+The proposed system integrates three subsystems: an offline training pipeline, an online prediction and control plane, and a hybrid execution infrastructure. The architecture follows a two-layer design inspired by the ElaX algorithm framework (Yang et al., 2019), where Algorithm 1 governs traffic routing between execution platforms and Algorithm 2 manages cluster-level resource scaling. Both algorithms are integrated into a single routing daemon that executes them in a coordinated 15-second control loop: Algorithm 1 provides immediate traffic shedding to serverless, while Algorithm 2 scales Kubernetes replicas to restore capacity, after which Algorithm 1 returns traffic to Kubernetes.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -45,7 +45,7 @@ The proposed system integrates three subsystems: an offline training pipeline, a
 │   │               │  │ Algorithm 1 │ │ Algorithm 2 │  │     │       │
 │   │               │  │ Routing     │ │ Cluster     │  │     │       │
 │   │               │  │ Controller  │ │ Controller  │  │     │       │
-│   │               │  │ (Impl.)     │ │ (PoC)       │  │     │       │
+│   │               │  │ (Impl.)     │ │ (Integrated)│  │     │       │
 │   │               │  └──────┬──────┘ └──────┬──────┘  │     │       │
 │   │               └─────────┼───────────────┼─────────┘     │       │
 │   │                         │               │                │       │
