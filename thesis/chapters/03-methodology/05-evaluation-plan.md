@@ -75,12 +75,13 @@ Pre-experiment validation tests to confirm that testbed mechanisms function corr
 - HPA overrides `kubectl scale` after its 5-minute stabilization window (T3). **This mandates that S3/S4 delete HPA before Algorithm 2 can operate.**
 - KPA cold start: ~1.2 seconds. Scale-up 1→7 pods under concurrent load; scale-to-zero ~60 seconds after idle (T4).
 - KPA uses concurrency-based scaling, requiring workloads with meaningful processing time (not just lightweight health checks) to trigger scaling (T4).
+- All system evaluation experiments (Phases A1, B, C) use the `/work?duration_ms=5` endpoint, which performs a deterministic CPU busy-loop for 5 milliseconds per request. Combined with `GOMAXPROCS=1` (single Go runtime thread), this creates predictable per-replica capacity (~145 RPS) and linear queuing under overload.
 
 #### Phase A1: Mechanism Validation (Validasi Mekanisme)
 
 A controlled ramp-load experiment to validate that individual system mechanisms function correctly:
 
-- **Workload profile (k6 synthetic):** Baseline (60s @ 20 RPS) → Ramp (60s @ 20→100 RPS) → Peak (120s @ 100 RPS)
+- **Workload profile (k6 synthetic):** Baseline (60s @ 20 RPS) → Ramp (60s @ 20→100 RPS) → Peak (120s @ 100 RPS). All requests target `/work?duration_ms=5` to ensure non-trivial processing time.
 - **Purpose:** Confirm that weight shifting, serverless engagement, SLO monitoring, PREDICTIVE action triggering, Kubernetes replica scaling via Algorithm 2, and traffic return to Kubernetes all operate as designed.
 - **Success criteria:**
   1. In S4, Algorithm 1 engages Knative before sustained SLO violation during the ramp (predictive trigger).
@@ -91,7 +92,7 @@ A controlled ramp-load experiment to validate that individual system mechanisms 
 
 The primary comparative evaluation with statistical rigor, using realistic time-varying workload derived from ClarkNet trace replay:
 
-- **Workload:** ClarkNet trace-driven replay using 30-second buckets and k6 `ramping-arrival-rate` stages (Section 3.2.4). Replay duration per run is fixed (e.g., 20 minutes) and recorded in the run manifest. A replay scaling factor $g$ is applied to fit testbed capacity and kept constant across all scenarios.
+- **Workload:** ClarkNet trace-driven replay using 30-second buckets and k6 `ramping-arrival-rate` stages (Section 3.2.4). Replay duration per run is fixed (e.g., 20 minutes) and recorded in the run manifest. A replay scaling factor $g$ is applied to fit testbed capacity and kept constant across all scenarios. Based on single-replica saturation calibration (~145 RPS for 5ms work with `GOMAXPROCS=1`), the scaling factor is set to $g = 33$, producing a peak replay rate of ~164 RPS (1.13× saturation) and mean of ~73 RPS (well within healthy range).
 - **Replication:** $n = 5$ runs per scenario × 4 scenarios = 20 total runs.
 - **Randomization:** Run order randomized using `random.shuffle()` to control for temporal confounds (e.g., system warm-up, background processes).
 - **Cool-down:** 60-second pause between consecutive runs plus explicit system reset (see Section 3.5.4).
@@ -118,7 +119,7 @@ Significance threshold is set at α = 0.05. Both parametric (Welch's t-test) and
 Stress the system with controlled, repeatable bursts to quantify responsiveness and stability beyond historical traces:
 
 - **Workload profiles:**
-  1. **Single burst:** 60s @ 30 RPS → 30s @ 200 RPS → 180s @ 30 RPS
+  1. **Single burst:** 60s @ 30 RPS → 30s @ 170 RPS → 180s @ 30 RPS. Burst peak chosen relative to calibrated single-replica saturation (~145 RPS) to stress the system without total collapse (1.17× saturation).
   2. **Burst train:** repeated 15s spikes every 60s for 10 minutes
 - **Purpose:** Stress the system with controlled bursts to measure scale-up responsiveness, oscillation behavior, and recovery time.
 - **Success criteria:**
@@ -138,15 +139,16 @@ Stress the system with controlled, repeatable bursts to quantify responsiveness 
    - Prometheus configured to scrape: HAProxy stats endpoint, routing daemon metrics endpoint, Kubernetes metrics
 3. **Start GRU prediction server** (FastAPI) and confirm health endpoint responds.
 4. **Start routing daemon** with: control interval = 15s, logging enabled (structured JSON), Prometheus exporter enabled.
+5. **Application workload configuration:** The test application exposes a `/work?duration_ms=5` endpoint with `GOMAXPROCS=1` to create deterministic, single-threaded processing. CPU limit is 500m, memory limit 128Mi. Each replica saturates at approximately 145 RPS.
 
 #### (B) Per-Run Reset Procedure
 
 Before each run:
 
 1. **Reset autoscaler state (scenario-dependent):**
-   - **S1 (HPA):** Ensure HPA exists with target CPU utilization (30%), minReplicas=2, maxReplicas=10. Wait for HPA to report metrics (avoids `<unknown>` targets). Do not use `kubectl scale` — HPA controls replicas.
+   - **S1 (HPA):** Ensure HPA exists with target CPU utilization (50%), minReplicas=1, maxReplicas=10. Wait for HPA to report metrics (avoids `<unknown>` targets). Do not use `kubectl scale` — HPA controls replicas.
    - **S2 (Knative KPA):** Ensure Knative service has minScale=0, maxScale=10. Wait until Knative pods scale to zero (no active requests).
-   - **S3/S4 (Algorithm 2):** **Delete HPA** for the target Deployment if present. Scale to baseline replicas via `kubectl scale` (e.g., 2 replicas). This ensures Algorithm 2 is the sole replica controller.
+   - **S3/S4 (Algorithm 2):** **Delete HPA** for the target Deployment if present. Scale to baseline replicas via `kubectl scale` (1 replica). This ensures Algorithm 2 is the sole replica controller.
 2. **Reset HAProxy weights** to scenario baseline (100/0 for S1; 0/100 for S2; scenario-defined for S3/S4).
 3. **Reset routing daemon state:** restart with scenario-specific flags (Algorithm 1/2 enabled/disabled, GRU on/off).
 4. **Clear/rotate logs:** routing daemon log, prediction server log, HAProxy log, k6 output path.
@@ -247,8 +249,12 @@ The experimental evaluation is subject to the following known threats, documente
 
 6. **Model coefficient drift:** The resource allocation coefficients ($\alpha, \beta$) are calibrated on the testbed; changes in container limits, application version, or node resources require recalibration to keep scaling behavior comparable.
 
-7. **GRU server availability:** The prediction server must be confirmed running before S4 experiments to ensure the predictive mechanism is active. Infrastructure health checks are performed at experiment start.
+7. **Single-threaded application constraint:** The test application is configured with `GOMAXPROCS=1`, restricting each pod to single-threaded request processing. This creates deterministic, reproducible saturation behavior but does not represent typical multi-threaded web applications. Results should be interpreted in the context of this controlled bottleneck.
 
-8. **Sample size:** With $n = 5$ runs per scenario, statistical power is limited for detecting moderate effect sizes. Results are interpreted as mechanism validation rather than definitive superiority claims.
+8. **Implementation bug invalidation:** Early Phase B and Phase C experiment data (prior to 2026-02-14) were invalidated due to three implementation bugs in the SLO monitor, Algorithm 1 priority ordering, and Prometheus scraping configuration. All reported results are from post-fix experiments.
 
-9. **Autoscaler mutual exclusion:** HPA and Algorithm 2 cannot coexist on the same Deployment (validated in Phase A0). This means S1 (HPA) and S3/S4 (Algorithm 2) use fundamentally different scaling mechanisms, which may confound direct performance comparisons between native and custom autoscaling approaches.
+9. **GRU server availability:** The prediction server must be confirmed running before S4 experiments to ensure the predictive mechanism is active. Infrastructure health checks are performed at experiment start.
+
+10. **Sample size:** With $n = 5$ runs per scenario, statistical power is limited for detecting moderate effect sizes. Results are interpreted as mechanism validation rather than definitive superiority claims.
+
+11. **Autoscaler mutual exclusion:** HPA and Algorithm 2 cannot coexist on the same Deployment (validated in Phase A0). This means S1 (HPA) and S3/S4 (Algorithm 2) use fundamentally different scaling mechanisms, which may confound direct performance comparisons between native and custom autoscaling approaches.

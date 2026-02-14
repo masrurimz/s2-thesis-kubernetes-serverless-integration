@@ -1,0 +1,33 @@
+id: phase-b.calibration.2026-02-14
+date: 2026-02-14
+phase: phase-b
+category: calibration
+scenarios: [s1-k8s-only]
+workload:
+  tool: k6-constant-arrival-rate
+  endpoint: /work?duration_ms=5
+  gomaxprocs: 1
+  work_duration_ms: 5
+  rps_levels: [30, 60, 90, 120, 130, 135, 140, 145, 148, 150, 155, 160, 180, 200]
+  duration_sec_per_level: 30
+  cooldown_between_sec: 10
+infrastructure:
+  deployment: test-app-warm
+  replicas: 1
+  cpu_limit: 500m
+  memory_limit: 128Mi
+  image_pull_policy: Always
+  haproxy_weights: {k3s: 100, knative: 0}
+claims:
+  supports: []
+  notes:
+    - "Saturation point: ~145-148 RPS with GOMAXPROCS=1, 5ms work per request"
+    - "Theoretical max: 200 RPS (1000ms/5ms). Practical: ~145 RPS (72% of theoretical)"
+    - "Goldilocks zone: 60-130 RPS healthy (p95<7ms), 145+ saturated (p95>200ms)"
+    - "Parameters derived: α=0.0069 (1/145), β=0.0 for Algorithm 2"
+reproduce:
+  - "docker build -t k3d-registry.localhost:5000/test-app:latest infrastructure/test-app/"
+  - "docker push localhost:5000/test-app:latest"
+  - "kubectl apply -f infrastructure/test-app/test-app-warm-deployment.yaml"
+  - "k6 run -e TARGET_URL=http://localhost:18082 -e WORK_MS=5 -e TARGET_RPS=N -e DURATION=30s infrastructure/load-tests/calibrate_work.js"
+status: complete

@@ -318,7 +318,7 @@ class ScenarioResetter:
         time.sleep(2)
         r = _kubectl([
             "autoscale", f"deployment/{DEPLOYMENT}",
-            "--cpu-percent=30", "--min=2", "--max=10",
+            "--cpu-percent=50", "--min=1", "--max=10",
         ])
         if r.returncode != 0:
             logger.error("hpa_create_failed", stderr=r.stderr.strip())
@@ -356,26 +356,26 @@ class ScenarioResetter:
         return True  # Proceed anyway
 
     def _reset_s3_s4(self) -> bool:
-        """S3/S4: delete HPA, scale to baseline, wait ready."""
+        """S3/S4: delete HPA, scale to baseline (1 replica), wait ready."""
         # Delete HPA
         _kubectl(["delete", "hpa", DEPLOYMENT, "--ignore-not-found"])
         time.sleep(2)
 
-        # Scale to baseline replicas
-        r = _kubectl(["scale", f"deployment/{DEPLOYMENT}", "--replicas=2"])
+        # Scale to baseline replicas (1 — resource-constrained, Algorithm 2 scales up)
+        r = _kubectl(["scale", f"deployment/{DEPLOYMENT}", "--replicas=1"])
         if r.returncode != 0:
             logger.error("scale_baseline_failed", stderr=r.stderr.strip())
             return False
 
-        # Wait for readyReplicas == 2
+        # Wait for readyReplicas == 1
         for _ in range(30):
             time.sleep(2)
             dr = _kubectl(["get", f"deployment/{DEPLOYMENT}", "-o", "json"])
             if dr.returncode == 0:
                 dep = json.loads(dr.stdout)
                 available = dep.get("status", {}).get("availableReplicas", 0) or 0
-                if available == 2:
-                    logger.info("baseline_replicas_ready", replicas=2)
+                if available >= 1:
+                    logger.info("baseline_replicas_ready", replicas=1)
                     return True
         logger.warning("baseline_replicas_timeout")
         return True
@@ -491,6 +491,7 @@ class K6Runner:
             K6_PATH, "run",
             "--out", "json=/dev/null",  # disable verbose json streaming
             "-e", f"TARGET_URL={TARGET_URL}",
+            "-e", "ENDPOINT=/work?duration_ms=5",
             "-e", f"SCENARIO={scenario}",
             "-e", f"RUN_ID={run_id}",
             "-e", f"RESULTS_DIR={k6_results_dir}",
@@ -805,8 +806,10 @@ class ExperimentRunner:
                 daemon_config={
                     "interval": 15, "haproxy_host": HAPROXY_HOST,
                     "haproxy_port": HAPROXY_SOCKET_PORT, "gru_url": GRU_URL,
+                    "endpoint": "/work?duration_ms=5",
+                    "gomaxprocs": 1, "work_duration_ms": 5,
                 },
-                scaling_config={"alpha": 0.01, "beta": 1.0, "buffer": 1.2,
+                scaling_config={"alpha": 0.0069, "beta": 0.0, "buffer": 1.2,
                                "min_replicas": 1, "max_replicas": 10},
                 timestamp=datetime.now().isoformat(),
             )
