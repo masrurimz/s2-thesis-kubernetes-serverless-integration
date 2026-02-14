@@ -267,7 +267,7 @@ kubectl cluster-info --context k3d-hybrid-cluster
 cat /tmp/haproxy.cfg
 
 # Test routing manually
-curl -v http://localhost:8080/health
+curl -v http://localhost:8080/work?duration_ms=5
 ```
 
 ### Performance Issues

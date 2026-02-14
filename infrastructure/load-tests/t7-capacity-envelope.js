@@ -8,7 +8,7 @@
  *
  * Usage:
  *   k6 run infrastructure/load-tests/t7-capacity-envelope.js \
- *     -e ENDPOINT=/health
+ *     -e ENDPOINT=/work?duration_ms=5
  *   k6 run infrastructure/load-tests/t7-capacity-envelope.js \
  *     -e ENDPOINT=/fib?n=25
  */
@@ -71,7 +71,7 @@ export const options = {
 };
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:18082';
-const ENDPOINT = __ENV.ENDPOINT || '/health';
+const ENDPOINT = __ENV.ENDPOINT || '/work?duration_ms=5';
 
 export function setup() {
     console.log('\n🔬 T7: Capacity Envelope Test');
@@ -81,7 +81,7 @@ export function setup() {
     console.log('Duration: 7.5 minutes (15 × 30s stages)');
     console.log('');
 
-    const warmup = http.get(`${BASE_URL}/health`);
+    const warmup = http.get(`${BASE_URL}/work?duration_ms=5`);
     if (warmup.status !== 200) {
         console.log(`⚠️ Warning: Health check returned ${warmup.status}`);
     }
@@ -117,7 +117,7 @@ export function teardown(data) {
 }
 
 export function handleSummary(data) {
-    const endpoint = __ENV.ENDPOINT || '/health';
+    const endpoint = __ENV.ENDPOINT || '/work?duration_ms=5';
     const label = endpoint.includes('fib') ? 'fib' : 'health';
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 

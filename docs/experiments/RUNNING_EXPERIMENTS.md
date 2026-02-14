@@ -13,8 +13,8 @@ Before running experiments, ensure all components are operational:
 | Component | Command to Verify | Expected Output |
 |-----------|------------------|-----------------|
 | k3d cluster | `kubectl get nodes` | 2+ nodes Ready |
-| Test app (K8s) | `curl http://localhost:8080/health` | 200 OK |
-| Test app (Knative) | `curl -H "Host: test-app.default.example.com" http://localhost:8081/health` | 200 OK |
+| Test app (K8s) | `curl http://localhost:8080/work?duration_ms=5` | 200 OK |
+| Test app (Knative) | `curl -H "Host: test-app.default.example.com" http://localhost:8081/work?duration_ms=5` | 200 OK |
 | HAProxy | `curl http://localhost:8404/stats` | Stats page |
 | Prometheus | `curl http://localhost:9090/-/healthy` | "Prometheus is Healthy" |
 | GRU prediction server | `curl http://localhost:8090/health` | `{"status": "healthy"}` |

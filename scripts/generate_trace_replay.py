@@ -26,7 +26,7 @@ K6_SCRIPTS_DIR = PROJECT_ROOT / "infrastructure" / "load-tests"
 # Selected window parameters (from exploration of clarknet_real_rps.parquet)
 # idx=14470 → 1995-09-02 04:35:30 UTC, high variance window (cv=0.468)
 DEFAULT_WINDOW_START_IDX = 14470
-DEFAULT_SCALING_FACTOR = 36.0  # raw mean ~2.22 RPS → scaled mean ~80 RPS
+DEFAULT_SCALING_FACTOR = 33.0  # raw mean ~2.22 RPS → scaled mean ~73 RPS
 DEFAULT_DURATION_MIN = 20  # 20 minutes = 40 × 30s buckets
 
 

@@ -38,7 +38,7 @@ kind: Deployment
 metadata:
   name: rust-app
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: rust-app

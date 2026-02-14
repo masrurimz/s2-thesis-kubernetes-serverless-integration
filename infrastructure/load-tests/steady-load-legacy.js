@@ -30,8 +30,8 @@ const HYBRID_ENDPOINT = __ENV.TARGET_URL || 'http://localhost:18082';
 const HAPROXY_STATS = __ENV.HAPROXY_STATS_URL || 'http://localhost:18404/stats';
 
 export default function () {
-  // Test hybrid endpoint (primary test) - use /health endpoint
-  let hybridResponse = http.get(HYBRID_ENDPOINT + '/health');
+  // Test hybrid endpoint (primary test) - use /work endpoint
+  let hybridResponse = http.get(HYBRID_ENDPOINT + '/work?duration_ms=5');
   
   // Record metrics
   check(hybridResponse, {
