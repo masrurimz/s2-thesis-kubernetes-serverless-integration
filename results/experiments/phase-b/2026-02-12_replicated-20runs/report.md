@@ -1,3 +1,5 @@
+> **⚠️ INVALIDATED (2026-02-14):** This experiment's controller decision data is invalidated due to three critical bugs fixed on 2026-02-14 (SLO monitor wrong HAProxy column, Algorithm 1 priority reversal, Prometheus not scraping daemon). k6 end-to-end latency data may remain valid but is not comparable to post-fix `/work` endpoint runs. See `results/claims/INCONSISTENCIES.md`.
+
 # Phase B: Replicated Experiments (20 Runs)
 
 **Date:** 2026-02-12 (21:26 - 23:09)

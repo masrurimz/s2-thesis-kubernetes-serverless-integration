@@ -118,7 +118,7 @@ export const options = {{
 }};
 
 const BASE_URL = __ENV.TARGET_URL || __ENV.BASE_URL || 'http://localhost:18082';
-const ENDPOINT = __ENV.ENDPOINT || '/health';
+const ENDPOINT = __ENV.ENDPOINT || '/work?duration_ms=5';
 
 export function setup() {{
     console.log('\\n🔬 ClarkNet Trace-Driven Replay');
@@ -130,9 +130,11 @@ export function setup() {{
     console.log(`Target: ${{BASE_URL}}${{ENDPOINT}}`);
     console.log('');
 
-    const warmup = http.get(`${{BASE_URL}}/health`);
+    const warmup = http.get(`${{BASE_URL}}${{ENDPOINT}}`, {{
+        headers: {{ 'Host': 'test-app.default.127.0.0.1.sslip.io' }},
+    }});
     if (warmup.status !== 200) {{
-        console.log(`⚠️ Warning: Health check returned ${{warmup.status}}`);
+        console.log(`⚠️ Warning: Warmup request returned ${{warmup.status}}`);
     }}
 
     return {{ startTime: Date.now() }};

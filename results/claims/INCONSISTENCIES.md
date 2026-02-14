@@ -88,3 +88,16 @@ Previous documentation had the same results reported in 3-5 different files with
 
 ### Resolution
 Previous Phase B (2026-02-12) and Phase C data should be treated as **invalidated** for Algorithm 1 decision analysis. k6 latency metrics remain valid (they measure end-to-end, not affected by daemon bugs). New Phase B experiments running 2026-02-14 with all three bugs fixed.
+
+### Resolution (continued)
+
+**New experimental baseline established 2026-02-14:**
+- Workload endpoint: `/work?duration_ms=5` (deterministic CPU busy-loop)
+- Runtime: `GOMAXPROCS=1` (single-threaded Go)
+- Resources: 500m CPU / 128Mi memory / 1 replica baseline
+- Saturation: ~145 RPS per replica (calibrated)
+- Scaling model: α=0.0069, β=0.0 (derived from saturation point)
+- Trace replay: ClarkNet g=33 (peak 164 RPS, mean 73 RPS)
+- Calibration bundle: `results/experiments/phase-b/2026-02-14_calibration-work-5ms/`
+
+**Phase A1 also affected:** Phase A1 mechanism validation (2026-02-12) was run before all three bug fixes. While the PREDICTIVE trigger evidence (p99=146ms, 47% surge predicted) demonstrates the mechanism conceptually, the SLO monitor was reading wrong values. Phase A1 should be re-validated post-fix.

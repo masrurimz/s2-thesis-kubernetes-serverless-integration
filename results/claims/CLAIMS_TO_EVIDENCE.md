@@ -22,7 +22,7 @@
 - **Raw Data:** `results/experiments/phase-b/2026-02-12_replicated-20runs/raw/experiments_final.json`
 - **Result:** S1 mean p99=519.8ms, S4 mean p99=430.8ms — S4 actually LOWER but high variance
 - **Threat:** k3d localhost routing bias, some runs have stale Prometheus metrics
-- **Status:** ⚠️ Not established (high variance, data quality issues)
+- **Status:** ⚠️ Evidence invalidated (2026-02-14); pending rerun with /work endpoint
 
 ---
 
@@ -39,7 +39,7 @@
 - **Result:** S3: 4/5 runs violated, S4: 5/5 runs violated. S4 is WORSE.
 - **Root Cause:** GRU server was NOT running during Phase B (gru_predictions_used=0 in all runs). Phase B inadvertently compared reactive-only behaviors (S3 vs S4 both used SCALE_OUT, no PREDICTIVE).
 - **Analysis:** `results/experiments/phase-b/2026-02-12_replicated-20runs/PREDICTIVE_ELIGIBILITY_ANALYSIS.md`
-- **Status:** ⚠️ Not demonstrated (Phase B = reactive comparison, not predictive vs reactive)
+- **Status:** ⚠️ Evidence invalidated (2026-02-14); pending rerun with /work endpoint
 
 ---
 
@@ -102,11 +102,24 @@
 | Mechanism | PREDICTIVE trigger | phase-a1/predictive-trigger | ✅ |
 | Mechanism | GRU inference (synthetic) | models/gru/training-synthetic | ✅ |
 | Mechanism | GRU inference (real traces) | models/gru/training-clarknet-calgary | ⚠️ Mechanism works, targets not met |
-| Superiority | S4 outperforms S1 | phase-b/replicated-20runs | ⚠️ Not established |
-| Superiority | S4 fewer violations than S3 | phase-b/replicated-20runs | ⚠️ Not demonstrated |
+| Superiority | S4 outperforms S1 | phase-b/replicated-20runs | ⚠️ Evidence invalidated (2026-02-14) |
+| Superiority | S4 fewer violations than S3 | phase-b/replicated-20runs | ⚠️ Evidence invalidated (2026-02-14) |
 | Testbed | HPA works on k3d | validation/infrastructure-validation | ✅ |
 | Design Decision | HPA vs kubectl scale exclusive | validation/infrastructure-validation | ✅ |
 | Testbed | Knative KPA works on k3d | validation/infrastructure-validation | ✅ |
+
+---
+
+## Invalidated Evidence (Audit Trail)
+
+Previous Phase B data (`phase-b/2026-02-12_replicated-20runs`) and Phase C data (`phase-c/2026-02-13_dynamic-workload`) are invalidated due to three critical bugs fixed 2026-02-14:
+1. SLO monitor used HAProxy ttime (total time) instead of rtime (response time) → false p99 readings
+2. Algorithm 1 priority order reversed (OPTIMIZE_COST before PREDICTIVE) → PREDICTIVE never reachable
+3. Prometheus not scraping routing daemon → missing controller metrics
+
+Additionally, previous experiments used `/health` endpoint (near-zero CPU), making autoscaler and capacity results non-comparable to post-fix `/work` endpoint experiments.
+
+See `results/claims/INCONSISTENCIES.md` for full details.
 
 ---
 
@@ -146,4 +159,4 @@ HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python ../thesis/scripts/run_phase_b_expe
 - ClarkNet provides usable signal at 5-min+ aggregation; Calgary too sparse for GRU
 - Real-data results are a known limitation to acknowledge in thesis
 
-**Last Updated:** 2026-02-13
+**Last Updated:** 2026-02-14

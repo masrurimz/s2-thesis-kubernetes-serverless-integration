@@ -113,3 +113,15 @@ All derived artifacts are stored for reproducibility: `trace_raw.parquet` (struc
 ```text
 Raw HTTP Logs → Parse → Parquet → 30s Bucketing (RPS) → Scale → k6 Stages → Online Replay
 ```
+
+#### (d) Workload Endpoint and Determinism Controls
+
+All trace-driven replay and synthetic load tests target the `/work?duration_ms=5` endpoint rather than a lightweight health check. This endpoint performs a deterministic CPU busy-loop for 5 milliseconds per request, ensuring:
+
+1. **Meaningful per-request processing time** that triggers autoscaler responses (both HPA CPU-based and KPA concurrency-based).
+2. **Predictable saturation behavior** when combined with `GOMAXPROCS=1` (single Go runtime thread per pod), creating a theoretical maximum of 200 RPS per replica with practical saturation at ~145 RPS.
+3. **Linear capacity scaling** where each additional replica adds approximately 145 RPS of capacity, enabling the resource allocation model ($R = \alpha \cdot x + \beta$) to operate with calibrated coefficients ($\alpha \approx 0.0069$, $\beta = 0$).
+
+The `/health` endpoint is retained exclusively for Kubernetes liveness/readiness probes and HAProxy backend health checks.
+
+Calgary dataset replay is excluded from online system experiments due to insufficient request density (mean 0.02 RPS at 30-second granularity). Calgary is used only for offline GRU prediction accuracy comparison (Section 3.5.1).

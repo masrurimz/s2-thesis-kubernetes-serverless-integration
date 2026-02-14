@@ -7,8 +7,8 @@ from scaling.cluster_controller import ClusterController, ScalingConfig, Scaling
 class TestScalingConfig:
     def test_defaults(self):
         cfg = ScalingConfig()
-        assert cfg.alpha == 0.01
-        assert cfg.beta == 1.0
+        assert cfg.alpha == 0.0069
+        assert cfg.beta == 0.0
         assert cfg.buffer == 1.2
         assert cfg.min_replicas == 1
         assert cfg.max_replicas == 10
