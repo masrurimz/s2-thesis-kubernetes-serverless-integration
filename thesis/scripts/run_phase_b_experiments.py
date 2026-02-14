@@ -422,7 +422,7 @@ class DaemonManager:
             "--interval", "15",
             "--api-port", str(DAEMON_API_PORT),
         ]
-        env = {**os.environ, "HSA_OVERRIDE_GFX_VERSION": "11.0.0"}
+        env = {**os.environ, "HSA_OVERRIDE_GFX_VERSION": "11.0.0", "KUBECTL_PATH": KUBECTL_PATH}
 
         log_file = open(log_path, "w")
         proc = subprocess.Popen(
@@ -777,6 +777,8 @@ class ExperimentRunner:
     ) -> Optional[ExperimentResult]:
         """Execute a single experiment run with full protocol."""
         run_dir = self.output_dir / f"{scenario}_run{run_id}"
+        if run_dir.exists():
+            shutil.rmtree(run_dir)
         run_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info("run_start", scenario=scenario, run_id=run_id, order=run_order_idx)
