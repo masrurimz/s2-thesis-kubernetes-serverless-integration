@@ -73,7 +73,7 @@ SCENARIOS = ["s1-k8s-only", "s2-serverless-only", "s3-hybrid-reactive", "s4-hybr
 
 WARMUP_SEC = 30
 COOLDOWN_SEC = 60
-INTER_RUN_PAUSE_SEC = 15
+INTER_RUN_PAUSE_SEC = 60
 
 
 # ---------------------------------------------------------------------------
@@ -680,6 +680,11 @@ class MetricExporter:
         "k8s_scale_up_fail": 'k8s_scaling_events_total{direction="up",result="fail"}',
         "k8s_scale_down_success": 'k8s_scaling_events_total{direction="down",result="success"}',
         "k8s_scale_down_fail": 'k8s_scaling_events_total{direction="down",result="fail"}',
+        # Control-loop metrics (Table 3-5)
+        "daemon_decision_latency_ms": 'routing_daemon_decision_latency_ms_sum / routing_daemon_decision_latency_ms_count',
+        # Resource metrics (Table 3-7)
+        "cpu_usage_cores": 'sum(rate(container_cpu_usage_seconds_total{namespace="default",container="test-app-warm"}[1m]))',
+        "memory_usage_bytes": 'sum(container_memory_working_set_bytes{namespace="default",container="test-app-warm"})',
     }
 
     def export_run(self, t_start: float, t_end: float, output_dir: Path) -> Dict[str, Any]:
@@ -745,6 +750,9 @@ class MetricExporter:
             "kn_weight_time": kn_wt,
             "time_in_serverless_pct": time_in_serverless * 100,
             "weight_change_count": weight_changes,
+            "daemon_decision_latency_avg_ms": _mean_val("daemon_decision_latency_ms"),
+            "cpu_usage_avg_cores": _mean_val("cpu_usage_cores"),
+            "memory_usage_avg_bytes": _mean_val("memory_usage_bytes"),
         }
 
     @staticmethod
@@ -1116,10 +1124,17 @@ class ExperimentRunner:
 
         comparisons = []
         pairs = [
-            ("s1-k8s-only", "s4-hybrid-predictive", "p99_latency_ms"),
-            ("s3-hybrid-reactive", "s4-hybrid-predictive", "slo_violations_k6"),
+            # Thesis §3.5.2: Platform baseline comparison
+            ("s1-k8s-only", "s2-serverless-only", "p99_latency_ms"),
+            ("s1-k8s-only", "s2-serverless-only", "error_rate"),
+            # Thesis §3.5.2: Hybrid vs baselines
             ("s1-k8s-only", "s3-hybrid-reactive", "p99_latency_ms"),
+            ("s2-serverless-only", "s3-hybrid-reactive", "p99_latency_ms"),
+            # Thesis §3.5.2: Prediction value (S3 vs S4)
             ("s3-hybrid-reactive", "s4-hybrid-predictive", "p99_latency_ms"),
+            ("s3-hybrid-reactive", "s4-hybrid-predictive", "slo_violations_k6"),
+            # Additional: full system vs K8s baseline
+            ("s1-k8s-only", "s4-hybrid-predictive", "p99_latency_ms"),
         ]
 
         for baseline, comp, metric in pairs:

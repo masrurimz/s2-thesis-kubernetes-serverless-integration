@@ -142,15 +142,6 @@ repeat every COOLDOWN seconds:
     knative_weight ← min(MAX_SERVERLESS, weights.knative + WEIGHT_STEP)
     weights ← {k3s: 100 - knative_weight, knative: knative_weight}
 
-  else if slo_status.p99 < SLO_THRESHOLD × HEALTHY_MARGIN then
-    // OPTIMIZE_COST (Priority 3): Healthy → reduce serverless usage
-    step ← WEIGHT_STEP / 2
-    k3s_weight ← min(100, weights.k3s + step)
-    weights ← {k3s: k3s_weight, knative: 100 - k3s_weight}
-    if weights.knative = 0 then
-      serverless_enabled ← False
-    end if
-
   else if prediction ≠ null
          AND prediction.confidence ≥ CONFIDENCE_THRESHOLD
          AND load_change(prediction, current_load) > LOAD_CHANGE_THRESHOLD then
@@ -162,6 +153,15 @@ repeat every COOLDOWN seconds:
     end if
     knative_weight ← min(MAX_SERVERLESS, weights.knative + WEIGHT_STEP)
     weights ← {k3s: 100 - knative_weight, knative: knative_weight}
+
+  else if slo_status.p99 < SLO_THRESHOLD × HEALTHY_MARGIN then
+    // OPTIMIZE_COST (Priority 3): Healthy → reduce serverless usage
+    step ← WEIGHT_STEP / 2
+    k3s_weight ← min(100, weights.k3s + step)
+    weights ← {k3s: k3s_weight, knative: 100 - k3s_weight}
+    if weights.knative = 0 then
+      serverless_enabled ← False
+    end if
 
   else
     // MAINTAIN (Priority 4): No change needed
