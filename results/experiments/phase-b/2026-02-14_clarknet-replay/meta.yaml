@@ -1,0 +1,53 @@
+id: phase-b.clarknet-replay.2026-02-14
+date: 2026-02-14
+phase: phase-b
+category: replicated-runs
+scenarios: [s1-k8s-only, s2-serverless-only, s3-hybrid-reactive, s4-hybrid-predictive]
+workload:
+  tool: k6-constant-arrival-rate
+  endpoint: /work?duration_ms=5
+  gomaxprocs: 1
+  work_duration_ms: 5
+  trace: clarknet-g33
+  peak_rps: 164
+  mean_rps: 73
+  duration_sec: 300
+  runs_per_scenario: 5
+  total_runs: 20
+  order: randomized
+infrastructure:
+  deployment: test-app-warm
+  replicas: 1
+  cpu_limit: 500m
+  memory_limit: 128Mi
+  haproxy_weights: {k3s: 100, knative: 0}
+  scaling_model: {alpha: 0.0069, beta: 0.0}
+claims:
+  supports: [H1, H2]
+  notes:
+    - "ALL 20 runs invalidated due to 4 experiment design bugs"
+    - "k6 latency data is valid (correct endpoint, ~87K requests/run, ~73 RPS mean)"
+    - "ALL daemon metrics (routing decisions, weight shifts, GRU usage) are garbage"
+    - "S1 shows PREDICTIVE=165-786 and time_in_serverless=70-96% — impossible for K8s-only"
+    - "gru_predictions_used=0 for ALL scenarios including S4 despite healthy GRU server"
+reproduce:
+  - "cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python ../scripts/run_phase_b_experiments.py --phase full --runs 5 --duration 300"
+status: invalidated
+invalidated_on: 2026-02-14
+invalidation_bugs:
+  - id: bug-4
+    description: "HAProxy server name mismatch: ScenarioResetter uses 'k3s-cluster' but actual server is 'k3s'. Weight resets silently failed via HAProxy Runtime API."
+    impact: "S1 never got 100/0 weights, S2 never got 0/100. All scenarios started with stale weights from previous run."
+    fix_bead: s2-1xu
+  - id: bug-5
+    description: "Stale daemon process on port 9104 not killed between runs. New daemon fails to bind, Prometheus scrapes old daemon."
+    impact: "All scenarios show PREDICTIVE actions from stale daemon. Complete metric contamination across scenarios."
+    fix_bead: s2-jrc
+  - id: bug-6
+    description: "Prometheus counter query uses 'routing_daemon_prediction_used' but Prometheus stores as 'routing_daemon_prediction_used_total'. Query returns empty."
+    impact: "gru_predictions_used=0 for ALL scenarios including S4 where GRU was healthy."
+    fix_bead: s2-nxq
+  - id: bug-7
+    description: "No pre-run invariant checks existed to catch any of these bugs."
+    impact: "All bugs went undetected for 20 runs (~2 hours of experiment time)."
+    fix_bead: s2-9w2

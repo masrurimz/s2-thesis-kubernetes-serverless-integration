@@ -23,6 +23,7 @@ import json
 import os
 import random
 import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -229,6 +230,30 @@ def _prom_query_range(expr: str, start: float, end: float, step: str = "15s") ->
     return []
 
 
+def _parse_haproxy_stats_weights() -> Optional[Dict[str, int]]:
+    """Parse HAProxy stats CSV to get current k3s/knative weights."""
+    try:
+        r = requests.get(HAPROXY_STATS_URL, timeout=5)
+        if r.status_code != 200:
+            return None
+        weights: Dict[str, int] = {}
+        for line in r.text.strip().split("\n"):
+            if line.startswith("#") or not line.strip():
+                continue
+            fields = line.split(",")
+            if len(fields) < 19 or fields[0] != "servers":
+                continue
+            svname = fields[1]
+            if svname in ("k3s", "k3s-cluster"):
+                weights["k3s"] = int(fields[18])
+            elif svname in ("knative", "serverless-sim"):
+                weights["knative"] = int(fields[18])
+        return weights if weights else None
+    except Exception as e:
+        logger.debug("haproxy_stats_parse_failed", error=str(e))
+        return None
+
+
 # ---------------------------------------------------------------------------
 # Infrastructure preflight  (s2-omz)
 # ---------------------------------------------------------------------------
@@ -306,8 +331,10 @@ class ScenarioResetter:
             return False
 
         if ok:
-            # Reset HAProxy weights to scenario baseline
-            self._reset_haproxy_weights(scenario)
+            # Reset HAProxy weights to scenario baseline (fatal if fails)
+            if not self._reset_haproxy_weights(scenario):
+                logger.error("scenario_reset_haproxy_failed", scenario=scenario)
+                return False
             logger.info("scenario_reset_complete", scenario=scenario)
         return ok
 
@@ -381,8 +408,8 @@ class ScenarioResetter:
         return True
 
     @staticmethod
-    def _reset_haproxy_weights(scenario: str) -> None:
-        """Reset HAProxy weights via admin socket."""
+    def _reset_haproxy_weights(scenario: str) -> bool:
+        """Reset HAProxy weights via admin socket and verify via stats CSV."""
         weight_map = {
             "s1-k8s-only": (100, 0),
             "s2-serverless-only": (0, 100),
@@ -390,18 +417,34 @@ class ScenarioResetter:
             "s4-hybrid-predictive": (80, 20),
         }
         k3s_w, kn_w = weight_map.get(scenario, (100, 0))
-        import socket
+        import socket as _socket
         try:
-            for server, weight in [("k3s-cluster", k3s_w), ("knative", kn_w)]:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            for server, weight in [("k3s", k3s_w), ("knative", kn_w)]:
+                sock = _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM)
                 sock.settimeout(5)
                 sock.connect((HAPROXY_HOST, HAPROXY_SOCKET_PORT))
                 sock.send(f"set server servers/{server} weight {weight}\n".encode())
-                sock.recv(4096)
+                resp = sock.recv(4096).decode().strip()
                 sock.close()
-            logger.info("haproxy_weights_reset", k3s=k3s_w, knative=kn_w)
+                if "no such" in resp.lower() or "error" in resp.lower():
+                    logger.error("haproxy_set_weight_rejected", server=server, response=resp)
+                    return False
         except Exception as e:
-            logger.warning("haproxy_weight_reset_failed", error=str(e))
+            logger.error("haproxy_weight_reset_failed", error=str(e))
+            return False
+
+        # Verify weights via stats CSV
+        time.sleep(0.5)
+        actual = _parse_haproxy_stats_weights()
+        if actual is None:
+            logger.error("haproxy_weight_verify_failed", reason="could not read stats CSV")
+            return False
+        if actual.get("k3s") != k3s_w or actual.get("knative") != kn_w:
+            logger.error("haproxy_weight_mismatch",
+                        expected={"k3s": k3s_w, "knative": kn_w}, actual=actual)
+            return False
+        logger.info("haproxy_weights_reset_verified", k3s=k3s_w, knative=kn_w)
+        return True
 
 
 # ---------------------------------------------------------------------------
@@ -411,7 +454,37 @@ class ScenarioResetter:
 class DaemonManager:
     """Start/stop the routing daemon with proper IO handling."""
 
+    @staticmethod
+    def _kill_stale_daemon() -> None:
+        """Kill any process listening on DAEMON_API_PORT before starting fresh."""
+        import socket as _socket
+        try:
+            sock = _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM)
+            sock.settimeout(2)
+            sock.connect(("localhost", DAEMON_API_PORT))
+            sock.close()
+        except (ConnectionRefusedError, OSError):
+            return  # Port free — nothing to kill
+
+        logger.warning("stale_daemon_detected", port=DAEMON_API_PORT)
+        try:
+            r = subprocess.run(
+                ["ss", "-tlnp", f"sport = :{DAEMON_API_PORT}"],
+                capture_output=True, text=True, timeout=5,
+            )
+            for line in r.stdout.strip().split("\n"):
+                if f":{DAEMON_API_PORT}" in line and "pid=" in line:
+                    pid_str = line.split("pid=")[1].split(",")[0]
+                    pid = int(pid_str)
+                    logger.warning("killing_stale_daemon", pid=pid)
+                    os.kill(pid, signal.SIGKILL)
+                    time.sleep(1)
+        except Exception as e:
+            logger.warning("stale_daemon_kill_failed", error=str(e))
+
     def start(self, scenario: str, log_path: Path) -> Optional[subprocess.Popen]:
+        self._kill_stale_daemon()
+
         cmd = [
             sys.executable, "-m", "daemon.routing_daemon",
             "--scenario", scenario,
@@ -431,16 +504,30 @@ class DaemonManager:
             env=env,
             stdout=log_file,
             stderr=subprocess.STDOUT,
+            start_new_session=True,
         )
-        # Store file handle for cleanup
         proc._log_file = log_file  # type: ignore[attr-defined]
 
-        # Wait for daemon API to become available
+        # Wait for daemon API + validate scenario and freshness
         for _ in range(20):
             time.sleep(1)
             try:
                 r = requests.get(f"{DAEMON_API}/health", timeout=3)
                 if r.status_code == 200:
+                    health = r.json()
+                    if health.get("scenario") != scenario:
+                        logger.error("daemon_scenario_mismatch",
+                                    expected=scenario, got=health.get("scenario"))
+                        self.stop(proc)
+                        return None
+                    # Verify freshness via /status uptime
+                    sr = requests.get(f"{DAEMON_API}/status", timeout=3)
+                    if sr.status_code == 200:
+                        status = sr.json()
+                        if status.get("uptime_seconds", 999) > 30:
+                            logger.error("daemon_not_fresh", uptime=status.get("uptime_seconds"))
+                            self.stop(proc)
+                            return None
                     logger.info("daemon_started", scenario=scenario, pid=proc.pid)
                     return proc
             except Exception:
@@ -454,11 +541,17 @@ class DaemonManager:
     def stop(proc: Optional[subprocess.Popen]) -> None:
         if proc is None:
             return
-        proc.terminate()
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+        except (ProcessLookupError, OSError):
+            proc.terminate()
         try:
             proc.wait(timeout=10)
         except subprocess.TimeoutExpired:
-            proc.kill()
+            try:
+                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+            except (ProcessLookupError, OSError):
+                proc.kill()
             proc.wait()
         if hasattr(proc, "_log_file"):
             proc._log_file.close()  # type: ignore[attr-defined]
@@ -540,19 +633,24 @@ class K6Runner:
         errs = m.get("errors", {})
         slo = m.get("slo_violations", {}).get("values", {})
 
+        p99 = dur.get("p(99)")
+        p95 = dur.get("p(95)") or 0
+        if p99 is None:
+            p99 = p95  # k6 raw JSON may omit p99; fall back to p95
+
         return {
             "scenario": scenario,
             "run_id": run_id,
             "metrics": {
-                "p50_latency_ms": dur.get("med", 0),
-                "p95_latency_ms": dur.get("p(95)", 0),
-                "p99_latency_ms": dur.get("p(99)", dur.get("p(95)", 0)),
-                "avg_latency_ms": dur.get("avg", 0),
-                "max_latency_ms": dur.get("max", 0),
+                "p50_latency_ms": dur.get("med") or 0,
+                "p95_latency_ms": p95,
+                "p99_latency_ms": p99,
+                "avg_latency_ms": dur.get("avg") or 0,
+                "max_latency_ms": dur.get("max") or 0,
                 "error_rate": errs.get("rate", 0) if isinstance(errs, dict) else 0,
-                "total_requests": reqs.get("count", 0),
-                "actual_rps": reqs.get("rate", 0),
-                "slo_violations": slo.get("count", 0),
+                "total_requests": reqs.get("count") or 0,
+                "actual_rps": reqs.get("rate") or 0,
+                "slo_violations": slo.get("count") or 0,
             },
         }
 
@@ -573,8 +671,8 @@ class MetricExporter:
         "daemon_decisions": 'routing_daemon_decision_total',
         "daemon_weight_k3s": 'routing_daemon_current_weight{backend="k3s"}',
         "daemon_weight_knative": 'routing_daemon_current_weight{backend="knative"}',
-        "daemon_predictions_used": 'routing_daemon_prediction_used',
-        "daemon_predictions_failed": 'routing_daemon_prediction_failed',
+        "daemon_predictions_used": 'routing_daemon_prediction_used_total',
+        "daemon_predictions_failed": 'routing_daemon_prediction_failed_total',
         # Algorithm 2 replica scaling
         "k8s_desired_replicas": 'k8s_deployment_desired_replicas',
         "k8s_available_replicas": 'k8s_deployment_available_replicas',
@@ -822,6 +920,11 @@ class ExperimentRunner:
             logger.info("warmup_start", seconds=WARMUP_SEC)
             time.sleep(WARMUP_SEC)
 
+            # (C.pre) Validate pre-run invariants before k6
+            if not self._validate_run_preconditions(scenario):
+                logger.error("precondition_check_failed", scenario=scenario, run_id=run_id)
+                return None
+
             # Record t_start
             t_start = time.time()
 
@@ -903,6 +1006,61 @@ class ExperimentRunner:
 
         finally:
             self.daemon.stop(daemon_proc)
+
+    @staticmethod
+    def _validate_run_preconditions(scenario: str) -> bool:
+        """Validate infrastructure state before k6 load test begins."""
+        ok = True
+
+        # 1. HAProxy weights match scenario intent
+        weight_expect = {
+            "s1-k8s-only": {"k3s": 100, "knative": 0},
+            "s2-serverless-only": {"k3s": 0, "knative": 100},
+        }
+        weights = _parse_haproxy_stats_weights()
+        if weights is None:
+            logger.error("precondition_haproxy_stats_unreadable")
+            return False
+
+        expected = weight_expect.get(scenario)
+        if expected:
+            if weights.get("k3s") != expected["k3s"] or weights.get("knative") != expected["knative"]:
+                logger.error("precondition_haproxy_weight_wrong",
+                            scenario=scenario, expected=expected, actual=weights)
+                return False
+        else:
+            # S3/S4: both backends must have weight > 0
+            if not weights.get("k3s", 0) > 0 or not weights.get("knative", 0) > 0:
+                logger.error("precondition_hybrid_weights_zero",
+                            scenario=scenario, actual=weights)
+                return False
+
+        # 2. Daemon /health scenario matches
+        try:
+            r = requests.get(f"{DAEMON_API}/health", timeout=5)
+            health = r.json()
+            if health.get("scenario") != scenario:
+                logger.error("precondition_daemon_scenario_mismatch",
+                            expected=scenario, got=health.get("scenario"))
+                return False
+        except Exception as e:
+            logger.error("precondition_daemon_health_failed", error=str(e))
+            return False
+
+        # 3. Daemon /status decision_count < 5 (fresh daemon)
+        try:
+            r = requests.get(f"{DAEMON_API}/status", timeout=5)
+            status = r.json()
+            if status.get("decision_count", 999) >= 5:
+                logger.error("precondition_daemon_not_fresh",
+                            decision_count=status.get("decision_count"))
+                return False
+        except Exception as e:
+            logger.error("precondition_daemon_status_failed", error=str(e))
+            return False
+
+        logger.info("preconditions_passed", scenario=scenario, weights=weights)
+        return True
 
     def run_replicated(
         self,

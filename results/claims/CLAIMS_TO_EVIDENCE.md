@@ -18,11 +18,10 @@
 - **Status:** ✅ Validated
 
 ### Claim 3 (Superiority): S4 outperforms S1
-- **Evidence:** `results/experiments/phase-b/2026-02-12_replicated-20runs/report.md`
-- **Raw Data:** `results/experiments/phase-b/2026-02-12_replicated-20runs/raw/experiments_final.json`
-- **Result:** S1 mean p99=519.8ms, S4 mean p99=430.8ms — S4 actually LOWER but high variance
-- **Threat:** k3d localhost routing bias, some runs have stale Prometheus metrics
-- **Status:** ⚠️ Evidence invalidated (2026-02-14); pending rerun with /work endpoint
+- **Evidence (attempt 1):** `results/experiments/phase-b/2026-02-12_replicated-20runs/report.md` — INVALIDATED (bugs 1-3: SLO column, priority order, Prometheus scrape)
+- **Evidence (attempt 2):** `results/experiments/phase-b/2026-02-14_clarknet-replay/report.md` — INVALIDATED (bugs 4-7: HAProxy name, stale daemon, counter suffix, no invariant checks)
+- **Result:** No valid superiority data exists. Both Phase B attempts had fundamental instrumentation bugs.
+- **Status:** ⚠️ Evidence invalidated twice (2026-02-12, 2026-02-14); pending rerun with all 7 bugs fixed
 
 ---
 
@@ -34,12 +33,10 @@
 - **Status:** ✅ Validated (in Phase A1 ramp test only)
 
 ### Claim 5 (Superiority): S4 reduces violations vs S3
-- **Evidence:** `results/experiments/phase-b/2026-02-12_replicated-20runs/report.md`
-- **Raw Data:** `results/experiments/phase-b/2026-02-12_replicated-20runs/raw/experiments_final.json`
-- **Result:** S3: 4/5 runs violated, S4: 5/5 runs violated. S4 is WORSE.
-- **Root Cause:** GRU server was NOT running during Phase B (gru_predictions_used=0 in all runs). Phase B inadvertently compared reactive-only behaviors (S3 vs S4 both used SCALE_OUT, no PREDICTIVE).
-- **Analysis:** `results/experiments/phase-b/2026-02-12_replicated-20runs/PREDICTIVE_ELIGIBILITY_ANALYSIS.md`
-- **Status:** ⚠️ Evidence invalidated (2026-02-14); pending rerun with /work endpoint
+- **Evidence (attempt 1):** `results/experiments/phase-b/2026-02-12_replicated-20runs/report.md` — INVALIDATED (bugs 1-3). GRU server not running; gru_predictions_used=0.
+- **Evidence (attempt 2):** `results/experiments/phase-b/2026-02-14_clarknet-replay/report.md` — INVALIDATED (bugs 4-7). Stale daemon contaminated all metrics; gru_predictions_used=0 due to Prometheus counter suffix bug.
+- **Result:** No valid superiority data exists. Neither attempt produced clean S3 vs S4 comparison.
+- **Status:** ⚠️ Evidence invalidated twice (2026-02-12, 2026-02-14); pending rerun with all 7 bugs fixed
 
 ---
 
@@ -102,8 +99,8 @@
 | Mechanism | PREDICTIVE trigger | phase-a1/predictive-trigger | ✅ |
 | Mechanism | GRU inference (synthetic) | models/gru/training-synthetic | ✅ |
 | Mechanism | GRU inference (real traces) | models/gru/training-clarknet-calgary | ⚠️ Mechanism works, targets not met |
-| Superiority | S4 outperforms S1 | phase-b/replicated-20runs | ⚠️ Evidence invalidated (2026-02-14) |
-| Superiority | S4 fewer violations than S3 | phase-b/replicated-20runs | ⚠️ Evidence invalidated (2026-02-14) |
+| Superiority | S4 outperforms S1 | phase-b/replicated-20runs + phase-b/clarknet-replay | ⚠️ Invalidated twice (bugs 1-3, then 4-7) |
+| Superiority | S4 fewer violations than S3 | phase-b/replicated-20runs + phase-b/clarknet-replay | ⚠️ Invalidated twice (bugs 1-3, then 4-7) |
 | Testbed | HPA works on k3d | validation/infrastructure-validation | ✅ |
 | Design Decision | HPA vs kubectl scale exclusive | validation/infrastructure-validation | ✅ |
 | Testbed | Knative KPA works on k3d | validation/infrastructure-validation | ✅ |
@@ -112,12 +109,22 @@
 
 ## Invalidated Evidence (Audit Trail)
 
+### Round 1 (2026-02-12): Bugs 1-3
 Previous Phase B data (`phase-b/2026-02-12_replicated-20runs`) and Phase C data (`phase-c/2026-02-13_dynamic-workload`) are invalidated due to three critical bugs fixed 2026-02-14:
 1. SLO monitor used HAProxy ttime (total time) instead of rtime (response time) → false p99 readings
 2. Algorithm 1 priority order reversed (OPTIMIZE_COST before PREDICTIVE) → PREDICTIVE never reachable
 3. Prometheus not scraping routing daemon → missing controller metrics
 
 Additionally, previous experiments used `/health` endpoint (near-zero CPU), making autoscaler and capacity results non-comparable to post-fix `/work` endpoint experiments.
+
+### Round 2 (2026-02-14): Bugs 4-7
+Phase B rerun (`phase-b/2026-02-14_clarknet-replay`) with /work endpoint also invalidated due to four experiment design bugs:
+4. HAProxy server name mismatch: ScenarioResetter uses 'k3s-cluster' but actual server is 'k3s' → weight resets silently failed
+5. Stale daemon process on port 9104 not killed between runs → Prometheus scrapes old daemon metrics across scenarios
+6. Prometheus counter query missing `_total` suffix → gru_predictions_used=0 for all scenarios
+7. No pre-run invariant checks to catch any of these
+
+k6 latency data from round 2 remains valid; all daemon/routing metrics are garbage.
 
 See `results/claims/INCONSISTENCIES.md` for full details.
 
@@ -159,4 +166,4 @@ HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python ../thesis/scripts/run_phase_b_expe
 - ClarkNet provides usable signal at 5-min+ aggregation; Calgary too sparse for GRU
 - Real-data results are a known limitation to acknowledge in thesis
 
-**Last Updated:** 2026-02-14
+**Last Updated:** 2026-02-14 (updated: bugs 4-7 documented, second Phase B invalidation)

@@ -14,8 +14,8 @@ Rules:
 
 | Hypothesis | Mechanism Validated? | Superiority Demonstrated? | Stats Done? | Notes |
 |------------|---------------------|--------------------------|-------------|-------|
-| **H1** (Hybrid > Pure) | ✅ Weight shifting, serverless engagement | ⚠️ Previous evidence invalidated; rerun pending | ✅ Welch t-test | k3d localhost bias; high p99 variance |
-| **H2** (Predictive > Reactive) | ✅ PREDICTIVE triggered pre-violation | ⚠️ Not demonstrated | ✅ | GRU server not running in Phase B (gru_predictions_used=0); mechanism validated in A1 ramp. Phase A1 also affected by bugs; revalidation needed |
+| **H1** (Hybrid > Pure) | ✅ Weight shifting, serverless engagement | ⚠️ Two Phase B runs invalidated (2026-02-12 bugs 1-3, 2026-02-14 bugs 4-7); rerun pending | ✅ Welch t-test | k3d localhost bias; high p99 variance |
+| **H2** (Predictive > Reactive) | ✅ PREDICTIVE triggered pre-violation | ⚠️ Not demonstrated; two Phase B runs invalidated | ✅ | gru_predictions_used=0 in both Phase B attempts (different bugs each time). Mechanism validated in A1 ramp only. |
 | **H3** (GRU adequate) | ✅ 6.01% RMSE (synthetic), ⚠️ 17.78% RMSE (real ClarkNet) | N/A | ✅ | Synthetic meets targets; real traces do not (<10% RMSE). GRU still outperforms baselines on real data. |
 
 ---
@@ -33,6 +33,8 @@ Rules:
 | `gru.training-clarknet-calgary.2026-02-13` | — | Model Training | 2026-02-13 | — | `models/gru/2026-02-13_training-clarknet-calgary/` |
 | `cost.proxy-analysis.2026-02-11` | B | Cost Analysis | 2026-02-11 | S1-S4 | `cost/2026-02-11_proxy-analysis/` |
 | `phase-c.dynamic-workload.2026-02-13` | C | Dynamic Workload | 2026-02-13 | S3, S4 | `experiments/phase-c/2026-02-13_dynamic-workload/` |
+| `phase-b.clarknet-replay.2026-02-14 (INVALIDATED)` | B | Replicated Runs (ClarkNet) | 2026-02-14 | S1-S4 | `experiments/phase-b/2026-02-14_clarknet-replay/` |
+| `phase-b.clarknet-replay-aborted.2026-02-14` | B | Aborted Run | 2026-02-14 | S2, S4 | `experiments/phase-b/2026-02-14_clarknet-replay-ABORTED/` |
 | `validation.infrastructure.2026-02-13` | Validation | Infrastructure Validation | 2026-02-13 | T0–T4 | `experiments/validation/2026-02-13_infrastructure-validation/` |
 
 ---
