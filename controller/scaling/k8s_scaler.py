@@ -6,8 +6,9 @@ Provides subprocess-based kubectl interface for Algorithm 2 integration.
 """
 
 import json
+import os
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 import structlog
@@ -15,12 +16,17 @@ import structlog
 logger = structlog.get_logger(__name__)
 
 
+def _default_kubectl_path() -> str:
+    """Resolve kubectl path from KUBECTL_PATH env var, falling back to PATH lookup."""
+    return os.environ.get("KUBECTL_PATH", "kubectl")
+
+
 @dataclass
 class K8sScalerConfig:
     """Configuration for K8s scaler."""
     namespace: str = "default"
     deployment: str = "test-app-warm"
-    kubectl_path: str = "kubectl"
+    kubectl_path: str = field(default_factory=_default_kubectl_path)
     timeout_sec: int = 5
 
 
