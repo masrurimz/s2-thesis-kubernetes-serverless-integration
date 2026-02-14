@@ -39,7 +39,7 @@ export const options = {
 };
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:18082';
-const ENDPOINT = __ENV.ENDPOINT || '/health';
+const ENDPOINT = __ENV.ENDPOINT || '/work?duration_ms=5';
 
 export default function () {
     const start = Date.now();

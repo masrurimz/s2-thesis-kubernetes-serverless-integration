@@ -92,7 +92,7 @@ function performHealthCheck() {
   console.log(`\n🔍 Health Check at ${Math.floor((Date.now() - testStartTime) / 1000 / 60)} minutes:`);
   
   // Test hybrid endpoint health
-  let hybridHealth = http.get(HYBRID_ENDPOINT + '/health');
+  let hybridHealth = http.get(HYBRID_ENDPOINT + '/work?duration_ms=5');
   let statsHealth = http.get(HAPROXY_STATS);
   
   console.log(`  Hybrid Endpoint: ${hybridHealth.status === 200 ? '✅' : '❌'} (${hybridHealth.status})`);

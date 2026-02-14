@@ -1,6 +1,6 @@
 /**
- * T7a: Capacity Envelope — /health endpoint
- * Quick ramp to very high RPS to find ceiling of lightweight endpoint.
+ * T7a: Capacity Envelope — /work?duration_ms=5 endpoint
+ * Quick ramp to very high RPS to find ceiling of work endpoint.
  */
 
 import http from 'k6/http';
@@ -44,15 +44,15 @@ export const options = {
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:18082';
 
 export function setup() {
-    console.log('\n🔬 T7a: /health Capacity Envelope');
+    console.log('\n🔬 T7a: /work?duration_ms=5 Capacity Envelope');
     console.log('Ramp: 100 → 200 → 500 → 1000 → 1500 → 2000 → 3000 RPS');
     console.log('Duration: 3.25 min');
-    const warmup = http.get(`${BASE_URL}/health`);
+    const warmup = http.get(`${BASE_URL}/work?duration_ms=5`);
     return { startTime: Date.now() };
 }
 
 export default function () {
-    const res = http.get(`${BASE_URL}/health`, {
+    const res = http.get(`${BASE_URL}/work?duration_ms=5`, {
         headers: { 'Host': 'test-app.default.127.0.0.1.sslip.io' },
     });
     if (res.timings.duration > SLO_THRESHOLD_MS) sloViolations.add(1);

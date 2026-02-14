@@ -54,7 +54,7 @@ export function setup() {
     console.log('\n🔬 T7c: /fib SLO Threshold Finder');
     console.log('Ramp: 10 → 20 → 30 → 50 → 75 → 100 → 125 → 150 → 175 → 200 RPS');
     console.log('Duration: ~5 min with holds at each level');
-    const warmup = http.get(`${BASE_URL}/health`);
+    const warmup = http.get(`${BASE_URL}/work?duration_ms=5`);
     return { startTime: Date.now() };
 }
 
