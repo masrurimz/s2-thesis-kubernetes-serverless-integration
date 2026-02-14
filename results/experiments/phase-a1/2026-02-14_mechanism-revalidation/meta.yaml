@@ -1,0 +1,20 @@
+id: phase-a1.mechanism-revalidation.2026-02-14
+date: 2026-02-14
+phase: phase-a1
+scenarios: [s1-k8s-only, s3-hybrid-reactive, s4-hybrid-predictive]
+workload:
+  type: ramping-arrival-rate
+  stages: "20→80→140→160→30 RPS, 30s each"
+  duration_sec: 150
+  endpoint: /work?duration_ms=5
+claims:
+  validates:
+    - "Bug #1 fix: HAProxy server name k3s (not k3s-cluster)"
+    - "Bug #2 fix: Daemon lifecycle (kill stale, assert scenario)"
+    - "Bug #3 fix: Prometheus counter names (_total suffix)"
+    - "Bug #4 fix: Pre-run invariant checks (scenario verification)"
+reproduce:
+  - "See validation plan in bead s2-1zy"
+  - "k6 run /tmp/phase_a1_ramp.js -e TARGET_URL=http://localhost:18082 -e SCENARIO=<scenario>"
+status: complete
+result: all_pass
