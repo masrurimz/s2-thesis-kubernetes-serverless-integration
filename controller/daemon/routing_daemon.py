@@ -487,7 +487,10 @@ class RoutingDaemon:
         # Determine scaling signal:
         # S4 (predictive) → use GRU prediction, fallback to observed load
         # S3 (reactive)   → use observed load (mean of history)
-        x_obs = float(sum(self._load_history) / len(self._load_history)) if self._load_history else 0.0
+        # Thesis §3.4.3.2: x_obs = mean observed RPS over last 30s
+        n_samples = max(1, min(len(self._load_history), -(-30 // self.decision_interval)))
+        recent = list(self._load_history)[-n_samples:]
+        x_obs = float(sum(recent) / len(recent)) if recent else 0.0
         scaling_signal = x_obs
 
         if (self.scenario_config.use_predictions
