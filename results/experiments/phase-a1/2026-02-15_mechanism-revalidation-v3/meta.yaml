@@ -1,0 +1,17 @@
+id: phase-a1.revalidation-v3.2026-02-15
+date: 2026-02-15
+phase: phase-a1
+scenarios: [s1-k8s-only, s3-hybrid-reactive, s4-hybrid-predictive]
+workload:
+  endpoint: /fib?n=32
+  gomaxprocs: 1
+  r_sat: 60
+  alpha: 0.0167
+  k6_profile: "30s@30 → 30s@100 → 60s@100 → 30s@30 RPS"
+claims:
+  supports: [mechanism-validation]
+reproduce:
+  - "# Gate 1 (S1): Run HPA pilot with /fib?n=30 at 160 RPS — verified HPA scales 1→10"
+  - "# Gate 2 (S3): Start daemon --scenario s3-hybrid-reactive, run k6 pilot → scale_up_events=1"
+  - "# Gate 3 (S4): Start daemon --scenario s4-hybrid-predictive --gru-url http://localhost:8090, run k6 → prediction_used=7, scale_up=1"
+status: complete
