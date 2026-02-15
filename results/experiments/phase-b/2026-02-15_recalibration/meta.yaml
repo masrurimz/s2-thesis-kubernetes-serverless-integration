@@ -1,0 +1,30 @@
+id: phase-b.recalibration.2026-02-15
+date: 2026-02-15
+phase: phase-b
+category: calibration
+scenarios: [s1-k8s-only]
+workload:
+  tool: k6-constant-arrival-rate
+  endpoint_tested: ["/work?duration_ms=10", "/work?duration_ms=20"]
+  gomaxprocs: 1
+  duration_sec_per_level: 30
+  cooldown_between_sec: 8
+infrastructure:
+  deployment: test-app-warm
+  replicas: 1
+  cpu_limit: 500m
+  memory_limit: 128Mi
+claims:
+  supports: []
+  notes:
+    - "D=20ms saturates at ~30 RPS — too aggressive (mean trace 73 RPS would need 3 pods just for average)"
+    - "D=10ms saturates at ~50 RPS — ideal for ClarkNet trace"
+    - "At D=10ms: α=0.02 (1/50), target_replicas=2 at mean (73 RPS), 4 at peak (164 RPS)"
+    - "85% of ClarkNet stages require >1 replica — scaling is exercised throughout experiment"
+    - "Previous calibration (D=5ms, α=0.0069) was wrong: target_replicas=1 for loads <121 RPS"
+  decision: "Use D=10ms (duration_ms=10) for Phase B redesign"
+reproduce:
+  - "k6 run -e TARGET_URL=http://localhost:18082 -e WORK_MS=10 -e TARGET_RPS=RPS -e DURATION=30s infrastructure/load-tests/calibrate_work.js"
+status: complete
+git_commit: pending
+context: "Recalibration triggered by Phase B v1 analysis showing scale_up_events=0 for all S3/S4 runs. Root cause: D=5ms workload too trivial for single pod at ClarkNet RPS levels."
