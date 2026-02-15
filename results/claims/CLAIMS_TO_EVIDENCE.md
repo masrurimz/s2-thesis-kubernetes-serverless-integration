@@ -17,11 +17,20 @@
 - **Raw Data:** Same as Claim 1
 - **Status:** ✅ Validated
 
-### Claim 3 (Superiority): S4 outperforms S1
-- **Evidence (attempt 1):** `results/experiments/phase-b/2026-02-12_replicated-20runs/report.md` — INVALIDATED (bugs 1-3: SLO column, priority order, Prometheus scrape)
-- **Evidence (attempt 2):** `results/experiments/phase-b/2026-02-14_clarknet-replay/report.md` — INVALIDATED (bugs 4-7: HAProxy name, stale daemon, counter suffix, no invariant checks)
-- **Result:** No valid superiority data exists. Both Phase B attempts had fundamental instrumentation bugs.
-- **Status:** ⚠️ Evidence invalidated twice (2026-02-12, 2026-02-14); pending rerun with all 7 bugs fixed
+### Claim 3 (Performance): S4 vs S1 latency comparison
+- **Evidence (attempt 1):** `results/experiments/phase-b/2026-02-12_replicated-20runs/report.md` — INVALIDATED (bugs 1-3)
+- **Evidence (attempt 2):** `results/experiments/phase-b/2026-02-14_clarknet-replay/report.md` — INVALIDATED (bugs 4-7)
+- **Evidence (attempt 3 — VALID):** `results/experiments/phase-b/2026-02-15_clarknet-replay/reanalysis_report.md`
+- **Raw Data:** `results/experiments/phase-b/2026-02-15_clarknet-replay/results_final.json` (20 runs)
+- **Result:** S4 p99 = 2821.69 ± 424.33 ms vs S1 p99 = 5.89 ± 0.01 ms. S4 is significantly worse (p<0.001 Welch corrected, d=9.384). Hybrid routing with partial serverless engagement causes severe tail-latency inflation from cold-start/queueing effects.
+- **Reproduce:** `cd controller && uv run python ../thesis/scripts/reanalyze_phase_b.py --results-dir ../results/experiments/phase-b/2026-02-15_clarknet-replay`
+- **Status:** ❌ H1 not supported for performance superiority — hybrid is worse than baselines on p99. This is a **valid negative result** with design implications (see Claim 3a).
+
+### Claim 3a (Design Insight): Hybrid tail-latency caused by serverless cold-start interaction
+- **Evidence:** `results/experiments/phase-b/2026-02-15_clarknet-replay/reanalysis_report.md` — S2 (serverless-only) p99 = 9.31ms (warm), but S3 (5% serverless share) p99 = 3280ms. Low serverless share causes intermittent cold-starts/queueing.
+- **Raw Data:** Same as Claim 3
+- **Result:** Partial serverless engagement (5-25% traffic) triggers repeated scale-from-zero penalties. S4 (25% share) performs better than S3 (5% share) because higher traffic keeps serverless warm.
+- **Status:** ✅ Validated — important design implication for hybrid architectures
 
 ---
 
@@ -32,11 +41,14 @@
 - **Raw Data:** Decision log — action=PREDICTIVE at p99=146ms, predicted 47% load increase, confidence 72%
 - **Status:** ✅ Validated (in Phase A1 ramp test only)
 
-### Claim 5 (Superiority): S4 reduces violations vs S3
-- **Evidence (attempt 1):** `results/experiments/phase-b/2026-02-12_replicated-20runs/report.md` — INVALIDATED (bugs 1-3). GRU server not running; gru_predictions_used=0.
-- **Evidence (attempt 2):** `results/experiments/phase-b/2026-02-14_clarknet-replay/report.md` — INVALIDATED (bugs 4-7). Stale daemon contaminated all metrics; gru_predictions_used=0 due to Prometheus counter suffix bug.
-- **Result:** No valid superiority data exists. Neither attempt produced clean S3 vs S4 comparison.
-- **Status:** ⚠️ Evidence invalidated twice (2026-02-12, 2026-02-14); pending rerun with all 7 bugs fixed
+### Claim 5 (Superiority): S4 reduces SLO violations vs S3
+- **Evidence (attempt 1):** `results/experiments/phase-b/2026-02-12_replicated-20runs/report.md` — INVALIDATED (bugs 1-3)
+- **Evidence (attempt 2):** `results/experiments/phase-b/2026-02-14_clarknet-replay/report.md` — INVALIDATED (bugs 4-7)
+- **Evidence (attempt 3 — VALID):** `results/experiments/phase-b/2026-02-15_clarknet-replay/reanalysis_report.md`
+- **Raw Data:** `results/experiments/phase-b/2026-02-15_clarknet-replay/results_final.json`
+- **Result:** S4 SLO violations = 11302 ± 1974 vs S3 = 16519 ± 1521 → **31.6% reduction** (Welch p=0.0037 Holm-corrected, Cohen's d=-2.961 large effect). S4 gru_predictions_used=80/run, S3=0. S4 p99 14% lower but not significant (p=0.073).
+- **Reproduce:** `cd controller && uv run python ../thesis/scripts/reanalyze_phase_b.py --results-dir ../results/experiments/phase-b/2026-02-15_clarknet-replay`
+- **Status:** ✅ H2 supported — GRU prediction significantly reduces SLO violations (mechanism + superiority validated)
 
 ---
 
@@ -99,8 +111,9 @@
 | Mechanism | PREDICTIVE trigger | phase-a1/predictive-trigger | ✅ |
 | Mechanism | GRU inference (synthetic) | models/gru/training-synthetic | ✅ |
 | Mechanism | GRU inference (real traces) | models/gru/training-clarknet-calgary | ⚠️ Mechanism works, targets not met |
-| Superiority | S4 outperforms S1 | phase-b/replicated-20runs + phase-b/clarknet-replay | ⚠️ Invalidated twice (bugs 1-3, then 4-7) |
-| Superiority | S4 fewer violations than S3 | phase-b/replicated-20runs + phase-b/clarknet-replay | ⚠️ Invalidated twice (bugs 1-3, then 4-7) |
+| Performance | S4 vs S1 latency | phase-b/2026-02-15_clarknet-replay | ❌ H1 not supported (hybrid p99 >> baseline) |
+| Design Insight | Hybrid cold-start tail-latency | phase-b/2026-02-15_clarknet-replay | ✅ Validated |
+| Superiority | S4 fewer violations than S3 | phase-b/2026-02-15_clarknet-replay | ✅ H2 supported (p=0.0037, d=-2.96) |
 | Testbed | HPA works on k3d | validation/infrastructure-validation | ✅ |
 | Design Decision | HPA vs kubectl scale exclusive | validation/infrastructure-validation | ✅ |
 | Testbed | Knative KPA works on k3d | validation/infrastructure-validation | ✅ |
@@ -166,4 +179,4 @@ HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python ../thesis/scripts/run_phase_b_expe
 - ClarkNet provides usable signal at 5-min+ aggregation; Calgary too sparse for GRU
 - Real-data results are a known limitation to acknowledge in thesis
 
-**Last Updated:** 2026-02-14 (updated: bugs 4-7 documented, second Phase B invalidation)
+**Last Updated:** 2026-02-15 (Phase B attempt 3 complete — H2 supported, H1 not supported, design insight validated)
