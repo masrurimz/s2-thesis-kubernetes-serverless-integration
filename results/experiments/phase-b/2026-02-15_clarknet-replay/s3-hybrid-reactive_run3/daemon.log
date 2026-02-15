@@ -1,0 +1,597 @@
+<frozen runpy>:128: RuntimeWarning: 'daemon.routing_daemon' found in sys.modules after import of package 'daemon', but prior to execution of 'daemon.routing_daemon'; this may result in unpredictable behaviour
+2026-02-15 04:31:08 [info     ] SLOMonitor initialized         threshold_ms=200.0 violation_window=30
+2026-02-15 04:31:08 [info     ] Algorithm1Controller initialized cooldown=15 weight_step=10
+2026-02-15 04:31:08 [info     ] HAProxyWeightAdjuster initialized backend=servers socket_path=/tmp/haproxy.sock tcp_socket=localhost:19999 tcp_socket_available=True unix_socket_available=False
+2026-02-15 04:31:08 [info     ] GRUClient initialized          base_url=http://localhost:8090
+2026-02-15 04:31:08 [info     ] K8sScaler initialized          deployment=test-app-warm namespace=default
+2026-02-15 04:31:08 [info     ] RoutingDaemon initialized      decision_interval=15 description='Algorithm 1 reactive routing without predictions' scenario=s3-hybrid-reactive use_algorithm=True use_predictions=False
+2026-02-15 04:31:08 [info     ] Starting routing daemon        interval=15 scenario=s3-hybrid-reactive
+2026-02-15 04:31:08 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2912
+2026-02-15 04:31:08 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-02-15 04:31:08 [debug    ] Weights already set correctly  k3s=80 knative=20
+2026-02-15 04:31:08 [info     ] Initial weights applied        k3s=80 knative=20
+2026-02-15 04:31:08 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:31:08 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=12.0 serverless_enabled=False
+2026-02-15 04:31:08 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2912
+2026-02-15 04:31:08 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-02-15 04:31:08 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2912
+2026-02-15 04:31:08 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 100' response_length=0
+2026-02-15 04:31:08 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2914
+2026-02-15 04:31:08 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 0' response_length=0
+2026-02-15 04:31:08 [debug    ] Weight commands sent via socket successfully k3s=100 knative=0
+2026-02-15 04:31:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2912
+2026-02-15 04:31:09 [debug    ] Current weights retrieved via socket weights={'k3s': 100, 'knative': 0}
+2026-02-15 04:31:09 [info     ] Weights updated successfully via HTTP new={'k3s': 100, 'knative': 0} previous={'k3s': 80, 'knative': 20}
+2026-02-15 04:31:09 [info     ] Weights updated                action=OPTIMIZE_COST reason='Healthy state (12ms < 140ms), optimizing cost' weights={'k3s': 100, 'knative': 0}
+2026-02-15 04:31:09 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=0.8444444444444443 required_resources=0.006 target_replicas=1
+2026-02-15 04:31:09 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=576.95 p99=12.0
+2026-02-15 04:31:24 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:31:24 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=12.0 serverless_enabled=False
+2026-02-15 04:31:24 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=0.8333333333333333 required_resources=0.006 target_replicas=1
+2026-02-15 04:31:24 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=69.27 p99=12.0
+2026-02-15 04:31:39 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:31:39 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=12.0 serverless_enabled=False
+2026-02-15 04:31:39 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=0.8333333333333333 required_resources=0.006 target_replicas=1
+2026-02-15 04:31:39 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=70.69 p99=12.0
+2026-02-15 04:31:54 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:31:54 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:31:54 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=2.144444444444444 required_resources=0.015 target_replicas=1
+2026-02-15 04:31:54 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=73.03 p99=10.0
+2026-02-15 04:32:09 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:32:09 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:32:09 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=10.788888888888888 required_resources=0.074 target_replicas=1
+2026-02-15 04:32:09 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=67.62 p99=10.0
+2026-02-15 04:32:24 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:32:24 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:32:24 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=25.477777777777774 required_resources=0.176 target_replicas=1
+2026-02-15 04:32:24 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=68.3 p99=10.0
+2026-02-15 04:32:39 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:32:39 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=12.0 serverless_enabled=False
+2026-02-15 04:32:39 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=39.64444444444444 required_resources=0.274 target_replicas=1
+2026-02-15 04:32:39 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=70.43 p99=12.0
+2026-02-15 04:32:54 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:32:54 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=12.0 serverless_enabled=False
+2026-02-15 04:32:54 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=48.355555555555554 required_resources=0.334 target_replicas=1
+2026-02-15 04:32:54 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=67.83 p99=12.0
+2026-02-15 04:33:09 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:33:09 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:33:09 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=50.92222222222222 required_resources=0.351 target_replicas=1
+2026-02-15 04:33:09 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=66.04 p99=10.0
+2026-02-15 04:33:24 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:33:24 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:33:25 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=49.11111111111111 required_resources=0.339 target_replicas=1
+2026-02-15 04:33:25 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=68.62 p99=10.0
+2026-02-15 04:33:40 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:33:40 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:33:40 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=41.83333333333333 required_resources=0.289 target_replicas=1
+2026-02-15 04:33:40 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=72.75 p99=10.0
+2026-02-15 04:33:55 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:33:55 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=12.0 serverless_enabled=False
+2026-02-15 04:33:55 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=32.93333333333333 required_resources=0.227 target_replicas=1
+2026-02-15 04:33:55 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=67.71 p99=12.0
+2026-02-15 04:34:10 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:34:10 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=12.0 serverless_enabled=False
+2026-02-15 04:34:10 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=28.999999999999996 required_resources=0.2 target_replicas=1
+2026-02-15 04:34:10 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=67.56 p99=12.0
+2026-02-15 04:34:25 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:34:25 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:34:25 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=33.63333333333333 required_resources=0.232 target_replicas=1
+2026-02-15 04:34:25 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=71.0 p99=10.0
+2026-02-15 04:34:40 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:34:40 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=12.0 serverless_enabled=False
+2026-02-15 04:34:40 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=42.87777777777777 required_resources=0.296 target_replicas=1
+2026-02-15 04:34:40 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=71.5 p99=12.0
+2026-02-15 04:34:55 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:34:55 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:34:55 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=48.68888888888888 required_resources=0.336 target_replicas=1
+2026-02-15 04:34:55 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=70.62 p99=10.0
+2026-02-15 04:35:10 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:35:10 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=12.0 serverless_enabled=False
+2026-02-15 04:35:10 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=48.288888888888884 required_resources=0.333 target_replicas=1
+2026-02-15 04:35:10 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=65.8 p99=12.0
+2026-02-15 04:35:25 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:35:25 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:35:25 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=47.511111111111106 required_resources=0.328 target_replicas=1
+2026-02-15 04:35:25 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=74.54 p99=10.0
+2026-02-15 04:35:40 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:35:40 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:35:40 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=51.43333333333332 required_resources=0.355 target_replicas=1
+2026-02-15 04:35:40 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=70.17 p99=10.0
+2026-02-15 04:35:55 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:35:55 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:35:55 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=57.533333333333324 required_resources=0.397 target_replicas=1
+2026-02-15 04:35:55 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=68.37 p99=10.0
+2026-02-15 04:36:10 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:36:10 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:36:10 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=62.18888888888888 required_resources=0.429 target_replicas=1
+2026-02-15 04:36:10 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=72.02 p99=10.0
+2026-02-15 04:36:25 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:36:25 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:36:25 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=66.34444444444443 required_resources=0.458 target_replicas=1
+2026-02-15 04:36:25 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=73.45 p99=10.0
+2026-02-15 04:36:40 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:36:40 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=12.0 serverless_enabled=False
+2026-02-15 04:36:40 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=72.56666666666666 required_resources=0.501 target_replicas=1
+2026-02-15 04:36:40 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=71.95 p99=12.0
+2026-02-15 04:36:55 [debug    ] HAProxy latency                avg_rtime=176 max_rtime=59997 p99_est=352
+2026-02-15 04:36:55 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=81.46666666666667 required_resources=0.562 target_replicas=1
+2026-02-15 04:36:55 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=40.18 p99=352.0
+2026-02-15 04:37:10 [debug    ] HAProxy latency                avg_rtime=1626 max_rtime=59997 p99_est=3252
+2026-02-15 04:37:11 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=93.16666666666666 required_resources=0.643 target_replicas=1
+2026-02-15 04:37:11 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=39.2 p99=3252.0
+2026-02-15 04:37:26 [debug    ] HAProxy latency                avg_rtime=2644 max_rtime=59997 p99_est=5288
+2026-02-15 04:37:26 [info     ] Algorithm 1: Enabling serverless backend for SCALE_OUT
+2026-02-15 04:37:26 [info     ] Pre-warming Knative service    host=test-app.default.localhost url=http://localhost:8081
+2026-02-15 04:37:26 [warning  ] Knative pre-warm returned non-200 cold_start_ms=1.8582344055175781 status=404
+2026-02-15 04:37:26 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 90, 'knative': 10} p99=5288.0 serverless_enabled=True violation_sec=31
+2026-02-15 04:37:26 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2934
+2026-02-15 04:37:26 [debug    ] Current weights retrieved via socket weights={'k3s': 100, 'knative': 0}
+2026-02-15 04:37:26 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2934
+2026-02-15 04:37:26 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 90' response_length=0
+2026-02-15 04:37:26 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2930
+2026-02-15 04:37:26 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 10' response_length=0
+2026-02-15 04:37:26 [debug    ] Weight commands sent via socket successfully k3s=90 knative=10
+2026-02-15 04:37:26 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2929
+2026-02-15 04:37:26 [debug    ] Current weights retrieved via socket weights={'k3s': 90, 'knative': 10}
+2026-02-15 04:37:26 [info     ] Weights updated successfully via HTTP new={'k3s': 90, 'knative': 10} previous={'k3s': 100, 'knative': 0}
+2026-02-15 04:37:26 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (5288ms > 200ms) for 31s' weights={'k3s': 90, 'knative': 10}
+2026-02-15 04:37:26 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=107.75555555555555 required_resources=0.744 target_replicas=1
+2026-02-15 04:37:26 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=544.64 p99=5288.0
+2026-02-15 04:37:41 [debug    ] HAProxy latency                avg_rtime=1778 max_rtime=59997 p99_est=3556
+2026-02-15 04:37:41 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 80, 'knative': 20} p99=3556.0 serverless_enabled=True violation_sec=46
+2026-02-15 04:37:41 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2931
+2026-02-15 04:37:41 [debug    ] Current weights retrieved via socket weights={'k3s': 90, 'knative': 10}
+2026-02-15 04:37:41 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2931
+2026-02-15 04:37:41 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 80' response_length=0
+2026-02-15 04:37:41 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2929
+2026-02-15 04:37:41 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 20' response_length=0
+2026-02-15 04:37:41 [debug    ] Weight commands sent via socket successfully k3s=80 knative=20
+2026-02-15 04:37:42 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2928
+2026-02-15 04:37:42 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-02-15 04:37:42 [info     ] Weights updated successfully via HTTP new={'k3s': 80, 'knative': 20} previous={'k3s': 90, 'knative': 10}
+2026-02-15 04:37:42 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (3556ms > 200ms) for 46s' weights={'k3s': 80, 'knative': 20}
+2026-02-15 04:37:42 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=98.02202777777777 required_resources=0.676 target_replicas=1
+2026-02-15 04:37:42 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=544.37 p99=3556.0
+2026-02-15 04:37:57 [debug    ] HAProxy latency                avg_rtime=181 max_rtime=59997 p99_est=362
+2026-02-15 04:37:57 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 70, 'knative': 30} p99=362.0 serverless_enabled=True violation_sec=62
+2026-02-15 04:37:57 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2921
+2026-02-15 04:37:57 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-02-15 04:37:57 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2921
+2026-02-15 04:37:57 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 70' response_length=0
+2026-02-15 04:37:57 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2919
+2026-02-15 04:37:57 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 30' response_length=0
+2026-02-15 04:37:57 [debug    ] Weight commands sent via socket successfully k3s=70 knative=30
+2026-02-15 04:37:57 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2921
+2026-02-15 04:37:57 [debug    ] Current weights retrieved via socket weights={'k3s': 70, 'knative': 30}
+2026-02-15 04:37:57 [info     ] Weights updated successfully via HTTP new={'k3s': 70, 'knative': 30} previous={'k3s': 80, 'knative': 20}
+2026-02-15 04:37:57 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (362ms > 200ms) for 62s' weights={'k3s': 70, 'knative': 30}
+2026-02-15 04:37:57 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=80.52202777777778 required_resources=0.556 target_replicas=1
+2026-02-15 04:37:57 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=538.35 p99=362.0
+2026-02-15 04:38:12 [debug    ] HAProxy latency                avg_rtime=26 max_rtime=59997 p99_est=52
+2026-02-15 04:38:12 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 75, 'knative': 25} p99=52.0 serverless_enabled=True
+2026-02-15 04:38:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2914
+2026-02-15 04:38:12 [debug    ] Current weights retrieved via socket weights={'k3s': 70, 'knative': 30}
+2026-02-15 04:38:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2914
+2026-02-15 04:38:12 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 75' response_length=0
+2026-02-15 04:38:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2914
+2026-02-15 04:38:12 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 25' response_length=0
+2026-02-15 04:38:12 [debug    ] Weight commands sent via socket successfully k3s=75 knative=25
+2026-02-15 04:38:13 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2914
+2026-02-15 04:38:13 [debug    ] Current weights retrieved via socket weights={'k3s': 75, 'knative': 25}
+2026-02-15 04:38:13 [info     ] Weights updated successfully via HTTP new={'k3s': 75, 'knative': 25} previous={'k3s': 70, 'knative': 30}
+2026-02-15 04:38:13 [info     ] Weights updated                action=OPTIMIZE_COST reason='Healthy state (52ms < 140ms), optimizing cost' weights={'k3s': 75, 'knative': 25}
+2026-02-15 04:38:13 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=63.22093888888888 required_resources=0.436 target_replicas=1
+2026-02-15 04:38:13 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=572.68 p99=52.0
+2026-02-15 04:38:28 [debug    ] HAProxy latency                avg_rtime=9 max_rtime=59997 p99_est=18
+2026-02-15 04:38:28 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 80, 'knative': 20} p99=18.0 serverless_enabled=True
+2026-02-15 04:38:28 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2912
+2026-02-15 04:38:28 [debug    ] Current weights retrieved via socket weights={'k3s': 75, 'knative': 25}
+2026-02-15 04:38:28 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2912
+2026-02-15 04:38:28 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 80' response_length=0
+2026-02-15 04:38:28 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2912
+2026-02-15 04:38:28 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 20' response_length=0
+2026-02-15 04:38:28 [debug    ] Weight commands sent via socket successfully k3s=80 knative=20
+2026-02-15 04:38:28 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2912
+2026-02-15 04:38:28 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-02-15 04:38:28 [info     ] Weights updated successfully via HTTP new={'k3s': 80, 'knative': 20} previous={'k3s': 75, 'knative': 25}
+2026-02-15 04:38:28 [info     ] Weights updated                action=OPTIMIZE_COST reason='Healthy state (18ms < 140ms), optimizing cost' weights={'k3s': 80, 'knative': 20}
+2026-02-15 04:38:28 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=57.37766925925925 required_resources=0.396 target_replicas=1
+2026-02-15 04:38:28 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=575.6 p99=18.0
+2026-02-15 04:38:43 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:38:43 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 85, 'knative': 15} p99=12.0 serverless_enabled=True
+2026-02-15 04:38:43 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2912
+2026-02-15 04:38:43 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-02-15 04:38:43 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2912
+2026-02-15 04:38:43 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 85' response_length=0
+2026-02-15 04:38:43 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2912
+2026-02-15 04:38:43 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 15' response_length=0
+2026-02-15 04:38:43 [debug    ] Weight commands sent via socket successfully k3s=85 knative=15
+2026-02-15 04:38:44 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2911
+2026-02-15 04:38:44 [debug    ] Current weights retrieved via socket weights={'k3s': 85, 'knative': 15}
+2026-02-15 04:38:44 [info     ] Weights updated successfully via HTTP new={'k3s': 85, 'knative': 15} previous={'k3s': 80, 'knative': 20}
+2026-02-15 04:38:44 [info     ] Weights updated                action=OPTIMIZE_COST reason='Healthy state (12ms < 140ms), optimizing cost' weights={'k3s': 85, 'knative': 15}
+2026-02-15 04:38:44 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=66.36784148148148 required_resources=0.458 target_replicas=1
+2026-02-15 04:38:44 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=573.14 p99=12.0
+2026-02-15 04:38:59 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:38:59 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 90, 'knative': 10} p99=10.0 serverless_enabled=True
+2026-02-15 04:38:59 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2913
+2026-02-15 04:38:59 [debug    ] Current weights retrieved via socket weights={'k3s': 85, 'knative': 15}
+2026-02-15 04:38:59 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2913
+2026-02-15 04:38:59 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 90' response_length=0
+2026-02-15 04:38:59 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2913
+2026-02-15 04:38:59 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 10' response_length=0
+2026-02-15 04:38:59 [debug    ] Weight commands sent via socket successfully k3s=90 knative=10
+2026-02-15 04:38:59 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2913
+2026-02-15 04:38:59 [debug    ] Current weights retrieved via socket weights={'k3s': 90, 'knative': 10}
+2026-02-15 04:38:59 [info     ] Weights updated successfully via HTTP new={'k3s': 90, 'knative': 10} previous={'k3s': 85, 'knative': 15}
+2026-02-15 04:38:59 [info     ] Weights updated                action=OPTIMIZE_COST reason='Healthy state (10ms < 140ms), optimizing cost' weights={'k3s': 90, 'knative': 10}
+2026-02-15 04:38:59 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=65.38888888888889 required_resources=0.451 target_replicas=1
+2026-02-15 04:38:59 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=578.18 p99=10.0
+2026-02-15 04:39:14 [debug    ] HAProxy latency                avg_rtime=543 max_rtime=59997 p99_est=1086
+2026-02-15 04:39:14 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=77.28888888888889 required_resources=0.533 target_replicas=1
+2026-02-15 04:39:14 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=39.22 p99=1086.0
+2026-02-15 04:39:29 [debug    ] HAProxy latency                avg_rtime=853 max_rtime=59997 p99_est=1706
+2026-02-15 04:39:30 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=98.52222222222221 required_resources=0.68 target_replicas=1
+2026-02-15 04:39:30 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=35.49 p99=1706.0
+2026-02-15 04:39:45 [debug    ] HAProxy latency                avg_rtime=67 max_rtime=59997 p99_est=134
+2026-02-15 04:39:45 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 95, 'knative': 5} p99=134.0 serverless_enabled=True
+2026-02-15 04:39:45 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2915
+2026-02-15 04:39:45 [debug    ] Current weights retrieved via socket weights={'k3s': 90, 'knative': 10}
+2026-02-15 04:39:45 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2915
+2026-02-15 04:39:45 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 95' response_length=0
+2026-02-15 04:39:45 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2915
+2026-02-15 04:39:45 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 5' response_length=0
+2026-02-15 04:39:45 [debug    ] Weight commands sent via socket successfully k3s=95 knative=5
+2026-02-15 04:39:45 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2913
+2026-02-15 04:39:45 [debug    ] Current weights retrieved via socket weights={'k3s': 95, 'knative': 5}
+2026-02-15 04:39:45 [info     ] Weights updated successfully via HTTP new={'k3s': 95, 'knative': 5} previous={'k3s': 90, 'knative': 10}
+2026-02-15 04:39:45 [info     ] Weights updated                action=OPTIMIZE_COST reason='Healthy state (134ms < 140ms), optimizing cost' weights={'k3s': 95, 'knative': 5}
+2026-02-15 04:39:45 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=112.06666666666666 required_resources=0.773 target_replicas=1
+2026-02-15 04:39:45 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=574.33 p99=134.0
+2026-02-15 04:40:00 [debug    ] HAProxy latency                avg_rtime=11 max_rtime=59997 p99_est=22
+2026-02-15 04:40:00 [info     ] Algorithm 1: Disabling serverless backend (weight=0, allow scale-to-zero)
+2026-02-15 04:40:00 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=22.0 serverless_enabled=False
+2026-02-15 04:40:00 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2910
+2026-02-15 04:40:00 [debug    ] Current weights retrieved via socket weights={'k3s': 95, 'knative': 5}
+2026-02-15 04:40:00 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2910
+2026-02-15 04:40:00 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 100' response_length=0
+2026-02-15 04:40:00 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2912
+2026-02-15 04:40:00 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 0' response_length=0
+2026-02-15 04:40:00 [debug    ] Weight commands sent via socket successfully k3s=100 knative=0
+2026-02-15 04:40:01 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2912
+2026-02-15 04:40:01 [debug    ] Current weights retrieved via socket weights={'k3s': 100, 'knative': 0}
+2026-02-15 04:40:01 [info     ] Weights updated successfully via HTTP new={'k3s': 100, 'knative': 0} previous={'k3s': 95, 'knative': 5}
+2026-02-15 04:40:01 [info     ] Weights updated                action=OPTIMIZE_COST reason='Healthy state (22ms < 140ms), optimizing cost' weights={'k3s': 100, 'knative': 0}
+2026-02-15 04:40:01 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=107.45555555555555 required_resources=0.741 target_replicas=1
+2026-02-15 04:40:01 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=576.46 p99=22.0
+2026-02-15 04:40:16 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:40:16 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=12.0 serverless_enabled=False
+2026-02-15 04:40:16 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=93.1 required_resources=0.642 target_replicas=1
+2026-02-15 04:40:16 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=73.0 p99=12.0
+2026-02-15 04:40:31 [debug    ] HAProxy latency                avg_rtime=238 max_rtime=59997 p99_est=476
+2026-02-15 04:40:31 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=86.76666666666665 required_resources=0.599 target_replicas=1
+2026-02-15 04:40:31 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=35.53 p99=476.0
+2026-02-15 04:40:46 [debug    ] HAProxy latency                avg_rtime=2597 max_rtime=59997 p99_est=5194
+2026-02-15 04:40:46 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=79.548475 required_resources=0.549 target_replicas=1
+2026-02-15 04:40:46 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=36.43 p99=5194.0
+2026-02-15 04:41:01 [debug    ] HAProxy latency                avg_rtime=2614 max_rtime=59997 p99_est=5228
+2026-02-15 04:41:01 [info     ] Algorithm 1: Enabling serverless backend for SCALE_OUT
+2026-02-15 04:41:01 [info     ] Pre-warming Knative service    host=test-app.default.localhost url=http://localhost:8081
+2026-02-15 04:41:01 [warning  ] Knative pre-warm returned non-200 cold_start_ms=0.9822845458984375 status=404
+2026-02-15 04:41:01 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 90, 'knative': 10} p99=5228.0 serverless_enabled=True violation_sec=30
+2026-02-15 04:41:01 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2929
+2026-02-15 04:41:01 [debug    ] Current weights retrieved via socket weights={'k3s': 100, 'knative': 0}
+2026-02-15 04:41:01 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2929
+2026-02-15 04:41:01 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 90' response_length=0
+2026-02-15 04:41:01 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2925
+2026-02-15 04:41:01 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 10' response_length=0
+2026-02-15 04:41:01 [debug    ] Weight commands sent via socket successfully k3s=90 knative=10
+2026-02-15 04:41:01 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2930
+2026-02-15 04:41:01 [debug    ] Current weights retrieved via socket weights={'k3s': 90, 'knative': 10}
+2026-02-15 04:41:01 [info     ] Weights updated successfully via HTTP new={'k3s': 90, 'knative': 10} previous={'k3s': 100, 'knative': 0}
+2026-02-15 04:41:01 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (5228ms > 200ms) for 30s' weights={'k3s': 90, 'knative': 10}
+2026-02-15 04:41:01 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=86.26652472222221 required_resources=0.595 target_replicas=1
+2026-02-15 04:41:01 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=544.44 p99=5228.0
+2026-02-15 04:41:16 [debug    ] HAProxy latency                avg_rtime=3522 max_rtime=59997 p99_est=7044
+2026-02-15 04:41:16 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 80, 'knative': 20} p99=7044.0 serverless_enabled=True violation_sec=45
+2026-02-15 04:41:16 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2932
+2026-02-15 04:41:16 [debug    ] Current weights retrieved via socket weights={'k3s': 90, 'knative': 10}
+2026-02-15 04:41:16 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2932
+2026-02-15 04:41:16 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 80' response_length=0
+2026-02-15 04:41:16 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2930
+2026-02-15 04:41:16 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 20' response_length=0
+2026-02-15 04:41:16 [debug    ] Weight commands sent via socket successfully k3s=80 knative=20
+2026-02-15 04:41:17 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2933
+2026-02-15 04:41:17 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-02-15 04:41:17 [info     ] Weights updated successfully via HTTP new={'k3s': 80, 'knative': 20} previous={'k3s': 90, 'knative': 10}
+2026-02-15 04:41:17 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (7044ms > 200ms) for 45s' weights={'k3s': 80, 'knative': 20}
+2026-02-15 04:41:17 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=92.3963186111111 required_resources=0.638 target_replicas=1
+2026-02-15 04:41:17 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=542.06 p99=7044.0
+2026-02-15 04:41:32 [debug    ] HAProxy latency                avg_rtime=1661 max_rtime=59997 p99_est=3322
+2026-02-15 04:41:32 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 70, 'knative': 30} p99=3322.0 serverless_enabled=True violation_sec=61
+2026-02-15 04:41:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2942
+2026-02-15 04:41:32 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-02-15 04:41:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2942
+2026-02-15 04:41:32 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 70' response_length=0
+2026-02-15 04:41:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2940
+2026-02-15 04:41:32 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 30' response_length=0
+2026-02-15 04:41:32 [debug    ] Weight commands sent via socket successfully k3s=70 knative=30
+2026-02-15 04:41:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2940
+2026-02-15 04:41:32 [debug    ] Current weights retrieved via socket weights={'k3s': 70, 'knative': 30}
+2026-02-15 04:41:32 [info     ] Weights updated successfully via HTTP new={'k3s': 70, 'knative': 30} previous={'k3s': 80, 'knative': 20}
+2026-02-15 04:41:32 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (3322ms > 200ms) for 61s' weights={'k3s': 70, 'knative': 30}
+2026-02-15 04:41:32 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=70.54493555555555 required_resources=0.487 target_replicas=1
+2026-02-15 04:41:32 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=542.96 p99=3322.0
+2026-02-15 04:41:47 [debug    ] HAProxy latency                avg_rtime=575 max_rtime=59997 p99_est=1150
+2026-02-15 04:41:47 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 60, 'knative': 40} p99=1150.0 serverless_enabled=True violation_sec=76
+2026-02-15 04:41:47 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2927
+2026-02-15 04:41:47 [debug    ] Current weights retrieved via socket weights={'k3s': 70, 'knative': 30}
+2026-02-15 04:41:47 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2927
+2026-02-15 04:41:47 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 60' response_length=0
+2026-02-15 04:41:47 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2925
+2026-02-15 04:41:47 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 40' response_length=0
+2026-02-15 04:41:47 [debug    ] Weight commands sent via socket successfully k3s=60 knative=40
+2026-02-15 04:41:48 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2926
+2026-02-15 04:41:48 [debug    ] Current weights retrieved via socket weights={'k3s': 60, 'knative': 40}
+2026-02-15 04:41:48 [info     ] Weights updated successfully via HTTP new={'k3s': 60, 'knative': 40} previous={'k3s': 70, 'knative': 30}
+2026-02-15 04:41:48 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (1150ms > 200ms) for 76s' weights={'k3s': 60, 'knative': 40}
+2026-02-15 04:41:48 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=60.44894999999999 required_resources=0.417 target_replicas=1
+2026-02-15 04:41:48 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=539.06 p99=1150.0
+2026-02-15 04:42:03 [debug    ] HAProxy latency                avg_rtime=21 max_rtime=59997 p99_est=42
+2026-02-15 04:42:03 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 65, 'knative': 35} p99=42.0 serverless_enabled=True
+2026-02-15 04:42:03 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2920
+2026-02-15 04:42:03 [debug    ] Current weights retrieved via socket weights={'k3s': 60, 'knative': 40}
+2026-02-15 04:42:03 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2920
+2026-02-15 04:42:03 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 65' response_length=0
+2026-02-15 04:42:03 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2920
+2026-02-15 04:42:03 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 35' response_length=0
+2026-02-15 04:42:03 [debug    ] Weight commands sent via socket successfully k3s=65 knative=35
+2026-02-15 04:42:04 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2920
+2026-02-15 04:42:04 [debug    ] Current weights retrieved via socket weights={'k3s': 65, 'knative': 35}
+2026-02-15 04:42:04 [info     ] Weights updated successfully via HTTP new={'k3s': 65, 'knative': 35} previous={'k3s': 60, 'knative': 40}
+2026-02-15 04:42:04 [info     ] Weights updated                action=OPTIMIZE_COST reason='Healthy state (42ms < 140ms), optimizing cost' weights={'k3s': 65, 'knative': 35}
+2026-02-15 04:42:04 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=85.28228333333331 required_resources=0.588 target_replicas=1
+2026-02-15 04:42:04 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=573.5 p99=42.0
+2026-02-15 04:42:19 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:42:19 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 70, 'knative': 30} p99=12.0 serverless_enabled=True
+2026-02-15 04:42:19 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2914
+2026-02-15 04:42:19 [debug    ] Current weights retrieved via socket weights={'k3s': 65, 'knative': 35}
+2026-02-15 04:42:19 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2914
+2026-02-15 04:42:19 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 70' response_length=0
+2026-02-15 04:42:19 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2914
+2026-02-15 04:42:19 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 30' response_length=0
+2026-02-15 04:42:19 [debug    ] Weight commands sent via socket successfully k3s=70 knative=30
+2026-02-15 04:42:19 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2914
+2026-02-15 04:42:19 [debug    ] Current weights retrieved via socket weights={'k3s': 70, 'knative': 30}
+2026-02-15 04:42:19 [info     ] Weights updated successfully via HTTP new={'k3s': 70, 'knative': 30} previous={'k3s': 65, 'knative': 35}
+2026-02-15 04:42:19 [info     ] Weights updated                action=OPTIMIZE_COST reason='Healthy state (12ms < 140ms), optimizing cost' weights={'k3s': 70, 'knative': 30}
+2026-02-15 04:42:19 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=114.69632444444443 required_resources=0.791 target_replicas=1
+2026-02-15 04:42:19 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=572.5 p99=12.0
+2026-02-15 04:42:34 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:42:34 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 75, 'knative': 25} p99=12.0 serverless_enabled=True
+2026-02-15 04:42:34 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2913
+2026-02-15 04:42:34 [debug    ] Current weights retrieved via socket weights={'k3s': 70, 'knative': 30}
+2026-02-15 04:42:34 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2913
+2026-02-15 04:42:34 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 75' response_length=0
+2026-02-15 04:42:34 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2913
+2026-02-15 04:42:34 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 25' response_length=0
+2026-02-15 04:42:34 [debug    ] Weight commands sent via socket successfully k3s=75 knative=25
+2026-02-15 04:42:35 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2913
+2026-02-15 04:42:35 [debug    ] Current weights retrieved via socket weights={'k3s': 75, 'knative': 25}
+2026-02-15 04:42:35 [info     ] Weights updated successfully via HTTP new={'k3s': 75, 'knative': 25} previous={'k3s': 70, 'knative': 30}
+2026-02-15 04:42:35 [info     ] Weights updated                action=OPTIMIZE_COST reason='Healthy state (12ms < 140ms), optimizing cost' weights={'k3s': 75, 'knative': 25}
+2026-02-15 04:42:35 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=120.70743555555555 required_resources=0.833 target_replicas=1
+2026-02-15 04:42:35 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=571.85 p99=12.0
+2026-02-15 04:42:50 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:42:50 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 80, 'knative': 20} p99=10.0 serverless_enabled=True
+2026-02-15 04:42:50 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2913
+2026-02-15 04:42:50 [debug    ] Current weights retrieved via socket weights={'k3s': 75, 'knative': 25}
+2026-02-15 04:42:50 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2913
+2026-02-15 04:42:50 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 80' response_length=0
+2026-02-15 04:42:50 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2913
+2026-02-15 04:42:50 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 20' response_length=0
+2026-02-15 04:42:50 [debug    ] Weight commands sent via socket successfully k3s=80 knative=20
+2026-02-15 04:42:50 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2913
+2026-02-15 04:42:50 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-02-15 04:42:50 [info     ] Weights updated successfully via HTTP new={'k3s': 80, 'knative': 20} previous={'k3s': 75, 'knative': 25}
+2026-02-15 04:42:50 [info     ] Weights updated                action=OPTIMIZE_COST reason='Healthy state (10ms < 140ms), optimizing cost' weights={'k3s': 80, 'knative': 20}
+2026-02-15 04:42:50 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=118.46666666666664 required_resources=0.817 target_replicas=1
+2026-02-15 04:42:50 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=571.36 p99=10.0
+2026-02-15 04:43:05 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:43:05 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 85, 'knative': 15} p99=10.0 serverless_enabled=True
+2026-02-15 04:43:05 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2911
+2026-02-15 04:43:05 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-02-15 04:43:05 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2911
+2026-02-15 04:43:05 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 85' response_length=0
+2026-02-15 04:43:05 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2911
+2026-02-15 04:43:05 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 15' response_length=0
+2026-02-15 04:43:05 [debug    ] Weight commands sent via socket successfully k3s=85 knative=15
+2026-02-15 04:43:06 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2911
+2026-02-15 04:43:06 [debug    ] Current weights retrieved via socket weights={'k3s': 85, 'knative': 15}
+2026-02-15 04:43:06 [info     ] Weights updated successfully via HTTP new={'k3s': 85, 'knative': 15} previous={'k3s': 80, 'knative': 20}
+2026-02-15 04:43:06 [info     ] Weights updated                action=OPTIMIZE_COST reason='Healthy state (10ms < 140ms), optimizing cost' weights={'k3s': 85, 'knative': 15}
+2026-02-15 04:43:06 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=115.23333333333332 required_resources=0.795 target_replicas=1
+2026-02-15 04:43:06 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=577.57 p99=10.0
+2026-02-15 04:43:21 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:43:21 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 90, 'knative': 10} p99=10.0 serverless_enabled=True
+2026-02-15 04:43:21 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2911
+2026-02-15 04:43:21 [debug    ] Current weights retrieved via socket weights={'k3s': 85, 'knative': 15}
+2026-02-15 04:43:21 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2911
+2026-02-15 04:43:21 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 90' response_length=0
+2026-02-15 04:43:21 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2911
+2026-02-15 04:43:21 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 10' response_length=0
+2026-02-15 04:43:21 [debug    ] Weight commands sent via socket successfully k3s=90 knative=10
+2026-02-15 04:43:21 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2910
+2026-02-15 04:43:21 [debug    ] Current weights retrieved via socket weights={'k3s': 90, 'knative': 10}
+2026-02-15 04:43:21 [info     ] Weights updated successfully via HTTP new={'k3s': 90, 'knative': 10} previous={'k3s': 85, 'knative': 15}
+2026-02-15 04:43:21 [info     ] Weights updated                action=OPTIMIZE_COST reason='Healthy state (10ms < 140ms), optimizing cost' weights={'k3s': 90, 'knative': 10}
+2026-02-15 04:43:21 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=106.69999999999999 required_resources=0.736 target_replicas=1
+2026-02-15 04:43:21 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=575.58 p99=10.0
+2026-02-15 04:43:36 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:43:36 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 95, 'knative': 5} p99=10.0 serverless_enabled=True
+2026-02-15 04:43:36 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2910
+2026-02-15 04:43:36 [debug    ] Current weights retrieved via socket weights={'k3s': 90, 'knative': 10}
+2026-02-15 04:43:36 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2910
+2026-02-15 04:43:36 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 95' response_length=0
+2026-02-15 04:43:36 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2910
+2026-02-15 04:43:36 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 5' response_length=0
+2026-02-15 04:43:36 [debug    ] Weight commands sent via socket successfully k3s=95 knative=5
+2026-02-15 04:43:37 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2908
+2026-02-15 04:43:37 [debug    ] Current weights retrieved via socket weights={'k3s': 95, 'knative': 5}
+2026-02-15 04:43:37 [info     ] Weights updated successfully via HTTP new={'k3s': 95, 'knative': 5} previous={'k3s': 90, 'knative': 10}
+2026-02-15 04:43:37 [info     ] Weights updated                action=OPTIMIZE_COST reason='Healthy state (10ms < 140ms), optimizing cost' weights={'k3s': 95, 'knative': 5}
+2026-02-15 04:43:37 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=93.78888888888888 required_resources=0.647 target_replicas=1
+2026-02-15 04:43:37 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=576.84 p99=10.0
+2026-02-15 04:43:52 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:43:52 [info     ] Algorithm 1: Disabling serverless backend (weight=0, allow scale-to-zero)
+2026-02-15 04:43:52 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:43:52 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2908
+2026-02-15 04:43:52 [debug    ] Current weights retrieved via socket weights={'k3s': 95, 'knative': 5}
+2026-02-15 04:43:52 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2908
+2026-02-15 04:43:52 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 100' response_length=0
+2026-02-15 04:43:52 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2910
+2026-02-15 04:43:52 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 0' response_length=0
+2026-02-15 04:43:52 [debug    ] Weight commands sent via socket successfully k3s=100 knative=0
+2026-02-15 04:43:53 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2910
+2026-02-15 04:43:53 [debug    ] Current weights retrieved via socket weights={'k3s': 100, 'knative': 0}
+2026-02-15 04:43:53 [info     ] Weights updated successfully via HTTP new={'k3s': 100, 'knative': 0} previous={'k3s': 95, 'knative': 5}
+2026-02-15 04:43:53 [info     ] Weights updated                action=OPTIMIZE_COST reason='Healthy state (10ms < 140ms), optimizing cost' weights={'k3s': 100, 'knative': 0}
+2026-02-15 04:43:53 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=81.06666666666666 required_resources=0.559 target_replicas=1
+2026-02-15 04:43:53 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=573.57 p99=10.0
+2026-02-15 04:44:08 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:44:08 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:44:08 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=73.95555555555555 required_resources=0.51 target_replicas=1
+2026-02-15 04:44:08 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=65.58 p99=10.0
+2026-02-15 04:44:23 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:44:23 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=12.0 serverless_enabled=False
+2026-02-15 04:44:23 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=74.86666666666666 required_resources=0.517 target_replicas=1
+2026-02-15 04:44:23 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=67.87 p99=12.0
+2026-02-15 04:44:38 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:44:38 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:44:38 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=78.74444444444444 required_resources=0.543 target_replicas=1
+2026-02-15 04:44:38 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=64.53 p99=10.0
+2026-02-15 04:44:53 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:44:53 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=12.0 serverless_enabled=False
+2026-02-15 04:44:53 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=77.0 required_resources=0.531 target_replicas=1
+2026-02-15 04:44:53 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=68.01 p99=12.0
+2026-02-15 04:45:08 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:45:08 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:45:08 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=66.96666666666665 required_resources=0.462 target_replicas=1
+2026-02-15 04:45:08 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=70.15 p99=10.0
+2026-02-15 04:45:23 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:45:23 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:45:23 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=55.05555555555555 required_resources=0.38 target_replicas=1
+2026-02-15 04:45:23 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=66.44 p99=10.0
+2026-02-15 04:45:38 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:45:38 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=12.0 serverless_enabled=False
+2026-02-15 04:45:38 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=48.17777777777778 required_resources=0.332 target_replicas=1
+2026-02-15 04:45:38 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=70.37 p99=12.0
+2026-02-15 04:45:53 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:45:53 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=12.0 serverless_enabled=False
+2026-02-15 04:45:53 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=45.511111111111106 required_resources=0.314 target_replicas=1
+2026-02-15 04:45:53 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=76.04 p99=12.0
+2026-02-15 04:46:08 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:46:08 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:46:08 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=45.466666666666654 required_resources=0.314 target_replicas=1
+2026-02-15 04:46:08 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=67.09 p99=10.0
+2026-02-15 04:46:23 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:46:23 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:46:23 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=50.222222222222214 required_resources=0.347 target_replicas=1
+2026-02-15 04:46:23 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=68.37 p99=10.0
+2026-02-15 04:46:38 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:46:38 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=12.0 serverless_enabled=False
+2026-02-15 04:46:38 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=59.17777777777778 required_resources=0.408 target_replicas=1
+2026-02-15 04:46:38 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=73.87 p99=12.0
+2026-02-15 04:46:53 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:46:53 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:46:53 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=67.32222222222222 required_resources=0.465 target_replicas=1
+2026-02-15 04:46:53 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=72.3 p99=10.0
+2026-02-15 04:47:08 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:47:08 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=12.0 serverless_enabled=False
+2026-02-15 04:47:08 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=70.89999999999999 required_resources=0.489 target_replicas=1
+2026-02-15 04:47:08 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=70.79 p99=12.0
+2026-02-15 04:47:23 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:47:23 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=12.0 serverless_enabled=False
+2026-02-15 04:47:24 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=71.56666666666666 required_resources=0.494 target_replicas=1
+2026-02-15 04:47:24 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=67.61 p99=12.0
+2026-02-15 04:47:39 [debug    ] HAProxy latency                avg_rtime=75 max_rtime=59997 p99_est=150
+2026-02-15 04:47:39 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=74.54444444444444 required_resources=0.514 target_replicas=1
+2026-02-15 04:47:39 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=39.48 p99=150.0
+2026-02-15 04:47:54 [debug    ] HAProxy latency                avg_rtime=93 max_rtime=59997 p99_est=186
+2026-02-15 04:47:54 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=83.54444444444444 required_resources=0.576 target_replicas=1
+2026-02-15 04:47:54 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=40.29 p99=186.0
+2026-02-15 04:48:09 [debug    ] HAProxy latency                avg_rtime=12 max_rtime=59997 p99_est=24
+2026-02-15 04:48:09 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=24.0 serverless_enabled=False
+2026-02-15 04:48:09 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=94.23333333333332 required_resources=0.65 target_replicas=1
+2026-02-15 04:48:09 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=71.98 p99=24.0
+2026-02-15 04:48:24 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:48:24 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=12.0 serverless_enabled=False
+2026-02-15 04:48:24 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=98.24444444444444 required_resources=0.678 target_replicas=1
+2026-02-15 04:48:24 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=68.7 p99=12.0
+2026-02-15 04:48:39 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:48:39 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:48:39 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=90.92222222222222 required_resources=0.627 target_replicas=1
+2026-02-15 04:48:39 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=70.35 p99=10.0
+2026-02-15 04:48:54 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:48:54 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:48:54 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=75.76666666666667 required_resources=0.523 target_replicas=1
+2026-02-15 04:48:54 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=75.95 p99=10.0
+2026-02-15 04:49:09 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:49:09 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:49:09 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=60.788888888888884 required_resources=0.419 target_replicas=1
+2026-02-15 04:49:09 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=69.75 p99=10.0
+2026-02-15 04:49:24 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:49:24 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:49:24 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=50.255555555555546 required_resources=0.347 target_replicas=1
+2026-02-15 04:49:24 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=74.46 p99=10.0
+2026-02-15 04:49:39 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:49:39 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:49:39 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=46.16666666666666 required_resources=0.319 target_replicas=1
+2026-02-15 04:49:39 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=69.02 p99=10.0
+2026-02-15 04:49:54 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:49:54 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:49:54 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=48.02222222222221 required_resources=0.331 target_replicas=1
+2026-02-15 04:49:54 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=67.32 p99=10.0
+2026-02-15 04:50:09 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:50:09 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:50:09 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=51.477777777777774 required_resources=0.355 target_replicas=1
+2026-02-15 04:50:09 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=73.48 p99=10.0
+2026-02-15 04:50:24 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:50:24 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:50:24 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=51.58888888888888 required_resources=0.356 target_replicas=1
+2026-02-15 04:50:24 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=70.73 p99=10.0
+2026-02-15 04:50:39 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:50:39 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:50:39 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=47.3 required_resources=0.326 target_replicas=1
+2026-02-15 04:50:39 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=69.11 p99=10.0
+2026-02-15 04:50:54 [debug    ] HAProxy latency                avg_rtime=6 max_rtime=59997 p99_est=12
+2026-02-15 04:50:54 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=12.0 serverless_enabled=False
+2026-02-15 04:50:54 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=42.27777777777777 required_resources=0.292 target_replicas=1
+2026-02-15 04:50:54 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=68.74 p99=12.0
+2026-02-15 04:51:09 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:51:09 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:51:10 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=40.3111111111111 required_resources=0.278 target_replicas=1
+2026-02-15 04:51:10 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=69.17 p99=10.0
+2026-02-15 04:51:25 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:51:25 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:51:25 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=41.099999999999994 required_resources=0.284 target_replicas=1
+2026-02-15 04:51:25 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=72.86 p99=10.0
+2026-02-15 04:51:40 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:51:40 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:51:40 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=43.05555555555555 required_resources=0.297 target_replicas=1
+2026-02-15 04:51:40 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=68.17 p99=10.0
+2026-02-15 04:51:55 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:51:55 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:51:55 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=44.511111111111106 required_resources=0.307 target_replicas=1
+2026-02-15 04:51:55 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=70.49 p99=10.0
+2026-02-15 04:52:10 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:52:10 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:52:10 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=37.67777777777778 required_resources=0.26 target_replicas=1
+2026-02-15 04:52:10 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=69.38 p99=10.0
+2026-02-15 04:52:25 [debug    ] HAProxy latency                avg_rtime=5 max_rtime=59997 p99_est=10
+2026-02-15 04:52:25 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=10.0 serverless_enabled=False
+2026-02-15 04:52:25 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.0069 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=22.799999999999997 required_resources=0.157 target_replicas=1
+2026-02-15 04:52:25 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=72.09 p99=10.0
+2026-02-15 04:52:39 [info     ] Received shutdown signal
+2026-02-15 04:52:39 [info     ] Stopping routing daemon...
+2026-02-15 04:52:39 [info     ] Routing daemon stopped

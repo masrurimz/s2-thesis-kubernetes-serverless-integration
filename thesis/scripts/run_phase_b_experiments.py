@@ -601,9 +601,12 @@ class K6Runner:
             cwd=str(PROJECT_ROOT),
         )
 
-        if result.returncode != 0:
+        # k6 exit code 99 = thresholds crossed (test completed, data valid)
+        if result.returncode not in (0, 99):
             logger.error("k6_failed", returncode=result.returncode, stderr=result.stderr[:500])
             return None
+        if result.returncode == 99:
+            logger.warning("k6_threshold_crossed", scenario=scenario, run_id=run_id)
 
         # k6 handleSummary saves the detailed JSON to k6_results_dir.
         # Read the saved file (stdout contains k6 banner + summary text).
@@ -1037,11 +1040,17 @@ class ExperimentRunner:
                             scenario=scenario, expected=expected, actual=weights)
                 return False
         else:
-            # S3/S4: both backends must have weight > 0
-            if not weights.get("k3s", 0) > 0 or not weights.get("knative", 0) > 0:
-                logger.error("precondition_hybrid_weights_zero",
+            # S3/S4: daemon may adjust weights during warmup (OPTIMIZE_COST
+            # can reduce knative to 0 if latency is healthy). Just verify k3s
+            # has weight > 0 (primary backend must be reachable).
+            if not weights.get("k3s", 0) > 0:
+                logger.error("precondition_hybrid_k3s_zero",
                             scenario=scenario, actual=weights)
                 return False
+            if weights.get("knative", 0) == 0:
+                logger.warning("precondition_hybrid_knative_zero_ok",
+                              scenario=scenario, actual=weights,
+                              reason="daemon OPTIMIZE_COST during warmup")
 
         # 2. Daemon /health scenario matches
         try:
