@@ -27,7 +27,7 @@ logger = structlog.get_logger(__name__)
 @dataclass
 class ScalingConfig:
     """Configuration for Algorithm 2 cluster controller."""
-    alpha: float = 0.0069         # Linear coefficient: replicas per request/s (1/145 RPS saturation)
+    alpha: float = 0.0167         # Linear coefficient: replicas per request/s (1/60 RPS saturation for /fib?n=32)
     beta: float = 0.0            # Base replicas offset (min_replicas enforces floor)
     buffer: float = 1.2          # 20% capacity buffer above computed requirement
     min_replicas: int = 1        # Floor

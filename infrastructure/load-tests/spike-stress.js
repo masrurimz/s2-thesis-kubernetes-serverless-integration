@@ -140,7 +140,7 @@ export function setup() {
   console.log('');
   
   // Verify endpoint is up
-  let warmup = http.get(HYBRID_ENDPOINT + '/work?duration_ms=5');
+  let warmup = http.get(HYBRID_ENDPOINT + '/work?duration_ms=10');
   if (warmup.status !== 200) {
     console.log(`⚠️ Warning: Warmup check returned ${warmup.status}`);
   }
@@ -202,7 +202,7 @@ export function teardown(data) {
   console.log(`Total duration: ${Math.round((Date.now() - data.startTime) / 1000)}s`);
   
   // Final health check
-  let health = http.get(HYBRID_ENDPOINT + '/work?duration_ms=5');
+  let health = http.get(HYBRID_ENDPOINT + '/work?duration_ms=10');
   console.log(`\nPost-test health: ${health.status === 200 ? '✅ HEALTHY' : '❌ DEGRADED'}`);
   
   console.log('\n🔍 Expected Outcomes:');

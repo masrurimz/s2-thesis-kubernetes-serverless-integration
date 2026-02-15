@@ -46,7 +46,7 @@ const BASE_URL = __ENV.BASE_URL || 'http://localhost:8082';
 export default function () {
     const start = Date.now();
     
-    const res = http.get(`${BASE_URL}/work?duration_ms=5`, {
+    const res = http.get(`${BASE_URL}/work?duration_ms=10`, {
         timeout: '5s',
     });
     

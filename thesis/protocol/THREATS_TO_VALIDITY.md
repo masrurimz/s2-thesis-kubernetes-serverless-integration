@@ -149,6 +149,48 @@ GRU model trained on synthetic traffic patterns:
 
 ---
 
+## Quinary Threat: Workload Parameterization Sensitivity
+
+### The Problem
+
+The per-request work duration (`duration_ms`) directly determines single-pod saturation capacity and therefore controls which scaling regimes the trace-driven workload exercises.
+
+### Evidence
+
+| Parameter | Initial (v1) | Corrected (v2) |
+|-----------|--------------|-----------------|
+| `duration_ms` | 5 | 10 |
+| Single-pod R_sat | ~145 RPS | ~50 RPS |
+| α (1/R_sat) | 0.0069 | 0.02 |
+| Peak trace (164 RPS) | 1.13× saturation (1 replica) | 3.28× saturation (4 replicas) |
+| Mean trace (73 RPS) | 0.50× saturation (1 replica) | 1.46× saturation (2 replicas) |
+| Trace stages needing >1 replica | ~10% | ~85% |
+
+### Impact
+
+Phase B v1 (with `duration_ms=5`) produced a workload where 90% of trace stages fit within a single pod. This meant:
+- Algorithm 2 (replica scaling) rarely triggered scale-up
+- Algorithm 1 (routing) had no overload condition to route around
+- S3 vs S4 comparison was effectively "all scenarios idle" — no differentiation possible
+
+### Root Cause
+
+Saturation calibration was performed but the replay scaling factor $g=33$ was set to match the old R_sat (~145 RPS). The combination of high single-pod capacity and moderate trace replay rates eliminated the multi-pod regime that the experiment was designed to test.
+
+### Lesson Learned
+
+**Always verify that the chosen parameterization places the workload trace in the target scaling regime.** A quick check: compute `max(trace_rps) / R_sat` and `mean(trace_rps) / R_sat`. If both ratios are ≤ 1, the workload will not exercise scaling mechanisms.
+
+### Mitigation
+
+1. **v2 attempt:** Recalibrated to `duration_ms=10` (~50 RPS saturation). However, the busy-loop in `/work` monopolized the single Go thread (`GOMAXPROCS=1`), preventing health checks from responding under overload. HPA saw ~1% CPU because the runtime could not schedule metrics collection. Pods restarted before HPA could react.
+2. **v3 (final):** Switched to `/fib?n=32` (~60 RPS saturation). Recursive Fibonacci yields to the Go scheduler between function calls, enabling correct CPU reporting (400-500% under load), stable health checks, and proper HPA/Algorithm 2 scaling.
+3. Verified that 85% of ClarkNet stages now exceed single-pod capacity (α=0.0167, peak→4 replicas, mean→2 replicas)
+4. Phase B v1 and v2 data preserved as negative results (demonstrates threat)
+5. Documented as explicit threat in evaluation plan (Section 3.5.7, threat #12)
+
+---
+
 ## Methodological Threats
 
 ### Randomization
@@ -178,6 +220,7 @@ GRU model trained on synthetic traffic patterns:
 | Threat | Severity | Mitigation | Thesis Impact |
 |--------|----------|------------|---------------|
 | S1 localhost bias | **Critical** | Documented + honest framing | Limits performance claims |
+| Workload parameterization | **High** | Recalibrated 5ms→10ms; documented | Invalidated Phase B v1; corrected in v2 |
 | Load insufficiency | Medium | Acknowledged | Limits predictive advantage proof |
 | Synthetic training data | Medium | Clearly labeled | Limits generalization claims |
 | Fixed duration | Low | Documented | Minor - 5 min sufficient |

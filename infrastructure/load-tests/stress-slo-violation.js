@@ -69,7 +69,7 @@ export function setup() {
   console.log('');
   
   // Verify endpoint works
-  let warmup = http.get(TARGET_URL + '/work?duration_ms=5');
+  let warmup = http.get(TARGET_URL + '/work?duration_ms=10');
   if (warmup.status !== 200) {
     console.log(`⚠️ Health check failed: ${warmup.status}`);
   }

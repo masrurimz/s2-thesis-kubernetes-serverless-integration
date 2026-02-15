@@ -208,10 +208,14 @@ Start
 |-------|--------|-------------|
 | A0 | ✅ Complete | Evidence documented |
 | A1 | ✅ Complete | PREDICTIVE triggered, metrics collected |
-| B0-B4 | ✅ Complete | 20 runs across 4 scenarios, stats computed |
+| B0-B4 (v1) | ⚠️ Invalidated | Workload parameterization insufficient — `duration_ms=5` (~145 RPS saturation) meant trace peak only 1.13× capacity; scaling mechanisms not exercised |
+| B (v2) | ⚠️ Invalidated | `duration_ms=10` busy-loop blocked Go scheduler — health checks failed, HPA saw ~1% CPU under full load |
+| B (v3) | 🔄 Redesigned | Switched to `/fib?n=32` (~60 RPS saturation); cooperative scheduling enables correct HPA/CPU reporting. α=0.0167. Awaiting re-execution. |
 
 ---
 
 **Plan created:** 2026-02-12  
-**Experiments completed:** 2026-02-13  
-**Next milestone:** Thesis results chapter write-up
+**Phase B v1 completed:** 2026-02-13 (invalidated due to workload parameterization — see THREATS_TO_VALIDITY.md)  
+**Phase B v2 invalidated:** 2026-02-15 (busy-loop blocked Go scheduler)  
+**Phase B v3 redesign:** 2026-02-15 (switched to /fib?n=32)  
+**Next milestone:** Re-run Phase B with corrected parameterization, then thesis results chapter write-up
