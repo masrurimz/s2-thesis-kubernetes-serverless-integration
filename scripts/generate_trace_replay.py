@@ -118,7 +118,7 @@ export const options = {{
 }};
 
 const BASE_URL = __ENV.TARGET_URL || __ENV.BASE_URL || 'http://localhost:18082';
-const ENDPOINT = __ENV.ENDPOINT || '/work?duration_ms=5';
+const ENDPOINT = __ENV.ENDPOINT || '/work?duration_ms=10';
 
 export function setup() {{
     console.log('\\n🔬 ClarkNet Trace-Driven Replay');

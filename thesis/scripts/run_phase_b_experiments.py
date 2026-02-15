@@ -584,7 +584,7 @@ class K6Runner:
             K6_PATH, "run",
             "--out", "json=/dev/null",  # disable verbose json streaming
             "-e", f"TARGET_URL={TARGET_URL}",
-            "-e", "ENDPOINT=/work?duration_ms=5",
+            "-e", "ENDPOINT=/fib?n=32",
             "-e", f"SCENARIO={scenario}",
             "-e", f"RUN_ID={run_id}",
             "-e", f"RESULTS_DIR={k6_results_dir}",
@@ -917,10 +917,10 @@ class ExperimentRunner:
                 daemon_config={
                     "interval": 15, "haproxy_host": HAPROXY_HOST,
                     "haproxy_port": HAPROXY_SOCKET_PORT, "gru_url": GRU_URL,
-                    "endpoint": "/work?duration_ms=5",
-                    "gomaxprocs": 1, "work_duration_ms": 5,
+                    "endpoint": "/fib?n=32",
+                    "gomaxprocs": 1, "fib_n": 32,
                 },
-                scaling_config={"alpha": 0.0069, "beta": 0.0, "buffer": 1.2,
+                scaling_config={"alpha": 0.0167, "beta": 0.0, "buffer": 1.2,
                                "min_replicas": 1, "max_replicas": 10},
                 timestamp=datetime.now().isoformat(),
             )

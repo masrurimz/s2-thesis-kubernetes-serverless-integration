@@ -75,13 +75,18 @@ Pre-experiment validation tests to confirm that testbed mechanisms function corr
 - HPA overrides `kubectl scale` after its 5-minute stabilization window (T3). **This mandates that S3/S4 delete HPA before Algorithm 2 can operate.**
 - KPA cold start: ~1.2 seconds. Scale-up 1→7 pods under concurrent load; scale-to-zero ~60 seconds after idle (T4).
 - KPA uses concurrency-based scaling, requiring workloads with meaningful processing time (not just lightweight health checks) to trigger scaling (T4).
-- All system evaluation experiments (Phases A1, B, C) use the `/work?duration_ms=5` endpoint, which performs a deterministic CPU busy-loop for 5 milliseconds per request. Combined with `GOMAXPROCS=1` (single Go runtime thread), this creates predictable per-replica capacity (~145 RPS) and linear queuing under overload.
+- All system evaluation experiments (Phases A1, B, C) use the `/fib?n=32` endpoint, which computes recursive Fibonacci numbers as a CPU-intensive workload. Unlike a busy-loop (`/work`), recursive Fibonacci yields to the Go runtime scheduler between function calls, allowing health checks, metrics reporting, and Prometheus scraping to operate correctly even under full CPU saturation. Combined with `GOMAXPROCS=1` (single Go runtime thread), this creates predictable per-replica capacity (~60 RPS) and linear queuing under overload.
+
+> **Workload recalibration note:** Two iterations were required to reach the final parameterization:
+> 1. **v1 (`/work?duration_ms=5`):** ~145 RPS single-pod saturation. ClarkNet peak (164 RPS) only reached 1.13× saturation — insufficient for multi-replica scaling.
+> 2. **v2 (`/work?duration_ms=10`):** ~50 RPS saturation. However, the busy-loop monopolized the single Go thread (`GOMAXPROCS=1`), preventing health checks from responding under overload. Kubernetes restarted pods before HPA could react, and CPU utilization was reported as ~1% (the runtime could not schedule metrics collection).
+> 3. **v3 (`/fib?n=32`, final):** ~60 RPS saturation. Recursive Fibonacci cooperates with the Go scheduler, enabling correct CPU reporting (~400-500% under load), stable health checks, and proper HPA/Algorithm 2 scaling. At this parameterization, 85% of ClarkNet trace stages exceed single-pod capacity (peak at 2.73× saturation requiring ~4 replicas, mean at 1.22× requiring ~2 replicas).
 
 #### Phase A1: Mechanism Validation (Validasi Mekanisme)
 
 A controlled ramp-load experiment to validate that individual system mechanisms function correctly:
 
-- **Workload profile (k6 synthetic):** Baseline (60s @ 20 RPS) → Ramp (60s @ 20→100 RPS) → Peak (120s @ 100 RPS). All requests target `/work?duration_ms=5` to ensure non-trivial processing time.
+- **Workload profile (k6 synthetic):** Baseline (60s @ 20 RPS) → Ramp (60s @ 20→100 RPS) → Peak (120s @ 100 RPS). All requests target `/fib?n=32` to ensure non-trivial, scheduler-cooperative CPU processing.
 - **Purpose:** Confirm that weight shifting, serverless engagement, SLO monitoring, PREDICTIVE action triggering, Kubernetes replica scaling via Algorithm 2, and traffic return to Kubernetes all operate as designed.
 - **Success criteria:**
   1. In S4, Algorithm 1 engages Knative before sustained SLO violation during the ramp (predictive trigger).
@@ -92,7 +97,7 @@ A controlled ramp-load experiment to validate that individual system mechanisms 
 
 The primary comparative evaluation with statistical rigor, using realistic time-varying workload derived from ClarkNet trace replay:
 
-- **Workload:** ClarkNet trace-driven replay using 30-second buckets and k6 `ramping-arrival-rate` stages (Section 3.2.4). Replay duration per run is fixed (e.g., 20 minutes) and recorded in the run manifest. A replay scaling factor $g$ is applied to fit testbed capacity and kept constant across all scenarios. Based on single-replica saturation calibration (~145 RPS for 5ms work with `GOMAXPROCS=1`), the scaling factor is set to $g = 33$, producing a peak replay rate of ~164 RPS (1.13× saturation) and mean of ~73 RPS (well within healthy range).
+- **Workload:** ClarkNet trace-driven replay using 30-second buckets and k6 `ramping-arrival-rate` stages (Section 3.2.4). Replay duration per run is fixed (e.g., 20 minutes) and recorded in the run manifest. A replay scaling factor $g$ is applied to fit testbed capacity and kept constant across all scenarios. Based on single-replica saturation calibration (~60 RPS for `/fib?n=32` with `GOMAXPROCS=1`), the scaling factor is set to $g = 33$, producing a peak replay rate of ~164 RPS (2.73× saturation, requiring ~4 replicas) and mean of ~73 RPS (1.22× saturation, requiring ~2 replicas). At this parameterization, 85% of ClarkNet trace stages exceed single-pod capacity, ensuring that scaling and routing mechanisms are exercised throughout each run.
 - **Replication:** $n = 5$ runs per scenario × 4 scenarios = 20 total runs.
 - **Randomization:** Run order randomized using `random.shuffle()` to control for temporal confounds (e.g., system warm-up, background processes).
 - **Cool-down:** 60-second pause between consecutive runs plus explicit system reset (see Section 3.5.4).
@@ -139,7 +144,7 @@ Stress the system with controlled, repeatable bursts to quantify responsiveness 
    - Prometheus configured to scrape: HAProxy stats endpoint, routing daemon metrics endpoint, Kubernetes metrics
 3. **Start GRU prediction server** (FastAPI) and confirm health endpoint responds.
 4. **Start routing daemon** with: control interval = 15s, logging enabled (structured JSON), Prometheus exporter enabled.
-5. **Application workload configuration:** The test application exposes a `/work?duration_ms=5` endpoint with `GOMAXPROCS=1` to create deterministic, single-threaded processing. CPU limit is 500m, memory limit 128Mi. Each replica saturates at approximately 145 RPS.
+5. **Application workload configuration:** The test application exposes a `/fib?n=32` endpoint with `GOMAXPROCS=1` to create CPU-intensive, scheduler-cooperative processing (~8ms per call). CPU limit is 500m, memory limit 128Mi. Each replica saturates at approximately 60 RPS.
 
 #### (B) Per-Run Reset Procedure
 
@@ -249,7 +254,7 @@ The experimental evaluation is subject to the following known threats, documente
 
 6. **Model coefficient drift:** The resource allocation coefficients ($\alpha, \beta$) are calibrated on the testbed; changes in container limits, application version, or node resources require recalibration to keep scaling behavior comparable.
 
-7. **Single-threaded application constraint:** The test application is configured with `GOMAXPROCS=1`, restricting each pod to single-threaded request processing. This creates deterministic, reproducible saturation behavior but does not represent typical multi-threaded web applications. Results should be interpreted in the context of this controlled bottleneck.
+7. **Single-threaded application constraint:** The test application is configured with `GOMAXPROCS=1`, restricting each pod to single-threaded request processing via recursive Fibonacci computation (`/fib?n=32`, ~8ms per call, ~60 RPS saturation). Unlike a busy-loop, Fibonacci yields to the Go scheduler, enabling correct CPU reporting and health check responsiveness. This creates reproducible saturation behavior but does not represent typical multi-threaded web applications. Results should be interpreted in the context of this controlled bottleneck.
 
 8. **Implementation bug invalidation:** Early Phase B and Phase C experiment data (prior to 2026-02-14) were invalidated due to three implementation bugs in the SLO monitor, Algorithm 1 priority ordering, and Prometheus scraping configuration. All reported results are from post-fix experiments.
 
@@ -258,3 +263,5 @@ The experimental evaluation is subject to the following known threats, documente
 10. **Sample size:** With $n = 5$ runs per scenario, statistical power is limited for detecting moderate effect sizes. Results are interpreted as mechanism validation rather than definitive superiority claims.
 
 11. **Autoscaler mutual exclusion:** HPA and Algorithm 2 cannot coexist on the same Deployment (validated in Phase A0). This means S1 (HPA) and S3/S4 (Algorithm 2) use fundamentally different scaling mechanisms, which may confound direct performance comparisons between native and custom autoscaling approaches.
+
+12. **Workload parameterization sensitivity:** The per-request computation directly determines single-pod capacity and thus the scaling behavior observed. Three iterations were required: (a) `/work?duration_ms=5` (~145 RPS) was too light for scaling; (b) `/work?duration_ms=10` (~50 RPS) blocked the Go scheduler, preventing health checks and CPU reporting; (c) `/fib?n=32` (~60 RPS) uses scheduler-cooperative CPU work that enables correct HPA and Algorithm 2 behavior. The final parameterization ensures the ClarkNet trace exercises multi-replica scaling across all scenarios (peak at 2.73× saturation requiring ~4 replicas, mean at 1.22× requiring ~2 replicas). Results are specific to this parameterization and may differ at other service times.

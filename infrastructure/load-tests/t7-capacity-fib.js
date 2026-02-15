@@ -53,7 +53,7 @@ export function setup() {
     console.log('\n🔬 T7b: /fib?n=25 Capacity Envelope');
     console.log('Ramp: 10 → 25 → 50 → 75 → 100 → 150 → 200 → 300 → 400 → 500 RPS');
     console.log('Duration: 4.75 min');
-    const warmup = http.get(`${BASE_URL}/work?duration_ms=5`);
+    const warmup = http.get(`${BASE_URL}/work?duration_ms=10`);
     return { startTime: Date.now() };
 }
 
