@@ -342,7 +342,9 @@ class ScenarioResetter:
         """S1: ensure HPA, delete any manual scaling artifacts."""
         # Delete HPA if it exists (clean slate), then recreate
         _kubectl(["delete", "hpa", DEPLOYMENT, "--ignore-not-found"])
-        time.sleep(2)
+        # Scale to 1 replica baseline before HPA takes over
+        _kubectl(["scale", f"deployment/{DEPLOYMENT}", "--replicas=1"])
+        time.sleep(5)
         r = _kubectl([
             "autoscale", f"deployment/{DEPLOYMENT}",
             "--cpu-percent=50", "--min=1", "--max=10",
