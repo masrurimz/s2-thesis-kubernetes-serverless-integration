@@ -122,7 +122,7 @@ configure_node_isolation() {
         --patch '{"data":{"kubernetes.podspec-nodeselector":"enabled"}}'
     
     # Patch Kourier gateway to run on infra node
-    kubectl -n kourier-system patch deploy kourier-gateway \
+    kubectl -n kourier-system patch deploy 3scale-kourier-gateway \
         --type='json' \
         -p='[{"op":"add","path":"/spec/template/spec/nodeSelector","value":{"node-type":"infra"}}]'
     
