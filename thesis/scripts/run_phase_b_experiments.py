@@ -121,13 +121,29 @@ class ExperimentResult:
     desired_replicas_final: int = 0
     available_replicas_final: int = 0
 
+    # Control-loop latency (Table 3-5)
+    control_loop_latency_avg_ms: float = 0.0
+
+    # Algorithm 2 derived metrics (Table 3-6)
+    scale_up_latency_sec: float = 0.0
+    oscillation_index: int = 0
+
     # Cost proxy metrics (Table 3-7)
     k8s_weight_time_product: float = 0.0
     serverless_weight_time_product: float = 0.0
+    k8s_replica_seconds: float = 0.0
+    knative_active_seconds: float = 0.0
 
     # GRU metrics (S4 only)
     gru_predictions_used: int = 0
     gru_predictions_failed: int = 0
+
+    # Resource utilization (Table 3-7, via metrics-server)
+    avg_cpu_millicores: float = 0.0
+    peak_cpu_millicores: float = 0.0
+    avg_memory_mib: float = 0.0
+    peak_memory_mib: float = 0.0
+    resource_utilization_path: str = ""
 
     # Run metadata
     duration_sec: int = 0
@@ -884,7 +900,8 @@ class MetricExporter:
 
         def _mean_val(key: str) -> float:
             ts = series.get(key, [])
-            return np.mean([v for _, v in ts]) if ts else 0.0
+            vals = [v for _, v in ts if np.isfinite(v)]
+            return float(np.mean(vals)) if vals else 0.0
 
         def _counter_delta(key: str) -> float:
             ts = series.get(key, [])
@@ -904,6 +921,36 @@ class MetricExporter:
         k3s_ts = series.get("daemon_weight_k3s", [])
         weight_changes = sum(1 for i in range(1, len(k3s_ts)) if k3s_ts[i][1] != k3s_ts[i-1][1])
 
+        # k8s_replica_seconds: trapezoidal integral of desired replicas × time
+        k8s_replica_seconds = self._weight_time_integral(series.get("k8s_desired_replicas", []))
+
+        # knative_active_seconds: sum of time intervals where knative weight > 0
+        knative_active_seconds = 0.0
+        for i in range(1, len(kn_series)):
+            if kn_series[i][1] > 0 or kn_series[i-1][1] > 0:
+                knative_active_seconds += kn_series[i][0] - kn_series[i-1][0]
+
+        # Oscillation index: direction changes in desired_replicas series
+        desired_ts = series.get("k8s_desired_replicas", [])
+        oscillations = 0
+        for i in range(2, len(desired_ts)):
+            prev_dir = desired_ts[i-1][1] - desired_ts[i-2][1]
+            curr_dir = desired_ts[i][1] - desired_ts[i-1][1]
+            if (prev_dir > 0 and curr_dir < 0) or (prev_dir < 0 and curr_dir > 0):
+                oscillations += 1
+
+        # Scale-up latency: time from first scale-up event to ready replicas matching desired
+        avail_ts = series.get("k8s_available_replicas", [])
+        scale_up_latency = 0.0
+        if desired_ts and avail_ts:
+            initial_desired = desired_ts[0][1] if desired_ts else 0
+            first_scale_up_t = next((t for t, v in desired_ts if v > initial_desired), None)
+            if first_scale_up_t is not None:
+                target_at_scale = next((v for t, v in desired_ts if t >= first_scale_up_t), initial_desired)
+                ready_t = next((t for t, v in avail_ts if t >= first_scale_up_t and v >= target_at_scale), None)
+                if ready_t is not None:
+                    scale_up_latency = ready_t - first_scale_up_t
+
         return {
             "prom_p99_ms": _mean_val("prom_p99_ms"),
             "scale_up_success": int(_counter_delta("k8s_scale_up_success")),
@@ -921,6 +968,10 @@ class MetricExporter:
             "daemon_decision_latency_avg_ms": _mean_val("daemon_decision_latency_ms"),
             "cpu_usage_avg_cores": _mean_val("cpu_usage_cores"),
             "memory_usage_avg_bytes": _mean_val("memory_usage_bytes"),
+            "k8s_replica_seconds": k8s_replica_seconds,
+            "knative_active_seconds": knative_active_seconds,
+            "oscillation_index": oscillations,
+            "scale_up_latency_sec": scale_up_latency,
         }
 
     @staticmethod
@@ -1026,6 +1077,139 @@ class StatisticalAnalyzer:
 
 
 # ---------------------------------------------------------------------------
+# Resource utilization poller  (s2-a2k)
+# ---------------------------------------------------------------------------
+
+class ResourcePoller:
+    """Poll kubectl metrics-server API for per-pod CPU/memory during experiment runs."""
+
+    def __init__(self, poll_interval_sec: int = 15):
+        self._poll_interval = poll_interval_sec
+        self._stop_event = threading.Event()
+        self._thread: Optional[threading.Thread] = None
+        self._samples: List[Dict[str, Any]] = []
+        self._lock = threading.Lock()
+
+    @staticmethod
+    def _parse_cpu(value: str) -> float:
+        """Parse Kubernetes CPU string to millicores. E.g. '882019n' → 0.882, '1m' → 1.0."""
+        try:
+            if value.endswith("n"):
+                return int(value[:-1]) / 1_000_000
+            if value.endswith("u"):
+                return int(value[:-1]) / 1000
+            if value.endswith("m"):
+                return int(value[:-1])
+            return float(value) * 1000
+        except (ValueError, IndexError):
+            return 0.0
+
+    @staticmethod
+    def _parse_memory(value: str) -> float:
+        """Parse Kubernetes memory string to MiB. E.g. '40144Ki' → ~39.2."""
+        if value.endswith("Ki"):
+            return int(value[:-2]) / 1024
+        if value.endswith("Mi"):
+            return int(value[:-2])
+        if value.endswith("Gi"):
+            return int(value[:-2]) * 1024
+        return int(value) / (1024 * 1024)
+
+    def _poll_once(self) -> None:
+        """Single poll of metrics-server API via kubectl."""
+        try:
+            r = _run_cmd(
+                [KUBECTL_PATH, "get", "--raw",
+                 "/apis/metrics.k8s.io/v1beta1/namespaces/default/pods"],
+                timeout=10,
+            )
+            if r.returncode != 0:
+                return
+            data = json.loads(r.stdout)
+            ts = time.time()
+            for item in data.get("items", []):
+                labels = item.get("metadata", {}).get("labels", {})
+                pod_name = item.get("metadata", {}).get("name", "")
+                is_k8s = labels.get("app") == "test-app-warm"
+                is_knative = "serving.knative.dev/service" in labels
+                if not (is_k8s or is_knative):
+                    continue
+                for container in item.get("containers", []):
+                    cpu_str = container.get("usage", {}).get("cpu", "0n")
+                    mem_str = container.get("usage", {}).get("memory", "0Ki")
+                    sample = {
+                        "timestamp": ts,
+                        "pod": pod_name,
+                        "backend": "k8s" if is_k8s else "knative",
+                        "cpu_millicores": self._parse_cpu(cpu_str),
+                        "memory_mib": self._parse_memory(mem_str),
+                    }
+                    with self._lock:
+                        self._samples.append(sample)
+        except Exception as e:
+            logger.debug("resource_poll_failed", error=str(e))
+
+    def _poll_loop(self) -> None:
+        """Background polling loop."""
+        while not self._stop_event.is_set():
+            self._poll_once()
+            self._stop_event.wait(self._poll_interval)
+
+    def start(self) -> None:
+        """Start background polling thread."""
+        with self._lock:
+            self._samples = []
+        self._stop_event.clear()
+        self._thread = threading.Thread(target=self._poll_loop, daemon=True)
+        self._thread.start()
+
+    def stop(self) -> None:
+        """Stop background polling thread."""
+        self._stop_event.set()
+        if self._thread is not None:
+            self._thread.join(timeout=5)
+            self._thread = None
+
+    def get_summary(self, output_dir: Path) -> Dict[str, float]:
+        """Compute avg/peak CPU and memory, save raw samples to JSON."""
+        with self._lock:
+            samples = list(self._samples)
+
+        output_dir.mkdir(parents=True, exist_ok=True)
+        save_path = output_dir / "resource_utilization.json"
+        with open(save_path, "w") as f:
+            json.dump(samples, f, indent=2)
+
+        if not samples:
+            return {
+                "avg_cpu_millicores": 0.0,
+                "peak_cpu_millicores": 0.0,
+                "avg_memory_mib": 0.0,
+                "peak_memory_mib": 0.0,
+                "resource_utilization_path": str(save_path),
+            }
+
+        # Aggregate per-timestamp (sum across pods), then compute avg/peak
+        from collections import defaultdict
+        ts_cpu: Dict[float, float] = defaultdict(float)
+        ts_mem: Dict[float, float] = defaultdict(float)
+        for s in samples:
+            ts_cpu[s["timestamp"]] += s["cpu_millicores"]
+            ts_mem[s["timestamp"]] += s["memory_mib"]
+
+        cpu_vals = list(ts_cpu.values())
+        mem_vals = list(ts_mem.values())
+
+        return {
+            "avg_cpu_millicores": float(np.mean(cpu_vals)),
+            "peak_cpu_millicores": float(max(cpu_vals)),
+            "avg_memory_mib": float(np.mean(mem_vals)),
+            "peak_memory_mib": float(max(mem_vals)),
+            "resource_utilization_path": str(save_path),
+        }
+
+
+# ---------------------------------------------------------------------------
 # Main experiment runner
 # ---------------------------------------------------------------------------
 
@@ -1050,6 +1234,7 @@ class ExperimentRunner:
             namespace="default",
         )
         self.analyzer = StatisticalAnalyzer()
+        self.resource_poller = ResourcePoller()
 
     def run_single(
         self,
@@ -1113,8 +1298,9 @@ class ExperimentRunner:
                 logger.error("precondition_check_failed", scenario=scenario, run_id=run_id)
                 return None
 
-            # Record t_start
+            # Record t_start and begin resource polling
             t_start = time.time()
+            self.resource_poller.start()
 
             # (C.2) Execute k6 trace replay
             k6_summary = self.k6.run(scenario, run_id, run_dir)
@@ -1122,6 +1308,9 @@ class ExperimentRunner:
             # (C.3) Post-k6 cooldown to capture delayed scaling effects
             logger.info("cooldown_start", seconds=COOLDOWN_SEC)
             time.sleep(COOLDOWN_SEC)
+
+            # Stop resource poller before recording t_end
+            self.resource_poller.stop()
 
             # Record t_end
             t_end = time.time()
@@ -1156,6 +1345,9 @@ class ExperimentRunner:
                 if hpa_metrics:
                     prom_summary.update(hpa_metrics)
 
+            # Collect resource utilization from poller
+            resource_summary = self.resource_poller.get_summary(run_dir)
+
             # Build result
             k6m = k6_summary.get("metrics", {}) if k6_summary else {}
             replay_manifest = json.loads(REPLAY_MANIFEST.read_text()) if REPLAY_MANIFEST.exists() else {}
@@ -1181,6 +1373,7 @@ class ExperimentRunner:
                 optimize_cost_count=daemon_status.get("optimize_cost_count", 0),
                 weight_change_count=prom_summary.get("weight_change_count", 0),
                 time_in_serverless_pct=prom_summary.get("time_in_serverless_pct", 0),
+                control_loop_latency_avg_ms=prom_summary.get("daemon_decision_latency_avg_ms", 0),
                 # Algorithm 2
                 scale_up_events=prom_summary.get("scale_up_success", 0) + prom_summary.get("scale_up_fail", 0),
                 scale_down_events=prom_summary.get("scale_down_success", 0) + prom_summary.get("scale_down_fail", 0),
@@ -1188,12 +1381,22 @@ class ExperimentRunner:
                 scale_down_success=prom_summary.get("scale_down_success", 0),
                 desired_replicas_final=prom_summary.get("desired_replicas_final", 0),
                 available_replicas_final=prom_summary.get("available_replicas_final", 0),
+                scale_up_latency_sec=prom_summary.get("scale_up_latency_sec", 0),
+                oscillation_index=prom_summary.get("oscillation_index", 0),
                 # Cost proxy
                 k8s_weight_time_product=prom_summary.get("k8s_weight_time", 0),
                 serverless_weight_time_product=prom_summary.get("kn_weight_time", 0),
+                k8s_replica_seconds=prom_summary.get("k8s_replica_seconds", 0),
+                knative_active_seconds=prom_summary.get("knative_active_seconds", 0),
                 # GRU
                 gru_predictions_used=prom_summary.get("predictions_used", 0),
                 gru_predictions_failed=prom_summary.get("predictions_failed", 0),
+                # Resource utilization (metrics-server)
+                avg_cpu_millicores=resource_summary.get("avg_cpu_millicores", 0),
+                peak_cpu_millicores=resource_summary.get("peak_cpu_millicores", 0),
+                avg_memory_mib=resource_summary.get("avg_memory_mib", 0),
+                peak_memory_mib=resource_summary.get("peak_memory_mib", 0),
+                resource_utilization_path=resource_summary.get("resource_utilization_path", ""),
                 # Run metadata
                 duration_sec=replay_manifest.get("duration_sec", 1200),
                 t_start=t_start,
@@ -1208,6 +1411,13 @@ class ExperimentRunner:
                 provision_log_path=str(provision_log_path),
             )
 
+            # Fix 1 (s2-nsw): Compute prediction_usage_rate from daemon decision counts
+            total_decisions = (result.maintain_count + result.scale_out_count
+                               + result.predictive_count + result.optimize_cost_count)
+            result.prediction_usage_rate = (
+                result.gru_predictions_used / total_decisions * 100
+            ) if total_decisions > 0 else 0.0
+
             # Save result
             with open(run_dir / "result.json", "w") as f:
                 json.dump(asdict(result), f, indent=2)
@@ -1217,6 +1427,7 @@ class ExperimentRunner:
             return result
 
         finally:
+            self.resource_poller.stop()
             self.provisioner.stop()
             self.daemon.stop(daemon_proc)
 
