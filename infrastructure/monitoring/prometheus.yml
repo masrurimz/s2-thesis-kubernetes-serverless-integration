@@ -42,6 +42,14 @@ scrape_configs:
       - targets: ['host.docker.internal:9100']
     scrape_interval: 30s
 
+  # Routing daemon metrics used by Phase B experiment runner
+  - job_name: 'routing-daemon'
+    static_configs:
+      - targets: ['host.docker.internal:9104']
+    scrape_interval: 15s
+    metrics_path: '/metrics'
+    scheme: 'http'
+
 # Storage settings configured via CLI flags in docker-compose.yml
 # (--storage.tsdb.retention.time=1h, --storage.tsdb.retention.size=512MB)
 

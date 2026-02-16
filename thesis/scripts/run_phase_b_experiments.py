@@ -1149,6 +1149,13 @@ class ExperimentRunner:
             k6_files = list((run_dir / "k6").glob("clarknet_replay_*.json")) if (run_dir / "k6").exists() else []
             k6_summary_path = str(k6_files[0]) if k6_files else ""
 
+            # (D.2) For S1, collect HPA/deployment replica metrics via kubectl
+            #       (daemon Algorithm 2 metrics are only emitted for S3/S4)
+            if scenario == "s1-k8s-only":
+                hpa_metrics = self._collect_hpa_metrics()
+                if hpa_metrics:
+                    prom_summary.update(hpa_metrics)
+
             # Build result
             k6m = k6_summary.get("metrics", {}) if k6_summary else {}
             replay_manifest = json.loads(REPLAY_MANIFEST.read_text()) if REPLAY_MANIFEST.exists() else {}
@@ -1212,6 +1219,68 @@ class ExperimentRunner:
         finally:
             self.provisioner.stop()
             self.daemon.stop(daemon_proc)
+
+    @staticmethod
+    def _collect_hpa_metrics() -> Optional[Dict[str, Any]]:
+        """Collect HPA and deployment replica metrics via kubectl for S1.
+
+        The daemon's Algorithm 2 metrics are only emitted for S3/S4.
+        For S1 (HPA-managed), we query Kubernetes objects directly.
+        """
+        metrics: Dict[str, Any] = {}
+        try:
+            # Deployment replicas
+            dr = _kubectl(["get", f"deployment/{DEPLOYMENT}", "-o", "json"])
+            if dr.returncode == 0:
+                dep = json.loads(dr.stdout)
+                spec_replicas = dep.get("spec", {}).get("replicas", 0) or 0
+                available = dep.get("status", {}).get("availableReplicas", 0) or 0
+                metrics["desired_replicas_final"] = spec_replicas
+                metrics["available_replicas_final"] = available
+                logger.info("hpa_kubectl_deployment", desired=spec_replicas, available=available)
+
+            # HPA status
+            hr = _kubectl(["get", f"hpa/{DEPLOYMENT}", "-o", "json"])
+            if hr.returncode == 0:
+                hpa = json.loads(hr.stdout)
+                hpa_desired = hpa.get("status", {}).get("desiredReplicas", 0) or 0
+                hpa_current = hpa.get("status", {}).get("currentReplicas", 0) or 0
+                # HPA desiredReplicas is the authoritative scaling target
+                metrics["desired_replicas_final"] = hpa_desired
+
+                # Infer scale events from HPA conditions
+                conditions = hpa.get("status", {}).get("conditions", [])
+                for c in conditions:
+                    if c.get("type") == "AbleToScale":
+                        logger.info("hpa_condition", type=c["type"],
+                                   status=c.get("status"), reason=c.get("reason"),
+                                   message=c.get("message", "")[:120])
+                logger.info("hpa_kubectl_hpa", desired=hpa_desired, current=hpa_current)
+
+            # Scale events: count from Kubernetes events
+            er = _kubectl(["get", "events", "--field-selector",
+                          f"involvedObject.name={DEPLOYMENT},reason=SuccessfulRescale",
+                          "-o", "json"], timeout=10)
+            if er.returncode == 0:
+                events = json.loads(er.stdout).get("items", [])
+                scale_ups = sum(1 for e in events if "up" in e.get("message", "").lower()
+                               or "scaled up" in e.get("message", "").lower()
+                               or "New size:" in e.get("message", ""))
+                scale_downs = sum(1 for e in events if "down" in e.get("message", "").lower()
+                                 or "scaled down" in e.get("message", "").lower())
+                # If message parsing didn't split, count all as scale events
+                if scale_ups == 0 and scale_downs == 0 and len(events) > 0:
+                    scale_ups = len(events)
+                metrics["scale_up_success"] = scale_ups
+                metrics["scale_down_success"] = scale_downs
+                logger.info("hpa_kubectl_events", scale_ups=scale_ups,
+                           scale_downs=scale_downs, total_events=len(events))
+
+        except Exception as e:
+            logger.warning("hpa_metrics_collection_failed", error=str(e))
+            return None
+
+        return metrics if metrics else None
 
     @staticmethod
     def _validate_run_preconditions(scenario: str) -> bool:
