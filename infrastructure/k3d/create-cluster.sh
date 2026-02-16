@@ -76,11 +76,9 @@ apply_resource_limits() {
     docker update --cpus 3 --memory 4g --memory-swap 4g "k3d-${CLUSTER_NAME}-agent-0" || true
     log_info "Set limits on agent-0 (infra): 3 CPU, 4 GiB"
     
-    # agent-1, agent-2, agent-3 (workload): 1 CPU, 1 GiB each
-    for i in 1 2 3; do
-        docker update --cpus 1 --memory 1g --memory-swap 1g "k3d-${CLUSTER_NAME}-agent-${i}" || true
-        log_info "Set limits on agent-$i (workload): 1 CPU, 1 GiB"
-    done
+    # agent-1 (workload baseline): 1 CPU, 1 GiB
+    docker update --cpus 1 --memory 1g --memory-swap 1g "k3d-${CLUSTER_NAME}-agent-1" || true
+    log_info "Set limits on agent-1 (workload baseline): 1 CPU, 1 GiB"
 }
 
 # Install metrics-server
@@ -135,10 +133,8 @@ label_nodes() {
     kubectl label node "k3d-${CLUSTER_NAME}-agent-0" node-type=infra --overwrite || true
     log_info "Labeled agent-0 as node-type=infra"
     
-    for i in 1 2 3; do
-        kubectl label node "k3d-${CLUSTER_NAME}-agent-${i}" node-type=workload --overwrite || true
-        log_info "Labeled agent-$i as node-type=workload"
-    done
+    kubectl label node "k3d-${CLUSTER_NAME}-agent-1" node-type=workload --overwrite || true
+    log_info "Labeled agent-1 as node-type=workload"
 }
 
 # Verify cluster setup
