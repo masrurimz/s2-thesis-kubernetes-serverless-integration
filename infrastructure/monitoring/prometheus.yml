@@ -42,15 +42,8 @@ scrape_configs:
       - targets: ['host.docker.internal:9100']
     scrape_interval: 30s
 
-# Storage configuration for resource constraints
-storage:
-  tsdb:
-    retention.time: 1h
-    retention.size: 512MB
-    path: /prometheus/data
-
-# Remote write disabled for resource constraints
-# remote_write: []
+# Storage settings configured via CLI flags in docker-compose.yml
+# (--storage.tsdb.retention.time=1h, --storage.tsdb.retention.size=512MB)
 
 # Alertmanager disabled for Sprint 1 simplicity
 # alerting:
