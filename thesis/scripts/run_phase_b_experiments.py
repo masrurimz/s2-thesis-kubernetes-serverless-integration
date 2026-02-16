@@ -40,6 +40,10 @@ from scipy import stats as scipy_stats
 
 logger = structlog.get_logger(__name__)
 
+# Add path for k3d autoscaler module
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "infrastructure" / "k3d"))
+from k3d_autoscaler import K3dAutoscalerAdapter
+
 SCRIPT_DIR = Path(__file__).resolve().parent  # thesis/scripts/
 PROJECT_ROOT = SCRIPT_DIR.parent.parent       # repo root
 CONTROLLER_DIR = PROJECT_ROOT / "controller"
@@ -271,8 +275,9 @@ class NodeProvisioner:
     ]
     BASELINE_NODES = ["k3d-thesis-hybrid-agent-1"]
 
-    def __init__(self, provision_delay_sec: int = 60):
-        self.provision_delay_sec = provision_delay_sec
+    def __init__(self, provision_delay_min_sec: int = 45, provision_delay_max_sec: int = 120):
+        self.provision_delay_min_sec = provision_delay_min_sec
+        self.provision_delay_max_sec = provision_delay_max_sec
         self._stop_event = threading.Event()
         self._thread: Optional[threading.Thread] = None
         self._provisioned_nodes: List[str] = []
@@ -310,7 +315,7 @@ class NodeProvisioner:
             "node_provisioner_reset",
             schedulable=self.BASELINE_NODES,
             cordoned=[n for n in self.WORKLOAD_NODES if n not in self.BASELINE_NODES],
-            provision_delay_sec=self.provision_delay_sec,
+            provision_delay_range=(self.provision_delay_min_sec, self.provision_delay_max_sec),
         )
         return True
 
@@ -379,10 +384,17 @@ class NodeProvisioner:
                 "node_provisioning_triggered",
                 pending_pods=len(pending_unschedulable),
                 next_node=next_node,
-                delay_sec=self.provision_delay_sec,
+                delay_range=(self.provision_delay_min_sec, self.provision_delay_max_sec),
             )
 
-            for _ in range(self.provision_delay_sec):
+            delay = random.randint(self.provision_delay_min_sec, self.provision_delay_max_sec)
+            self._append_event(
+                "provision_delay_started",
+                {"delay_sec": delay, "next_node": next_node},
+            )
+            logger.info("node_provision_delay", delay_sec=delay, next_node=next_node)
+
+            for _ in range(delay):
                 if self._stop_event.wait(1):
                     return
 
@@ -460,7 +472,7 @@ class PreflightChecker:
 class ScenarioResetter:
     """Implements per-run reset procedure per methodology Section 3.5.4(B)."""
 
-    def reset(self, scenario: str, provisioner: Optional[NodeProvisioner] = None) -> bool:
+    def reset(self, scenario: str, provisioner=None) -> bool:
         logger.info("scenario_reset_start", scenario=scenario)
 
         if provisioner and scenario in ("s1-k8s-only", "s3-hybrid-reactive", "s4-hybrid-predictive"):
@@ -1028,7 +1040,15 @@ class ExperimentRunner:
         self.daemon = DaemonManager()
         self.k6 = K6Runner()
         self.exporter = MetricExporter()
-        self.provisioner = NodeProvisioner()
+        self.provisioner = K3dAutoscalerAdapter(
+            cluster_name="thesis-hybrid",
+            min_nodes=0,
+            max_nodes=2,
+            provision_delay_min_sec=45,
+            provision_delay_max_sec=120,
+            node_memory="1g",
+            namespace="default",
+        )
         self.analyzer = StatisticalAnalyzer()
 
     def run_single(
@@ -1112,7 +1132,7 @@ class ExperimentRunner:
                 json.dump(provision_events, f, indent=2, default=str)
 
             first_pending_ts = next((e[0] for e in provision_events if e[1] == "pending_detected"), None)
-            first_provisioned_ts = next((e[0] for e in provision_events if e[1] == "node_provisioned"), None)
+            first_provisioned_ts = next((e[0] for e in provision_events if e[1] in ("node_provisioned", "node_created")), None)
             first_provision_delay_sec = (
                 max(0.0, first_provisioned_ts - first_pending_ts)
                 if first_pending_ts is not None and first_provisioned_ts is not None
@@ -1175,7 +1195,7 @@ class ExperimentRunner:
                 daemon_log_path=str(daemon_log),
                 prom_export_path=prom_summary.get("export_path", ""),
                 replica_timeline_path=str(run_dir / "prometheus" / "prometheus_export.json"),
-                nodes_provisioned=len([e for e in provision_events if e[1] == "node_provisioned"]),
+                nodes_provisioned=len([e for e in provision_events if e[1] in ("node_provisioned", "node_created")]),
                 first_provision_delay_sec=first_provision_delay_sec,
                 total_provision_events=len(provision_events),
                 provision_log_path=str(provision_log_path),

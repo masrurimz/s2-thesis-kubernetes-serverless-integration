@@ -5,7 +5,7 @@ kind: Simple
 metadata:
   name: thesis-hybrid
 servers: 1
-agents: 4
+agents: 2
 image: rancher/k3s:v1.28.5-k3s1
 kubeAPI:
   hostIP: "0.0.0.0"
@@ -50,6 +50,9 @@ options:
         nodeFilters:
           - server:*
           - agent:*
+      - arg: --kubelet-arg=system-reserved=cpu=15000m
+        nodeFilters:
+          - agent:1
   kubeconfig:
     updateDefaultKubeconfig: true
     switchCurrentContext: true
