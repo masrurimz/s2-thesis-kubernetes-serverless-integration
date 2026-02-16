@@ -64,14 +64,22 @@ create_cluster() {
     kubectl wait --for=condition=Ready nodes --all --timeout=120s
 }
 
-# Apply resource limits to nodes via Docker
+# Apply resource limits to nodes via Docker (per-node configuration)
 apply_resource_limits() {
-    log_info "Applying resource limits to nodes (512M memory, 1 CPU)..."
+    log_info "Applying per-node resource limits..."
     
-    # Get all k3d containers for this cluster
-    for container in $(docker ps --filter "name=k3d-$CLUSTER_NAME" --format '{{.Names}}'); do
-        log_info "Setting limits on container: $container"
-        docker update --cpus 1 --memory 512m --memory-swap 512m "$container" || true
+    # server-0: 1 CPU, 1 GiB
+    docker update --cpus 1 --memory 1g --memory-swap 1g "k3d-${CLUSTER_NAME}-server-0" || true
+    log_info "Set limits on server-0: 1 CPU, 1 GiB"
+    
+    # agent-0 (infra): 3 CPU, 4 GiB
+    docker update --cpus 3 --memory 4g --memory-swap 4g "k3d-${CLUSTER_NAME}-agent-0" || true
+    log_info "Set limits on agent-0 (infra): 3 CPU, 4 GiB"
+    
+    # agent-1, agent-2, agent-3 (workload): 1 CPU, 1 GiB each
+    for i in 1 2 3; do
+        docker update --cpus 1 --memory 1g --memory-swap 1g "k3d-${CLUSTER_NAME}-agent-${i}" || true
+        log_info "Set limits on agent-$i (workload): 1 CPU, 1 GiB"
     done
 }
 
@@ -117,13 +125,29 @@ data:
 EOF
 }
 
+# Label nodes for scheduling isolation
+label_nodes() {
+    log_info "Labeling nodes for scheduling isolation..."
+    
+    kubectl label node "k3d-${CLUSTER_NAME}-server-0" node-type=system --overwrite || true
+    log_info "Labeled server-0 as node-type=system"
+    
+    kubectl label node "k3d-${CLUSTER_NAME}-agent-0" node-type=infra --overwrite || true
+    log_info "Labeled agent-0 as node-type=infra"
+    
+    for i in 1 2 3; do
+        kubectl label node "k3d-${CLUSTER_NAME}-agent-${i}" node-type=workload --overwrite || true
+        log_info "Labeled agent-$i as node-type=workload"
+    done
+}
+
 # Verify cluster setup
 verify_cluster() {
     log_info "Verifying cluster setup..."
     
     echo ""
-    echo "=== Cluster Nodes ==="
-    kubectl get nodes -o wide
+    echo "=== Cluster Nodes (with labels) ==="
+    kubectl get nodes -o wide --show-labels
     
     echo ""
     echo "=== System Pods ==="
@@ -151,6 +175,7 @@ main() {
     cleanup_existing
     create_cluster
     apply_resource_limits
+    label_nodes
     install_metrics_server
     create_nodeport_services
     verify_cluster
