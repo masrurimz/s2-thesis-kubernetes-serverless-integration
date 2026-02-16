@@ -111,6 +111,24 @@ configure_autoscaling() {
     log_info "Autoscaling configured."
 }
 
+# Configure node isolation for Knative and workload scheduling
+configure_node_isolation() {
+    log_info "Configuring Knative node isolation..."
+    
+    # Enable nodeSelector support in Knative features
+    kubectl patch configmap/config-features \
+        --namespace knative-serving \
+        --type merge \
+        --patch '{"data":{"kubernetes.podspec-nodeselector":"enabled"}}'
+    
+    # Patch Kourier gateway to run on infra node
+    kubectl -n kourier-system patch deploy kourier-gateway \
+        --type='json' \
+        -p='[{"op":"add","path":"/spec/template/spec/nodeSelector","value":{"node-type":"infra"}}]'
+    
+    log_info "Node isolation configured."
+}
+
 # Verify installation
 verify_installation() {
     log_info "Verifying Knative installation..."
@@ -182,6 +200,7 @@ main() {
     configure_kourier_nodeport
     configure_dns
     configure_autoscaling
+    configure_node_isolation
     verify_installation
     deploy_test_service "${1:-}"
 }

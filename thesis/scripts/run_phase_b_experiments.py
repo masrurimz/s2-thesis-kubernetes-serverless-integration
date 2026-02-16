@@ -26,6 +26,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import threading
 import time
 from dataclasses import dataclass, asdict, field
 from datetime import datetime
@@ -134,6 +135,12 @@ class ExperimentResult:
 
     # Raw Prometheus time-series paths (stored per-run)
     replica_timeline_path: str = ""
+
+    # Node provisioning metrics (v4)
+    nodes_provisioned: int = 0
+    first_provision_delay_sec: float = 0.0
+    total_provision_events: int = 0
+    provision_log_path: str = ""
 
 
 @dataclass
@@ -254,6 +261,142 @@ def _parse_haproxy_stats_weights() -> Optional[Dict[str, int]]:
         return None
 
 
+class NodeProvisioner:
+    """Simulates cloud node provisioning via cordon/uncordon with delay."""
+
+    WORKLOAD_NODES = [
+        "k3d-thesis-hybrid-agent-1",  # baseline (always schedulable)
+        "k3d-thesis-hybrid-agent-2",
+        "k3d-thesis-hybrid-agent-3",
+    ]
+    BASELINE_NODES = ["k3d-thesis-hybrid-agent-1"]
+
+    def __init__(self, provision_delay_sec: int = 60):
+        self.provision_delay_sec = provision_delay_sec
+        self._stop_event = threading.Event()
+        self._thread: Optional[threading.Thread] = None
+        self._provisioned_nodes: List[str] = []
+        self._provision_log: List[Tuple[float, str, Dict[str, Any]]] = []
+        self._log_lock = threading.Lock()
+
+    @staticmethod
+    def _kubectl_cluster(args: List[str], timeout: int = 15) -> subprocess.CompletedProcess:
+        """Run cluster-scoped kubectl command (no namespace flag)."""
+        return _run_cmd([KUBECTL_PATH] + args, timeout=timeout)
+
+    def reset(self) -> bool:
+        """Reset all workload nodes: uncordon all, then cordon non-baseline."""
+        self.stop()
+        self._provisioned_nodes = list(self.BASELINE_NODES)
+        with self._log_lock:
+            self._provision_log = []
+
+        # Uncordon all first (clean state)
+        for node in self.WORKLOAD_NODES:
+            r = self._kubectl_cluster(["uncordon", node])
+            if r.returncode != 0:
+                logger.warning("uncordon_nonfatal", node=node, stderr=r.stderr.strip())
+
+        # Cordon non-baseline nodes
+        for node in self.WORKLOAD_NODES:
+            if node in self.BASELINE_NODES:
+                continue
+            r = self._kubectl_cluster(["cordon", node])
+            if r.returncode != 0:
+                logger.error("cordon_failed", node=node, stderr=r.stderr.strip())
+                return False
+
+        logger.info(
+            "node_provisioner_reset",
+            schedulable=self.BASELINE_NODES,
+            cordoned=[n for n in self.WORKLOAD_NODES if n not in self.BASELINE_NODES],
+            provision_delay_sec=self.provision_delay_sec,
+        )
+        return True
+
+    def start_background(self) -> None:
+        """Start background thread that watches for Pending pods."""
+        if self._thread and self._thread.is_alive():
+            return
+        self._stop_event.clear()
+        self._thread = threading.Thread(target=self._provision_loop, daemon=True)
+        self._thread.start()
+        logger.info("node_provisioner_started")
+
+    def stop(self) -> None:
+        """Stop the provisioner thread."""
+        self._stop_event.set()
+        if self._thread:
+            self._thread.join(timeout=10)
+            self._thread = None
+
+    def get_log(self) -> List[Tuple[float, str, Dict[str, Any]]]:
+        """Return provision events for experiment metadata."""
+        with self._log_lock:
+            return list(self._provision_log)
+
+    def _append_event(self, event_type: str, details: Dict[str, Any]) -> None:
+        with self._log_lock:
+            self._provision_log.append((time.time(), event_type, details))
+
+    def _provision_loop(self) -> None:
+        """Poll for Pending warm pods -> wait delay -> uncordon next node."""
+        cordoned = [n for n in self.WORKLOAD_NODES if n not in self._provisioned_nodes]
+
+        while not self._stop_event.is_set() and cordoned:
+            if self._stop_event.wait(2):
+                return
+
+            r = _kubectl([
+                "get", "pods", "-l", "app=test-app-warm",
+                "--field-selector=status.phase=Pending", "-o", "json",
+            ])
+            if r.returncode != 0:
+                continue
+
+            try:
+                pods = json.loads(r.stdout).get("items", [])
+            except json.JSONDecodeError:
+                continue
+
+            pending_unschedulable: List[str] = []
+            for pod in pods:
+                conditions = pod.get("status", {}).get("conditions", [])
+                for cond in conditions:
+                    if cond.get("reason") == "Unschedulable":
+                        pending_unschedulable.append(pod.get("metadata", {}).get("name", "unknown"))
+                        break
+
+            if not pending_unschedulable:
+                continue
+
+            next_node = cordoned[0]
+            self._append_event(
+                "pending_detected",
+                {"pods": pending_unschedulable, "next_node": next_node},
+            )
+            logger.info(
+                "node_provisioning_triggered",
+                pending_pods=len(pending_unschedulable),
+                next_node=next_node,
+                delay_sec=self.provision_delay_sec,
+            )
+
+            for _ in range(self.provision_delay_sec):
+                if self._stop_event.wait(1):
+                    return
+
+            r = self._kubectl_cluster(["uncordon", next_node])
+            if r.returncode == 0:
+                self._provisioned_nodes.append(next_node)
+                cordoned.pop(0)
+                self._append_event("node_provisioned", {"node": next_node})
+                logger.info("node_provisioned", node=next_node, remaining_cordoned=len(cordoned))
+            else:
+                self._append_event("uncordon_failed", {"node": next_node, "stderr": r.stderr.strip()})
+                logger.error("uncordon_failed", node=next_node, stderr=r.stderr.strip())
+
+
 # ---------------------------------------------------------------------------
 # Infrastructure preflight  (s2-omz)
 # ---------------------------------------------------------------------------
@@ -317,8 +460,13 @@ class PreflightChecker:
 class ScenarioResetter:
     """Implements per-run reset procedure per methodology Section 3.5.4(B)."""
 
-    def reset(self, scenario: str) -> bool:
+    def reset(self, scenario: str, provisioner: Optional[NodeProvisioner] = None) -> bool:
         logger.info("scenario_reset_start", scenario=scenario)
+
+        if provisioner and scenario in ("s1-k8s-only", "s3-hybrid-reactive", "s4-hybrid-predictive"):
+            if not provisioner.reset():
+                logger.error("node_provisioner_reset_failed", scenario=scenario)
+                return False
 
         if scenario == "s1-k8s-only":
             ok = self._reset_s1()
@@ -690,6 +838,9 @@ class MetricExporter:
         # Resource metrics (Table 3-7)
         "cpu_usage_cores": 'sum(rate(container_cpu_usage_seconds_total{namespace="default",container="test-app-warm"}[1m]))',
         "memory_usage_bytes": 'sum(container_memory_working_set_bytes{namespace="default",container="test-app-warm"})',
+        # Node provisioning metrics (v4)
+        "node_count_schedulable": 'count(kube_node_spec_unschedulable == 0)',
+        "pods_pending_count": 'count(kube_pod_status_phase{phase="Pending",namespace="default"})',
     }
 
     def export_run(self, t_start: float, t_end: float, output_dir: Path) -> Dict[str, Any]:
@@ -877,6 +1028,7 @@ class ExperimentRunner:
         self.daemon = DaemonManager()
         self.k6 = K6Runner()
         self.exporter = MetricExporter()
+        self.provisioner = NodeProvisioner()
         self.analyzer = StatisticalAnalyzer()
 
     def run_single(
@@ -895,7 +1047,7 @@ class ExperimentRunner:
         logger.info("run_start", scenario=scenario, run_id=run_id, order=run_order_idx)
 
         # (B) Per-run reset
-        if not self.resetter.reset(scenario):
+        if not self.resetter.reset(scenario, self.provisioner):
             logger.error("reset_failed", scenario=scenario)
             return None
 
@@ -904,6 +1056,9 @@ class ExperimentRunner:
         daemon_proc = self.daemon.start(scenario, daemon_log)
         if daemon_proc is None:
             return None
+
+        if scenario != "s2-serverless-only":
+            self.provisioner.start_background()
 
         try:
             # Save manifest  (s2-20e)
@@ -922,7 +1077,7 @@ class ExperimentRunner:
                     "endpoint": "/fib?n=32",
                     "gomaxprocs": 1, "fib_n": 32,
                 },
-                scaling_config={"alpha": 0.0167, "beta": 0.0, "buffer": 1.2,
+                scaling_config={"alpha": 0.04, "beta": 0.0, "buffer": 1.2,
                                "min_replicas": 1, "max_replicas": 10},
                 timestamp=datetime.now().isoformat(),
             )
@@ -950,6 +1105,19 @@ class ExperimentRunner:
 
             # Record t_end
             t_end = time.time()
+
+            provision_events = self.provisioner.get_log()
+            provision_log_path = run_dir / "provision_events.json"
+            with open(provision_log_path, "w") as f:
+                json.dump(provision_events, f, indent=2, default=str)
+
+            first_pending_ts = next((e[0] for e in provision_events if e[1] == "pending_detected"), None)
+            first_provisioned_ts = next((e[0] for e in provision_events if e[1] == "node_provisioned"), None)
+            first_provision_delay_sec = (
+                max(0.0, first_provisioned_ts - first_pending_ts)
+                if first_pending_ts is not None and first_provisioned_ts is not None
+                else 0.0
+            )
 
             # Get daemon status before stopping
             daemon_status = self.daemon.get_status() or {}
@@ -1007,6 +1175,10 @@ class ExperimentRunner:
                 daemon_log_path=str(daemon_log),
                 prom_export_path=prom_summary.get("export_path", ""),
                 replica_timeline_path=str(run_dir / "prometheus" / "prometheus_export.json"),
+                nodes_provisioned=len([e for e in provision_events if e[1] == "node_provisioned"]),
+                first_provision_delay_sec=first_provision_delay_sec,
+                total_provision_events=len(provision_events),
+                provision_log_path=str(provision_log_path),
             )
 
             # Save result
@@ -1018,6 +1190,7 @@ class ExperimentRunner:
             return result
 
         finally:
+            self.provisioner.stop()
             self.daemon.stop(daemon_proc)
 
     @staticmethod

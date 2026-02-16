@@ -18,6 +18,8 @@ spec:
         prometheus.io/port: "8080"
         prometheus.io/path: "/metrics"
     spec:
+      nodeSelector:
+        node-type: workload
       containers:
         - name: test-app-warm
           image: k3d-registry.localhost:5000/test-app:latest
@@ -38,10 +40,10 @@ spec:
               value: "32"
           resources:
             requests:
-              cpu: 500m
+              cpu: 200m
               memory: 64Mi
             limits:
-              cpu: 500m
+              cpu: 200m
               memory: 128Mi
           livenessProbe:
             httpGet:
