@@ -170,7 +170,7 @@ class K3dAutoscaler:
             "--k3s-node-label",
             "node-type=workload",
             "--k3s-arg",
-            "--kubelet-arg=system-reserved=cpu=15000m",
+            "--kubelet-arg=system-reserved=cpu=15600m",
             "--wait",
         ]
 
@@ -355,6 +355,11 @@ class K3dAutoscaler:
         with self._lock:
             return list(self._events)
 
+    def clear_log(self) -> None:
+        """Clear event log (call between experiment runs)."""
+        with self._lock:
+            self._events = []
+
     def get_pool_status(self) -> Dict:
         dynamic_nodes = self._discover_dynamic_nodes()
         node_states: Dict[str, Dict[str, str]] = {}
@@ -459,6 +464,10 @@ class K3dAutoscalerAdapter:
     def get_log(self) -> List[Tuple[float, str, Dict]]:
         """Retrieve event log from autoscaler. Implements NodeProvisioner interface."""
         return self._autoscaler.get_log()
+
+    def clear_log(self) -> None:
+        """Clear event log between experiment runs."""
+        self._autoscaler.clear_log()
 
     def get_pool_status(self) -> Dict:
         """Retrieve current pool status (convenience method, not in NodeProvisioner)."""
