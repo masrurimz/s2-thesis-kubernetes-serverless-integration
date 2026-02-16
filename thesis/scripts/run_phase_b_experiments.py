@@ -1256,6 +1256,9 @@ class ExperimentRunner:
             logger.error("reset_failed", scenario=scenario)
             return None
 
+        # Clear autoscaler event log so this run gets its own events
+        self.provisioner.clear_log()
+
         # Start daemon (S1/S2 still need daemon for metrics even if no algorithm)
         daemon_log = run_dir / "daemon.log"
         daemon_proc = self.daemon.start(scenario, daemon_log)
@@ -1315,7 +1318,9 @@ class ExperimentRunner:
             # Record t_end
             t_end = time.time()
 
-            provision_events = self.provisioner.get_log()
+            provision_events_raw = self.provisioner.get_log()
+            # Filter to events within this run's time window (guardrail)
+            provision_events = [e for e in provision_events_raw if e[0] >= t_start - 60]
             provision_log_path = run_dir / "provision_events.json"
             with open(provision_log_path, "w") as f:
                 json.dump(provision_events, f, indent=2, default=str)

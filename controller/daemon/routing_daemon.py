@@ -263,12 +263,12 @@ class RoutingDaemon:
         self._last_total_requests: Optional[int] = None
         self._last_total_requests_ts: Optional[float] = None
 
-        # Algorithm 2: K8s replica scaling (S3/S4 only)
+        # K8s scaler: always instantiate for replica gauge emission;
+        # Algorithm 2 scaling logic only runs when use_algorithm=True.
+        self.k8s_scaler = K8sScaler()
         if self.scenario_config.use_algorithm:
-            self.k8s_scaler = K8sScaler()
             self.cluster_controller = ClusterController(config=ScalingConfig())
         else:
-            self.k8s_scaler = None
             self.cluster_controller = None
         self._last_scale_up_ts: Optional[float] = None
         self._last_scale_down_ts: Optional[float] = None
@@ -364,11 +364,22 @@ class RoutingDaemon:
         except Exception as e:
             logger.debug("Failed HAProxy fallback load history update", error=str(e))
     
+    def _update_k8s_replica_gauges(self) -> None:
+        """Emit Prometheus replica gauges for all scenarios (including static S1/S2)."""
+        try:
+            dep_status = self.k8s_scaler.get_deployment_status()
+            if dep_status is not None:
+                k8s_desired_replicas.set(dep_status.spec_replicas or 0)
+                k8s_available_replicas.set(dep_status.available_replicas or 0)
+        except Exception:
+            pass
+
     def _execute_decision_loop(self) -> None:
         """Execute single decision loop iteration."""
         start_time = time.perf_counter()
         
         self._update_load_history()
+        self._update_k8s_replica_gauges()
         
         if not self.scenario_config.use_algorithm:
             self._last_decision_time = time.time()
