@@ -138,3 +138,23 @@ Previous Phase B (2026-02-12) and Phase C data should be treated as **invalidate
 - ALL daemon metrics (routing decisions, weight distributions, GRU predictions used, time in serverless) are garbage and must not be cited.
 - New Phase B experiment required with all 7 bugs (1-3 from earlier + 4-7 from this batch) fixed.
 - Bundle marked `status: invalidated` in meta.yaml.
+
+---
+
+## Resolved Inconsistencies (continued)
+
+### 9. Cost Chapter Mixed Stress-Harness Node Capacity with Production Projection
+
+- **Issue:** Original cost analysis (2026-02-17) derived EC2 node counts from k3d stress-harness observation (nodes_provisioned from experiment, constrained to 400m allocatable per node via `system-reserved=15600m`). This produced cost figures that reflected the artificial constraint — not representative of real cloud node capacity.
+- **Root Cause:** `cost_analyzer.py` Model 3 used observed `nodes_provisioned` from experiment, which reflected the artificial k3d constraint (2 pods/node). Real t3.medium has ~1.8 vCPU allocatable → 9 pods/node. S1's 9 desired replicas fit on 1–2 real nodes, not 6.
+- **Impact:**
+  - K8s execution time was hardcoded at 10ms (actual: 105ms via Little's Law with 200m CPU limit)
+  - EC2 model undercounted production nodes for serverless-heavy scenarios
+  - Missing EKS control plane cost ($72/month)
+  - Corrected numbers change the cost story: S1 $162/mo, S2 $192/mo, S3 $192/mo, S4 $222/mo (EC2 Production)
+- **Resolution:**
+  - `cost_analyzer.py` split into Model 3a (observed/stress) and Model 3b (production projection using real t3.medium capacity)
+  - K8s service time now derived from Little's Law (avg_replicas / k8s_rps)
+  - Added EKS control plane $0.10/hr
+  - Report rewritten with two-world framing
+  - Cross-ref: `thesis/protocol/THREATS_TO_VALIDITY.md` (new construct validity threat)

@@ -1,57 +1,121 @@
 # Phase B: Replicated Comparison Results
 
-**Date:** 2026-02-15T08:43:23.816231
-**Git:** f7c9fe6
-**Runs:** 10 clean, 10 excluded
+**Date:** 2026-02-15T23:49:39.870950
+**Git:** 1ac10ae
+**Runs:** 4 clean, 0 excluded
 
 ## Per-Scenario Summary
 
 | Scenario | n | p50 (ms) | p95 (ms) | p99 (ms) | Error% | RPS | SLO Violations | Scale-Up | Scale-Down |
 |----------|---|----------|----------|----------|--------|-----|----------------|----------|------------|
-| s3-hybrid-reactive | 5 | 5.7 | 3280.1 | 3280.1 | 0.000 | 71.6 | 82597 | 1 | 1 |
-| s4-hybrid-predictive | 5 | 5.7 | 2821.7 | 2821.7 | 0.000 | 72.0 | 56511 | 0 | 0 |
+| s1-k8s-only | 1 | 8.7 | 15.1 | 15.1 | 0.000 | 73.2 | 0 | 0 | 0 |
+| s2-serverless-only | 1 | 9.5 | 410.0 | 410.0 | 0.000 | 73.2 | 5464 | 0 | 0 |
+| s3-hybrid-reactive | 1 | 9.6 | 3378.2 | 3378.2 | 0.000 | 72.6 | 20976 | 6 | 6 |
+| s4-hybrid-predictive | 1 | 9.3 | 3246.4 | 3246.4 | 0.000 | 71.9 | 14753 | 0 | 0 |
 
 ## Statistical Comparisons
+
+### s2-serverless-only vs s1-k8s-only (p99_latency_ms)
+
+| Metric | Value |
+|--------|-------|
+| Baseline mean | 15.06 (n=1) |
+| Comparison mean | 410.02 (n=1) |
+| Difference | +394.96 (+2621.8%) |
+| Welch t-stat | nan |
+| Welch p-value | nan |
+| Mann-Whitney U | 1.0 |
+| Mann-Whitney p | 1.0000 |
+| 95% CI | [+394.96, +394.96] |
+| Cohen's d | 0.000 (negligible) |
+| Verdict | ⚠️ Not significant |
+
+### s2-serverless-only vs s1-k8s-only (error_rate)
+
+| Metric | Value |
+|--------|-------|
+| Baseline mean | 0.00 (n=1) |
+| Comparison mean | 0.00 (n=1) |
+| Difference | +0.00 (+0.0%) |
+| Welch t-stat | nan |
+| Welch p-value | nan |
+| Mann-Whitney U | 0.5 |
+| Mann-Whitney p | 1.0000 |
+| 95% CI | [+0.00, +0.00] |
+| Cohen's d | 0.000 (negligible) |
+| Verdict | ⚠️ Not significant |
+
+### s3-hybrid-reactive vs s1-k8s-only (p99_latency_ms)
+
+| Metric | Value |
+|--------|-------|
+| Baseline mean | 15.06 (n=1) |
+| Comparison mean | 3378.20 (n=1) |
+| Difference | +3363.14 (+22325.0%) |
+| Welch t-stat | nan |
+| Welch p-value | nan |
+| Mann-Whitney U | 1.0 |
+| Mann-Whitney p | 1.0000 |
+| 95% CI | [+3363.14, +3363.14] |
+| Cohen's d | 0.000 (negligible) |
+| Verdict | ⚠️ Not significant |
+
+### s3-hybrid-reactive vs s2-serverless-only (p99_latency_ms)
+
+| Metric | Value |
+|--------|-------|
+| Baseline mean | 410.02 (n=1) |
+| Comparison mean | 3378.20 (n=1) |
+| Difference | +2968.18 (+723.9%) |
+| Welch t-stat | nan |
+| Welch p-value | nan |
+| Mann-Whitney U | 1.0 |
+| Mann-Whitney p | 1.0000 |
+| 95% CI | [+2968.18, +2968.18] |
+| Cohen's d | 0.000 (negligible) |
+| Verdict | ⚠️ Not significant |
 
 ### s4-hybrid-predictive vs s3-hybrid-reactive (p99_latency_ms)
 
 | Metric | Value |
 |--------|-------|
-| Baseline mean | 3280.09 (n=5) |
-| Comparison mean | 2821.69 (n=5) |
-| Difference | -458.41 (-14.0%) |
-| Welch t-stat | -2.218 |
-| Welch p-value | 0.0730 |
-| Mann-Whitney U | 4.0 |
-| Mann-Whitney p | 0.0952 |
-| 95% CI | [-820.18, -96.86] |
-| Cohen's d | -1.403 (large) |
+| Baseline mean | 3378.20 (n=1) |
+| Comparison mean | 3246.40 (n=1) |
+| Difference | -131.80 (-3.9%) |
+| Welch t-stat | nan |
+| Welch p-value | nan |
+| Mann-Whitney U | 0.0 |
+| Mann-Whitney p | 1.0000 |
+| 95% CI | [-131.80, -131.80] |
+| Cohen's d | 0.000 (negligible) |
 | Verdict | ⚠️ Not significant |
 
 ### s4-hybrid-predictive vs s3-hybrid-reactive (slo_violations_k6)
 
 | Metric | Value |
 |--------|-------|
-| Baseline mean | 16519.40 (n=5) |
-| Comparison mean | 11302.20 (n=5) |
-| Difference | -5217.20 (-31.6%) |
-| Welch t-stat | -4.681 |
-| Welch p-value | 0.0019 |
+| Baseline mean | 20976.00 (n=1) |
+| Comparison mean | 14753.00 (n=1) |
+| Difference | -6223.00 (-29.7%) |
+| Welch t-stat | nan |
+| Welch p-value | nan |
 | Mann-Whitney U | 0.0 |
-| Mann-Whitney p | 0.0079 |
-| 95% CI | [-7206.87, -3313.60] |
-| Cohen's d | -2.961 (large) |
-| Verdict | ✅ Significant |
+| Mann-Whitney p | 1.0000 |
+| 95% CI | [-6223.00, -6223.00] |
+| Cohen's d | 0.000 (negligible) |
+| Verdict | ⚠️ Not significant |
 
-## Excluded Runs
+### s4-hybrid-predictive vs s1-k8s-only (p99_latency_ms)
 
-- s2-serverless-only run 1: p99=11.4ms (< 15ms threshold)
-- s1-k8s-only run 5: p99=5.9ms (< 15ms threshold)
-- s2-serverless-only run 5: p99=7.8ms (< 15ms threshold)
-- s2-serverless-only run 2: p99=8.4ms (< 15ms threshold)
-- s1-k8s-only run 2: p99=5.9ms (< 15ms threshold)
-- s1-k8s-only run 3: p99=5.9ms (< 15ms threshold)
-- s2-serverless-only run 3: p99=11.2ms (< 15ms threshold)
-- s2-serverless-only run 4: p99=7.8ms (< 15ms threshold)
-- s1-k8s-only run 1: p99=5.9ms (< 15ms threshold)
-- s1-k8s-only run 4: p99=5.9ms (< 15ms threshold)
+| Metric | Value |
+|--------|-------|
+| Baseline mean | 15.06 (n=1) |
+| Comparison mean | 3246.40 (n=1) |
+| Difference | +3231.34 (+21450.1%) |
+| Welch t-stat | nan |
+| Welch p-value | nan |
+| Mann-Whitney U | 1.0 |
+| Mann-Whitney p | 1.0000 |
+| 95% CI | [+3231.34, +3231.34] |
+| Cohen's d | 0.000 (negligible) |
+| Verdict | ⚠️ Not significant |

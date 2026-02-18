@@ -14,7 +14,7 @@ The experimental evaluation validates the **mechanistic correctness** of the hyb
 
 3. **Predictive pre-warming** was validated in Phase A1: PREDICTIVE triggered at p99 = 146ms upon detecting a 47% predicted workload increase with 72% confidence, successfully pre-positioning serverless capacity before SLO violation occurred.
 
-4. **Cost efficiency** of predictive routing is projected at 6–9% savings over reactive approaches across three major cloud providers, driven by reduced unnecessary serverless invocations.
+4. **Cost analysis** reveals that the billing model determines the cost ranking, not the architecture. Under Lambda Provisioned Concurrency pricing (the correct model for always-warm Knative pods), serverless and hybrid scenarios are significantly more expensive than K8s-only due to CPU throttling (200m ÷ 10 concurrent = 50× slowdown inflating wall-clock billing). Under Cloud Run CPU-second billing, all scenarios cost roughly the same. Under EC2 production node-hours (the most defensible infrastructure model), S1 is cheapest per run ($0.075) but has 40.3% success rate; S2 offers the best cost-per-successful-request ($1.13/1M) at $0.089/run.
 
 **Superiority not established:**
 
@@ -38,6 +38,8 @@ Three testbed constraints systematically affect the interpretation of comparativ
 
 **Insufficient load variation.** Phase B used steady 100 RPS load, which produces zero predicted load change—below the 30% threshold required for PREDICTIVE eligibility. Even with GRU running, Phase B would not have triggered PREDICTIVE. Phase C used dynamic bursts but the ramp duration (30 seconds) was shorter than the GRU's observation window requirement (~60 seconds), and SCALE_OUT priority preemption consumed the available decision space.
 
+**Artificial node capacity constraint.** Workload nodes were configured with `system-reserved=15600m` (leaving ~400m allocatable) to force Cluster Autoscaler triggers within 20-minute experiment runs. This successfully exercises CA/HPA scaling mechanisms but means: (a) S1 desired 9 replicas but only 6 were schedulable (causing 40.3% success rate), (b) Knative scaled to 26 pods despite `max-scale=10` (panic mode), and (c) infrastructure cost during experiments does not represent production sizing. Cost projections use real cloud node capacity (t3.medium ≈ 1.8 vCPU allocatable, ~9 pods/node).
+
 ### 4.6.4 Honest Assessment of Contributions
 
 This research demonstrates an **engineering contribution**: the design, implementation, and mechanism validation of a hybrid Kubernetes-serverless system with GRU-based prediction. The specific contributions are:
@@ -56,8 +58,8 @@ The original ElaX algorithm by Yang et al. (2019) proposed a two-layer decision 
 
 ### 4.6.6 Defensible Position
 
-The results support the following defensible framing for this work: the hybrid Kubernetes-serverless system with GRU-based prediction has been designed, implemented, and its mechanisms validated. All proposed components function correctly under appropriate conditions. Statistical performance superiority over baselines was not established due to testbed constraints (single-node k3d, localhost routing bias, GRU unavailability during controlled experiments, and insufficient sample sizes). Production deployment on multi-node cloud infrastructure with dynamic workloads and adequate replication would be required to resolve the superiority question—a direction documented as future work.
+The results support the following defensible framing for this work: the hybrid Kubernetes-serverless system with GRU-based prediction has been designed, implemented, and its mechanisms validated. All proposed components function correctly under appropriate conditions. Statistical performance superiority over baselines was not established due to testbed constraints (single-node k3d, localhost routing bias, GRU unavailability during controlled experiments, and insufficient sample sizes). Cost analysis demonstrates that the serverless billing model (wall-clock vs CPU-time) is the dominant cost factor, not the routing architecture itself; under production EC2 sizing, all scenarios fall within a narrow $162–$222/month range. Production deployment on multi-node cloud infrastructure with dynamic workloads and adequate replication would be required to resolve the superiority question—a direction documented as future work.
 
 ---
 
-*Evidence locations: `results/models/gru/2026-02-10_training-synthetic/`, `results/models/gru/2026-02-13_training-clarknet-calgary/`, `results/experiments/phase-a1/2026-02-12_predictive-trigger/`, `results/experiments/phase-b/2026-02-12_replicated-20runs/`, `results/experiments/phase-c/2026-02-13_dynamic-workload/`, `results/cost/2026-02-11_proxy-analysis/`.*
+*Evidence locations: `results/models/gru/2026-02-10_training-synthetic/`, `results/models/gru/2026-02-13_training-clarknet-calgary/`, `results/experiments/phase-a1/2026-02-12_predictive-trigger/`, `results/experiments/phase-b/2026-02-12_replicated-20runs/`, `results/experiments/phase-c/2026-02-13_dynamic-workload/`, `results/cost/2026-02-17_three-model-cost-comparison/`.*

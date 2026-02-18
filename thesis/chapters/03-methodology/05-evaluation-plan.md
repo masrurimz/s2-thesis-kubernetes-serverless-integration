@@ -228,7 +228,7 @@ For each run, store:
 | K8s Capacity Time | Σ(replicas × seconds) | Cost proxy for K8s usage |
 | Knative Active Time | Time with ≥1 Knative pod | Serverless cost proxy |
 
-Cost analysis uses proxy estimation based on published pricing from AWS, GCP, and Azure, rather than actual cloud billing data, due to the local testbed deployment.
+Cost analysis uses three billing models (Lambda Provisioned Concurrency, Cloud Run Always-Allocated, EC2 Node-Hours) applied to actual measured resource consumption from experiments. Production cost projections use real cloud node capacity (t3.medium, 1.8 vCPU allocatable) rather than the stress-harness constraint (400m allocatable). See Section 4.4 for methodology details.
 
 ### 3.5.6 Post-Processing and Statistical Analysis (Pengolahan Data)
 
@@ -263,5 +263,7 @@ The experimental evaluation is subject to the following known threats, documente
 10. **Sample size:** With $n = 5$ runs per scenario, statistical power is limited for detecting moderate effect sizes. Results are interpreted as mechanism validation rather than definitive superiority claims.
 
 11. **Autoscaler mutual exclusion:** HPA and Algorithm 2 cannot coexist on the same Deployment (validated in Phase A0). This means S1 (HPA) and S3/S4 (Algorithm 2) use fundamentally different scaling mechanisms, which may confound direct performance comparisons between native and custom autoscaling approaches.
+
+13. **Artificial node capacity constraint (Critical).** Workload nodes use `system-reserved=15600m` (leaving ~400m allocatable) to force Cluster Autoscaler triggers within experiment durations. This is a deliberate stress-harness technique to exercise autoscaling mechanisms but means: (a) CA triggers at lower loads than production, (b) pod scheduling constraints create artificial resource starvation (S1 desired 9 replicas but only 6 schedulable), and (c) observed node counts do not represent production sizing. Cost projections are computed separately using production node capacity (t3.medium, 1.8 vCPU allocatable).
 
 12. **Workload parameterization sensitivity:** The per-request computation directly determines single-pod capacity and thus the scaling behavior observed. Three iterations were required: (a) `/work?duration_ms=5` (~145 RPS) was too light for scaling; (b) `/work?duration_ms=10` (~50 RPS) blocked the Go scheduler, preventing health checks and CPU reporting; (c) `/fib?n=32` (~60 RPS) uses scheduler-cooperative CPU work that enables correct HPA and Algorithm 2 behavior. The final parameterization ensures the ClarkNet trace exercises multi-replica scaling across all scenarios (peak at 2.73× saturation requiring ~4 replicas, mean at 1.22× requiring ~2 replicas). Results are specific to this parameterization and may differ at other service times.

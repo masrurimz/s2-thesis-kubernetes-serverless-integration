@@ -45,6 +45,46 @@ S4 (Hybrid-Predictive) routing path:
 
 ---
 
+## Critical Threat: Artificially Reduced Node Allocatable Capacity (Construct Validity)
+
+### The Problem
+
+Workload nodes use `--system-reserved=15600m`, reducing allocatable CPU from 16 vCPU to ~400m per node. At 200m CPU request per pod, each workload node fits only **2 pods** — compared to **~9 pods/node** on a production t3.medium (1.8 vCPU allocatable).
+
+This was **intentional**: a stress-harness technique to force Cluster Autoscaler triggers within 20-minute experiment runs. Without this constraint, the tested load (~53–73 RPS) would fit entirely on 1–2 nodes and CA would never fire.
+
+### How It Biases CA Behavior
+
+- CA triggers at **lower loads** and **more frequently** than in production
+- S1 desired 9 replicas but only 6 schedulable (3 nodes × 2 pods) → 40.3% success rate is an **artifact** of the constraint, not a property of the architecture
+- In production, all 9 pods fit on 1–2 t3.medium nodes → no CA needed at tested load
+- Time spent in CA-regime (pods Pending → node provisioning → scheduling) is inflated vs production
+
+### How It Biases Cost If Misused
+
+If monthly EC2 cost is derived from stress-harness node counts, it overestimates by ~3–4×:
+
+| Scenario | Stress-Harness Nodes | Production Nodes (t3.medium + 1 HA) |
+|----------|---------------------|--------------------------------------|
+| S1 | 3 observed | 3 (ceil(1.8/1.8) + 1 HA) |
+| S2 | 4 observed | 4 (ceil(5.2/1.8) + 1 HA) |
+| S3 | 4 observed | 4 (ceil(5.0/1.8) + 1 HA) |
+| S4 | 5 observed | 5 (ceil(6.4/1.8) + 1 HA) |
+
+### Mitigation
+
+1. Strict two-world separation in thesis narrative (stress harness vs production projection)
+2. Cost chapter uses production allocatable (t3.medium 1.8 vCPU) with +1 HA node
+3. Mechanism chapter reports CA triggers as "under stress-harness constraints"
+4. `cost_analyzer.py` has Model 3a (observed/stress) and Model 3b (production projection)
+
+### Residual Risk
+
+- Stress harness may over- or understate hybrid value depending on where production traffic sits relative to real capacity thresholds
+- Cannot determine real-cloud CA frequency without actual cloud deployment
+
+---
+
 ## Secondary Threat: GRU Server Unavailability in Phase B
 
 ### The Problem
@@ -189,6 +229,54 @@ Saturation calibration was performed but the replay scaling factor $g=33$ was se
 4. Phase B v1 and v2 data preserved as negative results (demonstrates threat)
 5. Documented as explicit threat in evaluation plan (Section 3.5.7, threat #12)
 
+## Senary Threat: Emulated Node Provisioning Fidelity
+
+### The Problem
+
+The experiment emulates cloud node provisioning using k3d cordon/uncordon (Approach A) or dynamic k3d node creation (Approach B), rather than actual cloud VM provisioning. This creates differences from production behavior.
+
+### What Is Captured
+
+- ✅ Pods genuinely go Pending (Kubernetes scheduler cannot place them)
+- ✅ Provisioning delay introduces realistic capacity gap (randomized 45-120s per event)
+- ✅ HPA continues requesting replicas during Pending state
+- ✅ Knative operates independently on dedicated infra node
+- ✅ Approach B creates real Docker containers that join the cluster (~5s bootstrap)
+
+### What Is NOT Captured
+
+- ❌ Real VM boot sequence (kernel init, cloud-init, kubelet bootstrap)
+- ❌ Cloud API rate limiting and quota exhaustion
+- ❌ Network attachment and CNI initialization variability
+- ❌ Multi-availability-zone placement decisions
+- ❌ Heterogeneous instance types (all nodes identical in k3d)
+- ❌ Image pull from remote registry (images pre-cached in k3d)
+
+### Provisioning Delay Calibration
+
+The randomized delay range (uniform 45-120s) was calibrated against published benchmarks:
+
+| Platform / Tool | Measured Time | Source |
+|----------------|---------------|--------|
+| AWS Karpenter v1.5 (2025) | ~45-60s | Chkk production benchmark |
+| AWS EKS + Cluster Autoscaler | ~120-240s | AWS EKS Best Practices docs |
+| Cluster Autoscaler decision latency | 5-30s (decision only) | Kubernetes Autoscaler FAQ |
+| Azure AKS max-node-provision-time | default 15 min timeout | Microsoft Learn |
+
+### Impact
+
+The emulated provisioning is **faster and more deterministic** than real cloud provisioning. This means:
+- The provisioning gap where S3/S4's serverless absorption matters is **shorter** than in production
+- S1's disadvantage during the gap is **understated** compared to real cloud environments
+- Results represent a **conservative** estimate of the hybrid architecture's advantage
+
+### Mitigation
+
+1. Randomized delay (not fixed) introduces per-event variability
+2. Range calibrated against published benchmarks from major cloud providers
+3. Documented as explicit limitation with clear framing
+4. Future work: validate on managed Kubernetes (EKS/GKE) with actual node provisioning
+
 ---
 
 ## Methodological Threats
@@ -223,6 +311,7 @@ Saturation calibration was performed but the replay scaling factor $g=33$ was se
 | Workload parameterization | **High** | Recalibrated 5ms→10ms; documented | Invalidated Phase B v1; corrected in v2 |
 | Load insufficiency | Medium | Acknowledged | Limits predictive advantage proof |
 | Synthetic training data | Medium | Clearly labeled | Limits generalization claims |
+| Emulated node provisioning | Medium | Randomized 45-120s, calibrated to benchmarks | Conservative estimate of hybrid advantage |
 | Fixed duration | Low | Documented | Minor - 5 min sufficient |
 | Multiple comparisons | Low | Primary metrics pre-registered | Minor |
 
