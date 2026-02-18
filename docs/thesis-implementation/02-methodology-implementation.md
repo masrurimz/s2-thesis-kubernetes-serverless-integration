@@ -770,6 +770,9 @@ class SystemEvaluator:
                     
             time.sleep(5)  # Collect every 5 seconds
             
+    # ⚠️ SUPERSEDED: Cost estimation logic replaced by thesis/scripts/cost_analyzer.py.
+    # The e2-standard-2 pricing here is a prototype — final analysis uses three billing
+    # models with corrected service times and production node sizing.
     def calculate_cost_estimation(self) -> Dict[str, float]:
         """Calculate cost estimation based on Google Cloud pricing (thesis requirement)"""
         # Google Cloud pricing (as specified in thesis)

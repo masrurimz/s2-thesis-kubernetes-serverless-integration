@@ -322,6 +322,8 @@ def evaluate_prediction_accuracy(actual: np.ndarray, predicted: np.ndarray) -> f
 - **Deployment Method**: Full serverless vs Full Kubernetes vs Hybrid
 - **Scaling Method**: Cluster autoscaler vs ElaX vs Proposed method
 
+> **⚠️ SUPERSEDED:** This CostCalculator prototype was replaced by `thesis/scripts/cost_analyzer.py` which uses three billing models (Lambda Provisioned Concurrency, Cloud Run Always-Allocated, EC2 Node-Hours) with actual measured experiment data. See `results/cost/2026-02-17_three-model-cost-comparison/report.md` for the final cost analysis.
+
 ### 4.3 Cost Calculation
 
 ```python

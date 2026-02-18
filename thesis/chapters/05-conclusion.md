@@ -57,11 +57,11 @@ A comprehensive evaluation framework was designed spanning three experimental ph
 **H3 — GRU prediction adequacy:**
 - ✅ **Fully validated.** All accuracy targets met on synthetic data: 6.01% RMSE (<10%), 4.91% MAE (<5%), ~40ms latency (<50ms), confidence scores 0.72–0.88.
 
-**Cost analysis** (proxy-based estimates using published cloud pricing) shows S4 consistently cheaper than S3 across all major providers: AWS ($193 vs $206, 6% savings), GCP ($185 vs $198, 7% savings), and Azure ($120 vs $132, 9% savings). These are projected savings from reduced unnecessary serverless invocations through predictive routing, not actual billing data.
+**Cost analysis** using three billing models (Lambda Provisioned Concurrency, Cloud Run Always-Allocated, EC2 Node-Hours) reveals that the serverless billing model dominates cost rankings. Under Lambda PC pricing, S1 (K8s-only) is cheapest at $162/month but achieves only 40.3% SLO success; S2 (serverless) is most expensive at $2,326/month due to CPU throttling inflating wall-clock billing. Under EC2 production sizing (t3.medium), all scenarios range $162–222/month. The cost conclusion depends on pricing model, not architecture choice alone.
 
 In summary, this research successfully validates all proposed **mechanisms** — the GRU predictor achieves target accuracy, the routing controller correctly shifts traffic based on SLO status, and predictive actions trigger before violations under appropriate conditions. However, **statistical superiority** over baseline approaches was not established due to testbed constraints (single-node k3d deployment, localhost routing bias, GRU unavailability during controlled experiments, and insufficient sample sizes for normality assumptions). The work represents an engineering contribution with validated mechanisms and clearly identified deployment requirements for production validation.
 
-*(Evidence: `results/experiments/phase-b/2026-02-12_replicated-20runs/`, `results/experiments/phase-c/2026-02-13_dynamic-workload/`, `results/cost/2026-02-11_proxy-analysis/`)*
+*(Evidence: `results/experiments/phase-b/2026-02-12_replicated-20runs/`, `results/experiments/phase-c/2026-02-13_dynamic-workload/`, `results/cost/2026-02-17_three-model-cost-comparison/`)*
 
 ---
 
@@ -69,7 +69,7 @@ In summary, this research successfully validates all proposed **mechanisms** —
 
 Based on the limitations identified during evaluation, six directions are recommended for future research:
 
-1. **Multi-node cloud deployment.** The most critical limitation was the single-node k3d testbed, which introduces localhost routing bias and eliminates network latency differentials between Kubernetes and serverless backends. Deploying on a multi-node cloud cluster (e.g., 3+ nodes on AWS EKS or GCP GKE with Knative on separate nodes) would provide realistic network conditions necessary to establish statistical superiority of hybrid routing.
+1. **Multi-node cloud deployment.** The most critical limitation was the single-node k3d testbed, which introduces localhost routing bias and eliminates network latency differentials between Kubernetes and serverless backends. Deploying on a multi-node cloud cluster (e.g., 3+ nodes on AWS EKS or GCP GKE with Knative on separate nodes) would provide realistic network conditions necessary to establish statistical superiority of hybrid routing. The current experiment deliberately constrains node allocatable CPU (`system-reserved=15600m`) to force Cluster Autoscaler activity; production deployment would eliminate this artificial constraint and provide realistic CA trigger frequency data.
 
 2. **Algorithm 2 (Cluster Controller) integration with Kubernetes HPA.** The proposed horizontal scaling formula R = αx + β should be fully implemented and integrated with the Kubernetes Horizontal Pod Autoscaler. This would enable the system to not only route traffic between cluster types but also proactively scale Kubernetes replicas based on GRU predictions, completing the original ElaX modification design.
 

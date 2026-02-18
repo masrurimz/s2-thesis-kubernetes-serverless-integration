@@ -102,6 +102,28 @@
 
 ---
 
+## Cost Analysis
+
+### Claim 12a (Cost Mechanism): CPU throttling + concurrency creates hidden serverless cost multiplier
+- **Evidence:** `results/cost/2026-02-17_three-model-cost-comparison/report.md` §Key Finding: CPU Throttling and Little's Law
+- **Raw Data:** `controller/results/cost_analysis/cost_analysis_20260217_144437.json`
+- **Result:** Knative pod (200m CPU, target-concurrency=10) creates 50× CPU slowdown per request. Lambda bills wall-clock (2.515s for S2) not CPU time (9.77ms), creating ~364× cost multiplier. K8s pods also throttled: Little's Law service time S1=105ms, S3=262ms, S4=1.309s (not the naive 10ms hardcode).
+- **Status:** ✅ Validated — mechanism insight about serverless cost drivers
+
+### Claim 12b (Cost Projection): Production cost comparison under t3.medium sizing
+- **Evidence:** `results/cost/2026-02-17_three-model-cost-comparison/report.md` §Model 3b, §Thesis Implications
+- **Raw Data:** `controller/results/cost_analysis/cost_analysis_20260217_144437.json`
+- **Source Experiment:** `results/experiments/phase-b/2026-02-16_validation-metrics-fixes/`
+- **Reproduce:** `cd controller && uv run python ../thesis/scripts/cost_analyzer.py --experiment-dir ../results/experiments/phase-b/2026-02-16_validation-metrics-fixes`
+- **Production Assumptions:** t3.medium ($0.0416/hr), 1.8 vCPU allocatable, +1 HA headroom node, EKS $0.10/hr
+- **Results (Model 3b EC2 Production — monthly):** S1 $162, S2 $192, S3 $192, S4 $222
+- **Results (Model 1 Lambda PC — monthly):** S1 $162, S2 $2,326, S3 $636, S4 $897
+- **Results ($/1M successful — EC2 Production):** S1 $2.91, S2 $1.13, S3 $1.33, S4 $1.52
+- **Interpretation Constraint:** These are analytical projections using experiment throughput/pod-count inputs mapped to production node sizing. NOT direct measurements from the stress harness (which used 400m allocatable per node).
+- **Status:** ✅ Analysis complete — supports H3 cost discussion
+
+---
+
 ## Summary
 
 | Type | Claim | Bundle | Status |
@@ -117,6 +139,8 @@
 | Testbed | HPA works on k3d | validation/infrastructure-validation | ✅ |
 | Design Decision | HPA vs kubectl scale exclusive | validation/infrastructure-validation | ✅ |
 | Testbed | Knative KPA works on k3d | validation/infrastructure-validation | ✅ |
+| Cost Mechanism | Throttling cost multiplier | cost/2026-02-17_three-model-cost-comparison | ✅ Validated |
+| Cost Projection | Production 3-model comparison | cost/2026-02-17_three-model-cost-comparison | ✅ Analysis complete |
 
 ---
 

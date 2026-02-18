@@ -1,0 +1,37 @@
+id: cost.three-model-comparison.2026-02-17
+date: 2026-02-17
+phase: phase-b
+scenarios: [s1-k8s-only, s2-serverless-only, s3-hybrid-reactive, s4-hybrid-predictive]
+source_experiment: results/experiments/phase-b/2026-02-16_validation-metrics-fixes/
+correction_note: >
+  Supersedes original analysis. Five errors corrected: (1) Lambda on-demand → Provisioned
+  Concurrency pricing for min-scale=1; (2) CPU-time → wall-clock service time for execution
+  billing; (3) 512MB → 354MB Lambda memory (CPU-proportional); (4) 1:1 → 1:10 pod-to-instance
+  concurrency mapping; (5) S2 idle K8s deployment now included. Net effect: S2 ranking
+  inverted from cheapest to most expensive under Model 1.
+models:
+  - name: AWS Lambda Provisioned Concurrency
+    pricing: {provisioned_gb_s: 0.0000041667, execution_gb_s: 0.0000097222, requests_per_m: 0.20}
+    notes: "Primary model. 1 Knative pod (target-concurrency=10) = 10 Lambda PC instances."
+  - name: Google Cloud Run Always-Allocated
+    pricing: {vcpu_s: 0.00002400, gib_s: 0.00000250, requests_per_m: 0.40}
+    notes: "CPU-second billing neutralizes throttling multiplier."
+  - name: Node-Hours (t3.medium)
+    pricing: {per_hour: 0.0416}
+    notes: "Most defensible infrastructure-only model."
+resource_config:
+  cpu_request: 200m
+  memory_alloc: 128Mi
+  memory_alloc_gb: 0.125
+  lambda_equivalent_memory_mb: 354
+  lambda_equivalent_memory_gb: 0.346
+  knative_target_concurrency: 10
+claims: {supports: [H3-cost-efficiency]}
+key_findings:
+  - "CPU throttling (200m/10 concurrent) creates 364× wall-clock vs CPU-time ratio"
+  - "S2 ranking inverts: cheapest (old) → most expensive (corrected) under Lambda PC"
+  - "S1 cheapest on cost but 40.3% success rate"
+  - "S3 best cost-performance balance ($0.91/run, 76.7% success)"
+  - "GRU prediction (S4) routes more to serverless, increasing cost by $0.20/run"
+reproduce: ["python3 results/cost/2026-02-17_three-model-cost-comparison/calculate_costs.py"]
+status: complete
