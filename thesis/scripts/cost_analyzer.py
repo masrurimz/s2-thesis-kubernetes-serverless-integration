@@ -161,6 +161,9 @@ class ScenarioMetrics:
     app_duration_avg_ms: float = 0.0
     app_duration_p50_ms: float = 0.0
     app_duration_p95_ms: float = 0.0
+    app_duration_serverless_avg_ms: float = 0.0
+    app_duration_serverless_p95_ms: float = 0.0
+    app_duration_k8s_avg_ms: float = 0.0
 
     # Derived (computed by analyzer)
     cpu_per_request_sec: float = 0.0
@@ -256,6 +259,9 @@ def load_experiment_metrics(result_path: Path) -> ScenarioMetrics:
         app_duration_avg_ms=result.get("app_duration_avg_ms", 0),
         app_duration_p50_ms=result.get("app_duration_p50_ms", 0),
         app_duration_p95_ms=result.get("app_duration_p95_ms", 0),
+        app_duration_serverless_avg_ms=result.get("app_duration_serverless_avg_ms", 0),
+        app_duration_serverless_p95_ms=result.get("app_duration_serverless_p95_ms", 0),
+        app_duration_k8s_avg_ms=result.get("app_duration_k8s_avg_ms", 0),
     )
 
 
@@ -298,14 +304,30 @@ def analyze_from_experiment(metrics: ScenarioMetrics) -> Dict[str, Any]:
     )
     cpu_derived_exec_time_sec = metrics.cpu_per_request_sec / POD_CPU_REQUEST + LAMBDA_OVERHEAD_SEC
 
-    # Prefer direct app duration (reported by workload response payload via k6).
-    # It reflects actual function work better than metrics-server CPU under heavy routing/load.
-    if metrics.app_duration_avg_ms > 0:
+    # Prefer serverless-specific execution signal for Lambda sizing.
+    if metrics.app_duration_serverless_avg_ms > 0:
+        metrics.lambda_exec_time_sec = (metrics.app_duration_serverless_avg_ms / 1000.0) + LAMBDA_OVERHEAD_SEC
+        metrics.execution_time_source = "app_duration_serverless_avg"
+    elif metrics.app_duration_avg_ms > 0 and scenario.startswith("s2"):
+        # S2 is fully serverless, so blended app duration is still serverless-specific.
         metrics.lambda_exec_time_sec = (metrics.app_duration_avg_ms / 1000.0) + LAMBDA_OVERHEAD_SEC
         metrics.execution_time_source = "app_duration_avg"
     else:
-        metrics.lambda_exec_time_sec = cpu_derived_exec_time_sec
-        metrics.execution_time_source = "cpu_derived"
+        # Fallback: derive serverless compute time from knative CPU and serverless request count.
+        if scenario.startswith("s1"):
+            serverless_pct_tmp = 0.0
+        elif scenario.startswith("s2"):
+            serverless_pct_tmp = 100.0
+        else:
+            serverless_pct_tmp = metrics.serverless_traffic_pct
+        serverless_requests_tmp = int(metrics.total_requests * (serverless_pct_tmp / 100.0))
+        if serverless_requests_tmp > 0 and metrics.knative_cpu_seconds > 0:
+            knative_cpu_per_req_sec = metrics.knative_cpu_seconds / serverless_requests_tmp
+            metrics.lambda_exec_time_sec = knative_cpu_per_req_sec / POD_CPU_REQUEST + LAMBDA_OVERHEAD_SEC
+            metrics.execution_time_source = "knative_cpu_per_serverless_req"
+        else:
+            metrics.lambda_exec_time_sec = cpu_derived_exec_time_sec
+            metrics.execution_time_source = "cpu_derived"
 
     # --- Serverless request routing ---
     if scenario.startswith("s1"):
@@ -391,6 +413,9 @@ def analyze_from_experiment(metrics: ScenarioMetrics) -> Dict[str, Any]:
         "app_duration_avg_ms": round(metrics.app_duration_avg_ms, 2),
         "app_duration_p50_ms": round(metrics.app_duration_p50_ms, 2),
         "app_duration_p95_ms": round(metrics.app_duration_p95_ms, 2),
+        "app_duration_serverless_avg_ms": round(metrics.app_duration_serverless_avg_ms, 2),
+        "app_duration_serverless_p95_ms": round(metrics.app_duration_serverless_p95_ms, 2),
+        "app_duration_k8s_avg_ms": round(metrics.app_duration_k8s_avg_ms, 2),
         "execution_time_source": metrics.execution_time_source,
         "lambda_exec_time_ms": round(metrics.lambda_exec_time_sec * 1000, 1),
         "lambda_pc_instances": metrics.lambda_pc_instances,
