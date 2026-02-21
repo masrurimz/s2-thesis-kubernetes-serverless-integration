@@ -72,7 +72,10 @@ DAEMON_API = "http://localhost:9104"
 TARGET_URL = "http://localhost:18082"
 DAEMON_API_PORT = 9104
 DEPLOYMENT = "test-app-warm"
+HPA_NAME = "test-app-warm-hpa"
 NAMESPACE = "default"
+K6_ENDPOINT = "/fib?n=34"
+K8S_DEPLOYMENT_FILTER = f'deployment="{DEPLOYMENT}",namespace="{NAMESPACE}"'
 
 SCENARIOS = ["s1-k8s-only", "s2-serverless-only", "s3-hybrid-reactive", "s4-hybrid-predictive"]
 
@@ -100,6 +103,9 @@ class ExperimentResult:
     throughput_rps: float = 0.0
     total_requests: int = 0
     slo_violations_k6: int = 0
+    app_duration_avg_ms: float = 0.0
+    app_duration_p50_ms: float = 0.0
+    app_duration_p95_ms: float = 0.0
 
     # Prometheus corroboration
     prom_p99_latency_ms: float = 0.0
@@ -161,6 +167,19 @@ class ExperimentResult:
     first_provision_delay_sec: float = 0.0
     total_provision_events: int = 0
     provision_log_path: str = ""
+
+    # Multi-node validity gates
+    k8s_pod_nodes: List[str] = field(default_factory=list)
+    knative_pod_nodes: List[str] = field(default_factory=list)
+    distinct_workload_nodes: int = 0
+    dynamic_node_pod_count: int = 0
+    cross_node_observed: bool = False
+    validity_gate_passed: bool = True
+    validity_gate_notes: List[str] = field(default_factory=list)
+    run_validity_passed: bool = True
+    run_validity_notes: List[str] = field(default_factory=list)
+    stress_validity_passed: bool = True
+    stress_validity_notes: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -545,8 +564,25 @@ class ScenarioResetter:
         return True  # Proceed anyway; HPA may still work
 
     def _reset_s2(self) -> bool:
-        """S2: ensure Knative KPA is active, wait for scale-to-zero."""
-        # Knative annotations should already be set; verify pods are zero
+        """S2: ensure K8s path is drained and Knative KPA scales to zero."""
+        # Remove any lingering HPA and scale warm deployment down.
+        _kubectl(["delete", "hpa", HPA_NAME, "--ignore-not-found"])
+        r = _kubectl(["scale", f"deployment/{DEPLOYMENT}", "--replicas=0"])
+        if r.returncode != 0:
+            logger.error("scale_s2_to_zero_failed", stderr=r.stderr.strip())
+            return False
+
+        for _ in range(20):
+            time.sleep(3)
+            dr = _kubectl(["get", f"deployment/{DEPLOYMENT}", "-o", "json"])
+            if dr.returncode == 0:
+                dep = json.loads(dr.stdout)
+                available = dep.get("status", {}).get("availableReplicas", 0) or 0
+                if available == 0:
+                    logger.info("k8s_scaled_to_zero")
+                    break
+
+        # Knative annotations should already be set; verify pods are zero.
         for attempt in range(12):
             r = _kubectl(["get", "pods", "-l", "serving.knative.dev/service=test-app", "-o", "json"])
             if r.returncode == 0:
@@ -762,7 +798,7 @@ class K6Runner:
             K6_PATH, "run",
             "--out", "json=/dev/null",  # disable verbose json streaming
             "-e", f"TARGET_URL={TARGET_URL}",
-            "-e", "ENDPOINT=/fib?n=32",
+            "-e", f"ENDPOINT={K6_ENDPOINT}",
             "-e", f"SCENARIO={scenario}",
             "-e", f"RUN_ID={run_id}",
             "-e", f"RESULTS_DIR={k6_results_dir}",
@@ -832,6 +868,9 @@ class K6Runner:
                 "total_requests": reqs.get("count") or 0,
                 "actual_rps": reqs.get("rate") or 0,
                 "slo_violations": slo.get("count") or 0,
+                "app_duration_avg_ms": m.get("app_duration_ms", {}).get("values", {}).get("avg") or 0,
+                "app_duration_p50_ms": m.get("app_duration_ms", {}).get("values", {}).get("p(50)") or 0,
+                "app_duration_p95_ms": m.get("app_duration_ms", {}).get("values", {}).get("p(95)") or 0,
             },
         }
 
@@ -855,8 +894,8 @@ class MetricExporter:
         "daemon_predictions_used": 'routing_daemon_prediction_used_total',
         "daemon_predictions_failed": 'routing_daemon_prediction_failed_total',
         # Algorithm 2 replica scaling
-        "k8s_desired_replicas": 'k8s_deployment_desired_replicas',
-        "k8s_available_replicas": 'k8s_deployment_available_replicas',
+        "k8s_desired_replicas": f'k8s_deployment_desired_replicas{{{K8S_DEPLOYMENT_FILTER}}}',
+        "k8s_available_replicas": f'k8s_deployment_available_replicas{{{K8S_DEPLOYMENT_FILTER}}}',
         "k8s_scale_up_success": 'k8s_scaling_events_total{direction="up",result="success"}',
         "k8s_scale_up_fail": 'k8s_scaling_events_total{direction="up",result="fail"}',
         "k8s_scale_down_success": 'k8s_scaling_events_total{direction="down",result="success"}',
@@ -994,16 +1033,16 @@ class MetricExporter:
 class StatisticalAnalyzer:
     """Welch t-test, Mann-Whitney U, bootstrap CI, Cohen's d, outlier detection."""
 
-    OUTLIER_P99_FLOOR_MS = 15.0  # p99 < 15ms is measurement artifact
+    OUTLIER_P99_FLOOR_MS = 0.0  # disabled; low-latency can be legitimate for S2
 
     def detect_outliers(self, results: List[ExperimentResult]) -> Tuple[List[ExperimentResult], List[ExperimentResult]]:
         """Returns (clean, excluded) results."""
         clean, excluded = [], []
         for r in results:
-            if r.p99_latency_ms < self.OUTLIER_P99_FLOOR_MS:
+            if (r.total_requests <= 0 or r.p99_latency_ms <= self.OUTLIER_P99_FLOOR_MS or not np.isfinite(r.p99_latency_ms)):
                 excluded.append(r)
                 logger.warning("outlier_detected", scenario=r.scenario, run_id=r.run_id,
-                             p99=r.p99_latency_ms, reason="p99 < 15ms")
+                             p99=r.p99_latency_ms, reason="invalid/empty metrics")
             else:
                 clean.append(r)
         return clean, excluded
@@ -1282,8 +1321,8 @@ class ExperimentRunner:
                 daemon_config={
                     "interval": 15, "haproxy_host": HAPROXY_HOST,
                     "haproxy_port": HAPROXY_SOCKET_PORT, "gru_url": GRU_URL,
-                    "endpoint": "/fib?n=32",
-                    "gomaxprocs": 1, "fib_n": 32,
+                    "endpoint": K6_ENDPOINT,
+                    "gomaxprocs": 1, "fib_n": 34,
                 },
                 scaling_config={"alpha": 0.04, "beta": 0.0, "buffer": 1.2,
                                "min_replicas": 1, "max_replicas": 10},
@@ -1369,6 +1408,9 @@ class ExperimentRunner:
                 throughput_rps=k6m.get("actual_rps", 0),
                 total_requests=k6m.get("total_requests", 0),
                 slo_violations_k6=k6m.get("slo_violations", 0),
+                app_duration_avg_ms=k6m.get("app_duration_avg_ms", 0),
+                app_duration_p50_ms=k6m.get("app_duration_p50_ms", 0),
+                app_duration_p95_ms=k6m.get("app_duration_p95_ms", 0),
                 # Prometheus corroboration
                 prom_p99_latency_ms=prom_summary.get("prom_p99_ms", 0),
                 # Routing metrics
@@ -1416,6 +1458,22 @@ class ExperimentRunner:
                 provision_log_path=str(provision_log_path),
             )
 
+            # Multi-node validity evidence and gating
+            pod_snapshot = self._collect_pod_node_snapshot()
+            result.k8s_pod_nodes = pod_snapshot.get("k8s_pod_nodes", [])
+            result.knative_pod_nodes = pod_snapshot.get("knative_pod_nodes", [])
+            result.distinct_workload_nodes = pod_snapshot.get("distinct_workload_nodes", 0)
+            result.dynamic_node_pod_count = pod_snapshot.get("dynamic_node_pod_count", 0)
+            result.cross_node_observed = pod_snapshot.get("cross_node_observed", False)
+            run_ok, run_notes, stress_ok, stress_notes = self._evaluate_validity_gates(scenario, result, pod_snapshot)
+            result.run_validity_passed = run_ok
+            result.run_validity_notes = run_notes
+            result.stress_validity_passed = stress_ok
+            result.stress_validity_notes = stress_notes
+            # Backward-compatible combined gate field: run validity only.
+            result.validity_gate_passed = run_ok
+            result.validity_gate_notes = run_notes
+
             # Fix 1 (s2-nsw): Compute prediction_usage_rate from daemon decision counts
             total_decisions = (result.maintain_count + result.scale_out_count
                                + result.predictive_count + result.optimize_cost_count)
@@ -1428,7 +1486,9 @@ class ExperimentRunner:
                 json.dump(asdict(result), f, indent=2)
 
             logger.info("run_complete", scenario=scenario, run_id=run_id,
-                       p99=result.p99_latency_ms, error_rate=result.error_rate)
+                       p99=result.p99_latency_ms, error_rate=result.error_rate,
+                       run_valid=result.run_validity_passed,
+                       stress_valid=result.stress_validity_passed)
             return result
 
         finally:
@@ -1497,6 +1557,100 @@ class ExperimentRunner:
             return None
 
         return metrics if metrics else None
+
+    @staticmethod
+    def _collect_pod_node_snapshot() -> Dict[str, Any]:
+        """Collect pod-to-node placement evidence for run validity checks."""
+        snapshot = {
+            "k8s_pod_nodes": [],
+            "knative_pod_nodes": [],
+            "distinct_workload_nodes": 0,
+            "dynamic_node_pod_count": 0,
+            "cross_node_observed": False,
+        }
+        try:
+            pods_res = _kubectl(["get", "pods", "-o", "json"], timeout=15)
+            if pods_res.returncode != 0:
+                return snapshot
+
+            pods = json.loads(pods_res.stdout).get("items", [])
+            k8s_nodes = set()
+            knative_nodes = set()
+            dynamic_count = 0
+
+            for pod in pods:
+                meta = pod.get("metadata", {})
+                labels = meta.get("labels", {})
+                spec = pod.get("spec", {})
+                node_name = spec.get("nodeName")
+                if not node_name:
+                    continue
+
+                is_k8s = labels.get("app") == "test-app-warm"
+                is_knative = labels.get("serving.knative.dev/service") == "test-app"
+
+                if is_k8s:
+                    k8s_nodes.add(node_name)
+                if is_knative:
+                    knative_nodes.add(node_name)
+                if (is_k8s or is_knative) and "dynamic-workload" in node_name:
+                    dynamic_count += 1
+
+            all_nodes = k8s_nodes | knative_nodes
+            snapshot["k8s_pod_nodes"] = sorted(k8s_nodes)
+            snapshot["knative_pod_nodes"] = sorted(knative_nodes)
+            snapshot["distinct_workload_nodes"] = len(all_nodes)
+            snapshot["dynamic_node_pod_count"] = dynamic_count
+            snapshot["cross_node_observed"] = dynamic_count > 0 or len(all_nodes) >= 2
+            return snapshot
+        except Exception as e:
+            logger.warning("pod_node_snapshot_failed", error=str(e))
+            return snapshot
+
+    @staticmethod
+    def _evaluate_validity_gates(
+        scenario: str,
+        result: ExperimentResult,
+        pod_snapshot: Dict[str, Any],
+    ) -> Tuple[bool, List[str], bool, List[str]]:
+        """Evaluate run-valid and stress-valid gates separately."""
+        run_notes: List[str] = []
+        stress_notes: List[str] = []
+
+        # Run-validity: data integrity and scenario-consistent evidence.
+        if result.total_requests <= 0:
+            run_notes.append("No requests recorded")
+        if scenario in ("s2-serverless-only", "s3-hybrid-reactive", "s4-hybrid-predictive"):
+            if len(pod_snapshot.get("knative_pod_nodes", [])) == 0:
+                run_notes.append("No Knative pod placement evidence captured")
+        if scenario == "s2-serverless-only" and result.nodes_provisioned > 0:
+            run_notes.append("S2 unexpectedly provisioned dynamic K8s nodes")
+        if scenario == "s2-serverless-only":
+            if result.desired_replicas_final > 0:
+                run_notes.append("S2 has nonzero K8s desired replicas")
+            if result.k8s_replica_seconds > 0:
+                run_notes.append("S2 recorded K8s replica seconds")
+            if len(pod_snapshot.get("k8s_pod_nodes", [])) > 0:
+                run_notes.append("S2 observed K8s workload pods")
+            if result.total_requests > 0 and result.app_duration_avg_ms > 0 and result.avg_cpu_millicores > 0:
+                cpu_per_req_ms = (result.avg_cpu_millicores * result.duration_sec) / result.total_requests
+                if cpu_per_req_ms > 0 and (result.app_duration_avg_ms / cpu_per_req_ms) > 20:
+                    run_notes.append(
+                        "CPU accounting mismatch: app duration much larger than metrics-server CPU/request"
+                    )
+
+        # Stress-validity: scaling challenge actually exercised.
+        if scenario in ("s1-k8s-only", "s3-hybrid-reactive", "s4-hybrid-predictive"):
+            if result.nodes_provisioned <= 0:
+                stress_notes.append("No dynamic node provisioning events captured")
+            if pod_snapshot.get("dynamic_node_pod_count", 0) <= 0:
+                stress_notes.append("No workload pod observed on dynamic nodes")
+            if pod_snapshot.get("distinct_workload_nodes", 0) < 2:
+                stress_notes.append("Workload pods did not span at least two nodes")
+
+        run_ok = len(run_notes) == 0
+        stress_ok = len(stress_notes) == 0
+        return run_ok, run_notes, stress_ok, stress_notes
 
     @staticmethod
     def _validate_run_preconditions(scenario: str) -> bool:
@@ -1606,6 +1760,20 @@ class ExperimentRunner:
         """Statistical analysis + report generation."""
         clean, excluded = self.analyzer.detect_outliers(results)
 
+        run_invalid = [r for r in clean if not r.run_validity_passed]
+        if run_invalid:
+            logger.warning("run_validity_failed", count=len(run_invalid))
+            clean = [r for r in clean if r.run_validity_passed]
+            excluded = excluded + run_invalid
+
+        # Primary inferential set: stress-valid for S1/S3/S4, run-valid for S2.
+        analysis_set: List[ExperimentResult] = []
+        for r in clean:
+            if r.scenario == "s2-serverless-only":
+                analysis_set.append(r)
+            elif r.stress_validity_passed:
+                analysis_set.append(r)
+
         if excluded:
             logger.warning("outliers_excluded", count=len(excluded))
             with open(self.output_dir / "excluded_runs.json", "w") as f:
@@ -1628,7 +1796,7 @@ class ExperimentRunner:
 
         for baseline, comp, metric in pairs:
             try:
-                stat = self.analyzer.compare(clean, baseline, comp, metric)
+                stat = self.analyzer.compare(analysis_set, baseline, comp, metric)
                 comparisons.append(stat)
             except ValueError as e:
                 logger.warning("comparison_skipped", error=str(e))
@@ -1638,7 +1806,7 @@ class ExperimentRunner:
             json.dump([asdict(c) for c in comparisons], f, indent=2)
 
         # Generate report
-        report = self._generate_report(clean, excluded, comparisons)
+        report = self._generate_report(clean, analysis_set, excluded, comparisons)
         report_path = self.output_dir / "report.md"
         with open(report_path, "w") as f:
             f.write(report)
@@ -1654,6 +1822,7 @@ class ExperimentRunner:
     def _generate_report(
         self,
         clean: List[ExperimentResult],
+        analysis_set: List[ExperimentResult],
         excluded: List[ExperimentResult],
         comparisons: List[StatisticalComparison],
     ) -> str:
@@ -1687,6 +1856,56 @@ class ExperimentRunner:
                 f"| {s} | {n} | {p50:.1f} | {p95:.1f} | {p99:.1f} | {err:.3f} | {rps:.1f} | {slo} | {su} | {sd} |"
             )
 
+        lines.extend(["", "## Run Validity Gates", ""])
+        lines.extend([
+            "| Scenario | Run-Valid / Total |",
+            "|----------|-------------------|",
+        ])
+        for s in SCENARIOS:
+            rs = [r for r in clean + excluded if r.scenario == s]
+            if not rs:
+                continue
+            pass_count = sum(1 for r in rs if r.run_validity_passed)
+            lines.append(f"| {s} | {pass_count}/{len(rs)} |")
+
+        lines.extend(["", "## Stress Validity Coverage", ""])
+        lines.extend([
+            "| Scenario | Stress-Valid / Run-Valid | Dynamic Nodes (sum) | Cross-node Runs |",
+            "|----------|--------------------------|---------------------|-----------------|",
+        ])
+        for s in ("s1-k8s-only", "s3-hybrid-reactive", "s4-hybrid-predictive"):
+            rs = [r for r in clean if r.scenario == s]
+            if not rs:
+                continue
+            stress_count = sum(1 for r in rs if r.stress_validity_passed)
+            dyn_sum = sum(r.nodes_provisioned for r in rs)
+            cross_runs = sum(1 for r in rs if r.cross_node_observed)
+            lines.append(f"| {s} | {stress_count}/{len(rs)} | {dyn_sum} | {cross_runs}/{len(rs)} |")
+
+        lines.extend(["", "## Analysis Set Coverage", ""])
+        lines.extend([
+            "| Scenario | Included in Inferential Set |",
+            "|----------|-----------------------------|",
+        ])
+        for s in SCENARIOS:
+            total = len([r for r in clean if r.scenario == s])
+            inc = len([r for r in analysis_set if r.scenario == s])
+            if total == 0:
+                continue
+            lines.append(f"| {s} | {inc}/{total} |")
+
+        failing = [r for r in (clean + excluded) if (not r.run_validity_passed or not r.stress_validity_passed)]
+        if failing:
+            lines.extend(["", "### Gate Failures", ""])
+            for r in failing:
+                reasons: List[str] = []
+                if not r.run_validity_passed:
+                    reasons.extend(r.run_validity_notes)
+                if not r.stress_validity_passed:
+                    reasons.extend(r.stress_validity_notes)
+                reason = "; ".join(reasons) if reasons else "unspecified"
+                lines.append(f"- {r.scenario} run {r.run_id}: {reason}")
+
         lines.extend(["", "## Statistical Comparisons", ""])
 
         for c in comparisons:
@@ -1712,7 +1931,14 @@ class ExperimentRunner:
         if excluded:
             lines.extend(["## Excluded Runs", ""])
             for r in excluded:
-                lines.append(f"- {r.scenario} run {r.run_id}: p99={r.p99_latency_ms:.1f}ms (< 15ms threshold)")
+                if not r.run_validity_passed:
+                    reason = "; ".join(r.run_validity_notes) if r.run_validity_notes else "run validity failure"
+                    lines.append(f"- {r.scenario} run {r.run_id}: {reason}")
+                elif r.scenario in ("s1-k8s-only", "s3-hybrid-reactive", "s4-hybrid-predictive") and not r.stress_validity_passed:
+                    reason = "; ".join(r.stress_validity_notes) if r.stress_validity_notes else "stress validity failure"
+                    lines.append(f"- {r.scenario} run {r.run_id}: {reason}")
+                else:
+                    lines.append(f"- {r.scenario} run {r.run_id}: invalid/empty metrics")
 
         return "\n".join(lines)
 

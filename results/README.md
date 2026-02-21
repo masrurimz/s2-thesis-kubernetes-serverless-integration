@@ -35,7 +35,15 @@ Rules:
 | `phase-c.dynamic-workload.2026-02-13` | C | Dynamic Workload | 2026-02-13 | S3, S4 | `experiments/phase-c/2026-02-13_dynamic-workload/` |
 | `phase-b.clarknet-replay.2026-02-14 (INVALIDATED)` | B | Replicated Runs (ClarkNet) | 2026-02-14 | S1-S4 | `experiments/phase-b/2026-02-14_clarknet-replay/` |
 | `phase-b.clarknet-replay-aborted.2026-02-14` | B | Aborted Run | 2026-02-14 | S2, S4 | `experiments/phase-b/2026-02-14_clarknet-replay-ABORTED/` |
+| `phase-b.fib34-validation.2026-02-18` | B | Validation (fib34) | 2026-02-18 | S1-S4 | `experiments/phase-b/2026-02-18_fib34-validation/` |
+| `phase-b.pilot-validity-gates-rerun.2026-02-19` | B | Pilot Validation (n=2) | 2026-02-19 | S1-S4 | `experiments/phase-b/2026-02-19_pilot-n2-validity-gates-rerun/` |
+| `phase-b.s2-serverless-validation.2026-02-20` | B | Validation (S2 only) | 2026-02-20 | S2 | `experiments/phase-b/2026-02-20_s2-serverless-validation/` |
+| `phase-b.s2-serverless-validation-v2.2026-02-21` | B | Validation (S2 only, app-duration) | 2026-02-21 | S2 | `experiments/phase-b/2026-02-20_s2-serverless-validation-v2/` |
 | `validation.infrastructure.2026-02-13` | Validation | Infrastructure Validation | 2026-02-13 | T0–T4 | `experiments/validation/2026-02-13_infrastructure-validation/` |
+| `cost.unified-aws-fib34.2026-02-18` | B | Cost Analysis | 2026-02-18 | S1-S4 | `cost/2026-02-18_fib34-unified-aws-cost/` |
+| `cost.unified-aws-pilot-n2.2026-02-19` | B | Cost Analysis (Pilot n=2) | 2026-02-19 | S1-S4 | `cost/2026-02-19_pilot-n2-unified-aws-cost/` |
+| `cost.unified-aws-s2-validation.2026-02-20` | B | Cost Analysis (S2 validation) | 2026-02-20 | S2 | `cost/2026-02-20_s2-validation-unified-aws-cost/` |
+| `cost.unified-aws-s2-validation-v2.2026-02-21` | B | Cost Analysis (S2 validation v2) | 2026-02-21 | S2 | `cost/2026-02-21_s2-validation-v2-unified-aws-cost/` |
 
 ---
 

@@ -17,6 +17,7 @@ import { Rate, Trend, Counter } from 'k6/metrics';
 
 const errorRate = new Rate('errors');
 const latencyTrend = new Trend('latency_ms');
+const appDurationTrend = new Trend('app_duration_ms');
 const requestCounter = new Counter('total_requests');
 const sloViolations = new Counter('slo_violations');
 
@@ -43,7 +44,7 @@ export const options = {
 };
 
 const BASE_URL = __ENV.TARGET_URL || __ENV.BASE_URL || 'http://localhost:18082';
-const ENDPOINT = __ENV.ENDPOINT || '/fib?n=32';
+const ENDPOINT = __ENV.ENDPOINT || '/fib?n=34';
 
 export function setup() {
     console.log('\n🔬 ClarkNet Trace-Driven Replay');
@@ -75,6 +76,17 @@ export default function () {
     const duration = res.timings.duration;
     latencyTrend.add(duration);
     requestCounter.add(1);
+
+    if (res.status === 200 && res.body) {
+        try {
+            const payload = JSON.parse(res.body);
+            if (typeof payload.duration_ms === 'number' && Number.isFinite(payload.duration_ms)) {
+                appDurationTrend.add(payload.duration_ms);
+            }
+        } catch (_) {
+            // Ignore non-JSON responses; keep load generation unaffected.
+        }
+    }
 
     if (duration > SLO_THRESHOLD_MS) {
         sloViolations.add(1);
@@ -115,6 +127,9 @@ export function handleSummary(data) {
             total_requests: data.metrics.http_reqs?.count || 0,
             actual_rps: data.metrics.http_reqs?.rate || 0,
             slo_violations: data.metrics.slo_violations?.count || 0,
+            app_duration_avg_ms: data.metrics.app_duration_ms?.avg || 0,
+            app_duration_p50_ms: data.metrics.app_duration_ms?.['p(50)'] || 0,
+            app_duration_p95_ms: data.metrics.app_duration_ms?.['p(95)'] || 0,
         },
     };
 
