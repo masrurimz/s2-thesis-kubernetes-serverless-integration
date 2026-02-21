@@ -5,6 +5,8 @@
 **Date:** 2026-02-11 (Updated)  
 **Author:** Thesis Infrastructure Validation
 
+> **Status Note (Superseded for final thesis claims):** This file captures intermediate validation history. Final claim framing and cost interpretation must follow `results/claims/CLAIMS_TO_EVIDENCE.md` and the latest rerun-v2 cost evidence (`results/cost/2026-02-21_all-scenarios-rerun-v2-unified-aws-cost/`). Do not treat rankings here as final inferential evidence.
+
 ---
 
 ## Executive Summary
@@ -190,16 +192,16 @@ server serverless-sim ... check inter 5s  # ← Can keep Knative warm!
 
 ## Hypothesis Validation
 
-### H1: Hybrid Routing Improves SLO Compliance ✅
+### H1: Hybrid Routing (Historical Validation Snapshot)
 
 **Evidence:**
 - S1 (pure K8s): 72.62% error rate, 60s p95 latency - complete saturation
 - S2 (pure serverless): 92.83% error rate - capacity exceeded  
 - S3/S4 (hybrid): 0% error rate, <6ms p95 latency - sustained throughput
 
-**Conclusion:** Hybrid routing prevented complete SLO collapse by dynamically balancing load between K8s and serverless backends.
+**Conclusion (historical run):** This run showed hybrid routing behavior under its specific stress profile. Use current replicated and claims-mapped bundles for thesis-level conclusions.
 
-### H2: Predictive (GRU) Outperforms Reactive-Only ✅
+### H2: Predictive (Historical Validation Snapshot)
 
 **Evidence from Stress Test (previous run with higher load):**
 
@@ -220,7 +222,7 @@ Algorithm 1: PREDICTIVE scale out
   weights: 85/15 → 75/25
 ```
 
-**Conclusion:** GRU predictions enabled preemptive weight adjustments before full SLO violation, triggering 4 PREDICTIVE decisions with 72% average confidence.
+**Conclusion (historical run):** GRU-driven preemptive actions were observed in this run configuration, but superiority claims must be based on validity-gated comparative bundles.
 
 ---
 

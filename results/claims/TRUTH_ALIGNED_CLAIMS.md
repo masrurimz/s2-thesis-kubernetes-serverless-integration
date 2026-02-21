@@ -170,13 +170,12 @@
 ### Section 4.4: Cost Analysis
 
 **Claims to report**:
-- ✅ S4 (predictive) cheaper than S3 (reactive) on all providers
-  - AWS: $193 vs $206 (6% savings)
-  - GCP: $185 vs $198 (7% savings)
-  - Azure: $120 vs $132 (9% savings)
-- ⚠️ Proxy estimates, not real billing data
+- ✅ Cost outcomes are workload- and execution-signal-dependent; no fixed cross-provider savings percentage should be claimed
+- ✅ In all-scenarios rerun-v2 (AWS unified model, `n=1` each), per-1200s totals are S1=$0.061, S2=$0.169, S3=$0.486, S4=$0.432 and S4 < S3 in this directional sample
+- ⚠️ Rerun-v2 is directional/pipeline-validating (`n=1`), not final inferential ranking
+- ⚠️ Proxy estimates from list pricing, not cloud billing exports
 
-**Evidence**: `results/cost/2026-02-11_proxy-analysis/`
+**Evidence**: `results/cost/2026-02-21_all-scenarios-rerun-v2-unified-aws-cost/`
 
 ---
 
@@ -225,11 +224,11 @@
 
 ### Abstract (Truth-Aligned Version)
 
-> This research proposes a hybrid Kubernetes-serverless architecture with GRU-based workload prediction for intelligent traffic routing. The system implements SLO-aware routing (Algorithm 1) that dynamically shifts traffic between cost-effective Kubernetes and elastic serverless backends based on tail latency monitoring. 
+> This research proposes a hybrid Kubernetes-serverless architecture with GRU-based workload prediction for intelligent traffic routing. The system implements SLO-aware routing (Algorithm 1) that dynamically shifts traffic between Kubernetes baseline capacity and elastic serverless backends based on tail latency monitoring.
 >
 > The GRU predictor achieves 6.01% RMSE and 4.91% MAE on synthetic workload patterns, meeting accuracy targets (<10% RMSE, <5% MAE). The predictive mechanism successfully triggers pre-violation during dynamic workload tests, demonstrating proactive capacity positioning.
 >
-> Controlled experiments (20 replicated runs) validate system mechanisms but do not establish statistical superiority over baseline approaches due to testbed limitations (single-node k3d, localhost routing bias, GRU unavailability during some experiments). Cost modeling suggests 6-9% savings potential for predictive routing over reactive-only approaches.
+> Controlled experiments (20 replicated runs) validate system mechanisms but do not establish statistical superiority over baseline approaches due to testbed limitations (single-node k3d, localhost routing bias, GRU unavailability during some experiments). Cost modeling is highly sensitive to execution-time signal selection; updated rerun-v2 evidence is reported as directional rather than fixed savings percentages.
 >
 > The research contributes: (1) a validated GRU predictor for HTTP workloads, (2) an SLO-aware routing controller with predictive pre-warming, and (3) a comprehensive evaluation framework identifying deployment requirements for production validation.
 

@@ -145,7 +145,7 @@ HSA_OVERRIDE_GFX_VERSION=11.0.0 sg render -c \
 **Acceptance Criteria:**
 1. S4 throughput > S1 throughput (statistically significant, p < 0.05)
 2. S4 error rate < S1 error rate OR within margin
-3. S4 cost < S2 cost (hybrid cheaper than pure serverless)
+3. Cost analysis reports both whole-run totals and fairness-normalized metrics (`$/1M requests`, `$/1M successful`) without assuming fixed scenario ordering
 
 **Measurements Needed:**
 - S1: 3+ runs with metrics
@@ -221,6 +221,8 @@ Based on stress test history, we expect:
 - Infrastructure state
 - Network conditions
 - CPU throttling settings
+
+Cost rankings may also change materially with workload profile and execution-time signal selection (for example, app-duration-informed vs CPU-derived sizing), so treat any single run as directional unless replicated.
 
 ## Troubleshooting
 
