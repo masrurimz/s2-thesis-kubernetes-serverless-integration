@@ -18,6 +18,8 @@ import { Rate, Trend, Counter } from 'k6/metrics';
 const errorRate = new Rate('errors');
 const latencyTrend = new Trend('latency_ms');
 const appDurationTrend = new Trend('app_duration_ms');
+const appDurationServerlessTrend = new Trend('app_duration_serverless_ms');
+const appDurationK8sTrend = new Trend('app_duration_k8s_ms');
 const requestCounter = new Counter('total_requests');
 const sloViolations = new Counter('slo_violations');
 
@@ -82,6 +84,12 @@ export default function () {
             const payload = JSON.parse(res.body);
             if (typeof payload.duration_ms === 'number' && Number.isFinite(payload.duration_ms)) {
                 appDurationTrend.add(payload.duration_ms);
+                const backend = String(payload.backend || '').toLowerCase();
+                if (backend.includes('knative') || backend.includes('serverless')) {
+                    appDurationServerlessTrend.add(payload.duration_ms);
+                } else {
+                    appDurationK8sTrend.add(payload.duration_ms);
+                }
             }
         } catch (_) {
             // Ignore non-JSON responses; keep load generation unaffected.
@@ -130,6 +138,9 @@ export function handleSummary(data) {
             app_duration_avg_ms: data.metrics.app_duration_ms?.avg || 0,
             app_duration_p50_ms: data.metrics.app_duration_ms?.['p(50)'] || 0,
             app_duration_p95_ms: data.metrics.app_duration_ms?.['p(95)'] || 0,
+            app_duration_serverless_avg_ms: data.metrics.app_duration_serverless_ms?.avg || 0,
+            app_duration_serverless_p95_ms: data.metrics.app_duration_serverless_ms?.['p(95)'] || 0,
+            app_duration_k8s_avg_ms: data.metrics.app_duration_k8s_ms?.avg || 0,
         },
     };
 

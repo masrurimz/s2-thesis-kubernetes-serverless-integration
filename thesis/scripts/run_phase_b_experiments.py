@@ -106,6 +106,9 @@ class ExperimentResult:
     app_duration_avg_ms: float = 0.0
     app_duration_p50_ms: float = 0.0
     app_duration_p95_ms: float = 0.0
+    app_duration_serverless_avg_ms: float = 0.0
+    app_duration_serverless_p95_ms: float = 0.0
+    app_duration_k8s_avg_ms: float = 0.0
 
     # Prometheus corroboration
     prom_p99_latency_ms: float = 0.0
@@ -871,6 +874,9 @@ class K6Runner:
                 "app_duration_avg_ms": m.get("app_duration_ms", {}).get("values", {}).get("avg") or 0,
                 "app_duration_p50_ms": m.get("app_duration_ms", {}).get("values", {}).get("p(50)") or 0,
                 "app_duration_p95_ms": m.get("app_duration_ms", {}).get("values", {}).get("p(95)") or 0,
+                "app_duration_serverless_avg_ms": m.get("app_duration_serverless_ms", {}).get("values", {}).get("avg") or 0,
+                "app_duration_serverless_p95_ms": m.get("app_duration_serverless_ms", {}).get("values", {}).get("p(95)") or 0,
+                "app_duration_k8s_avg_ms": m.get("app_duration_k8s_ms", {}).get("values", {}).get("avg") or 0,
             },
         }
 
@@ -1411,6 +1417,9 @@ class ExperimentRunner:
                 app_duration_avg_ms=k6m.get("app_duration_avg_ms", 0),
                 app_duration_p50_ms=k6m.get("app_duration_p50_ms", 0),
                 app_duration_p95_ms=k6m.get("app_duration_p95_ms", 0),
+                app_duration_serverless_avg_ms=k6m.get("app_duration_serverless_avg_ms", 0),
+                app_duration_serverless_p95_ms=k6m.get("app_duration_serverless_p95_ms", 0),
+                app_duration_k8s_avg_ms=k6m.get("app_duration_k8s_avg_ms", 0),
                 # Prometheus corroboration
                 prom_p99_latency_ms=prom_summary.get("prom_p99_ms", 0),
                 # Routing metrics
