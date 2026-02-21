@@ -8,23 +8,27 @@
 
 ## Executive Summary
 
-This thesis proves that a **HYBRID approach (K8s + Serverless)** outperforms using either platform alone, and that **prediction-based routing** improves upon reactive-only control.
+This strategic plan defined how to evaluate a **hybrid approach (K8s + Serverless)** and **prediction-based routing** against baseline scenarios.
 
 ### Core Thesis Statement
-> In a heterogeneous cloud environment, an SLO-aware hybrid autoscaling and routing mechanism using workload prediction achieves **better SLO compliance and cost-efficiency** than pure Kubernetes, pure serverless, or reactive-only hybrid approaches.
+> In a heterogeneous cloud environment, an SLO-aware hybrid autoscaling and routing mechanism using workload prediction can be evaluated against pure Kubernetes, pure serverless, and reactive-only hybrid approaches for mechanism validity, SLO behavior, and workload-dependent cost outcomes.
+
+### Current Alignment Note
+
+This document is a planning artifact. Current thesis-facing claims should follow `results/claims/CLAIMS_TO_EVIDENCE.md` and rerun-v2 cost framing: cost rankings are workload- and execution-signal-dependent, and rerun-v2 (`n=1`) is directional rather than inferential.
 
 ---
 
 ## Hypothesis Hierarchy
 
-| Level | Hypothesis | What to Prove | Evaluation Method |
+| Level | Hypothesis | What to Evaluate | Evaluation Method |
 |-------|------------|---------------|-------------------|
-| **H1 (System)** | Hybrid > Pure approaches | K8s+Serverless beats K8s-only AND Serverless-only | Scenario 1,2 vs 4 comparison |
-| **H2 (Control)** | Predictive > Reactive | Adding prediction improves SLO/cost vs reactive hybrid | Scenario 3 vs 4 comparison |
+| **H1 (System)** | Hybrid > Pure approaches | Whether hybrid mechanism and outcomes exceed pure baselines under valid conditions | Scenario 1,2 vs 4 comparison |
+| **H2 (Control)** | Predictive > Reactive | Whether prediction improves SLO/cost outcomes vs reactive hybrid under valid conditions | Scenario 3 vs 4 comparison |
 | **H3 (Model)** | GRU justification | GRU provides adequate prediction for the controller | Offline RMSE + closed-loop validation |
 
 ### Key Insight
-> H1 and H2 are the **main contributions**. H3 is **supporting evidence** for the model choice. The thesis succeeds if H1+H2 are proven, regardless of whether GRU dramatically outperforms simpler models.
+> H1 and H2 are the main comparative contributions, while H3 supports model adequacy. Superiority conclusions depend on experiment validity and should be framed conservatively when evidence is non-inferential.
 
 ---
 
@@ -41,9 +45,9 @@ This thesis proves that a **HYBRID approach (K8s + Serverless)** outperforms usi
 
 | Comparison | Tests Hypothesis | Expected Result |
 |------------|------------------|-----------------|
-| S4 vs S1 | H1 (Hybrid > K8s) | Lower p99 during spikes, better cost at baseline |
-| S4 vs S2 | H1 (Hybrid > Serverless) | Lower cost at steady load, no cold-start issues |
-| S4 vs S3 | H2 (Predictive > Reactive) | Fewer SLO violations, proactive scaling |
+| S4 vs S1 | H1 (Hybrid > K8s) | Evaluate latency/SLO tradeoffs under controlled load |
+| S4 vs S2 | H1 (Hybrid > Serverless) | Evaluate cost/latency tradeoffs by workload profile |
+| S4 vs S3 | H2 (Predictive > Reactive) | Evaluate SLO violations and preemptive actions |
 | GRU vs LR (offline) | H3 (Model choice) | Justify GRU selection |
 
 ---
@@ -202,9 +206,9 @@ For each scenario [S1, S2, S3, S4]:
 
 | Metric | Description | Expected Result |
 |--------|-------------|-----------------|
-| K8s Cost | Resource hours × unit cost | Lower at baseline load |
-| Serverless Cost | Invocations × time × unit cost | Higher at sustained load |
-| Hybrid Cost | K8s + Serverless | Optimized across patterns |
+| K8s Cost | Resource hours × unit cost | Baseline reference under warm-capacity assumptions |
+| Serverless Cost | Invocations × time × unit cost | Sensitive to execution-time signal and concurrency |
+| Hybrid Cost | K8s + Serverless | Workload- and routing-policy-dependent (no fixed ordering) |
 
 ---
 
@@ -215,8 +219,8 @@ For each scenario [S1, S2, S3, S4]:
 | **M1** | Phase 0 | Sprint 2 runs end-to-end | Infrastructure ready |
 | **M2** | Phase 1 | All 4 scenarios executable | Evaluation framework ready |
 | **M3** | Phase 2 | GRU RMSE < 10% | H3 (model adequate) |
-| **M4** | Phase 3 | S4 < S1 AND S4 < S2 on p99 | H1 (hybrid > pure) |
-| **M5** | Phase 3 | S4 < S3 on SLO violations | H2 (predictive > reactive) |
+| **M4** | Phase 3 | Valid comparison dataset produced for S4 vs S1/S2 | H1 evaluation readiness |
+| **M5** | Phase 3 | Valid comparison dataset produced for S4 vs S3 | H2 evaluation readiness |
 
 ---
 

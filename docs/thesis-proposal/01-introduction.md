@@ -26,9 +26,9 @@ A hybrid approach that combines Kubernetes and serverless can leverage the stren
 
 | Aspect | Kubernetes | Serverless | Hybrid |
 |--------|------------|------------|--------|
-| **Baseline Load** | ✅ Cost-effective | ❌ Expensive | ✅ Use K8s |
+| **Baseline Load** | ✅ Predictable warm capacity | ⚠️ Invocation-based cost | ✅ Route by workload state |
 | **Traffic Spikes** | ❌ Scaling delay | ✅ Instant scale | ✅ Use Serverless |
-| **Resource Efficiency** | ⚠️ Manual tuning | ✅ Automatic | ✅ Optimized |
+| **Resource Efficiency** | ⚠️ Manual tuning | ✅ Automatic | ⚠️ Workload- and policy-dependent |
 | **Cold Start** | ✅ Always warm | ❌ Cold start | ✅ Warm baseline |
 
 ### Workload Prediction
@@ -97,7 +97,7 @@ The objectives of this research are:
 - Validated methodology using real-world datasets
 
 ### Practical Benefits
-- Reduced operational costs through intelligent resource allocation
+- Improved cost control through workload-aware resource allocation (not a fixed savings guarantee)
 - Improved application performance with proactive scaling
 - Minimized SLA violations through predictive decision making
 
