@@ -2,7 +2,7 @@
 
 ## System Overview
 
-This system implements a novel hybrid approach that intelligently routes traffic between cost-effective Kubernetes clusters and infinitely-scalable serverless functions based on real-time performance metrics and machine learning predictions.
+This system implements a hybrid approach that intelligently routes traffic between Kubernetes baseline capacity and elastic serverless functions based on real-time performance metrics and machine learning predictions.
 
 ## Core Concept
 
@@ -140,11 +140,14 @@ Traffic Spike (1000 RPS):  80ms p50, 200ms p99 (with serverless)
 Without Serverless:        200ms p50, 2000ms p99 (overwhelmed)
 ```
 
-### Cost Profile
+### Cost Profile (Illustrative, Workload-Dependent)
 ```
-Pure Kubernetes:    $10/day (fixed cost, poor spike handling)
-Pure Serverless:    $80/day (variable cost, excellent scaling)
-Hybrid System:      $25/day (balanced cost, excellent scaling)
+Cost ranking depends on execution-time signals and workload shape.
+Latest rerun-v2 (1200s, n=1 each):
+S1 K8s-only:        $0.061
+S2 Serverless-only: $0.169
+S3 Hybrid Reactive: $0.097
+S4 Hybrid Predict.: $0.098
 ```
 
 ### Scaling Response
@@ -221,4 +224,4 @@ Hybrid Routing:         <5 seconds to detect and route
 2. **Integrate with existing monitoring** - Adapt to your observability stack
 3. **Customize for your constraints** - Adjust SLO thresholds and cost models
 
-The hybrid architecture demonstrates that intelligent routing can achieve the best of both worlds: the cost-effectiveness of Kubernetes with the infinite scaling of serverless computing.
+The hybrid architecture demonstrates that intelligent routing can combine Kubernetes baseline capacity with serverless elasticity. The cost outcome must be evaluated empirically for each workload and execution-time model.

@@ -2,8 +2,8 @@
 
 ## What This Project Does
 
-This research implements a novel hybrid architecture that combines:
-- **Kubernetes clusters** for cost-effective baseline operations
+This research implements a hybrid architecture that combines:
+- **Kubernetes clusters** for baseline warm operations
 - **Serverless computing** for infinite scaling during traffic spikes  
 - **Intelligent routing** using machine learning-based workload prediction
 
@@ -22,7 +22,7 @@ This research implements a novel hybrid architecture that combines:
 
 ### How It Works
 ```
-Normal Load (100 RPS)     →  Kubernetes Cluster (cost-effective)
+Normal Load (100 RPS)     →  Kubernetes Cluster (baseline capacity)
 Traffic Spike (1000 RPS)  →  Serverless Functions (instant scale)  
 Sustained High (800 RPS)  →  Back to Kubernetes (cost optimization)
 ```
@@ -64,7 +64,7 @@ We follow an **incremental, agile methodology**:
 
 ## Expected Results
 
-- **60-80% cost reduction** vs pure serverless
+- **Workload-dependent cost ranking** (validated from measured run artifacts)
 - **<200ms p95 latency** under normal load
 - **<30 second scaling** response time
 - **RMSE <10%** prediction accuracy

@@ -57,11 +57,11 @@ A comprehensive evaluation framework was designed spanning three experimental ph
 **H3 — GRU prediction adequacy:**
 - ✅ **Fully validated.** All accuracy targets met on synthetic data: 6.01% RMSE (<10%), 4.91% MAE (<5%), ~40ms latency (<50ms), confidence scores 0.72–0.88.
 
-**Cost analysis** using three billing models (Lambda Provisioned Concurrency, Cloud Run Always-Allocated, EC2 Node-Hours) reveals that the serverless billing model dominates cost rankings. Under Lambda PC pricing, S1 (K8s-only) is cheapest at $162/month but achieves only 40.3% SLO success; S2 (serverless) is most expensive at $2,326/month due to CPU throttling inflating wall-clock billing. Under EC2 production sizing (t3.medium), all scenarios range $162–222/month. The cost conclusion depends on pricing model, not architecture choice alone.
+**Cost analysis** under the unified AWS model confirms that both workload intensity and execution-time signal selection affect cost ranking. In the all-scenarios rerun-v2 (2026-02-21, `n=1` each) with serverless-specific app-duration sizing, costs are S1 $0.061, S2 $0.169, S3 $0.486, and S4 $0.432 per 1200s. This bundle is directional and pipeline-validating rather than inferential final evidence, but it confirms that hybrid/serverless pricing must use serverless-specific execution signals (not blended scenario duration) when available. The fib(34) crossover analysis still shows workload sensitivity (S1-vs-S2 crossover ~65.9 RPS for fib(34) vs ~97.9 RPS for fib(32)).
 
 In summary, this research successfully validates all proposed **mechanisms** — the GRU predictor achieves target accuracy, the routing controller correctly shifts traffic based on SLO status, and predictive actions trigger before violations under appropriate conditions. However, **statistical superiority** over baseline approaches was not established due to testbed constraints (single-node k3d deployment, localhost routing bias, GRU unavailability during controlled experiments, and insufficient sample sizes for normality assumptions). The work represents an engineering contribution with validated mechanisms and clearly identified deployment requirements for production validation.
 
-*(Evidence: `results/experiments/phase-b/2026-02-12_replicated-20runs/`, `results/experiments/phase-c/2026-02-13_dynamic-workload/`, `results/cost/2026-02-17_three-model-cost-comparison/`)*
+*(Evidence: `results/experiments/phase-b/2026-02-21_all-scenarios-rerun-v2/`, `results/experiments/phase-b/2026-02-18_fib34-validation/`, `results/experiments/phase-c/2026-02-13_dynamic-workload/`, `results/cost/2026-02-21_all-scenarios-rerun-v2-unified-aws-cost/`, `results/cost/2026-02-18_fib34-unified-aws-cost/`)*
 
 ---
 

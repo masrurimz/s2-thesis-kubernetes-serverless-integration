@@ -61,9 +61,9 @@ The proposed system integrates three subsystems: an offline training pipeline, a
 │   │                 ▼                       ▼                │       │
 │   │   ┌─────────────────────┐   ┌─────────────────────┐    │       │
 │   │   │   KUBERNETES (K3s)  │   │     SERVERLESS      │    │       │
-│   │   │   • Cost-effective  │   │     (Knative)       │    │       │
-│   │   │   • Always warm     │   │   • Instant scale   │    │       │
-│   │   │   • Baseline load   │   │   • Burst handling  │    │       │
+│   │   │   • Baseline warm   │   │     (Knative)       │    │       │
+│   │   │   • Predictable cap │   │   • Elastic scale   │    │       │
+│   │   │   • Steady traffic  │   │   • Burst handling  │    │       │
 │   │   └─────────────────────┘   └─────────────────────┘    │       │
 │   │                                                          │       │
 │   └──────────────────────────────────────────────────────────┘       │
@@ -77,7 +77,7 @@ The infrastructure layer consists of three components:
 
 **HAProxy (Traffic Router):** Serves as the entry point for all HTTP traffic, distributing requests between the Kubernetes and serverless backends according to weighted routing rules. Weights are dynamically adjusted by Algorithm 1 through the HAProxy Runtime API (TCP socket interface). HAProxy also exposes a statistics endpoint that provides real-time throughput and latency metrics consumed by the monitoring subsystem.
 
-**K3s (Kubernetes Backend):** A lightweight, certified Kubernetes distribution deployed via k3d (k3s-in-Docker). K3s runs the primary application workload as always-warm pods, providing consistent low-latency responses for baseline traffic. The K3s backend is cost-effective for sustained load because its resources are pre-provisioned and shared across requests.
+**K3s (Kubernetes Backend):** A lightweight, certified Kubernetes distribution deployed via k3d (k3s-in-Docker). K3s runs the primary application workload as always-warm pods, providing consistent low-latency responses for baseline traffic. In this study, K3s serves as the baseline warm capacity; relative cost advantage is evaluated empirically per run rather than assumed a priori.
 
 **Knative Serving (Serverless Backend):** Deployed on the same K3s cluster using Kourier as the ingress controller. Knative provides scale-to-zero capability and rapid autoscaling for burst traffic. When the routing controller enables the serverless backend, Knative automatically manages pod lifecycle including cold start initialization. The serverless backend is engaged only when SLO violations occur or when the GRU model predicts an imminent load surge.
 

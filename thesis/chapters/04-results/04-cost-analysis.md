@@ -1,74 +1,70 @@
 ## 4.4 Cost Analysis
 
-Cost analysis applies three cloud billing models to actual measured resource consumption from Phase B v4 experiments. Unlike the performance results (which use a stress-harness testbed), cost projections use production-grade node sizing to produce realistic estimates.
+Cost analysis maps the experiment's local k3s architecture to equivalent AWS services, producing a unified cost projection from measured resource consumption. The mapping is: K8s HPA pods → EKS control plane + EC2 nodes, Knative KPA pods → AWS Lambda Provisioned Concurrency.
 
-### 4.4.1 Evaluation Context: Stress Harness vs Production Projection
+### 4.4.1 Architecture-to-AWS Mapping
 
-The Phase B experiments used `system-reserved=15600m` on k3d workload nodes, reducing allocatable CPU to ~400m per node (~2 pods at 200m request). This deliberately forces Cluster Autoscaler triggers within 20-minute runs — valid for mechanism validation but not representative of production node capacity.
+Each scenario uses a different subset of AWS services based on its traffic routing:
 
-For cost projection, clusters are sized using t3.medium instances (1.8 vCPU allocatable, ~9 pods/node at 200m request) with EKS control plane ($0.10/hr) and +1 node for HA headroom. At the tested load (~53–73 RPS), all desired replicas fit on 1–2 production nodes without triggering Cluster Autoscaler.
+- **S1 (K8s-only):** EKS control plane ($0.10/hr) + EC2 nodes (t3.medium, $0.0416/hr). No Lambda.
+- **S2 (Serverless-only):** Lambda Provisioned Concurrency only. No EKS or EC2.
+- **S3/S4 (Hybrid):** EKS + EC2 for the K8s share + Lambda for the serverless share.
 
-Resource consumption metrics (CPU-seconds, pod counts, service times) are taken directly from experiment measurements, as these reflect actual application behavior independent of node sizing.
+EC2 nodes are sized from K8s CPU demand only: `nodes = max(ceil(avg_k8s_cpu / 1.08), ceil(avg_k8s_mem / 2.45)) + 1 HA`, where 1.08 = 1.8 vCPU × 0.60 target utilization and 2.45 = 3.5 GiB × 0.70 target utilization. Lambda execution time uses a signal hierarchy: serverless-specific app duration first, S2 scenario app duration second, and CPU-derived fallback (`cpu_per_request_ms / 0.2 + 10ms`) only when app-duration signals are unavailable.
 
-### 4.4.2 Three-Model Cost Comparison
+### 4.4.2 Unified AWS Cost Comparison (All-Scenarios Rerun v2, n=1)
 
-Three billing models capture different aspects of the K8s-vs-serverless cost trade-off:
+**Table 4.21: AWS Cost per 1200s Experiment Run**
 
-- **Model 1 (Lambda Provisioned Concurrency):** Maps Knative's always-warm pods (`min-scale=1`) to Lambda PC instances. Each pod with `target-concurrency=10` maps to 10 Lambda instances. Execution billed at wall-clock service time derived from Little's Law.
-- **Model 2 (Cloud Run Always-Allocated):** Bills actual CPU-seconds and GiB-seconds consumed, immune to the wall-clock inflation that affects Lambda billing.
-- **Model 3b (EC2 Production):** Infrastructure-level cost using t3.medium nodes ($0.0416/hr) plus EKS control plane ($0.10/hr). Node count = ceil(total CPU requested / 1.8 vCPU) + 1 HA headroom.
-
-**Table 4.21: Cost per 1200s Experiment Run**
-
-| Scenario | Lambda PC | Cloud Run | EC2 Production |
-|----------|----------:|----------:|---------------:|
-| S1 (K8s-only) | $0.075 | $0.036 | $0.075 |
-| S2 (Knative-only) | $1.077 | $0.056 | $0.089 |
-| S3 (Hybrid Reactive) | $0.294 | $0.054 | $0.089 |
-| S4 (Hybrid Predictive) | $0.415 | $0.053 | $0.103 |
+| Component | S1 (K8s-only) | S2 (Knative-only) | S3 (Hybrid Reactive) | S4 (Hybrid Predictive) |
+|-----------|---:|---:|---:|---:|
+| EKS control plane | $0.033 | — | $0.033 | $0.033 |
+| EC2 compute | $0.028 | — | $0.028 | $0.028 |
+| Lambda capacity | — | $0.047 | $0.124 | $0.109 |
+| Lambda execution | — | $0.106 | $0.290 | $0.252 |
+| Lambda requests | — | $0.016 | $0.010 | $0.010 |
+| **Total** | **$0.061** | **$0.169** | **$0.486** | **$0.432** |
 
 **Table 4.22: Monthly Projection (30 Days Continuous at Experiment Load)**
 
-| Scenario | Lambda PC | Cloud Run | EC2 Production |
-|----------|----------:|----------:|---------------:|
-| S1 (K8s-only) | $162 | $79 | $162 |
-| S2 (Knative-only) | $2,326 | $121 | $192 |
-| S3 (Hybrid Reactive) | $636 | $116 | $192 |
-| S4 (Hybrid Predictive) | $897 | $115 | $222 |
+| Scenario | AWS Total |
+|----------|----------:|
+| S1 (K8s-only) | $132 |
+| S2 (Knative-only) | $364 |
+| S3 (Hybrid Reactive) | $1,049 |
+| S4 (Hybrid Predictive) | $934 |
 
 **Table 4.23: Cost per 1M Successful Requests**
 
-| Scenario | Lambda PC | Cloud Run | EC2 Production |
-|----------|----------:|----------:|---------------:|
-| S1 (K8s-only, 40.3% success) | $2.91 | $1.42 | $2.91 |
-| S2 (Knative-only, 89.6% success) | $13.72 | $0.71 | $1.13 |
-| S3 (Hybrid Reactive, 76.7% success) | $4.41 | $0.81 | $1.33 |
-| S4 (Hybrid Predictive, 79.2% success) | $6.14 | $0.79 | $1.52 |
+| Scenario | $/1M Successful |
+|----------|----------------:|
+| S1 (K8s-only, 100% success) | $0.70 |
+| S2 (Knative-only, 47.1% success) | $4.46 |
+| S3 (Hybrid Reactive, 51.5% success) | $15.70 |
+| S4 (Hybrid Predictive, 52.1% success) | $13.28 |
 
 ### 4.4.3 Key Findings
 
-**The billing model determines the cost ranking, not the architecture.** Under Lambda Provisioned Concurrency, S1 is cheapest ($0.075/run) and S2 most expensive ($1.077/run). Under EC2 Production pricing, all scenarios are within 1.4× of each other ($0.075–$0.103/run). Under Cloud Run, all scenarios cost roughly the same ($0.036–$0.056/run).
+**S1 is cheapest in this rerun-v2 sample.** In the 2026-02-21 all-scenarios rerun-v2 (`n=1` each), S1 has the lowest total cost ($0.061/run). Under app-duration-informed sizing, S2 rises to $0.169/run and hybrid scenarios are highest (S3 $0.486, S4 $0.432).
 
-**CPU throttling creates a hidden serverless cost multiplier.** Each Knative pod (200m CPU, target-concurrency=10) gives each concurrent request only 20m effective CPU. The fib(32) workload that completes in ~10ms on a full core takes 2.5–3.6s wall-clock under this throttling. Lambda bills wall-clock time, creating a ~364× cost inflation relative to CPU time. This is the dominant factor making S2 expensive under Lambda PC pricing.
+**Serverless-specific execution sizing materially changes hybrid estimates.** S3/S4 are no longer priced from blended or underreported execution duration. With serverless-specific duration signals, Lambda capacity and execution components dominate, and S4 is lower than S3 ($0.432 vs $0.486) in this run.
 
-**S4 does not save money compared to S3.** Under all three models, S4 costs more than S3 because GRU prediction routes more traffic to serverless (6.7 avg Knative pods vs 5.2), increasing the pod footprint. However, S4 achieves 2.5 percentage points better success rate (79.2% vs 76.7%), which may justify the premium in SLA-sensitive environments.
+**Whole-run totals and fairness-normalized metrics must be interpreted together.** Raw totals capture infrastructure spend per run, while `$ / 1M successful` captures output efficiency under each scenario's success rate. In rerun-v2, both views are reported and used jointly for interpretation.
 
-**S1 is cheapest but least reliable.** S1 costs the least per run ($0.075 under Lambda PC and EC2 Production) but delivers only 40.3% success rate under stress-harness conditions. Its cost-per-successful-request ($2.91/1M under EC2 Production) is the worst of all scenarios. The low success rate is an artifact of the stress-harness constraint (max 6 schedulable pods vs 9 desired); in production at this load, S1 would likely achieve >95% success.
+**Directionality only (not inferential ranking).** The rerun-v2 bundle is `n=1` per scenario and is intended for pipeline validation and directional interpretation. Final ranking claims require the planned replicated main study (n=10–15 per scenario).
 
 ### 4.4.4 Limitations
 
-These cost estimates carry several limitations:
+1. **Projected, not billed.** Costs are computed from 2025 list prices (us-east-1) applied to measured resource consumption. They do not reflect free tiers, reserved instances, savings plans, or volume discounts.
 
-1. **Projected, not billed.** All costs are computed from published 2025 list prices (us-east-1) applied to measured resource consumption. They do not reflect free tiers, reserved instances, savings plans, or volume discounts.
-
-2. **Stress-harness success rates.** The 40.3% S1 success rate reflects the artificial node constraint (400m allocatable), not production K8s performance. Cost-per-successful-request figures should be interpreted cautiously for S1.
+2. **Stress-harness success rates.** Success rates can vary materially across runs under the artificial node constraint (400m allocatable). Cost-per-successful-request figures should therefore be interpreted as run-dependent and not direct production performance.
 
 3. **Linear monthly projection.** The 30-day projection assumes constant load at experiment intensity. Real workloads vary, making actual monthly costs lower.
 
-4. **Knative exceeded configured max-scale.** S2 scaled to 26 pods despite a configured `max-scale=10`, likely due to KPA panic mode under sustained load. This inflates S2's resource consumption beyond what a production configuration with enforced limits would incur.
+4. **Single-run directionality.** The 2026-02-21 all-scenarios rerun-v2 includes one run per scenario. Its rankings and absolute totals are directional, not inferential final evidence.
 
-5. **Single workload profile.** Results are specific to fib(32) with 200m CPU pods. Different CPU allocations or workload characteristics would change the cost ratios significantly — particularly the throttling-driven wall-clock inflation that dominates Lambda PC costs.
+5. **Single workload profile.** Results are specific to fib(34) with 200m CPU pods. Different CPU allocations or workload characteristics would change the cost ratios.
 
 ---
 
-*Evidence: `controller/results/cost_analysis/cost_analysis_20260217_144437.json`. Methodology: `results/cost/2026-02-17_three-model-cost-comparison/report.md`. Analyzer: `thesis/scripts/cost_analyzer.py`.*
+*Evidence: `results/cost/2026-02-21_all-scenarios-rerun-v2-unified-aws-cost/cost_results.json` and `results/cost/2026-02-21_all-scenarios-rerun-v2-unified-aws-cost/report.md`. Source experiment: `results/experiments/phase-b/2026-02-21_all-scenarios-rerun-v2/results_final.json`. Analyzer: `thesis/scripts/cost_analyzer.py` v5.*
