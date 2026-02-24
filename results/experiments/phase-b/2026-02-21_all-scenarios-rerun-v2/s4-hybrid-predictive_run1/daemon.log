@@ -1,0 +1,608 @@
+<frozen runpy>:128: RuntimeWarning: 'daemon.routing_daemon' found in sys.modules after import of package 'daemon', but prior to execution of 'daemon.routing_daemon'; this may result in unpredictable behaviour
+2026-02-21 20:18:09 [info     ] SLOMonitor initialized         threshold_ms=200.0 violation_window=30
+2026-02-21 20:18:09 [info     ] Algorithm1Controller initialized cooldown=15 weight_step=10
+2026-02-21 20:18:09 [info     ] HAProxyWeightAdjuster initialized backend=servers socket_path=/tmp/haproxy.sock tcp_socket=localhost:19999 tcp_socket_available=True unix_socket_available=False
+2026-02-21 20:18:09 [info     ] GRUClient initialized          base_url=http://localhost:8090
+2026-02-21 20:18:09 [info     ] K8sScaler initialized          deployment=test-app-warm namespace=default
+2026-02-21 20:18:09 [info     ] RoutingDaemon initialized      decision_interval=15 description='Algorithm 1 with GRU predictions (Algorithm 2)' scenario=s4-hybrid-predictive use_algorithm=True use_predictions=True
+2026-02-21 20:18:09 [info     ] Starting routing daemon        interval=15 scenario=s4-hybrid-predictive
+2026-02-21 20:18:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2868
+2026-02-21 20:18:09 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-02-21 20:18:09 [debug    ] Weights already set correctly  k3s=80 knative=20
+2026-02-21 20:18:09 [info     ] Initial weights applied        k3s=80 knative=20
+2026-02-21 20:18:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2868
+2026-02-21 20:18:09 [debug    ] HAProxy latency                avg_rtime=56 max_rtime=40018 p99_est=112
+2026-02-21 20:18:09 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:18:09 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=112.0 serverless_enabled=False
+2026-02-21 20:18:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2868
+2026-02-21 20:18:09 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-02-21 20:18:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2868
+2026-02-21 20:18:09 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 100' response_length=0
+2026-02-21 20:18:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2870
+2026-02-21 20:18:09 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 0' response_length=0
+2026-02-21 20:18:09 [debug    ] Weight commands sent via socket successfully k3s=100 knative=0
+2026-02-21 20:18:10 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2856
+2026-02-21 20:18:10 [debug    ] Current weights retrieved via socket weights={'k3s': 100, 'knative': 0}
+2026-02-21 20:18:10 [info     ] Weights updated successfully via HTTP new={'k3s': 100, 'knative': 0} previous={'k3s': 80, 'knative': 20}
+2026-02-21 20:18:10 [info     ] Weights updated                action=OPTIMIZE_COST reason='Healthy state (112ms < 140ms), optimizing cost' weights={'k3s': 100, 'knative': 0}
+2026-02-21 20:18:10 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=0.0 required_resources=0.0 target_replicas=1
+2026-02-21 20:18:10 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=624.49 p99=112.0
+2026-02-21 20:18:25 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2860
+2026-02-21 20:18:25 [debug    ] HAProxy latency                avg_rtime=56 max_rtime=40018 p99_est=112
+2026-02-21 20:18:25 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=112.0 serverless_enabled=False
+2026-02-21 20:18:25 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=0.0 required_resources=0.0 target_replicas=1
+2026-02-21 20:18:25 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=101.24 p99=112.0
+2026-02-21 20:18:40 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2858
+2026-02-21 20:18:40 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:18:40 [debug    ] HAProxy latency                avg_rtime=56 max_rtime=40018 p99_est=112
+2026-02-21 20:18:40 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=112.0 serverless_enabled=False
+2026-02-21 20:18:40 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=0.0 required_resources=0.0 target_replicas=1
+2026-02-21 20:18:40 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=108.82 p99=112.0
+2026-02-21 20:18:55 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2874
+2026-02-21 20:18:55 [debug    ] HAProxy latency                avg_rtime=56 max_rtime=40018 p99_est=112
+2026-02-21 20:18:55 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=112.0 serverless_enabled=False
+2026-02-21 20:18:55 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.04 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=21.908932739432814 required_resources=0.876 target_replicas=2
+2026-02-21 20:18:55 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=2
+2026-02-21 20:18:55 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=139.77 p99=112.0
+2026-02-21 20:19:10 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2874
+2026-02-21 20:19:10 [debug    ] HAProxy latency                avg_rtime=56 max_rtime=40018 p99_est=112
+2026-02-21 20:19:10 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:19:10 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=112.0 serverless_enabled=False
+2026-02-21 20:19:10 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.04 beta=0.0 buffer=1.2 current_replicas=2 predicted_load=43.935604278798486 required_resources=1.757 target_replicas=3
+2026-02-21 20:19:10 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=105.08 p99=112.0
+2026-02-21 20:19:25 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2874
+2026-02-21 20:19:25 [debug    ] HAProxy latency                avg_rtime=56 max_rtime=40018 p99_est=112
+2026-02-21 20:19:25 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=112.0 serverless_enabled=False
+2026-02-21 20:19:25 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.04 beta=0.0 buffer=1.2 current_replicas=2 predicted_load=45.826907137427504 required_resources=1.833 target_replicas=3
+2026-02-21 20:19:25 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=3
+2026-02-21 20:19:25 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=143.99 p99=112.0
+2026-02-21 20:19:40 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2896
+2026-02-21 20:19:40 [debug    ] HAProxy latency                avg_rtime=56 max_rtime=40018 p99_est=112
+2026-02-21 20:19:40 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:19:40 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=112.0 serverless_enabled=False
+2026-02-21 20:19:40 [warning  ] Blocking traffic return: K8s not ready (available != desired) original_action=OPTIMIZE_COST
+2026-02-21 20:19:41 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=51.10399793843662 required_resources=2.044 target_replicas=3
+2026-02-21 20:19:41 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=105.93 p99=112.0
+2026-02-21 20:19:56 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2897
+2026-02-21 20:19:56 [debug    ] HAProxy latency                avg_rtime=56 max_rtime=40018 p99_est=112
+2026-02-21 20:19:56 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=112.0 serverless_enabled=False
+2026-02-21 20:19:56 [warning  ] Blocking traffic return: K8s not ready (available != desired) original_action=OPTIMIZE_COST
+2026-02-21 20:19:56 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=52.45914632643355 required_resources=2.098 target_replicas=3
+2026-02-21 20:19:56 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=105.39 p99=112.0
+2026-02-21 20:20:11 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2898
+2026-02-21 20:20:11 [debug    ] HAProxy latency                avg_rtime=56 max_rtime=40018 p99_est=112
+2026-02-21 20:20:11 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:20:11 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=112.0 serverless_enabled=False
+2026-02-21 20:20:11 [warning  ] Blocking traffic return: K8s not ready (available != desired) original_action=OPTIMIZE_COST
+2026-02-21 20:20:11 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=42.99794677026176 required_resources=1.72 target_replicas=3
+2026-02-21 20:20:11 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=98.02 p99=112.0
+2026-02-21 20:20:26 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2898
+2026-02-21 20:20:26 [debug    ] HAProxy latency                avg_rtime=56 max_rtime=40018 p99_est=112
+2026-02-21 20:20:26 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=112.0 serverless_enabled=False
+2026-02-21 20:20:26 [warning  ] Blocking traffic return: K8s not ready (available != desired) original_action=OPTIMIZE_COST
+2026-02-21 20:20:26 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=31.38598173879309 required_resources=1.255 target_replicas=2
+2026-02-21 20:20:26 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=2
+2026-02-21 20:20:26 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=137.9 p99=112.0
+2026-02-21 20:20:41 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2898
+2026-02-21 20:20:41 [debug    ] HAProxy latency                avg_rtime=56 max_rtime=40018 p99_est=112
+2026-02-21 20:20:41 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:20:41 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=112.0 serverless_enabled=False
+2026-02-21 20:20:41 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=2 predicted_load=25.335090751780264 required_resources=1.013 target_replicas=2
+2026-02-21 20:20:41 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=107.14 p99=112.0
+2026-02-21 20:20:56 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2881
+2026-02-21 20:20:56 [debug    ] HAProxy latency                avg_rtime=56 max_rtime=40018 p99_est=112
+2026-02-21 20:20:56 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=112.0 serverless_enabled=False
+2026-02-21 20:20:56 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=2 predicted_load=28.14116519229008 required_resources=1.126 target_replicas=2
+2026-02-21 20:20:56 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=106.76 p99=112.0
+2026-02-21 20:21:11 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2894
+2026-02-21 20:21:11 [debug    ] HAProxy latency                avg_rtime=56 max_rtime=40018 p99_est=112
+2026-02-21 20:21:11 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:21:11 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 100, 'knative': 0} p99=112.0 serverless_enabled=False
+2026-02-21 20:21:11 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.04 beta=0.0 buffer=1.2 current_replicas=2 predicted_load=42.232934543166934 required_resources=1.689 target_replicas=3
+2026-02-21 20:21:11 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=3
+2026-02-21 20:21:11 [debug    ] Decision loop completed        action=OPTIMIZE_COST latency_ms=136.74 p99=112.0
+2026-02-21 20:21:26 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2872
+2026-02-21 20:21:26 [debug    ] HAProxy latency                avg_rtime=449 max_rtime=40018 p99_est=898
+2026-02-21 20:21:26 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=52.14252783785649 required_resources=2.086 target_replicas=3
+2026-02-21 20:21:26 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=71.4 p99=898.0
+2026-02-21 20:21:41 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2872
+2026-02-21 20:21:41 [debug    ] HAProxy latency                avg_rtime=4389 max_rtime=40018 p99_est=8778
+2026-02-21 20:21:41 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:21:41 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=42.11799166893289 required_resources=1.685 target_replicas=3
+2026-02-21 20:21:41 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=69.33 p99=8778.0
+2026-02-21 20:21:56 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2876
+2026-02-21 20:21:56 [debug    ] HAProxy latency                avg_rtime=4796 max_rtime=40018 p99_est=9592
+2026-02-21 20:21:56 [info     ] Algorithm 1: Enabling serverless backend for SCALE_OUT
+2026-02-21 20:21:56 [info     ] Pre-warming Knative service    host=test-app.default.localhost url=http://localhost:8081
+2026-02-21 20:21:56 [warning  ] Knative pre-warm returned non-200 cold_start_ms=1.2433528900146484 status=404
+2026-02-21 20:21:56 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 90, 'knative': 10} p99=9592.0 serverless_enabled=True violation_sec=30
+2026-02-21 20:21:56 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2875
+2026-02-21 20:21:56 [debug    ] Current weights retrieved via socket weights={'k3s': 100, 'knative': 0}
+2026-02-21 20:21:56 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2875
+2026-02-21 20:21:56 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 90' response_length=0
+2026-02-21 20:21:56 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2871
+2026-02-21 20:21:56 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 10' response_length=0
+2026-02-21 20:21:56 [debug    ] Weight commands sent via socket successfully k3s=90 knative=10
+2026-02-21 20:21:57 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2872
+2026-02-21 20:21:57 [debug    ] Current weights retrieved via socket weights={'k3s': 90, 'knative': 10}
+2026-02-21 20:21:57 [info     ] Weights updated successfully via HTTP new={'k3s': 90, 'knative': 10} previous={'k3s': 100, 'knative': 0}
+2026-02-21 20:21:57 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (9592ms > 200ms) for 30s' weights={'k3s': 90, 'knative': 10}
+2026-02-21 20:21:57 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=45.78525572602743 required_resources=1.831 target_replicas=3
+2026-02-21 20:21:57 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=579.06 p99=9592.0
+2026-02-21 20:22:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2874
+2026-02-21 20:22:12 [debug    ] HAProxy latency                avg_rtime=6506 max_rtime=40018 p99_est=13012
+2026-02-21 20:22:12 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:22:12 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 80, 'knative': 20} p99=13012.0 serverless_enabled=True violation_sec=46
+2026-02-21 20:22:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2873
+2026-02-21 20:22:12 [debug    ] Current weights retrieved via socket weights={'k3s': 90, 'knative': 10}
+2026-02-21 20:22:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2873
+2026-02-21 20:22:12 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 80' response_length=0
+2026-02-21 20:22:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2871
+2026-02-21 20:22:12 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 20' response_length=0
+2026-02-21 20:22:12 [debug    ] Weight commands sent via socket successfully k3s=80 knative=20
+2026-02-21 20:22:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2873
+2026-02-21 20:22:12 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-02-21 20:22:12 [info     ] Weights updated successfully via HTTP new={'k3s': 80, 'knative': 20} previous={'k3s': 90, 'knative': 10}
+2026-02-21 20:22:12 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (13012ms > 200ms) for 46s' weights={'k3s': 80, 'knative': 20}
+2026-02-21 20:22:12 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=44.69023238409636 required_resources=1.788 target_replicas=3
+2026-02-21 20:22:12 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=571.25 p99=13012.0
+2026-02-21 20:22:27 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2882
+2026-02-21 20:22:28 [debug    ] HAProxy latency                avg_rtime=4950 max_rtime=40018 p99_est=9900
+2026-02-21 20:22:28 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 70, 'knative': 30} p99=9900.0 serverless_enabled=True violation_sec=62
+2026-02-21 20:22:28 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2881
+2026-02-21 20:22:28 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-02-21 20:22:28 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2881
+2026-02-21 20:22:28 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 70' response_length=0
+2026-02-21 20:22:28 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2879
+2026-02-21 20:22:28 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 30' response_length=0
+2026-02-21 20:22:28 [debug    ] Weight commands sent via socket successfully k3s=70 knative=30
+2026-02-21 20:22:28 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2881
+2026-02-21 20:22:28 [debug    ] Current weights retrieved via socket weights={'k3s': 70, 'knative': 30}
+2026-02-21 20:22:28 [info     ] Weights updated successfully via HTTP new={'k3s': 70, 'knative': 30} previous={'k3s': 80, 'knative': 20}
+2026-02-21 20:22:28 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (9900ms > 200ms) for 62s' weights={'k3s': 70, 'knative': 30}
+2026-02-21 20:22:28 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=48.89555570136058 required_resources=1.956 target_replicas=3
+2026-02-21 20:22:28 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=570.53 p99=9900.0
+2026-02-21 20:22:43 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2877
+2026-02-21 20:22:43 [debug    ] HAProxy latency                avg_rtime=4770 max_rtime=40018 p99_est=9540
+2026-02-21 20:22:43 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:22:43 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 60, 'knative': 40} p99=9540.0 serverless_enabled=True violation_sec=77
+2026-02-21 20:22:43 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2876
+2026-02-21 20:22:43 [debug    ] Current weights retrieved via socket weights={'k3s': 70, 'knative': 30}
+2026-02-21 20:22:43 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2876
+2026-02-21 20:22:43 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 60' response_length=0
+2026-02-21 20:22:43 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2876
+2026-02-21 20:22:43 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 40' response_length=0
+2026-02-21 20:22:43 [debug    ] Weight commands sent via socket successfully k3s=60 knative=40
+2026-02-21 20:22:44 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2877
+2026-02-21 20:22:44 [debug    ] Current weights retrieved via socket weights={'k3s': 60, 'knative': 40}
+2026-02-21 20:22:44 [info     ] Weights updated successfully via HTTP new={'k3s': 60, 'knative': 40} previous={'k3s': 70, 'knative': 30}
+2026-02-21 20:22:44 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (9540ms > 200ms) for 77s' weights={'k3s': 60, 'knative': 40}
+2026-02-21 20:22:44 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=56.707226223097976 required_resources=2.268 target_replicas=3
+2026-02-21 20:22:44 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=575.2 p99=9540.0
+2026-02-21 20:22:59 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2885
+2026-02-21 20:22:59 [debug    ] HAProxy latency                avg_rtime=2318 max_rtime=40018 p99_est=4636
+2026-02-21 20:22:59 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=4636.0 serverless_enabled=True violation_sec=93
+2026-02-21 20:22:59 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2884
+2026-02-21 20:22:59 [debug    ] Current weights retrieved via socket weights={'k3s': 60, 'knative': 40}
+2026-02-21 20:22:59 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2884
+2026-02-21 20:22:59 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 50' response_length=0
+2026-02-21 20:22:59 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2882
+2026-02-21 20:22:59 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 50' response_length=0
+2026-02-21 20:22:59 [debug    ] Weight commands sent via socket successfully k3s=50 knative=50
+2026-02-21 20:22:59 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2883
+2026-02-21 20:22:59 [debug    ] Current weights retrieved via socket weights={'k3s': 50, 'knative': 50}
+2026-02-21 20:22:59 [info     ] Weights updated successfully via HTTP new={'k3s': 50, 'knative': 50} previous={'k3s': 60, 'knative': 40}
+2026-02-21 20:22:59 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (4636ms > 200ms) for 93s' weights={'k3s': 50, 'knative': 50}
+2026-02-21 20:22:59 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=60.74440641370809 required_resources=2.43 target_replicas=3
+2026-02-21 20:22:59 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=575.77 p99=4636.0
+2026-02-21 20:23:14 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2884
+2026-02-21 20:23:14 [debug    ] HAProxy latency                avg_rtime=4026 max_rtime=40018 p99_est=8052
+2026-02-21 20:23:14 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:23:14 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=8052.0 serverless_enabled=True violation_sec=108
+2026-02-21 20:23:14 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=71.45750198704442 required_resources=2.858 target_replicas=4
+2026-02-21 20:23:14 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=4
+2026-02-21 20:23:14 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=106.24 p99=8052.0
+2026-02-21 20:23:29 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2880
+2026-02-21 20:23:29 [debug    ] HAProxy latency                avg_rtime=2368 max_rtime=40018 p99_est=4736
+2026-02-21 20:23:29 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=4736.0 serverless_enabled=True violation_sec=123
+2026-02-21 20:23:29 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=83.69847220160636 required_resources=3.348 target_replicas=5
+2026-02-21 20:23:29 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=67.86 p99=4736.0
+2026-02-21 20:23:44 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2882
+2026-02-21 20:23:44 [debug    ] HAProxy latency                avg_rtime=4238 max_rtime=40018 p99_est=8476
+2026-02-21 20:23:44 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:23:44 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=8476.0 serverless_enabled=True violation_sec=138
+2026-02-21 20:23:44 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=84.88663314736988 required_resources=3.395 target_replicas=5
+2026-02-21 20:23:45 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=5
+2026-02-21 20:23:45 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=110.5 p99=8476.0
+2026-02-21 20:24:00 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2883
+2026-02-21 20:24:00 [debug    ] HAProxy latency                avg_rtime=2975 max_rtime=40018 p99_est=5950
+2026-02-21 20:24:00 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=5950.0 serverless_enabled=True violation_sec=154
+2026-02-21 20:24:00 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=89.23985887562918 required_resources=3.57 target_replicas=5
+2026-02-21 20:24:00 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=64.48 p99=5950.0
+2026-02-21 20:24:15 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2883
+2026-02-21 20:24:15 [debug    ] HAProxy latency                avg_rtime=4326 max_rtime=40018 p99_est=8652
+2026-02-21 20:24:15 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:24:15 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=8652.0 serverless_enabled=True violation_sec=169
+2026-02-21 20:24:15 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=95.98392307338926 required_resources=3.839 target_replicas=5
+2026-02-21 20:24:15 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=70.19 p99=8652.0
+2026-02-21 20:24:30 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2879
+2026-02-21 20:24:30 [debug    ] HAProxy latency                avg_rtime=2643 max_rtime=40018 p99_est=5286
+2026-02-21 20:24:30 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=5286.0 serverless_enabled=True violation_sec=184
+2026-02-21 20:24:30 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=85.21491025343349 required_resources=3.409 target_replicas=5
+2026-02-21 20:24:30 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=68.11 p99=5286.0
+2026-02-21 20:24:45 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2884
+2026-02-21 20:24:45 [debug    ] HAProxy latency                avg_rtime=3074 max_rtime=40018 p99_est=6148
+2026-02-21 20:24:45 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:24:45 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=6148.0 serverless_enabled=True violation_sec=199
+2026-02-21 20:24:45 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=80.42836672040153 required_resources=3.217 target_replicas=4
+2026-02-21 20:24:45 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=67.6 p99=6148.0
+2026-02-21 20:25:00 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2912
+2026-02-21 20:25:00 [debug    ] HAProxy latency                avg_rtime=3525 max_rtime=40018 p99_est=7050
+2026-02-21 20:25:00 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=7050.0 serverless_enabled=True violation_sec=214
+2026-02-21 20:25:00 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=75.15931261424312 required_resources=3.006 target_replicas=4
+2026-02-21 20:25:00 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=71.09 p99=7050.0
+2026-02-21 20:25:15 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2889
+2026-02-21 20:25:15 [debug    ] HAProxy latency                avg_rtime=3495 max_rtime=40018 p99_est=6990
+2026-02-21 20:25:15 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:25:15 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=6990.0 serverless_enabled=True violation_sec=229
+2026-02-21 20:25:15 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=66.29477834528477 required_resources=2.652 target_replicas=4
+2026-02-21 20:25:15 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=68.93 p99=6990.0
+2026-02-21 20:25:30 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2881
+2026-02-21 20:25:30 [debug    ] HAProxy latency                avg_rtime=1448 max_rtime=40018 p99_est=2896
+2026-02-21 20:25:30 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=2896.0 serverless_enabled=True violation_sec=244
+2026-02-21 20:25:30 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=60.617281812547176 required_resources=2.425 target_replicas=3
+2026-02-21 20:25:30 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=70.13 p99=2896.0
+2026-02-21 20:25:45 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2889
+2026-02-21 20:25:45 [debug    ] HAProxy latency                avg_rtime=830 max_rtime=40018 p99_est=1660
+2026-02-21 20:25:45 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:25:45 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=1660.0 serverless_enabled=True violation_sec=259
+2026-02-21 20:25:45 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=59.52367670263253 required_resources=2.381 target_replicas=3
+2026-02-21 20:25:45 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=69.8 p99=1660.0
+2026-02-21 20:26:00 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2889
+2026-02-21 20:26:00 [debug    ] HAProxy latency                avg_rtime=953 max_rtime=40018 p99_est=1906
+2026-02-21 20:26:00 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=1906.0 serverless_enabled=True violation_sec=274
+2026-02-21 20:26:00 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=74.3199736855937 required_resources=2.973 target_replicas=4
+2026-02-21 20:26:00 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=70.37 p99=1906.0
+2026-02-21 20:26:15 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2882
+2026-02-21 20:26:15 [debug    ] HAProxy latency                avg_rtime=3001 max_rtime=40018 p99_est=6002
+2026-02-21 20:26:15 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:26:15 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=6002.0 serverless_enabled=True violation_sec=289
+2026-02-21 20:26:15 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=64.53091522095895 required_resources=2.581 target_replicas=4
+2026-02-21 20:26:15 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=76.73 p99=6002.0
+2026-02-21 20:26:30 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2887
+2026-02-21 20:26:30 [debug    ] HAProxy latency                avg_rtime=1563 max_rtime=40018 p99_est=3126
+2026-02-21 20:26:30 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=3126.0 serverless_enabled=True violation_sec=304
+2026-02-21 20:26:30 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=66.73468372333605 required_resources=2.669 target_replicas=4
+2026-02-21 20:26:30 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=70.26 p99=3126.0
+2026-02-21 20:26:45 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2884
+2026-02-21 20:26:45 [debug    ] HAProxy latency                avg_rtime=3515 max_rtime=40018 p99_est=7030
+2026-02-21 20:26:45 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:26:45 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=7030.0 serverless_enabled=True violation_sec=319
+2026-02-21 20:26:45 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=62.055951929898924 required_resources=2.482 target_replicas=3
+2026-02-21 20:26:45 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=73.65 p99=7030.0
+2026-02-21 20:27:00 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2885
+2026-02-21 20:27:00 [debug    ] HAProxy latency                avg_rtime=2258 max_rtime=40018 p99_est=4516
+2026-02-21 20:27:00 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=4516.0 serverless_enabled=True violation_sec=334
+2026-02-21 20:27:00 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=55.16576113775646 required_resources=2.207 target_replicas=3
+2026-02-21 20:27:00 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=73.71 p99=4516.0
+2026-02-21 20:27:15 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2883
+2026-02-21 20:27:15 [debug    ] HAProxy latency                avg_rtime=3040 max_rtime=40018 p99_est=6080
+2026-02-21 20:27:15 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:27:15 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=6080.0 serverless_enabled=True violation_sec=349
+2026-02-21 20:27:15 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=74.90253834180469 required_resources=2.996 target_replicas=4
+2026-02-21 20:27:15 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=70.99 p99=6080.0
+2026-02-21 20:27:30 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2891
+2026-02-21 20:27:31 [debug    ] HAProxy latency                avg_rtime=3006 max_rtime=40018 p99_est=6012
+2026-02-21 20:27:31 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=6012.0 serverless_enabled=True violation_sec=365
+2026-02-21 20:27:31 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=75.93744895013246 required_resources=3.037 target_replicas=4
+2026-02-21 20:27:31 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=69.65 p99=6012.0
+2026-02-21 20:27:46 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2890
+2026-02-21 20:27:46 [debug    ] HAProxy latency                avg_rtime=3333 max_rtime=40018 p99_est=6666
+2026-02-21 20:27:46 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:27:46 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=6666.0 serverless_enabled=True violation_sec=380
+2026-02-21 20:27:46 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=99.43331297823335 required_resources=3.977 target_replicas=5
+2026-02-21 20:27:46 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=76.43 p99=6666.0
+2026-02-21 20:28:01 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2884
+2026-02-21 20:28:01 [debug    ] HAProxy latency                avg_rtime=3722 max_rtime=40018 p99_est=7444
+2026-02-21 20:28:01 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=7444.0 serverless_enabled=True violation_sec=395
+2026-02-21 20:28:01 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=76.69841084560242 required_resources=3.068 target_replicas=4
+2026-02-21 20:28:01 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=67.45 p99=7444.0
+2026-02-21 20:28:16 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2883
+2026-02-21 20:28:16 [debug    ] HAProxy latency                avg_rtime=2201 max_rtime=40018 p99_est=4402
+2026-02-21 20:28:16 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:28:16 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=4402.0 serverless_enabled=True violation_sec=410
+2026-02-21 20:28:16 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=56.0020049905262 required_resources=2.24 target_replicas=3
+2026-02-21 20:28:16 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=75.94 p99=4402.0
+2026-02-21 20:28:31 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2876
+2026-02-21 20:28:31 [debug    ] HAProxy latency                avg_rtime=484 max_rtime=40018 p99_est=968
+2026-02-21 20:28:31 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=968.0 serverless_enabled=True violation_sec=425
+2026-02-21 20:28:31 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=61.4418576425488 required_resources=2.458 target_replicas=3
+2026-02-21 20:28:31 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=72.42 p99=968.0
+2026-02-21 20:28:46 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2877
+2026-02-21 20:28:46 [debug    ] HAProxy latency                avg_rtime=116 max_rtime=40018 p99_est=232
+2026-02-21 20:28:46 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:28:46 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=232.0 serverless_enabled=True violation_sec=440
+2026-02-21 20:28:46 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=70.51636958116012 required_resources=2.821 target_replicas=4
+2026-02-21 20:28:46 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=81.64 p99=232.0
+2026-02-21 20:29:01 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2898
+2026-02-21 20:29:01 [debug    ] HAProxy latency                avg_rtime=994 max_rtime=40018 p99_est=1988
+2026-02-21 20:29:01 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=1988.0 serverless_enabled=True violation_sec=455
+2026-02-21 20:29:01 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=77.56895423257106 required_resources=3.103 target_replicas=4
+2026-02-21 20:29:01 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=72.17 p99=1988.0
+2026-02-21 20:29:16 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2889
+2026-02-21 20:29:16 [debug    ] HAProxy latency                avg_rtime=1971 max_rtime=40018 p99_est=3942
+2026-02-21 20:29:16 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:29:16 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=3942.0 serverless_enabled=True violation_sec=470
+2026-02-21 20:29:16 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=66.12773156496502 required_resources=2.645 target_replicas=4
+2026-02-21 20:29:16 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=71.05 p99=3942.0
+2026-02-21 20:29:31 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2886
+2026-02-21 20:29:31 [debug    ] HAProxy latency                avg_rtime=870 max_rtime=40018 p99_est=1740
+2026-02-21 20:29:31 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=1740.0 serverless_enabled=True violation_sec=485
+2026-02-21 20:29:31 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=65.71662666935126 required_resources=2.629 target_replicas=4
+2026-02-21 20:29:31 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=72.82 p99=1740.0
+2026-02-21 20:29:46 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2888
+2026-02-21 20:29:46 [debug    ] HAProxy latency                avg_rtime=3145 max_rtime=40018 p99_est=6290
+2026-02-21 20:29:46 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:29:46 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=6290.0 serverless_enabled=True violation_sec=500
+2026-02-21 20:29:46 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=51.55201249289016 required_resources=2.062 target_replicas=3
+2026-02-21 20:29:46 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=75.25 p99=6290.0
+2026-02-21 20:30:01 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2883
+2026-02-21 20:30:01 [debug    ] HAProxy latency                avg_rtime=1404 max_rtime=40018 p99_est=2808
+2026-02-21 20:30:01 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=2808.0 serverless_enabled=True violation_sec=515
+2026-02-21 20:30:01 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=57.248657501560956 required_resources=2.29 target_replicas=3
+2026-02-21 20:30:01 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=69.26 p99=2808.0
+2026-02-21 20:30:16 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2878
+2026-02-21 20:30:16 [debug    ] HAProxy latency                avg_rtime=3171 max_rtime=40018 p99_est=6342
+2026-02-21 20:30:16 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:30:16 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=6342.0 serverless_enabled=True violation_sec=530
+2026-02-21 20:30:16 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=43.81389281507229 required_resources=1.753 target_replicas=3
+2026-02-21 20:30:16 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=76.36 p99=6342.0
+2026-02-21 20:30:31 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2889
+2026-02-21 20:30:31 [debug    ] HAProxy latency                avg_rtime=2631 max_rtime=40018 p99_est=5262
+2026-02-21 20:30:31 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=5262.0 serverless_enabled=True violation_sec=545
+2026-02-21 20:30:31 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=34.42837675508769 required_resources=1.377 target_replicas=2
+2026-02-21 20:30:31 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=69.46 p99=5262.0
+2026-02-21 20:30:46 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2885
+2026-02-21 20:30:46 [debug    ] HAProxy latency                avg_rtime=1524 max_rtime=40018 p99_est=3048
+2026-02-21 20:30:46 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:30:46 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=3048.0 serverless_enabled=True violation_sec=560
+2026-02-21 20:30:47 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=51.682223734382426 required_resources=2.067 target_replicas=3
+2026-02-21 20:30:47 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=71.75 p99=3048.0
+2026-02-21 20:31:02 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2882
+2026-02-21 20:31:02 [debug    ] HAProxy latency                avg_rtime=192 max_rtime=40018 p99_est=384
+2026-02-21 20:31:02 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=384.0 serverless_enabled=True violation_sec=576
+2026-02-21 20:31:02 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=61.177658930016975 required_resources=2.447 target_replicas=3
+2026-02-21 20:31:02 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=74.76 p99=384.0
+2026-02-21 20:31:17 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2877
+2026-02-21 20:31:17 [debug    ] HAProxy latency                avg_rtime=221 max_rtime=40018 p99_est=442
+2026-02-21 20:31:17 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:31:17 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=442.0 serverless_enabled=True violation_sec=591
+2026-02-21 20:31:17 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=78.14853132832184 required_resources=3.126 target_replicas=4
+2026-02-21 20:31:17 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=76.75 p99=442.0
+2026-02-21 20:31:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2884
+2026-02-21 20:31:32 [debug    ] HAProxy latency                avg_rtime=1610 max_rtime=40018 p99_est=3220
+2026-02-21 20:31:32 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=3220.0 serverless_enabled=True violation_sec=606
+2026-02-21 20:31:32 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=43.1479775825306 required_resources=1.726 target_replicas=3
+2026-02-21 20:31:32 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=67.35 p99=3220.0
+2026-02-21 20:31:47 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2888
+2026-02-21 20:31:47 [debug    ] HAProxy latency                avg_rtime=2775 max_rtime=40018 p99_est=5550
+2026-02-21 20:31:47 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:31:47 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=5550.0 serverless_enabled=True violation_sec=621
+2026-02-21 20:31:47 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=26.711094881910928 required_resources=1.068 target_replicas=2
+2026-02-21 20:31:47 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=70.53 p99=5550.0
+2026-02-21 20:32:02 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2883
+2026-02-21 20:32:02 [debug    ] HAProxy latency                avg_rtime=727 max_rtime=40018 p99_est=1454
+2026-02-21 20:32:02 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=1454.0 serverless_enabled=True violation_sec=636
+2026-02-21 20:32:02 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=45.623333588430256 required_resources=1.825 target_replicas=3
+2026-02-21 20:32:02 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=68.22 p99=1454.0
+2026-02-21 20:32:17 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2883
+2026-02-21 20:32:17 [debug    ] HAProxy latency                avg_rtime=212 max_rtime=40018 p99_est=424
+2026-02-21 20:32:17 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:32:17 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=424.0 serverless_enabled=True violation_sec=651
+2026-02-21 20:32:17 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=46.119163411250355 required_resources=1.845 target_replicas=3
+2026-02-21 20:32:17 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=71.43 p99=424.0
+2026-02-21 20:32:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2878
+2026-02-21 20:32:32 [debug    ] HAProxy latency                avg_rtime=83 max_rtime=40018 p99_est=166
+2026-02-21 20:32:32 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=44.42602866074597 required_resources=1.777 target_replicas=3
+2026-02-21 20:32:32 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=67.54 p99=166.0
+2026-02-21 20:32:47 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2878
+2026-02-21 20:32:47 [debug    ] HAProxy latency                avg_rtime=46 max_rtime=40018 p99_est=92
+2026-02-21 20:32:47 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:32:47 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 55, 'knative': 45} p99=92.0 serverless_enabled=True
+2026-02-21 20:32:47 [warning  ] Blocking traffic return: K8s not ready (available != desired) original_action=OPTIMIZE_COST
+2026-02-21 20:32:47 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2877
+2026-02-21 20:32:47 [debug    ] Current weights retrieved via socket weights={'k3s': 50, 'knative': 50}
+2026-02-21 20:32:47 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2877
+2026-02-21 20:32:47 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 55' response_length=0
+2026-02-21 20:32:47 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2877
+2026-02-21 20:32:47 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 45' response_length=0
+2026-02-21 20:32:47 [debug    ] Weight commands sent via socket successfully k3s=55 knative=45
+2026-02-21 20:32:48 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2877
+2026-02-21 20:32:48 [debug    ] Current weights retrieved via socket weights={'k3s': 55, 'knative': 45}
+2026-02-21 20:32:48 [info     ] Weights updated successfully via HTTP new={'k3s': 55, 'knative': 45} previous={'k3s': 50, 'knative': 50}
+2026-02-21 20:32:48 [info     ] Weights updated                action=MAINTAIN reason='Within acceptable range, maintaining current weights' weights={'k3s': 55, 'knative': 45}
+2026-02-21 20:32:48 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=42.668806817820126 required_resources=1.707 target_replicas=3
+2026-02-21 20:32:48 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=3
+2026-02-21 20:32:48 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=665.63 p99=92.0
+2026-02-21 20:33:03 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2886
+2026-02-21 20:33:03 [debug    ] HAProxy latency                avg_rtime=843 max_rtime=40018 p99_est=1686
+2026-02-21 20:33:03 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=49.286599317173625 required_resources=1.971 target_replicas=3
+2026-02-21 20:33:03 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=69.45 p99=1686.0
+2026-02-21 20:33:18 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2882
+2026-02-21 20:33:18 [debug    ] HAProxy latency                avg_rtime=1141 max_rtime=40018 p99_est=2282
+2026-02-21 20:33:18 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:33:18 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=52.4031066604406 required_resources=2.096 target_replicas=3
+2026-02-21 20:33:18 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=68.29 p99=2282.0
+2026-02-21 20:33:33 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2882
+2026-02-21 20:33:33 [debug    ] HAProxy latency                avg_rtime=178 max_rtime=40018 p99_est=356
+2026-02-21 20:33:33 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=356.0 serverless_enabled=True violation_sec=30
+2026-02-21 20:33:33 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2881
+2026-02-21 20:33:33 [debug    ] Current weights retrieved via socket weights={'k3s': 55, 'knative': 45}
+2026-02-21 20:33:33 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2881
+2026-02-21 20:33:33 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 50' response_length=0
+2026-02-21 20:33:33 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2881
+2026-02-21 20:33:33 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 50' response_length=0
+2026-02-21 20:33:33 [debug    ] Weight commands sent via socket successfully k3s=50 knative=50
+2026-02-21 20:33:33 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2881
+2026-02-21 20:33:33 [debug    ] Current weights retrieved via socket weights={'k3s': 50, 'knative': 50}
+2026-02-21 20:33:33 [info     ] Weights updated successfully via HTTP new={'k3s': 50, 'knative': 50} previous={'k3s': 55, 'knative': 45}
+2026-02-21 20:33:33 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (356ms > 200ms) for 30s' weights={'k3s': 50, 'knative': 50}
+2026-02-21 20:33:33 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=59.6933135460135 required_resources=2.388 target_replicas=3
+2026-02-21 20:33:33 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=574.47 p99=356.0
+2026-02-21 20:33:48 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2878
+2026-02-21 20:33:48 [debug    ] HAProxy latency                avg_rtime=57 max_rtime=40018 p99_est=114
+2026-02-21 20:33:48 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:33:48 [info     ] Algorithm 1: OPTIMIZE_COST     new_weights={'k3s': 55, 'knative': 45} p99=114.0 serverless_enabled=True
+2026-02-21 20:33:48 [warning  ] Blocking traffic return: K8s not ready (available != desired) original_action=OPTIMIZE_COST
+2026-02-21 20:33:48 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2877
+2026-02-21 20:33:48 [debug    ] Current weights retrieved via socket weights={'k3s': 50, 'knative': 50}
+2026-02-21 20:33:48 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2877
+2026-02-21 20:33:48 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 55' response_length=0
+2026-02-21 20:33:48 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2877
+2026-02-21 20:33:48 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 45' response_length=0
+2026-02-21 20:33:48 [debug    ] Weight commands sent via socket successfully k3s=55 knative=45
+2026-02-21 20:33:49 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2877
+2026-02-21 20:33:49 [debug    ] Current weights retrieved via socket weights={'k3s': 55, 'knative': 45}
+2026-02-21 20:33:49 [info     ] Weights updated successfully via HTTP new={'k3s': 55, 'knative': 45} previous={'k3s': 50, 'knative': 50}
+2026-02-21 20:33:49 [info     ] Weights updated                action=MAINTAIN reason='Within acceptable range, maintaining current weights' weights={'k3s': 55, 'knative': 45}
+2026-02-21 20:33:49 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=70.23954430565146 required_resources=2.81 target_replicas=4
+2026-02-21 20:33:49 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=4
+2026-02-21 20:33:49 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=646.21 p99=114.0
+2026-02-21 20:34:04 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2892
+2026-02-21 20:34:04 [debug    ] HAProxy latency                avg_rtime=2052 max_rtime=40018 p99_est=4104
+2026-02-21 20:34:04 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=70.36651429787997 required_resources=2.815 target_replicas=4
+2026-02-21 20:34:04 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=73.75 p99=4104.0
+2026-02-21 20:34:19 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2886
+2026-02-21 20:34:19 [debug    ] HAProxy latency                avg_rtime=1457 max_rtime=40018 p99_est=2914
+2026-02-21 20:34:19 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:34:19 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=64.81866308171365 required_resources=2.593 target_replicas=4
+2026-02-21 20:34:19 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=79.25 p99=2914.0
+2026-02-21 20:34:34 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2891
+2026-02-21 20:34:34 [debug    ] HAProxy latency                avg_rtime=1948 max_rtime=40018 p99_est=3896
+2026-02-21 20:34:34 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=3896.0 serverless_enabled=True violation_sec=30
+2026-02-21 20:34:34 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2890
+2026-02-21 20:34:34 [debug    ] Current weights retrieved via socket weights={'k3s': 55, 'knative': 45}
+2026-02-21 20:34:34 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2890
+2026-02-21 20:34:34 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 50' response_length=0
+2026-02-21 20:34:34 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2890
+2026-02-21 20:34:34 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 50' response_length=0
+2026-02-21 20:34:34 [debug    ] Weight commands sent via socket successfully k3s=50 knative=50
+2026-02-21 20:34:35 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2890
+2026-02-21 20:34:35 [debug    ] Current weights retrieved via socket weights={'k3s': 50, 'knative': 50}
+2026-02-21 20:34:35 [info     ] Weights updated successfully via HTTP new={'k3s': 50, 'knative': 50} previous={'k3s': 55, 'knative': 45}
+2026-02-21 20:34:35 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (3896ms > 200ms) for 30s' weights={'k3s': 50, 'knative': 50}
+2026-02-21 20:34:35 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=48.02225966499768 required_resources=1.921 target_replicas=3
+2026-02-21 20:34:35 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=572.46 p99=3896.0
+2026-02-21 20:34:50 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2888
+2026-02-21 20:34:50 [debug    ] HAProxy latency                avg_rtime=1743 max_rtime=40018 p99_est=3486
+2026-02-21 20:34:50 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:34:50 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=3486.0 serverless_enabled=True violation_sec=46
+2026-02-21 20:34:50 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=67.5065819608721 required_resources=2.7 target_replicas=4
+2026-02-21 20:34:50 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=73.89 p99=3486.0
+2026-02-21 20:35:05 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2886
+2026-02-21 20:35:05 [debug    ] HAProxy latency                avg_rtime=3430 max_rtime=40018 p99_est=6860
+2026-02-21 20:35:05 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=6860.0 serverless_enabled=True violation_sec=61
+2026-02-21 20:35:05 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=53.67988508818603 required_resources=2.147 target_replicas=3
+2026-02-21 20:35:05 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=70.12 p99=6860.0
+2026-02-21 20:35:20 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2881
+2026-02-21 20:35:20 [debug    ] HAProxy latency                avg_rtime=5587 max_rtime=40018 p99_est=11174
+2026-02-21 20:35:20 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:35:20 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=11174.0 serverless_enabled=True violation_sec=76
+2026-02-21 20:35:20 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=7.9617604854190205 required_resources=0.318 target_replicas=1
+2026-02-21 20:35:20 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=71.01 p99=11174.0
+2026-02-21 20:35:35 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2881
+2026-02-21 20:35:35 [debug    ] HAProxy latency                avg_rtime=8311 max_rtime=46134 p99_est=16622
+2026-02-21 20:35:35 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=16622.0 serverless_enabled=True violation_sec=91
+2026-02-21 20:35:35 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=15.957276364408411 required_resources=0.638 target_replicas=1
+2026-02-21 20:35:35 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=69.9 p99=16622.0
+2026-02-21 20:35:50 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2888
+2026-02-21 20:35:50 [debug    ] HAProxy latency                avg_rtime=4869 max_rtime=56888 p99_est=9738
+2026-02-21 20:35:50 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:35:50 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=9738.0 serverless_enabled=True violation_sec=106
+2026-02-21 20:35:50 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=40.8744807859231 required_resources=1.635 target_replicas=2
+2026-02-21 20:35:50 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=70.83 p99=9738.0
+2026-02-21 20:36:05 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2888
+2026-02-21 20:36:05 [debug    ] HAProxy latency                avg_rtime=5053 max_rtime=56888 p99_est=10106
+2026-02-21 20:36:05 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=10106.0 serverless_enabled=True violation_sec=121
+2026-02-21 20:36:05 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=49.60103360755568 required_resources=1.984 target_replicas=3
+2026-02-21 20:36:05 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=73.7 p99=10106.0
+2026-02-21 20:36:20 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2886
+2026-02-21 20:36:20 [debug    ] HAProxy latency                avg_rtime=2832 max_rtime=56888 p99_est=5664
+2026-02-21 20:36:20 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:36:20 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=5664.0 serverless_enabled=True violation_sec=136
+2026-02-21 20:36:20 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=51.252747249697165 required_resources=2.05 target_replicas=3
+2026-02-21 20:36:20 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=76.19 p99=5664.0
+2026-02-21 20:36:35 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2884
+2026-02-21 20:36:35 [debug    ] HAProxy latency                avg_rtime=3639 max_rtime=56888 p99_est=7278
+2026-02-21 20:36:35 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=7278.0 serverless_enabled=True violation_sec=151
+2026-02-21 20:36:35 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=55.78799592053202 required_resources=2.232 target_replicas=3
+2026-02-21 20:36:35 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=76.94 p99=7278.0
+2026-02-21 20:36:50 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2886
+2026-02-21 20:36:50 [debug    ] HAProxy latency                avg_rtime=2323 max_rtime=56888 p99_est=4646
+2026-02-21 20:36:50 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:36:50 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=4646.0 serverless_enabled=True violation_sec=166
+2026-02-21 20:36:50 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=60.85570821494592 required_resources=2.434 target_replicas=3
+2026-02-21 20:36:50 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=67.3 p99=4646.0
+2026-02-21 20:37:05 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2890
+2026-02-21 20:37:05 [debug    ] HAProxy latency                avg_rtime=3691 max_rtime=56888 p99_est=7382
+2026-02-21 20:37:05 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=7382.0 serverless_enabled=True violation_sec=181
+2026-02-21 20:37:05 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=57.55232176929525 required_resources=2.302 target_replicas=3
+2026-02-21 20:37:05 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=69.4 p99=7382.0
+2026-02-21 20:37:20 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2894
+2026-02-21 20:37:21 [debug    ] HAProxy latency                avg_rtime=4130 max_rtime=56888 p99_est=8260
+2026-02-21 20:37:21 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:37:21 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=8260.0 serverless_enabled=True violation_sec=197
+2026-02-21 20:37:21 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=45.82360638086386 required_resources=1.833 target_replicas=3
+2026-02-21 20:37:21 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=75.39 p99=8260.0
+2026-02-21 20:37:36 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2878
+2026-02-21 20:37:36 [debug    ] HAProxy latency                avg_rtime=1958 max_rtime=56888 p99_est=3916
+2026-02-21 20:37:36 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=3916.0 serverless_enabled=True violation_sec=212
+2026-02-21 20:37:36 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=44.68442544946029 required_resources=1.787 target_replicas=3
+2026-02-21 20:37:36 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=69.87 p99=3916.0
+2026-02-21 20:37:51 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2876
+2026-02-21 20:37:51 [debug    ] HAProxy latency                avg_rtime=621 max_rtime=56888 p99_est=1242
+2026-02-21 20:37:51 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:37:51 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=1242.0 serverless_enabled=True violation_sec=227
+2026-02-21 20:37:51 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=41.92998404462389 required_resources=1.677 target_replicas=3
+2026-02-21 20:37:51 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=73.04 p99=1242.0
+2026-02-21 20:38:06 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2875
+2026-02-21 20:38:06 [debug    ] HAProxy latency                avg_rtime=205 max_rtime=56888 p99_est=410
+2026-02-21 20:38:06 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=410.0 serverless_enabled=True violation_sec=242
+2026-02-21 20:38:06 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=41.16996906101062 required_resources=1.647 target_replicas=2
+2026-02-21 20:38:06 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=69.66 p99=410.0
+2026-02-21 20:38:21 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2892
+2026-02-21 20:38:21 [debug    ] HAProxy latency                avg_rtime=1872 max_rtime=56888 p99_est=3744
+2026-02-21 20:38:21 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:38:21 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=3744.0 serverless_enabled=True violation_sec=257
+2026-02-21 20:38:21 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=43.29327771249396 required_resources=1.732 target_replicas=3
+2026-02-21 20:38:21 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=71.83 p99=3744.0
+2026-02-21 20:38:36 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2888
+2026-02-21 20:38:36 [debug    ] HAProxy latency                avg_rtime=808 max_rtime=56888 p99_est=1616
+2026-02-21 20:38:36 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=1616.0 serverless_enabled=True violation_sec=272
+2026-02-21 20:38:36 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=47.143946531892055 required_resources=1.886 target_replicas=3
+2026-02-21 20:38:36 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=73.76 p99=1616.0
+2026-02-21 20:38:51 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2881
+2026-02-21 20:38:51 [debug    ] HAProxy latency                avg_rtime=1793 max_rtime=56888 p99_est=3586
+2026-02-21 20:38:51 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:38:51 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=3586.0 serverless_enabled=True violation_sec=287
+2026-02-21 20:38:51 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=32.60907441980893 required_resources=1.304 target_replicas=2
+2026-02-21 20:38:51 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=70.97 p99=3586.0
+2026-02-21 20:39:06 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2878
+2026-02-21 20:39:06 [debug    ] HAProxy latency                avg_rtime=1793 max_rtime=56888 p99_est=3586
+2026-02-21 20:39:06 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=3586.0 serverless_enabled=True violation_sec=302
+2026-02-21 20:39:06 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=7.727984831883941 required_resources=0.309 target_replicas=1
+2026-02-21 20:39:06 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=73.16 p99=3586.0
+2026-02-21 20:39:21 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2876
+2026-02-21 20:39:21 [debug    ] HAProxy latency                avg_rtime=1793 max_rtime=56888 p99_est=3586
+2026-02-21 20:39:21 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-02-21 20:39:21 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=3586.0 serverless_enabled=True violation_sec=317
+2026-02-21 20:39:21 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=0.0 required_resources=0.0 target_replicas=1
+2026-02-21 20:39:21 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=75.13 p99=3586.0
+2026-02-21 20:39:36 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2876
+2026-02-21 20:39:36 [debug    ] HAProxy latency                avg_rtime=1793 max_rtime=56888 p99_est=3586
+2026-02-21 20:39:36 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=3586.0 serverless_enabled=True violation_sec=332
+2026-02-21 20:39:36 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=0.0 required_resources=0.0 target_replicas=1
+2026-02-21 20:39:36 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=69.36 p99=3586.0
+2026-02-21 20:39:47 [info     ] Received shutdown signal
+2026-02-21 20:39:47 [info     ] Stopping routing daemon...
+2026-02-21 20:39:47 [info     ] Routing daemon stopped

@@ -1,0 +1,10 @@
+id: phase-b.all-scenarios-rerun-v2.2026-02-21
+date: 2026-02-21
+phase: phase-b
+scenarios: [s1-k8s-only, s2-serverless-only, s3-hybrid-reactive, s4-hybrid-predictive]
+workload: {trace: clarknet, endpoint: /fib?n=34, duration_sec: 1200, runs_per_scenario: 1}
+claims: {supports: []}
+reproduce:
+  - cd controller && uv run python ../thesis/scripts/run_phase_b_experiments.py --phase experiments --runs 1 --output results/experiments/phase-b/2026-02-21_all-scenarios-rerun-v2
+  - cd controller && uv run python ../thesis/scripts/run_phase_b_experiments.py --phase analysis --results-file ../results/experiments/phase-b/2026-02-21_all-scenarios-rerun-v2/results_final.json --output ../results/experiments/phase-b/2026-02-21_all-scenarios-rerun-v2
+status: complete

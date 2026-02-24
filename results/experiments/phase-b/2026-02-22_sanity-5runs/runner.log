@@ -1,0 +1,250 @@
+
+======================================================================
+PREFLIGHT CHECKS
+======================================================================
+2026-02-22 05:11:00 [info     ] preflight                      check=k6_binary status=✅
+2026-02-22 05:11:00 [info     ] preflight                      check=kubectl_binary status=✅
+2026-02-22 05:11:00 [info     ] preflight                      check=k6_script status=✅
+2026-02-22 05:11:00 [info     ] preflight                      check=k6_stages status=✅
+2026-02-22 05:11:00 [info     ] preflight                      check=prometheus status=✅
+2026-02-22 05:11:00 [info     ] preflight                      check=haproxy_stats status=✅
+2026-02-22 05:11:00 [info     ] preflight                      check=gru_server status=✅
+2026-02-22 05:11:00 [info     ] preflight                      check=cluster_nodes status=✅
+2026-02-22 05:11:00 [info     ] preflight                      check=target_deployment status=✅
+2026-02-22 05:11:00 [info     ] preflight                      check=knative_serving status=✅
+
+✅ All preflight checks passed
+
+======================================================================
+PHASE B EXPERIMENTS — 1 runs × 5 scenarios
+Seed: 42  |  Output: /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/experiments/phase-b/2026-02-22_sanity-5runs
+======================================================================
+2026-02-22 05:11:00 [info     ] experiment_schedule            seed=42 total=5
+2026-02-22 05:11:00 [info     ] run_progress                   current=1 run_id=1 scenario=s4-hybrid-predictive total=5
+2026-02-22 05:11:00 [info     ] run_start                      order=0 run_id=1 scenario=s4-hybrid-predictive
+2026-02-22 05:11:00 [info     ] scenario_reset_start           scenario=s4-hybrid-predictive
+2026-02-22 05:11:01 [info     ] node_deleted                   k8s_node=k3d-dynamic-workload-0-0 node=dynamic-workload-0
+2026-02-22 05:11:06 [info     ] baseline_replicas_ready        replicas=1
+2026-02-22 05:11:06 [info     ] haproxy_weights_reset_verified k3s=80 knative=20
+2026-02-22 05:11:06 [info     ] scenario_reset_complete        scenario=s4-hybrid-predictive
+2026-02-22 05:11:06 [warning  ] stale_daemon_detected          port=9104
+2026-02-22 05:11:06 [warning  ] killing_stale_daemon           pid=42742
+2026-02-22 05:11:08 [info     ] daemon_started                 pid=100488 scenario=s4-hybrid-predictive
+2026-02-22 05:11:08 [info     ] k3d_autoscaler_loop_started    cluster=thesis-hybrid max_nodes=2 min_nodes=0 poll_interval_sec=2
+2026-02-22 05:11:08 [info     ] warmup_start                   seconds=30
+2026-02-22 05:11:38 [info     ] preconditions_passed           scenario=s4-hybrid-predictive weights={'k3s': 90, 'knative': 10}
+2026-02-22 05:11:38 [info     ] k6_start                       run_id=1 scenario=s4-hybrid-predictive
+2026-02-22 05:12:27 [info     ] provision_delay_wait           delay_sec=117
+2026-02-22 05:14:29 [info     ] node_created                   elapsed_sec=4.457 k8s_node=k3d-dynamic-workload-0-0 node=dynamic-workload-0
+2026-02-22 05:32:05 [warning  ] k6_threshold_crossed           run_id=1 scenario=s4-hybrid-predictive
+2026-02-22 05:32:05 [info     ] k6_complete                    p99=28129.695625499986 run_id=1 scenario=s4-hybrid-predictive total_requests=61847
+2026-02-22 05:32:05 [info     ] cooldown_start                 seconds=60
+2026-02-22 05:33:06 [info     ] run_complete                   error_rate=0 p99=28129.695625499986 run_id=1 run_valid=True scenario=s4-hybrid-predictive stress_valid=True
+2026-02-22 05:33:06 [info     ] k3d_autoscaler_loop_stopped
+2026-02-22 05:33:06 [info     ] daemon_stopped
+2026-02-22 05:33:06 [info     ] inter_run_pause                seconds=60
+2026-02-22 05:34:06 [info     ] run_progress                   current=2 run_id=1 scenario=s2-serverless-only total=5
+2026-02-22 05:34:06 [info     ] run_start                      order=1 run_id=1 scenario=s2-serverless-only
+2026-02-22 05:34:06 [info     ] scenario_reset_start           scenario=s2-serverless-only
+2026-02-22 05:34:09 [info     ] k8s_scaled_to_zero
+2026-02-22 05:34:10 [debug    ] knative_pods_still_running     count=1
+2026-02-22 05:34:20 [debug    ] knative_pods_still_running     count=1
+2026-02-22 05:34:30 [debug    ] knative_pods_still_running     count=1
+2026-02-22 05:34:40 [debug    ] knative_pods_still_running     count=1
+2026-02-22 05:34:50 [debug    ] knative_pods_still_running     count=1
+2026-02-22 05:35:00 [debug    ] knative_pods_still_running     count=1
+2026-02-22 05:35:10 [debug    ] knative_pods_still_running     count=1
+2026-02-22 05:35:20 [debug    ] knative_pods_still_running     count=1
+2026-02-22 05:35:30 [debug    ] knative_pods_still_running     count=1
+2026-02-22 05:35:40 [debug    ] knative_pods_still_running     count=1
+2026-02-22 05:35:50 [debug    ] knative_pods_still_running     count=1
+2026-02-22 05:36:00 [debug    ] knative_pods_still_running     count=1
+2026-02-22 05:36:10 [warning  ] knative_scale_to_zero_timeout
+2026-02-22 05:36:10 [info     ] haproxy_weights_reset_verified k3s=0 knative=100
+2026-02-22 05:36:10 [info     ] scenario_reset_complete        scenario=s2-serverless-only
+2026-02-22 05:36:11 [info     ] daemon_started                 pid=272903 scenario=s2-serverless-only
+2026-02-22 05:36:11 [info     ] warmup_start                   seconds=30
+2026-02-22 05:36:41 [info     ] preconditions_passed           scenario=s2-serverless-only weights={'k3s': 0, 'knative': 100}
+2026-02-22 05:36:41 [info     ] k6_start                       run_id=1 scenario=s2-serverless-only
+2026-02-22 05:56:42 [warning  ] k6_threshold_crossed           run_id=1 scenario=s2-serverless-only
+2026-02-22 05:56:42 [info     ] k6_complete                    p99=4649.204575 run_id=1 scenario=s2-serverless-only total_requests=80391
+2026-02-22 05:56:42 [info     ] cooldown_start                 seconds=60
+2026-02-22 05:57:42 [info     ] run_complete                   error_rate=0 p99=4649.204575 run_id=1 run_valid=True scenario=s2-serverless-only stress_valid=True
+2026-02-22 05:57:42 [info     ] daemon_stopped
+2026-02-22 05:57:42 [info     ] inter_run_pause                seconds=60
+2026-02-22 05:58:42 [info     ] run_progress                   current=3 run_id=1 scenario=s3-hybrid-reactive total=5
+2026-02-22 05:58:42 [info     ] run_start                      order=2 run_id=1 scenario=s3-hybrid-reactive
+2026-02-22 05:58:42 [info     ] scenario_reset_start           scenario=s3-hybrid-reactive
+2026-02-22 05:58:43 [info     ] node_deleted                   k8s_node=k3d-dynamic-workload-0-0 node=dynamic-workload-0
+2026-02-22 05:58:49 [info     ] baseline_replicas_ready        replicas=1
+2026-02-22 05:58:49 [info     ] haproxy_weights_reset_verified k3s=80 knative=20
+2026-02-22 05:58:49 [info     ] scenario_reset_complete        scenario=s3-hybrid-reactive
+2026-02-22 05:58:50 [info     ] daemon_started                 pid=380990 scenario=s3-hybrid-reactive
+2026-02-22 05:58:50 [info     ] k3d_autoscaler_loop_started    cluster=thesis-hybrid max_nodes=2 min_nodes=0 poll_interval_sec=2
+2026-02-22 05:58:50 [info     ] warmup_start                   seconds=30
+2026-02-22 05:59:20 [warning  ] precondition_hybrid_knative_zero_ok actual={'k3s': 100, 'knative': 0} reason='daemon OPTIMIZE_COST during warmup' scenario=s3-hybrid-reactive
+2026-02-22 05:59:20 [info     ] preconditions_passed           scenario=s3-hybrid-reactive weights={'k3s': 100, 'knative': 0}
+2026-02-22 05:59:20 [info     ] k6_start                       run_id=1 scenario=s3-hybrid-reactive
+2026-02-22 06:00:07 [info     ] provision_delay_wait           delay_sec=120
+2026-02-22 06:02:12 [info     ] node_created                   elapsed_sec=4.396 k8s_node=k3d-dynamic-workload-1-0 node=dynamic-workload-1
+2026-02-22 06:05:11 [info     ] provision_delay_wait           delay_sec=66
+2026-02-22 06:06:22 [info     ] node_created                   elapsed_sec=4.465 k8s_node=k3d-dynamic-workload-2-0 node=dynamic-workload-2
+2026-02-22 06:19:51 [warning  ] k6_threshold_crossed           run_id=1 scenario=s3-hybrid-reactive
+2026-02-22 06:19:51 [info     ] k6_complete                    p99=22120.840788449994 run_id=1 scenario=s3-hybrid-reactive total_requests=63982
+2026-02-22 06:19:51 [info     ] cooldown_start                 seconds=60
+2026-02-22 06:20:51 [info     ] run_complete                   error_rate=0 p99=22120.840788449994 run_id=1 run_valid=True scenario=s3-hybrid-reactive stress_valid=True
+2026-02-22 06:20:51 [info     ] k3d_autoscaler_loop_stopped
+2026-02-22 06:20:51 [info     ] daemon_stopped
+2026-02-22 06:20:51 [info     ] inter_run_pause                seconds=60
+2026-02-22 06:21:51 [info     ] run_progress                   current=4 run_id=1 scenario=s4-hybrid-predictive total=5
+2026-02-22 06:21:51 [info     ] run_start                      order=3 run_id=1 scenario=s4-hybrid-predictive
+2026-02-22 06:21:51 [info     ] scenario_reset_start           scenario=s4-hybrid-predictive
+2026-02-22 06:21:54 [info     ] node_deleted                   k8s_node=k3d-dynamic-workload-2-0 node=dynamic-workload-2
+2026-02-22 06:21:55 [info     ] node_deleted                   k8s_node=k3d-dynamic-workload-1-0 node=dynamic-workload-1
+2026-02-22 06:22:36 [info     ] baseline_replicas_ready        replicas=1
+2026-02-22 06:22:37 [info     ] haproxy_weights_reset_verified k3s=80 knative=20
+2026-02-22 06:22:37 [info     ] scenario_reset_complete        scenario=s4-hybrid-predictive
+2026-02-22 06:22:38 [info     ] daemon_started                 pid=560265 scenario=s4-hybrid-predictive
+2026-02-22 06:22:38 [info     ] k3d_autoscaler_loop_started    cluster=thesis-hybrid max_nodes=2 min_nodes=0 poll_interval_sec=2
+2026-02-22 06:22:38 [info     ] warmup_start                   seconds=30
+2026-02-22 06:23:08 [info     ] preconditions_passed           scenario=s4-hybrid-predictive weights={'k3s': 90, 'knative': 10}
+2026-02-22 06:23:08 [info     ] k6_start                       run_id=1 scenario=s4-hybrid-predictive
+2026-02-22 06:23:57 [info     ] provision_delay_wait           delay_sec=97
+2026-02-22 06:25:39 [info     ] node_created                   elapsed_sec=4.484 k8s_node=k3d-dynamic-workload-3-0 node=dynamic-workload-3
+2026-02-22 06:43:31 [warning  ] k6_threshold_crossed           run_id=1 scenario=s4-hybrid-predictive
+2026-02-22 06:43:31 [info     ] k6_complete                    p99=25308.267808949997 run_id=1 scenario=s4-hybrid-predictive total_requests=64324
+2026-02-22 06:43:31 [info     ] cooldown_start                 seconds=60
+2026-02-22 06:44:31 [info     ] run_complete                   error_rate=0 p99=25308.267808949997 run_id=1 run_valid=True scenario=s4-hybrid-predictive stress_valid=True
+2026-02-22 06:44:32 [info     ] k3d_autoscaler_loop_stopped
+2026-02-22 06:44:32 [info     ] daemon_stopped
+2026-02-22 06:44:32 [info     ] inter_run_pause                seconds=60
+2026-02-22 06:45:32 [info     ] run_progress                   current=5 run_id=1 scenario=s1-k8s-only total=5
+2026-02-22 06:45:32 [info     ] run_start                      order=4 run_id=1 scenario=s1-k8s-only
+2026-02-22 06:45:32 [info     ] scenario_reset_start           scenario=s1-k8s-only
+2026-02-22 06:45:34 [info     ] node_deleted                   k8s_node=k3d-dynamic-workload-3-0 node=dynamic-workload-3
+2026-02-22 06:45:54 [info     ] hpa_ready                      replicas=1
+2026-02-22 06:45:55 [info     ] haproxy_weights_reset_verified k3s=100 knative=0
+2026-02-22 06:45:55 [info     ] scenario_reset_complete        scenario=s1-k8s-only
+2026-02-22 06:45:56 [info     ] daemon_started                 pid=721335 scenario=s1-k8s-only
+2026-02-22 06:45:56 [info     ] k3d_autoscaler_loop_started    cluster=thesis-hybrid max_nodes=2 min_nodes=0 poll_interval_sec=2
+2026-02-22 06:45:56 [info     ] warmup_start                   seconds=30
+2026-02-22 06:46:26 [info     ] preconditions_passed           scenario=s1-k8s-only weights={'k3s': 100, 'knative': 0}
+2026-02-22 06:46:26 [info     ] k6_start                       run_id=1 scenario=s1-k8s-only
+2026-02-22 07:06:26 [warning  ] k6_threshold_crossed           run_id=1 scenario=s1-k8s-only
+2026-02-22 07:06:26 [info     ] k6_complete                    p99=0.632689 run_id=1 scenario=s1-k8s-only total_requests=87840
+2026-02-22 07:06:26 [info     ] cooldown_start                 seconds=60
+2026-02-22 07:07:26 [info     ] hpa_kubectl_deployment         available=1 desired=1
+2026-02-22 07:07:26 [info     ] hpa_condition                  message='recommended size matches current size' reason=ReadyForNewScale status=True type=AbleToScale
+2026-02-22 07:07:26 [info     ] hpa_kubectl_hpa                current=1 desired=1
+2026-02-22 07:07:26 [info     ] hpa_kubectl_events             scale_downs=0 scale_ups=0 total_events=0
+2026-02-22 07:07:26 [info     ] run_complete                   error_rate=0 p99=0.632689 run_id=1 run_valid=True scenario=s1-k8s-only stress_valid=False
+2026-02-22 07:07:27 [info     ] k3d_autoscaler_loop_stopped
+2026-02-22 07:07:27 [info     ] daemon_stopped
+
+✅ 5 runs completed
+
+======================================================================
+STATISTICAL ANALYSIS
+======================================================================
+2026-02-22 07:07:27 [warning  ] comparison_skipped             error='Insufficient data for s1-k8s-only vs s2-serverless-only on p99_latency_ms'
+2026-02-22 07:07:27 [warning  ] comparison_skipped             error='Insufficient data for s1-k8s-only vs s2-serverless-only on error_rate'
+2026-02-22 07:07:27 [warning  ] comparison_skipped             error='Insufficient data for s1-k8s-only vs s3-hybrid-reactive on p99_latency_ms'
+/home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/controller/.venv/lib/python3.12/site-packages/numpy/_core/_methods.py:219: RuntimeWarning: Degrees of freedom <= 0 for slice
+  ret = _var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+/home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/controller/.venv/lib/python3.12/site-packages/numpy/_core/_methods.py:211: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+2026-02-22 07:07:28 [warning  ] comparison_skipped             error='Insufficient data for s1-k8s-only vs s4-hybrid-predictive on p99_latency_ms'
+2026-02-22 07:07:28 [info     ] analysis_complete              report=/home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/experiments/phase-b/2026-02-22_sanity-5runs/report.md
+
+# Phase B: Replicated Comparison Results
+
+**Date:** 2026-02-22T07:07:28.114799
+**Git:** 04eced9
+**Runs:** 5 clean, 0 excluded
+
+## Per-Scenario Summary
+
+| Scenario | n | p50 (ms) | p95 (ms) | p99 (ms) | Error% | RPS | SLO Violations | Scale-Up | Scale-Down |
+|----------|---|----------|----------|----------|--------|-----|----------------|----------|------------|
+| s1-k8s-only | 1 | 0.4 | 0.6 | 0.6 | 0.000 | 73.2 | 0 | 0 | 0 |
+| s2-serverless-only | 1 | 626.7 | 4649.2 | 4649.2 | 0.000 | 67.0 | 42944 | 0 | 0 |
+| s3-hybrid-reactive | 1 | 209.8 | 22120.8 | 22120.8 | 0.000 | 52.0 | 32082 | 4 | 0 |
+| s4-hybrid-predictive | 2 | 655.7 | 26719.0 | 26719.0 | 0.000 | 51.5 | 69552 | 0 | 0 |
+
+## Run Validity Gates
+
+| Scenario | Run-Valid / Total |
+|----------|-------------------|
+| s1-k8s-only | 1/1 |
+| s2-serverless-only | 1/1 |
+| s3-hybrid-reactive | 1/1 |
+| s4-hybrid-predictive | 2/2 |
+
+## Stress Validity Coverage
+
+| Scenario | Stress-Valid / Run-Valid | Dynamic Nodes (sum) | Cross-node Runs |
+|----------|--------------------------|---------------------|-----------------|
+| s1-k8s-only | 0/1 | 0 | 1/1 |
+| s3-hybrid-reactive | 1/1 | 2 | 1/1 |
+| s4-hybrid-predictive | 2/2 | 2 | 2/2 |
+
+## Analysis Set Coverage
+
+| Scenario | Included in Inferential Set |
+|----------|-----------------------------|
+| s1-k8s-only | 0/1 |
+| s2-serverless-only | 1/1 |
+| s3-hybrid-reactive | 1/1 |
+| s4-hybrid-predictive | 2/2 |
+
+### Gate Failures
+
+- s1-k8s-only run 1: No dynamic node provisioning events captured; No workload pod observed on dynamic nodes
+
+## Statistical Comparisons
+
+### s3-hybrid-reactive vs s2-serverless-only (p99_latency_ms)
+
+| Metric | Value |
+|--------|-------|
+| Baseline mean | 4649.20 (n=1) |
+| Comparison mean | 22120.84 (n=1) |
+| Difference | +17471.64 (+375.8%) |
+| Welch t-stat | nan |
+| Welch p-value | nan |
+| Mann-Whitney U | 1.0 |
+| Mann-Whitney p | 1.0000 |
+| 95% CI | [+17471.64, +17471.64] |
+| Cohen's d | 0.000 (negligible) |
+| Verdict | ⚠️ Not significant |
+
+### s4-hybrid-predictive vs s3-hybrid-reactive (p99_latency_ms)
+
+| Metric | Value |
+|--------|-------|
+| Baseline mean | 22120.84 (n=1) |
+| Comparison mean | 26718.98 (n=2) |
+| Difference | +4598.14 (+20.8%) |
+| Welch t-stat | nan |
+| Welch p-value | nan |
+| Mann-Whitney U | 2.0 |
+| Mann-Whitney p | 0.6667 |
+| 95% CI | [+3187.43, +6008.85] |
+| Cohen's d | 0.000 (negligible) |
+| Verdict | ⚠️ Not significant |
+
+### s4-hybrid-predictive vs s3-hybrid-reactive (slo_violations_k6)
+
+| Metric | Value |
+|--------|-------|
+| Baseline mean | 32082.00 (n=1) |
+| Comparison mean | 34776.00 (n=2) |
+| Difference | +2694.00 (+8.4%) |
+| Welch t-stat | nan |
+| Welch p-value | nan |
+| Mann-Whitney U | 2.0 |
+| Mann-Whitney p | 0.6667 |
+| 95% CI | [+2624.00, +2764.00] |
+| Cohen's d | 0.000 (negligible) |
+| Verdict | ⚠️ Not significant |
+
