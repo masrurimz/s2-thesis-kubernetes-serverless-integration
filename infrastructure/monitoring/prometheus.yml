@@ -18,23 +18,11 @@ scrape_configs:
       - targets: ['localhost:9090']
     scrape_interval: 30s
 
-  # HAProxy stats endpoint (basic stats scraping)
-  - job_name: 'haproxy'
-    static_configs:
-      - targets: ['host.docker.internal:8404']
-    scrape_interval: 15s
-    metrics_path: '/stats'
-    params:
-      stats: ['csv']
-    scheme: 'http'
-
-  # K3s cluster metrics (via kubectl proxy if available)
-  - job_name: 'kubernetes-nodes'
-    static_configs:
-      - targets: ['host.docker.internal:8080']
-    scrape_interval: 30s
-    metrics_path: '/metrics'
-    scheme: 'http'
+  # HAProxy — stats CSV is not Prometheus format; metrics collected via daemon API
+  # To enable: add haproxy_exporter sidecar or enable prometheus-exporter in HAProxy 2.4+
+  # - job_name: 'haproxy'
+  #   static_configs:
+  #     - targets: ['host.docker.internal:18404']
 
   # System metrics from node-exporter (if deployed)
   - job_name: 'node-exporter'
