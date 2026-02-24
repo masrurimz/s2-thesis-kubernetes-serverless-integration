@@ -14,8 +14,8 @@ Rules:
 
 | Hypothesis | Mechanism Validated? | Superiority Demonstrated? | Stats Done? | Notes |
 |------------|---------------------|--------------------------|-------------|-------|
-| **H1** (Hybrid > Pure) | ✅ Weight shifting, serverless engagement | ⚠️ Two Phase B runs invalidated (2026-02-12 bugs 1-3, 2026-02-14 bugs 4-7); rerun pending | ✅ Welch t-test | k3d localhost bias; high p99 variance |
-| **H2** (Predictive > Reactive) | ✅ PREDICTIVE triggered pre-violation | ⚠️ Not demonstrated; two Phase B runs invalidated | ✅ | gru_predictions_used=0 in both Phase B attempts (different bugs each time). Mechanism validated in A1 ramp only. |
+| **H1** (Hybrid > Pure) | ✅ Weight shifting, serverless engagement | ❌ Not supported in valid replicated set (`2026-02-15_clarknet-replay`); rerun-v2 (`n=1`) directional only | ✅ Welch t-test | Hybrid p99 worse than S1 in valid replicated set; no superiority claim |
+| **H2** (Predictive > Reactive) | ✅ PREDICTIVE triggered pre-violation | ✅ Supported in valid replicated set (`2026-02-15_clarknet-replay`); rerun-v2 (`n=1`) non-inferential | ✅ | Keep A1 mechanism evidence + valid replicated evidence; treat rerun-v2 as pipeline/directional |
 | **H3** (GRU adequate) | ✅ 6.01% RMSE (synthetic), ⚠️ 17.78% RMSE (real ClarkNet) | N/A | ✅ | Synthetic meets targets; real traces do not (<10% RMSE). GRU still outperforms baselines on real data. |
 
 ---
@@ -38,12 +38,14 @@ Rules:
 | `phase-b.fib34-validation.2026-02-18` | B | Validation (fib34) | 2026-02-18 | S1-S4 | `experiments/phase-b/2026-02-18_fib34-validation/` |
 | `phase-b.pilot-validity-gates-rerun.2026-02-19` | B | Pilot Validation (n=2) | 2026-02-19 | S1-S4 | `experiments/phase-b/2026-02-19_pilot-n2-validity-gates-rerun/` |
 | `phase-b.s2-serverless-validation.2026-02-20` | B | Validation (S2 only) | 2026-02-20 | S2 | `experiments/phase-b/2026-02-20_s2-serverless-validation/` |
-| `phase-b.s2-serverless-validation-v2.2026-02-21` | B | Validation (S2 only, app-duration) | 2026-02-21 | S2 | `experiments/phase-b/2026-02-20_s2-serverless-validation-v2/` |
+| `phase-b.s2-serverless-validation-v2.2026-02-20` | B | Validation (S2 only, app-duration) | 2026-02-20 | S2 | `experiments/phase-b/2026-02-20_s2-serverless-validation-v2/` |
+| `phase-b.all-scenarios-rerun-v2.2026-02-21` | B | Full Rerun (n=1 each, app-duration) | 2026-02-21 | S1-S4 | `experiments/phase-b/2026-02-21_all-scenarios-rerun-v2/` |
 | `validation.infrastructure.2026-02-13` | Validation | Infrastructure Validation | 2026-02-13 | T0–T4 | `experiments/validation/2026-02-13_infrastructure-validation/` |
 | `cost.unified-aws-fib34.2026-02-18` | B | Cost Analysis | 2026-02-18 | S1-S4 | `cost/2026-02-18_fib34-unified-aws-cost/` |
 | `cost.unified-aws-pilot-n2.2026-02-19` | B | Cost Analysis (Pilot n=2) | 2026-02-19 | S1-S4 | `cost/2026-02-19_pilot-n2-unified-aws-cost/` |
 | `cost.unified-aws-s2-validation.2026-02-20` | B | Cost Analysis (S2 validation) | 2026-02-20 | S2 | `cost/2026-02-20_s2-validation-unified-aws-cost/` |
 | `cost.unified-aws-s2-validation-v2.2026-02-21` | B | Cost Analysis (S2 validation v2) | 2026-02-21 | S2 | `cost/2026-02-21_s2-validation-v2-unified-aws-cost/` |
+| `cost.unified-aws-all-scenarios-rerun-v2.2026-02-21` | B | Cost Analysis (all scenarios rerun v2) | 2026-02-21 | S1-S4 | `cost/2026-02-21_all-scenarios-rerun-v2-unified-aws-cost/` |
 
 ---
 

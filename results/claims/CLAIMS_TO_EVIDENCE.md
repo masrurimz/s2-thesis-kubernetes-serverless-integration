@@ -100,6 +100,12 @@
 - **Reproduce:** See Commands Used in report.md (T4 section)
 - **Status:** ✅ Validated — S2 viable as Knative-only baseline
 
+### Claim 11a (Pipeline): Two-tier validity gates are emitted end-to-end
+- **Evidence:** `results/experiments/phase-b/2026-02-19_pilot-n2-validity-gates-rerun/report.md` — Run Validity, Stress Validity, and Analysis Set sections
+- **Raw Data:** `results/experiments/phase-b/2026-02-19_pilot-n2-validity-gates-rerun/results_final.json` (`run_validity_passed`, `stress_validity_passed`, `validity_gate_passed`)
+- **Reproduce:** `cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python ../thesis/scripts/run_phase_b_experiments.py --phase full --runs 2 --output /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/experiments/phase-b/2026-02-19_pilot-n2-validity-gates-rerun`
+- **Status:** ✅ Validated — all scenarios 2/2 run-valid and 2/2 stress-valid in pilot
+
 ---
 
 ## Cost Analysis
@@ -122,6 +128,35 @@
 - **Interpretation Constraint:** These are analytical projections using experiment throughput/pod-count inputs mapped to production node sizing. NOT direct measurements from the stress harness (which used 400m allocatable per node).
 - **Status:** ✅ Analysis complete — supports H3 cost discussion
 
+### Claim 12c (Cost Crossover): fib(34) crossover occurs within experiment RPS band
+- **Evidence:** `results/cost/2026-02-18_fib34-unified-aws-cost/report.md` §Crossover Points
+- **Raw Data:** `results/cost/2026-02-18_fib34-unified-aws-cost/cost_results.json`, `results/cost/cost_crossover_rps.png`
+- **Source Experiment:** `results/experiments/phase-b/2026-02-18_fib34-validation/`
+- **Reproduce:**
+  - `cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python ../thesis/scripts/cost_analyzer.py --experiment-dir ../results/experiments/phase-b/2026-02-18_fib34-validation`
+  - `cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python ../thesis/scripts/cost_analyzer.py --crossover-graph`
+- **Result:** S1 vs S2 crossover at ~65.9 RPS for fib(34), inside the observed ~50–73 RPS range; fib(32) crossover at ~97.9 RPS remains outside the band.
+- **Status:** ✅ Validated — workload sensitivity shifts crossover into measurable range
+
+### Claim 12d (Cost Fairness): Fairness-normalized metrics produced on updated pilot pipeline
+- **Evidence:** `results/cost/2026-02-19_pilot-n2-unified-aws-cost/report.md`
+- **Raw Data:** `results/cost/2026-02-19_pilot-n2-unified-aws-cost/cost_results.json`
+- **Source Experiment:** `results/experiments/phase-b/2026-02-19_pilot-n2-validity-gates-rerun/`
+- **Reproduce:** `cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python ../thesis/scripts/cost_analyzer.py --experiment-dir /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/experiments/phase-b/2026-02-19_pilot-n2-validity-gates-rerun`
+- **Result:** `$ / 1M requests` and `$ / 1M successful` are populated for all scenarios; pilot directional result shows S4 better than S3 on `$ / 1M successful`.
+- **Status:** ✅ Validated for pipeline output (pilot n=2; not final inferential evidence)
+
+### Claim 12e (Cost Model Correction): Serverless-specific execution-time sizing is applied to hybrid/serverless scenarios
+- **Evidence:** `results/cost/2026-02-21_all-scenarios-rerun-v2-unified-aws-cost/report.md`
+- **Raw Data:**
+  - `results/cost/2026-02-21_all-scenarios-rerun-v2-unified-aws-cost/cost_results.json`
+  - `results/experiments/phase-b/2026-02-21_all-scenarios-rerun-v2/results_final.json`
+- **Source Experiment:** `results/experiments/phase-b/2026-02-21_all-scenarios-rerun-v2/`
+- **Reproduce:** `cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python ../thesis/scripts/cost_analyzer.py --experiment-dir /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/experiments/phase-b/2026-02-21_all-scenarios-rerun-v2`
+- **Result:** Analyzer uses app-duration-informed execution sizing (`execution_time_source=app_duration_avg`) for S2/S3/S4. Reported totals per 1200s run: S1=$0.061, S2=$0.169, S3=$0.486, S4=$0.432; S4 < S3 after correction.
+- **Interpretation Constraint:** n=1 per scenario; directional/pipeline-validating evidence, not final inferential ranking.
+- **Status:** ✅ Validated for model behavior and reporting pipeline
+
 ---
 
 ## Summary
@@ -141,6 +176,9 @@
 | Testbed | Knative KPA works on k3d | validation/infrastructure-validation | ✅ |
 | Cost Mechanism | Throttling cost multiplier | cost/2026-02-17_three-model-cost-comparison | ✅ Validated |
 | Cost Projection | Production 3-model comparison | cost/2026-02-17_three-model-cost-comparison | ✅ Analysis complete |
+| Cost Crossover | fib(34) crossover in observed band | cost/2026-02-18_fib34-unified-aws-cost | ✅ Validated |
+| Cost Fairness Pipeline | Fairness-normalized outputs emitted | cost/2026-02-19_pilot-n2-unified-aws-cost | ✅ Validated (pilot) |
+| Cost Model Correction | Serverless-specific execution sizing | cost/2026-02-21_all-scenarios-rerun-v2-unified-aws-cost | ✅ Validated (directional n=1) |
 
 ---
 
@@ -203,4 +241,4 @@ HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python ../thesis/scripts/run_phase_b_expe
 - ClarkNet provides usable signal at 5-min+ aggregation; Calgary too sparse for GRU
 - Real-data results are a known limitation to acknowledge in thesis
 
-**Last Updated:** 2026-02-15 (Phase B attempt 3 complete — H2 supported, H1 not supported, design insight validated)
+**Last Updated:** 2026-02-21 (cost-model correction + all-scenarios rerun-v2 evidence mapped)
