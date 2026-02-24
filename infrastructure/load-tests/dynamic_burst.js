@@ -143,7 +143,7 @@ export const options = {
 };
 
 const BASE_URL = __ENV.BASE_URL || __ENV.TARGET_URL || 'http://localhost:18082';
-const ENDPOINT = __ENV.ENDPOINT || '/fib?n=32';
+const ENDPOINT = __ENV.ENDPOINT || '/fib?n=34';
 
 export function setup() {
     console.log('\n🔬 Dynamic Burst Load Test for Phase C');
@@ -159,7 +159,7 @@ export function setup() {
     console.log('');
 
     // Verify endpoint is reachable
-    const warmup = http.get(`${BASE_URL}/fib?n=32`);
+    const warmup = http.get(`${BASE_URL}/fib?n=34`);
     if (warmup.status !== 200) {
         console.log(`⚠️ Warning: Health check returned ${warmup.status}`);
     }
@@ -197,7 +197,7 @@ export function teardown(data) {
     console.log('================================');
     console.log(`Total duration: ${elapsed}s`);
 
-    const health = http.get(`${BASE_URL}/fib?n=32`);
+    const health = http.get(`${BASE_URL}/fib?n=34`);
     console.log(`Post-test health: ${health.status === 200 ? '✅ HEALTHY' : '❌ DEGRADED'}`);
 
     console.log('\n🔍 Analysis guidance:');

@@ -25,9 +25,9 @@ Hybrid K8s-Serverless platform infrastructure for thesis evaluation.
 ┌─────────────────────────┐   ┌─────────────────────────┐
 │   KUBERNETES (K3s)      │   │     SERVERLESS          │
 │   infrastructure/k3s/   │   │   infrastructure/       │
-│   • Cost-effective      │   │   serverless/           │
-│   • Always warm         │   │   • Instant scale       │
-│   • Baseline load       │   │   • Burst handling      │
+│   • Baseline warm       │   │   serverless/           │
+│   • Predictable capacity│   │   • Elastic scale       │
+│   • Steady load         │   │   • Burst handling      │
 └─────────────────────────┘   └─────────────────────────┘
 ```
 

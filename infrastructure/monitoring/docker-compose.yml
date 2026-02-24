@@ -11,7 +11,9 @@ services:
     mem_reservation: 512m
     cpus: '0.5'
     
-    # Networking
+    # Networking — host.docker.internal required on Linux (auto on macOS/Windows)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "9090:9090"
     
@@ -45,6 +47,34 @@ services:
     labels:
       - "sprint1.component=monitoring"
       - "sprint1.service=prometheus"
+
+  node-exporter:
+    image: prom/node-exporter:v1.6.1
+    container_name: sprint1-node-exporter
+    restart: unless-stopped
+    
+    # Host network so it reports real host metrics (CPU, memory, disk)
+    network_mode: host
+    pid: host
+    
+    # Resource constraints — node-exporter is lightweight
+    mem_limit: 128m
+    cpus: '0.1'
+    
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    
+    labels:
+      - "sprint1.component=monitoring"
+      - "sprint1.service=node-exporter"
 
   # Optional: Basic Grafana for visualization (commented out for resource constraints)
   # grafana:
