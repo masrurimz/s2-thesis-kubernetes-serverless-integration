@@ -98,7 +98,10 @@ A controlled ramp-load experiment to validate that individual system mechanisms 
 The primary comparative evaluation with statistical rigor, using realistic time-varying workload derived from ClarkNet trace replay:
 
 - **Workload:** ClarkNet trace-driven replay using 30-second buckets and k6 `ramping-arrival-rate` stages (Section 3.2.4). Replay duration per run is fixed (e.g., 20 minutes) and recorded in the run manifest. A replay scaling factor $g$ is applied to fit testbed capacity and kept constant across all scenarios. Based on single-replica saturation calibration (~60 RPS for `/fib?n=32` with `GOMAXPROCS=1`), the scaling factor is set to $g = 33$, producing a peak replay rate of ~164 RPS (2.73× saturation, requiring ~4 replicas) and mean of ~73 RPS (1.22× saturation, requiring ~2 replicas). At this parameterization, 85% of ClarkNet trace stages exceed single-pod capacity, ensuring that scaling and routing mechanisms are exercised throughout each run.
-- **Replication:** $n = 5$ runs per scenario × 4 scenarios = 20 total runs.
+- **Replication (staged):**
+  - **Pilot gate:** $n = 2$ runs per scenario (8 total) to verify instrumentation and run-validity gates.
+  - **Main study:** target $n = 10$ to $15$ runs per scenario (40–60 total), depending on confidence-interval stability and runtime budget.
+  - **Power target:** practical target is ≥80% power for large effects (|d| ≈ 0.8–1.0), replacing the previous underpowered $n=5$ design.
 - **Randomization:** Run order randomized using `random.shuffle()` to control for temporal confounds (e.g., system warm-up, background processes).
 - **Cool-down:** 60-second pause between consecutive runs plus explicit system reset (see Section 3.5.4).
 
@@ -113,11 +116,14 @@ The primary comparative evaluation with statistical rigor, using realistic time-
 
 Significance threshold is set at α = 0.05. Both parametric (Welch's t-test) and non-parametric (Mann-Whitney U) tests are reported to provide robustness against small-sample normality violations. Effect sizes (Cohen's d) are reported alongside p-values to quantify practical significance regardless of statistical significance.
 
-**Data Quality:**
+**Data Quality and Run Validity Gates:**
 
 - Outlier detection using the criterion p99 < 15ms (indicating measurement artifact rather than genuine system behavior).
 - Excluded runs are documented with explicit justification.
 - Statistics are recomputed on the clean dataset.
+- **Multi-node gate (S1/S3/S4):** run is marked invalid if no dynamic-node provisioning events are captured, if no workload pod is observed on dynamic nodes, or if workload pods do not span at least two nodes.
+- **Serverless gate (S2/S3/S4):** run is marked invalid if no Knative pod placement evidence is captured.
+- Gate outcomes are reported explicitly in the run report before inferential statistics.
 
 #### Phase C: Dynamic Burst Validation (Validasi Lonjakan Dinamis)
 
@@ -227,8 +233,13 @@ For each run, store:
 | Memory Utilization | Average memory usage | From Prometheus/K8s metrics |
 | K8s Capacity Time | Σ(replicas × seconds) | Cost proxy for K8s usage |
 | Knative Active Time | Time with ≥1 Knative pod | Serverless cost proxy |
+| $/1M successful requests | Total cost normalized by successful output | Fair cross-scenario cost metric |
+| $/1M SLO-compliant requests | Total cost normalized by SLO-compliant output | Fairness metric for service quality |
+| Successful requests per USD | Output efficiency per cost | Throughput-cost fairness |
 
-Cost analysis uses three billing models (Lambda Provisioned Concurrency, Cloud Run Always-Allocated, EC2 Node-Hours) applied to actual measured resource consumption from experiments. Production cost projections use real cloud node capacity (t3.medium, 1.8 vCPU allocatable) rather than the stress-harness constraint (400m allocatable). See Section 4.4 for methodology details.
+Cost analysis uses the unified AWS model (EKS + EC2 for K8s share, Lambda Provisioned Concurrency for serverless share) applied to measured resource consumption. Production cost projections use real cloud node capacity (t3.medium, 1.8 vCPU allocatable) rather than the stress-harness constraint (400m allocatable). Raw total cost is reported, but fairness-normalized metrics above are primary for scenario comparison.
+
+For Lambda sizing, execution time uses an explicit signal hierarchy to avoid under- or over-estimation in hybrid scenarios: (1) serverless-specific application duration from Knative-served successful requests; (2) scenario-level app duration for S2-only runs when serverless-specific splits are not needed; (3) CPU-derived fallback (`cpu_per_request_ms / 0.2 + 10ms`) only when app-duration signals are unavailable. Hybrid scenarios (S3/S4) must not use blended whole-scenario execution duration when serverless-specific signal is available. The analyzer reports whole-run totals (per 1200s run) and fairness-normalized metrics together.
 
 ### 3.5.6 Post-Processing and Statistical Analysis (Pengolahan Data)
 
@@ -236,7 +247,8 @@ Cost analysis uses three billing models (Lambda Provisioned Concurrency, Cloud R
 2. **Event derivation:** Routing event = change in HAProxy backend weights. Scaling event = change in deployment `.spec.replicas`.
 3. **Latency aggregation:** k6 latency percentiles are computed per run; Prometheus latency (if collected from HAProxy) is used as secondary corroboration.
 4. **Statistical tests (Phase B):** Welch's t-test and Mann-Whitney U for scenario comparisons, bootstrap confidence intervals for median/p99 differences, Cohen's d for effect size.
-5. **Reporting:** All exclusions (e.g., failed runs) are documented with a reproducible reason.
+5. **Cost post-processing:** Compute AWS totals from measured run-level consumption using the execution-time signal hierarchy above; emit both raw totals and fairness-normalized metrics.
+6. **Reporting:** All exclusions (e.g., failed runs) are documented with a reproducible reason.
 
 ### 3.5.7 Threats to Validity (Ancaman terhadap Validitas)
 
@@ -260,7 +272,7 @@ The experimental evaluation is subject to the following known threats, documente
 
 9. **GRU server availability:** The prediction server must be confirmed running before S4 experiments to ensure the predictive mechanism is active. Infrastructure health checks are performed at experiment start.
 
-10. **Sample size:** With $n = 5$ runs per scenario, statistical power is limited for detecting moderate effect sizes. Results are interpreted as mechanism validation rather than definitive superiority claims.
+10. **Sample size and power:** Small-$n$ designs are underpowered for moderate effects. The revised staged design (pilot + main) targets n=10–15 per scenario, with confidence-interval and effect-size stability as stopping criteria.
 
 11. **Autoscaler mutual exclusion:** HPA and Algorithm 2 cannot coexist on the same Deployment (validated in Phase A0). This means S1 (HPA) and S3/S4 (Algorithm 2) use fundamentally different scaling mechanisms, which may confound direct performance comparisons between native and custom autoscaling approaches.
 

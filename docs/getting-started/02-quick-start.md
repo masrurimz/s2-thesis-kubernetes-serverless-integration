@@ -110,7 +110,7 @@ done
 
 🎉 **Congratulations!** You now have a basic hybrid system with:
 
-- **K3s cluster** serving 80% of traffic (cost-effective baseline)
+- **K3s cluster** serving 80% of traffic (baseline warm capacity)
 - **Simulated serverless** handling 20% of traffic (overflow capacity)
 - **Traffic router** distributing load between both systems
 
@@ -126,7 +126,7 @@ User Request → HAProxy Router → 80% to K3s / 20% to Serverless
 
 1. **Traffic Distribution**: Requests split between different compute models
 2. **Independent Scaling**: Each backend can scale independently
-3. **Cost Optimization**: Majority traffic uses cost-effective k3s
+3. **Capacity Balance**: Majority traffic uses baseline k3s while serverless absorbs bursts
 4. **Overflow Capacity**: Serverless provides additional capacity
 
 ## Next Steps

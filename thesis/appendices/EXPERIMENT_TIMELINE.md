@@ -2,6 +2,8 @@
 
 **Period:** 2026-01-12 to 2026-02-12
 
+> **Supersession note (2026-02-21):** This appendix is a historical timeline snapshot. Cost ranking statements in Week 4/Week 5 were superseded by canonical bundles in `results/` after cost-model corrections (`85a1126`, `6df0913`) and reruns (`results/cost/2026-02-21_all-scenarios-rerun-v2-unified-aws-cost/`). Current directional rerun-v2 totals are: S1 $0.061, S2 $0.169, S3 $0.486, S4 $0.432 per 1200s (`n=1` each; non-inferential).
+
 ---
 
 ## Week 1 (Jan 12-18): Foundation Setup
@@ -108,7 +110,7 @@ Weights: 50/50 (pre-positioned for surge)
 - Previous **steady load** never allowed system to be healthy during prediction
 - GRU confidence 0.72 > threshold 0.6
 
-### Cost Analysis Results (AWS, 1 day, 360K req/hr)
+### Cost Analysis Results (AWS, 1 day, 360K req/hr) — Historical (Superseded)
 | Scenario | Total Cost | vs S1 | vs S2 |
 |----------|------------|-------|-------|
 | S1 (K8s-Only) | $1.79 | - | -45.9% |
