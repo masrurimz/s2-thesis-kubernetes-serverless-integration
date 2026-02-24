@@ -1,0 +1,22 @@
+id: cost.unified-aws-all-scenarios-rerun-v2.2026-02-21
+date: 2026-02-21
+phase: phase-b
+scenarios: [s1-k8s-only, s2-serverless-only, s3-hybrid-reactive, s4-hybrid-predictive]
+source_experiment: results/experiments/phase-b/2026-02-21_all-scenarios-rerun-v2/
+model: unified_aws
+pricing:
+  eks_control_plane_rate: 0.10
+  ec2_t3_medium_rate: 0.0416
+  lambda_pc_rate: 0.0000041667
+  lambda_pc_exec_rate: 0.0000097222
+  lambda_request_rate_per_million: 0.20
+resource_config:
+  cpu_request: 200m
+  memory_alloc: 128Mi
+  lambda_equivalent_memory_mb: 354
+  knative_target_concurrency: 10
+execution_time_source: app_duration_avg_preferred
+claims: {supports: []}
+reproduce:
+  - cd controller && uv run python ../thesis/scripts/cost_analyzer.py --experiment-dir ../results/experiments/phase-b/2026-02-21_all-scenarios-rerun-v2
+status: complete
