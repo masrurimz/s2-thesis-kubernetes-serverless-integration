@@ -1,13 +1,9 @@
 """Tests for baseline models."""
 import pytest
 import numpy as np
-import sys
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from baselines.naive import NaivePredictor, SeasonalNaivePredictor
-from baselines.moving_avg import MovingAveragePredictor, ExponentialMovingAveragePredictor
+from prediction.baselines.naive import NaivePredictor, SeasonalNaivePredictor
+from prediction.baselines.moving_avg import MovingAveragePredictor, ExponentialMovingAveragePredictor
 
 
 class TestNaivePredictor:
