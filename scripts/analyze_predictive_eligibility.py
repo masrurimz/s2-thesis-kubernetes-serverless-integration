@@ -22,33 +22,37 @@ import json
 import sys
 from pathlib import Path
 
+
 def analyze_eligibility():
     """Analyze PREDICTIVE eligibility conditions."""
-    
+
     # Load Phase B raw data
-    phase_b_path = Path(__file__).parent.parent / "results/experiments/phase-b/2026-02-12_replicated-20runs/raw/experiments_final.json"
-    
+    phase_b_path = (
+        Path(__file__).parent.parent
+        / "results/experiments/phase-b/2026-02-12_replicated-20runs/raw/experiments_final.json"
+    )
+
     if not phase_b_path.exists():
         print(f"❌ Phase B data not found: {phase_b_path}")
         sys.exit(1)
-    
+
     with open(phase_b_path) as f:
         experiments = json.load(f)
-    
+
     # Filter S4 (hybrid-predictive) runs
     s4_runs = [exp for exp in experiments if exp["scenario"] == "s4-hybrid-predictive"]
-    
+
     print("=" * 80)
     print("PREDICTIVE Eligibility Analysis - Phase B")
     print("=" * 80)
     print(f"\nTotal S4 runs: {len(s4_runs)}")
     print(f"PREDICTIVE triggered: {sum(exp['predictive_count'] for exp in s4_runs)}")
     print(f"GRU predictions used: {sum(exp['gru_predictions_used'] for exp in s4_runs)}")
-    
+
     print("\n" + "=" * 80)
     print("Per-Run Analysis")
     print("=" * 80)
-    
+
     for run in s4_runs:
         run_id = run["run_id"]
         p99 = run["p99_latency_ms"]
@@ -57,7 +61,7 @@ def analyze_eligibility():
         predictive = run["predictive_count"]
         gru_used = run["gru_predictions_used"]
         gru_conf = run["gru_avg_confidence"]
-        
+
         print(f"\n📊 S4 Run {run_id}")
         print(f"   p99 latency: {p99:.1f}ms")
         print(f"   SLO violations: {violations}")
@@ -65,30 +69,30 @@ def analyze_eligibility():
         print(f"   PREDICTIVE: {predictive}")
         print(f"   GRU predictions used: {gru_used}")
         print(f"   GRU avg confidence: {gru_conf:.2f}" if gru_conf > 0 else "   GRU avg confidence: N/A (0.00)")
-        
+
         # Infer eligibility
         healthy_periods = "Likely few" if violations > 0 else "Likely many"
         print(f"   → Healthy periods (p99<200ms): {healthy_periods}")
-        
+
         if gru_used == 0:
-            print(f"   → ❌ GRU was NOT queried (gru_predictions_used=0)")
-            print(f"      Possible reasons:")
-            print(f"      - GRU server not running")
-            print(f"      - Daemon not configured for S4")
-            print(f"      - GRU client error")
+            print("   → ❌ GRU was NOT queried (gru_predictions_used=0)")
+            print("      Possible reasons:")
+            print("      - GRU server not running")
+            print("      - Daemon not configured for S4")
+            print("      - GRU client error")
         elif gru_conf == 0.0:
-            print(f"   → ⚠️ GRU queried but confidence=0 (below threshold)")
+            print("   → ⚠️ GRU queried but confidence=0 (below threshold)")
         else:
             print(f"   → ✅ GRU active, confidence={gru_conf:.2f}")
-        
-        print(f"   → Load change: Steady 100 RPS → ~0% change (< 30% threshold)")
-    
+
+        print("   → Load change: Steady 100 RPS → ~0% change (< 30% threshold)")
+
     print("\n" + "=" * 80)
     print("ROOT CAUSE ANALYSIS")
     print("=" * 80)
-    
+
     total_gru_used = sum(exp["gru_predictions_used"] for exp in s4_runs)
-    
+
     if total_gru_used == 0:
         print("\n🔍 PRIMARY CAUSE: GRU predictions were NEVER used (gru_predictions_used=0 for all runs)")
         print("\nPossible explanations:")
@@ -106,7 +110,7 @@ def analyze_eligibility():
         print("   PREDICTIVE threshold = 30% → 0% << 30% → never triggers")
         print("\n✅ MECHANISM VALIDATED in Phase A1 ramp test (p99=146ms, 47% increase predicted)")
         print("⚠️ PHASE B workload insufficient to demonstrate predictive advantage")
-    
+
     print("\n" + "=" * 80)
     print("RECOMMENDATIONS")
     print("=" * 80)
@@ -114,7 +118,7 @@ def analyze_eligibility():
     print("2. Cite Phase A1 ramp test as PREDICTIVE mechanism validation")
     print("3. Run dynamic workload experiment (ramp/burst) for statistical H2 proof")
     print("4. Document in THREATS_TO_VALIDITY.md: Load insufficiency for predictive advantage")
-    
+
     print("\n" + "=" * 80)
     print("THESIS-READY SUMMARY")
     print("=" * 80)
@@ -127,6 +131,7 @@ The PREDICTIVE action did not trigger in Phase B controlled experiments because:
 
 This is a TESTBED LIMITATION, not a SYSTEM LIMITATION.
 """)
+
 
 if __name__ == "__main__":
     analyze_eligibility()

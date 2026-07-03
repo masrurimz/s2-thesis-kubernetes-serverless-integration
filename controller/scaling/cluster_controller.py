@@ -14,7 +14,7 @@ This is a proof-of-concept that:
 """
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional, List
 
 import structlog
@@ -27,11 +27,12 @@ logger = structlog.get_logger(__name__)
 @dataclass
 class ScalingConfig:
     """Configuration for Algorithm 2 cluster controller."""
-    alpha: float = 0.04           # Linear coefficient: replicas per request/s (1/25 RPS saturation at 200m CPU for /fib?n=32)
-    beta: float = 0.0            # Base replicas offset (min_replicas enforces floor)
-    buffer: float = 1.2          # 20% capacity buffer above computed requirement
-    min_replicas: int = 1        # Floor
-    max_replicas: int = 10       # Ceiling
+
+    alpha: float = 0.04  # Linear coefficient: replicas per request/s (1/25 RPS saturation at 200m CPU for /fib?n=32)
+    beta: float = 0.0  # Base replicas offset (min_replicas enforces floor)
+    buffer: float = 1.2  # 20% capacity buffer above computed requirement
+    min_replicas: int = 1  # Floor
+    max_replicas: int = 10  # Ceiling
     scale_down_threshold: float = 0.8  # Scale down when target < current * threshold
     prediction_interval_sec: int = 30  # How often to re-evaluate
 
@@ -39,11 +40,12 @@ class ScalingConfig:
 @dataclass
 class ScalingDecision:
     """Output of a single Algorithm 2 evaluation cycle."""
+
     predicted_load: float
-    required_resources: float    # R = α·x + β (raw)
-    target_replicas: int         # After buffer + clamp
+    required_resources: float  # R = α·x + β (raw)
+    target_replicas: int  # After buffer + clamp
     current_replicas: int
-    action: str                  # SCALE_UP, SCALE_DOWN, MAINTAIN
+    action: str  # SCALE_UP, SCALE_DOWN, MAINTAIN
     reason: str
 
     def __str__(self) -> str:
@@ -104,21 +106,16 @@ class ClusterController:
         if target > current_replicas:
             action = "SCALE_UP"
             reason = (
-                f"Predicted load {predicted_load:.0f} req/s requires "
-                f"{target} replicas (currently {current_replicas})"
+                f"Predicted load {predicted_load:.0f} req/s requires {target} replicas (currently {current_replicas})"
             )
         elif target < current_replicas * self.config.scale_down_threshold:
             action = "SCALE_DOWN"
             reason = (
-                f"Predicted load {predicted_load:.0f} req/s needs only "
-                f"{target} replicas (currently {current_replicas})"
+                f"Predicted load {predicted_load:.0f} req/s needs only {target} replicas (currently {current_replicas})"
             )
         else:
             action = "MAINTAIN"
-            reason = (
-                f"Target {target} within threshold of "
-                f"current {current_replicas}"
-            )
+            reason = f"Target {target} within threshold of current {current_replicas}"
 
         decision = ScalingDecision(
             predicted_load=predicted_load,

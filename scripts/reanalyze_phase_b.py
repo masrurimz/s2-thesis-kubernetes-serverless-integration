@@ -15,7 +15,7 @@ Usage:
 import argparse
 import json
 import sys
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
@@ -59,6 +59,7 @@ BETA_VALUES = [0.5, 0.7, 1.0, 1.5]
 # Data structures
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class StatisticalComparison:
     baseline_scenario: str
@@ -95,9 +96,10 @@ class StatisticalComparison:
 # Statistical helpers
 # ---------------------------------------------------------------------------
 
-def bootstrap_ci_diff(baseline: List[float], comparison: List[float],
-                      n_bootstrap: int = 10000, confidence: float = 0.95,
-                      seed: int = 42) -> Tuple[float, float]:
+
+def bootstrap_ci_diff(
+    baseline: List[float], comparison: List[float], n_bootstrap: int = 10000, confidence: float = 0.95, seed: int = 42
+) -> Tuple[float, float]:
     """Bootstrap 95% CI for difference of means (comparison - baseline)."""
     rng = np.random.default_rng(seed=seed)
     diffs = []
@@ -114,7 +116,7 @@ def cohens_d(group1: List[float], group2: List[float]) -> float:
     """Cohen's d with pooled SD (average of variances)."""
     s1 = np.std(group1, ddof=1)
     s2 = np.std(group2, ddof=1)
-    pooled = np.sqrt((s1 ** 2 + s2 ** 2) / 2)
+    pooled = np.sqrt((s1**2 + s2**2) / 2)
     if pooled == 0:
         return 0.0
     return float((np.mean(group2) - np.mean(group1)) / pooled)
@@ -151,6 +153,7 @@ def holm_bonferroni(p_values: List[float]) -> List[float]:
 # ---------------------------------------------------------------------------
 # Core comparison
 # ---------------------------------------------------------------------------
+
 
 def run_comparison(
     results: List[Dict],
@@ -211,6 +214,7 @@ def run_comparison(
 # Cost proxy analysis
 # ---------------------------------------------------------------------------
 
+
 def compute_cost_proxy(results: List[Dict]) -> Dict[str, Any]:
     """Per-run cost proxy metrics per thesis §3.5.2."""
     out: Dict[str, Any] = {"per_run": [], "per_scenario": {}}
@@ -228,17 +232,19 @@ def compute_cost_proxy(results: List[Dict]) -> Dict[str, Any]:
         for beta in BETA_VALUES:
             cost_proxies[f"beta_{beta}"] = k8s + beta * srv
 
-        out["per_run"].append({
-            "scenario": r["scenario"],
-            "run_id": r["run_id"],
-            "k8s_weight_time_product": k8s,
-            "serverless_weight_time_product": srv,
-            "serverless_share": serverless_share,
-            "total_requests": total_req,
-            "slo_violations_k6": r["slo_violations_k6"],
-            "violation_rate": violation_rate,
-            **cost_proxies,
-        })
+        out["per_run"].append(
+            {
+                "scenario": r["scenario"],
+                "run_id": r["run_id"],
+                "k8s_weight_time_product": k8s,
+                "serverless_weight_time_product": srv,
+                "serverless_share": serverless_share,
+                "total_requests": total_req,
+                "slo_violations_k6": r["slo_violations_k6"],
+                "violation_rate": violation_rate,
+                **cost_proxies,
+            }
+        )
 
     # Normalize to S1 mean = 1.0 for each beta
     s1_runs = [pr for pr in out["per_run"] if pr["scenario"] == "s1-k8s-only"]
@@ -282,6 +288,7 @@ def compute_cost_proxy(results: List[Dict]) -> Dict[str, Any]:
 # Report generation
 # ---------------------------------------------------------------------------
 
+
 def generate_report(
     results: List[Dict],
     h1_comps: List[StatisticalComparison],
@@ -293,8 +300,8 @@ def generate_report(
     lines.append("# Phase B Reanalysis — All 20 Runs (No Outlier Exclusion)")
     lines.append("")
     lines.append(f"**Generated:** {datetime.now().isoformat()}")
-    lines.append(f"**Runs per scenario:** 5 × 4 = 20 total")
-    lines.append(f"**Outliers excluded:** None")
+    lines.append("**Runs per scenario:** 5 × 4 = 20 total")
+    lines.append("**Outliers excluded:** None")
     lines.append("")
 
     # ── 1. Per-Scenario Summary ──
@@ -398,31 +405,34 @@ def _render_comparisons(lines: List[str], comps: List[StatisticalComparison]) ->
     for c in comps:
         sig_w = "✅ Significant" if c.welch_p_corrected < 0.05 else "⚠️ Not significant"
         sig_m = "✅ Significant" if c.mannwhitney_p_corrected < 0.05 else "⚠️ Not significant"
-        lines.extend([
-            f"### {c.comparison_scenario} vs {c.baseline_scenario} — {c.metric} ({c.label})",
-            "",
-            "| Statistic | Value |",
-            "|-----------|-------|",
-            f"| Baseline mean ± std | {c.baseline_mean:.2f} ± {c.baseline_std:.2f} (n={c.n_baseline}) |",
-            f"| Comparison mean ± std | {c.comparison_mean:.2f} ± {c.comparison_std:.2f} (n={c.n_comparison}) |",
-            f"| Difference | {c.difference:+.2f} ({c.percent_change:+.1f}%) |",
-            f"| Welch t-stat | {c.welch_t_stat:.3f} |",
-            f"| Welch p-value (raw) | {c.welch_p_value:.4f} |",
-            f"| Welch p-value (Holm-Bonferroni) | {c.welch_p_corrected:.4f} |",
-            f"| Mann-Whitney U | {c.mannwhitney_u_stat:.1f} |",
-            f"| Mann-Whitney p (raw) | {c.mannwhitney_p_value:.4f} |",
-            f"| Mann-Whitney p (Holm-Bonferroni) | {c.mannwhitney_p_corrected:.4f} |",
-            f"| Bootstrap 95% CI | [{c.ci_lower:+.2f}, {c.ci_upper:+.2f}] |",
-            f"| Cohen's d | {c.cohens_d:.3f} ({c.effect_size_interpretation}) |",
-            f"| Verdict (Welch corrected) | {sig_w} |",
-            f"| Verdict (MW corrected) | {sig_m} |",
-            "",
-        ])
+        lines.extend(
+            [
+                f"### {c.comparison_scenario} vs {c.baseline_scenario} — {c.metric} ({c.label})",
+                "",
+                "| Statistic | Value |",
+                "|-----------|-------|",
+                f"| Baseline mean ± std | {c.baseline_mean:.2f} ± {c.baseline_std:.2f} (n={c.n_baseline}) |",
+                f"| Comparison mean ± std | {c.comparison_mean:.2f} ± {c.comparison_std:.2f} (n={c.n_comparison}) |",
+                f"| Difference | {c.difference:+.2f} ({c.percent_change:+.1f}%) |",
+                f"| Welch t-stat | {c.welch_t_stat:.3f} |",
+                f"| Welch p-value (raw) | {c.welch_p_value:.4f} |",
+                f"| Welch p-value (Holm-Bonferroni) | {c.welch_p_corrected:.4f} |",
+                f"| Mann-Whitney U | {c.mannwhitney_u_stat:.1f} |",
+                f"| Mann-Whitney p (raw) | {c.mannwhitney_p_value:.4f} |",
+                f"| Mann-Whitney p (Holm-Bonferroni) | {c.mannwhitney_p_corrected:.4f} |",
+                f"| Bootstrap 95% CI | [{c.ci_lower:+.2f}, {c.ci_upper:+.2f}] |",
+                f"| Cohen's d | {c.cohens_d:.3f} ({c.effect_size_interpretation}) |",
+                f"| Verdict (Welch corrected) | {sig_w} |",
+                f"| Verdict (MW corrected) | {sig_m} |",
+                "",
+            ]
+        )
 
 
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Phase B Reanalysis — all 20 runs, no outlier exclusion")

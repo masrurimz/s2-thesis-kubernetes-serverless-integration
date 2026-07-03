@@ -1,4 +1,5 @@
 """Baseline prediction models for comparison."""
+
 from .naive import NaivePredictor
 from .moving_avg import MovingAveragePredictor
 

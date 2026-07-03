@@ -17,7 +17,6 @@ Usage:
 """
 
 import json
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -29,35 +28,35 @@ import numpy as np
 # ---------------------------------------------------------------------------
 
 # Measured cold start times from infrastructure/results/knative-real/RESULTS-SUMMARY.md
-COLD_START_MS_S3 = 682.0    # Pre-warm cold start for S3 reactive
-COLD_START_MS_S4 = 1235.0   # Pre-warm cold start for S4 predictive
+COLD_START_MS_S3 = 682.0  # Pre-warm cold start for S3 reactive
+COLD_START_MS_S4 = 1235.0  # Pre-warm cold start for S4 predictive
 COLD_START_RANGE = (682.0, 1235.0)  # Range across measurements
 
 # Knative autoscaler config from infrastructure/k3d/knative-install.sh
 KNATIVE_SCALE_TO_ZERO_GRACE = 30  # seconds
-KNATIVE_STABLE_WINDOW = 60        # seconds
-KNATIVE_MIN_SCALE = 0             # minScale annotation
+KNATIVE_STABLE_WINDOW = 60  # seconds
+KNATIVE_MIN_SCALE = 0  # minScale annotation
 
 # Algorithm 1 config from controller/intelligent_router/algorithm1_controller.py
-WEIGHT_STEP = 10          # +10% per SCALE_OUT
-COOLDOWN_SEC = 15         # seconds between adjustments
-MAX_KNATIVE_WEIGHT = 50   # max serverless weight
-SLO_THRESHOLD_MS = 200    # p99 threshold
+WEIGHT_STEP = 10  # +10% per SCALE_OUT
+COOLDOWN_SEC = 15  # seconds between adjustments
+MAX_KNATIVE_WEIGHT = 50  # max serverless weight
+SLO_THRESHOLD_MS = 200  # p99 threshold
 
 # Phase A1 decision log (from report.md)
 PHASE_A1_DECISIONS = [
-    {"decision": 1, "action": "MAINTAIN",       "p99_ms": None,    "weights": (100, 0)},
-    {"decision": 2, "action": "MAINTAIN",       "p99_ms": 6516.0,  "weights": (100, 0)},
-    {"decision": 3, "action": "SCALE_OUT",      "p99_ms": 3648.0,  "weights": (90, 10)},
-    {"decision": 4, "action": "SCALE_OUT",      "p99_ms": 2060.0,  "weights": (80, 20)},
-    {"decision": 5, "action": "SCALE_OUT",      "p99_ms": 1120.0,  "weights": (70, 30)},
-    {"decision": 6, "action": "SCALE_OUT",      "p99_ms": 632.0,   "weights": (60, 40)},
-    {"decision": 7, "action": "SCALE_OUT",      "p99_ms": 278.0,   "weights": (50, 50)},
-    {"decision": 8, "action": "OPTIMIZE_COST",  "p99_ms": 110.0,   "weights": (55, 45)},
-    {"decision": 9, "action": "PREDICTIVE",     "p99_ms": 146.0,   "weights": (50, 50)},
-    {"decision": 10, "action": "MAINTAIN",      "p99_ms": 158.0,   "weights": (50, 50)},
-    {"decision": 11, "action": "MAINTAIN",      "p99_ms": 266.0,   "weights": (50, 50)},
-    {"decision": 18, "action": "OPTIMIZE_COST", "p99_ms": 118.0,   "weights": (55, 45)},
+    {"decision": 1, "action": "MAINTAIN", "p99_ms": None, "weights": (100, 0)},
+    {"decision": 2, "action": "MAINTAIN", "p99_ms": 6516.0, "weights": (100, 0)},
+    {"decision": 3, "action": "SCALE_OUT", "p99_ms": 3648.0, "weights": (90, 10)},
+    {"decision": 4, "action": "SCALE_OUT", "p99_ms": 2060.0, "weights": (80, 20)},
+    {"decision": 5, "action": "SCALE_OUT", "p99_ms": 1120.0, "weights": (70, 30)},
+    {"decision": 6, "action": "SCALE_OUT", "p99_ms": 632.0, "weights": (60, 40)},
+    {"decision": 7, "action": "SCALE_OUT", "p99_ms": 278.0, "weights": (50, 50)},
+    {"decision": 8, "action": "OPTIMIZE_COST", "p99_ms": 110.0, "weights": (55, 45)},
+    {"decision": 9, "action": "PREDICTIVE", "p99_ms": 146.0, "weights": (50, 50)},
+    {"decision": 10, "action": "MAINTAIN", "p99_ms": 158.0, "weights": (50, 50)},
+    {"decision": 11, "action": "MAINTAIN", "p99_ms": 266.0, "weights": (50, 50)},
+    {"decision": 18, "action": "OPTIMIZE_COST", "p99_ms": 118.0, "weights": (55, 45)},
 ]
 
 # Outlier run IDs to exclude (from outliers.json)
@@ -71,6 +70,7 @@ OUTLIER_RUNS = {
 # ---------------------------------------------------------------------------
 # Data loading
 # ---------------------------------------------------------------------------
+
 
 def load_phase_b_data(base_path: Path) -> List[Dict]:
     """Load Phase B experiment data, excluding outlier runs."""
@@ -102,6 +102,7 @@ def group_by_scenario(data: List[Dict]) -> Dict[str, List[Dict]]:
 # Phase B analysis
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ScenarioStats:
     scenario: str
@@ -126,9 +127,7 @@ def compute_scenario_stats(scenario: str, runs: List[Dict]) -> ScenarioStats:
     throughputs = [r["throughput_rps"] for r in runs]
     scale_outs = [r["scale_out_count"] for r in runs]
     total_decisions = [
-        r["maintain_count"] + r["scale_out_count"] +
-        r["predictive_count"] + r["optimize_cost_count"]
-        for r in runs
+        r["maintain_count"] + r["scale_out_count"] + r["predictive_count"] + r["optimize_cost_count"] for r in runs
     ]
 
     p99_arr = np.array(p99s)
@@ -166,6 +165,7 @@ def correlation_scale_out_p99(runs: List[Dict]) -> Optional[float]:
 # ---------------------------------------------------------------------------
 # Phase A1 cold start decomposition
 # ---------------------------------------------------------------------------
+
 
 def analyze_phase_a1_transition():
     """Analyze the weight transition in Phase A1 to estimate cold start penalty.
@@ -221,6 +221,7 @@ def analyze_phase_a1_transition():
 # Variance decomposition model
 # ---------------------------------------------------------------------------
 
+
 def variance_decomposition(stats: Dict[str, ScenarioStats]):
     """Decompose p99 variance into components.
 
@@ -263,6 +264,7 @@ def variance_decomposition(stats: Dict[str, ScenarioStats]):
 # ---------------------------------------------------------------------------
 # Theoretical cold start impact model
 # ---------------------------------------------------------------------------
+
 
 def theoretical_cold_start_impact(
     rps: int = 100,
@@ -315,6 +317,7 @@ def theoretical_cold_start_impact(
 # Main analysis
 # ---------------------------------------------------------------------------
 
+
 def main():
     base_path = Path(__file__).parent.parent.parent  # thesis-kubernetes-serverless-integration/
 
@@ -351,11 +354,11 @@ def main():
         if r is not None:
             print(f"  {scenario}: r={r:.3f} (n={len(runs)})")
             if abs(r) > 0.5:
-                print(f"    → Moderate-to-strong correlation: more scale-outs ↔ higher p99")
+                print("    → Moderate-to-strong correlation: more scale-outs ↔ higher p99")
             elif abs(r) > 0.3:
-                print(f"    → Weak correlation")
+                print("    → Weak correlation")
             else:
-                print(f"    → No meaningful correlation")
+                print("    → No meaningful correlation")
         else:
             print(f"  {scenario}: insufficient data")
 
@@ -368,11 +371,19 @@ def main():
         print(f"  Base variance (avg S1+S2): σ²={decomp['base_variance']:.0f}, σ={decomp['base_std']:.1f}ms")
         print(f"  S1 variance: σ²={decomp['s1_variance']:.0f}, σ={stats['s1-k8s-only'].p99_std:.1f}ms")
         print(f"  S2 variance: σ²={decomp['s2_variance']:.0f}, σ={stats['s2-serverless-only'].p99_std:.1f}ms")
-        print(f"  S3 total variance: σ²={decomp['s3_total_variance']:.0f}, σ={stats['s3-hybrid-reactive'].p99_std:.1f}ms")
-        print(f"  S3 excess (cold start + routing): σ²={decomp['s3_excess_variance']:.0f}, σ={decomp['s3_excess_std']:.1f}ms")
+        print(
+            f"  S3 total variance: σ²={decomp['s3_total_variance']:.0f}, σ={stats['s3-hybrid-reactive'].p99_std:.1f}ms"
+        )
+        print(
+            f"  S3 excess (cold start + routing): σ²={decomp['s3_excess_variance']:.0f}, σ={decomp['s3_excess_std']:.1f}ms"
+        )
         print(f"  S3 % from cold start/routing: {decomp['s3_pct_from_cold_start']:.1f}%")
-        print(f"  S4 total variance: σ²={decomp['s4_total_variance']:.0f}, σ={stats['s4-hybrid-predictive'].p99_std:.1f}ms")
-        print(f"  S4 excess (cold start + routing): σ²={decomp['s4_excess_variance']:.0f}, σ={decomp['s4_excess_std']:.1f}ms")
+        print(
+            f"  S4 total variance: σ²={decomp['s4_total_variance']:.0f}, σ={stats['s4-hybrid-predictive'].p99_std:.1f}ms"
+        )
+        print(
+            f"  S4 excess (cold start + routing): σ²={decomp['s4_excess_variance']:.0f}, σ={decomp['s4_excess_std']:.1f}ms"
+        )
         print(f"  S4 % from cold start/routing: {decomp['s4_pct_from_cold_start']:.1f}%")
 
     # 4. Phase A1 transition analysis
@@ -387,12 +398,12 @@ def main():
     print(f"  Measured cold start S4: {a1['cold_start_measured_s4']:.0f}ms")
     print(f"  Average cold start: {a1['cold_start_average']:.0f}ms")
 
-    print(f"\n  Weight ramp trajectory (decisions 3-7):")
+    print("\n  Weight ramp trajectory (decisions 3-7):")
     for d in a1["transition_decisions"]:
         k3s, kn = d["weights"]
         print(f"    Decision {d['decision']}: {d['action']:15s} p99={d['p99_ms']:.0f}ms  weights={k3s}/{kn}")
 
-    print(f"\n  Warm state decisions:")
+    print("\n  Warm state decisions:")
     for d in a1["warm_decisions"]:
         k3s, kn = d["weights"]
         print(f"    Decision {d['decision']}: {d['action']:15s} p99={d['p99_ms']:.0f}ms  weights={k3s}/{kn}")
@@ -401,10 +412,18 @@ def main():
     print("\n\n## Theoretical Cold Start Impact Model")
     print("-" * 60)
 
-    for cs_ms, label in [(COLD_START_MS_S3, "S3 (682ms)"), (COLD_START_MS_S4, "S4 (1235ms)"), (958.0, "Average (958ms)")]:
+    for cs_ms, label in [
+        (COLD_START_MS_S3, "S3 (682ms)"),
+        (COLD_START_MS_S4, "S4 (1235ms)"),
+        (958.0, "Average (958ms)"),
+    ]:
         impact = theoretical_cold_start_impact(
-            rps=100, duration_sec=300, cold_start_ms=cs_ms,
-            weight_at_transition=10, n_scale_out_events=1, cold_start_duration_sec=5.0
+            rps=100,
+            duration_sec=300,
+            cold_start_ms=cs_ms,
+            weight_at_transition=10,
+            n_scale_out_events=1,
+            cold_start_duration_sec=5.0,
         )
         print(f"\n  ### {label}:")
         print(f"    Total requests: {impact['total_requests']}")
@@ -412,7 +431,7 @@ def main():
         print(f"    p99 threshold (top 1%): {impact['p99_threshold_count']} requests")
         print(f"    Cold start fraction: {impact['cold_start_fraction']:.3%}")
         print(f"    Cold start dominates p99: {impact['cold_start_dominates_p99']}")
-        if impact['estimated_p99_with_cold_start']:
+        if impact["estimated_p99_with_cold_start"]:
             print(f"    → Estimated p99 ≈ {impact['estimated_p99_with_cold_start']:.0f}ms (cold start latency)")
 
     # 6. Summary
@@ -430,10 +449,10 @@ def main():
     Cold start overhead: {cs_penalty - warm_p99:.0f}ms above warm state
 
   Variance Attribution (S3 reactive):
-    Total p99 std: {stats['s3-hybrid-reactive'].p99_std:.0f}ms
-    Base std (no routing): {decomp['base_std']:.0f}ms
-    Excess std (cold start + routing): {decomp['s3_excess_std']:.0f}ms
-    → {decomp['s3_pct_from_cold_start']:.0f}% of S3 variance attributable to cold start/routing
+    Total p99 std: {stats["s3-hybrid-reactive"].p99_std:.0f}ms
+    Base std (no routing): {decomp["base_std"]:.0f}ms
+    Excess std (cold start + routing): {decomp["s3_excess_std"]:.0f}ms
+    → {decomp["s3_pct_from_cold_start"]:.0f}% of S3 variance attributable to cold start/routing
 
   Correlation (scale_out ↔ p99):""")
 
@@ -475,10 +494,7 @@ def main():
             }
             for k, v in stats.items()
         },
-        "variance_decomposition": {
-            k: round(v, 1) if isinstance(v, float) else v
-            for k, v in (decomp or {}).items()
-        },
+        "variance_decomposition": {k: round(v, 1) if isinstance(v, float) else v for k, v in (decomp or {}).items()},
         "correlations": {
             scenario: round(correlation_scale_out_p99(grouped.get(scenario, [])) or 0, 3)
             for scenario in ["s3-hybrid-reactive", "s4-hybrid-predictive"]

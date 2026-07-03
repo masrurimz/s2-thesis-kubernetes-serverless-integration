@@ -20,17 +20,11 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).parent.parent / "controller"))
 
-from gru_predictor import GRUPredictor, GRUConfig
+from prediction.gru_predictor import GRUPredictor, GRUConfig
 
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "processed"
-RESULTS_DIR = (
-    Path(__file__).parent.parent
-    / "results"
-    / "models"
-    / "gru"
-    / "2026-02-13_training-clarknet-calgary"
-)
+RESULTS_DIR = Path(__file__).parent.parent / "results" / "models" / "gru" / "2026-02-13_training-clarknet-calgary"
 MODEL_DIR = Path(__file__).parent.parent / "controller" / "data" / "models"
 
 
@@ -50,9 +44,7 @@ def load_calgary(resample: str = "1min") -> pd.DataFrame:
     return df
 
 
-def compute_metrics(
-    y_true: np.ndarray, y_pred: np.ndarray, dataset_name: str
-) -> dict:
+def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, dataset_name: str) -> dict:
     """Compute RMSE, MAE, MAE%, and MAPE."""
     errors = y_pred - y_true
     abs_errors = np.abs(errors)
@@ -65,9 +57,7 @@ def compute_metrics(
     # MAPE: skip zeros in denominator
     nonzero_mask = y_true > 0
     if nonzero_mask.sum() > 0:
-        mape = float(
-            np.mean(np.abs(errors[nonzero_mask] / y_true[nonzero_mask])) * 100
-        )
+        mape = float(np.mean(np.abs(errors[nonzero_mask] / y_true[nonzero_mask])) * 100)
     else:
         mape = float("inf")
 
@@ -109,9 +99,9 @@ def train_and_evaluate(
     config: GRUConfig,
 ) -> tuple[GRUPredictor, dict, dict]:
     """Train GRU on train_df, evaluate on test_df."""
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"Training on: {dataset_name}")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
     print(f"  Train samples: {len(train_df)}")
     print(f"  Test samples:  {len(test_df)}")
     print(f"  Train mean:    {train_df['total_requests'].mean():.2f}")
@@ -123,10 +113,8 @@ def train_and_evaluate(
     print(f"  Val RMSE%:     {train_metrics['val_rmse_percent']:.2f}%")
     print(f"  Epochs:        {train_metrics['epochs_trained']}")
 
-    test_metrics = evaluate_on_test(
-        predictor, test_df["total_requests"].values.astype(np.float32), dataset_name
-    )
-    print(f"\n  Test Results:")
+    test_metrics = evaluate_on_test(predictor, test_df["total_requests"].values.astype(np.float32), dataset_name)
+    print("\n  Test Results:")
     print(f"    RMSE:   {test_metrics['rmse']:.4f} ({test_metrics['rmse_pct']:.2f}%)")
     print(f"    MAE:    {test_metrics['mae']:.4f} ({test_metrics['mae_pct']:.2f}%)")
     print(f"    MAPE:   {test_metrics['mape']:.2f}%")
@@ -176,9 +164,7 @@ def main():
             early_stopping_patience=25,
         )
 
-        predictor, train_m, test_m = train_and_evaluate(
-            train, test, label, config
-        )
+        predictor, train_m, test_m = train_and_evaluate(train, test, label, config)
         key = f"clarknet_{resample}"
         all_results[key] = {
             "train": train_m,
@@ -228,9 +214,7 @@ def main():
             early_stopping_patience=25,
         )
 
-        predictor, train_m, test_m = train_and_evaluate(
-            train, test, label, config
-        )
+        predictor, train_m, test_m = train_and_evaluate(train, test, label, config)
         key = f"calgary_{resample}"
         all_results[key] = {
             "train": train_m,

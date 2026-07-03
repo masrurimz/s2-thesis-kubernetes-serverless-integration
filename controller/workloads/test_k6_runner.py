@@ -143,9 +143,7 @@ class TestK6Runner:
             script_path.write_text("export default function() {}")
 
             runner = K6Runner(scripts_dir=tmpdir)
-            runner.run_workload(
-                "steady", "s1-k8s-only", target_url="http://localhost:8080"
-            )
+            runner.run_workload("steady", "s1-k8s-only", target_url="http://localhost:8080")
 
         call_args = mock_run.call_args[0][0]
         assert "-e" in call_args
@@ -157,9 +155,7 @@ class TestGenerateTraceStages:
     def test_generate_stages_from_request_count(self):
         runner = K6Runner()
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".csv", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             f.write("timestamp,request_count\n")
             f.write("0,10\n")
             f.write("60,25\n")
@@ -181,9 +177,7 @@ class TestGenerateTraceStages:
     def test_generate_stages_from_rps(self):
         runner = K6Runner()
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".csv", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             f.write("time,rps\n")
             f.write("0,100\n")
             f.write("1,200\n")

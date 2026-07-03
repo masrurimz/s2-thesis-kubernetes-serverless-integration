@@ -45,7 +45,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "infrastr
 from k3d_autoscaler import K3dAutoscalerAdapter
 
 SCRIPT_DIR = Path(__file__).resolve().parent  # thesis/scripts/
-PROJECT_ROOT = SCRIPT_DIR.parent.parent       # repo root
+PROJECT_ROOT = SCRIPT_DIR.parent.parent  # repo root
 CONTROLLER_DIR = PROJECT_ROOT / "controller"
 
 # Tool paths (mise-managed)
@@ -88,9 +88,11 @@ INTER_RUN_PAUSE_SEC = 60
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ExperimentResult:
     """Single experiment run result — all fields per methodology Tables 3-4..3-7."""
+
     scenario: str
     run_id: int
     timestamp: str
@@ -188,6 +190,7 @@ class ExperimentResult:
 @dataclass
 class RunManifest:
     """Per-run configuration snapshot for reproducibility."""
+
     scenario: str
     run_id: int
     run_order_idx: int
@@ -204,6 +207,7 @@ class RunManifest:
 @dataclass
 class StatisticalComparison:
     """Statistical comparison between two scenarios."""
+
     baseline_scenario: str
     comparison_scenario: str
     metric: str
@@ -226,6 +230,7 @@ class StatisticalComparison:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _run_cmd(cmd: List[str], timeout: int = 30, **kwargs) -> subprocess.CompletedProcess:
     """Run a command with timeout, return CompletedProcess."""
@@ -390,10 +395,17 @@ class NodeProvisioner:
             if self._stop_event.wait(2):
                 return
 
-            r = _kubectl([
-                "get", "pods", "-l", "app=test-app-warm",
-                "--field-selector=status.phase=Pending", "-o", "json",
-            ])
+            r = _kubectl(
+                [
+                    "get",
+                    "pods",
+                    "-l",
+                    "app=test-app-warm",
+                    "--field-selector=status.phase=Pending",
+                    "-o",
+                    "json",
+                ]
+            )
             if r.returncode != 0:
                 continue
 
@@ -451,6 +463,7 @@ class NodeProvisioner:
 # Infrastructure preflight  (s2-omz)
 # ---------------------------------------------------------------------------
 
+
 class PreflightChecker:
     """Validates cluster and service readiness before experiments."""
 
@@ -507,6 +520,7 @@ class PreflightChecker:
 # Per-run scenario reset  (s2-rsg, s2-5xb)
 # ---------------------------------------------------------------------------
 
+
 class ScenarioResetter:
     """Implements per-run reset procedure per methodology Section 3.5.4(B)."""
 
@@ -543,10 +557,15 @@ class ScenarioResetter:
         # Scale to 1 replica baseline before HPA takes over
         _kubectl(["scale", f"deployment/{DEPLOYMENT}", "--replicas=1"])
         time.sleep(5)
-        r = _kubectl([
-            "autoscale", f"deployment/{DEPLOYMENT}",
-            "--cpu-percent=50", "--min=1", "--max=10",
-        ])
+        r = _kubectl(
+            [
+                "autoscale",
+                f"deployment/{DEPLOYMENT}",
+                "--cpu-percent=50",
+                "--min=1",
+                "--max=10",
+            ]
+        )
         if r.returncode != 0:
             logger.error("hpa_create_failed", stderr=r.stderr.strip())
             return False
@@ -635,6 +654,7 @@ class ScenarioResetter:
         }
         k3s_w, kn_w = weight_map.get(scenario, (100, 0))
         import socket as _socket
+
         try:
             reset_sock = _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM)
             reset_sock.settimeout(5)
@@ -663,8 +683,7 @@ class ScenarioResetter:
             logger.error("haproxy_weight_verify_failed", reason="could not read stats CSV")
             return False
         if actual.get("k3s") != k3s_w or actual.get("knative") != kn_w:
-            logger.error("haproxy_weight_mismatch",
-                        expected={"k3s": k3s_w, "knative": kn_w}, actual=actual)
+            logger.error("haproxy_weight_mismatch", expected={"k3s": k3s_w, "knative": kn_w}, actual=actual)
             return False
         logger.info("haproxy_weights_reset_verified", k3s=k3s_w, knative=kn_w)
         return True
@@ -674,6 +693,7 @@ class ScenarioResetter:
 # Daemon management  (s2-i72 fix: log to files, not PIPE)
 # ---------------------------------------------------------------------------
 
+
 class DaemonManager:
     """Start/stop the routing daemon with proper IO handling."""
 
@@ -681,6 +701,7 @@ class DaemonManager:
     def _kill_stale_daemon() -> None:
         """Kill any process listening on DAEMON_API_PORT before starting fresh."""
         import socket as _socket
+
         try:
             sock = _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM)
             sock.settimeout(2)
@@ -693,7 +714,9 @@ class DaemonManager:
         try:
             r = subprocess.run(
                 ["ss", "-tlnp", f"sport = :{DAEMON_API_PORT}"],
-                capture_output=True, text=True, timeout=5,
+                capture_output=True,
+                text=True,
+                timeout=5,
             )
             for line in r.stdout.strip().split("\n"):
                 if f":{DAEMON_API_PORT}" in line and "pid=" in line:
@@ -709,14 +732,23 @@ class DaemonManager:
         self._kill_stale_daemon()
 
         cmd = [
-            sys.executable, "-m", "daemon.routing_daemon",
-            "--scenario", scenario,
-            "--haproxy-host", HAPROXY_HOST,
-            "--haproxy-port", str(HAPROXY_SOCKET_PORT),
-            "--haproxy-stats", HAPROXY_STATS_URL,
-            "--gru-url", GRU_URL,
-            "--interval", "15",
-            "--api-port", str(DAEMON_API_PORT),
+            sys.executable,
+            "-m",
+            "daemon.routing_daemon",
+            "--scenario",
+            scenario,
+            "--haproxy-host",
+            HAPROXY_HOST,
+            "--haproxy-port",
+            str(HAPROXY_SOCKET_PORT),
+            "--haproxy-stats",
+            HAPROXY_STATS_URL,
+            "--gru-url",
+            GRU_URL,
+            "--interval",
+            "15",
+            "--api-port",
+            str(DAEMON_API_PORT),
         ]
         env = {**os.environ, "HSA_OVERRIDE_GFX_VERSION": "11.0.0", "KUBECTL_PATH": KUBECTL_PATH}
 
@@ -739,8 +771,7 @@ class DaemonManager:
                 if r.status_code == 200:
                     health = r.json()
                     if health.get("scenario") != scenario:
-                        logger.error("daemon_scenario_mismatch",
-                                    expected=scenario, got=health.get("scenario"))
+                        logger.error("daemon_scenario_mismatch", expected=scenario, got=health.get("scenario"))
                         self.stop(proc)
                         return None
                     # Verify freshness via /status uptime
@@ -795,6 +826,7 @@ class DaemonManager:
 # k6 runner  (s2-5l9, s2-gk8)
 # ---------------------------------------------------------------------------
 
+
 class K6Runner:
     """Run k6 ClarkNet trace replay and capture output."""
 
@@ -804,13 +836,20 @@ class K6Runner:
         k6_results_dir.mkdir(parents=True, exist_ok=True)
 
         cmd = [
-            K6_PATH, "run",
-            "--out", "json=/dev/null",  # disable verbose json streaming
-            "-e", f"TARGET_URL={TARGET_URL}",
-            "-e", f"ENDPOINT={K6_ENDPOINT}",
-            "-e", f"SCENARIO={scenario}",
-            "-e", f"RUN_ID={run_id}",
-            "-e", f"RESULTS_DIR={k6_results_dir}",
+            K6_PATH,
+            "run",
+            "--out",
+            "json=/dev/null",  # disable verbose json streaming
+            "-e",
+            f"TARGET_URL={TARGET_URL}",
+            "-e",
+            f"ENDPOINT={K6_ENDPOINT}",
+            "-e",
+            f"SCENARIO={scenario}",
+            "-e",
+            f"RUN_ID={run_id}",
+            "-e",
+            f"RESULTS_DIR={k6_results_dir}",
             str(K6_SCRIPT),
         ]
 
@@ -842,9 +881,13 @@ class K6Runner:
             with open(k6_files[-1]) as f:
                 raw = json.load(f)
             summary = self._extract_metrics(raw, scenario, run_id)
-            logger.info("k6_complete", scenario=scenario, run_id=run_id,
-                       p99=summary.get("metrics", {}).get("p99_latency_ms"),
-                       total_requests=summary.get("metrics", {}).get("total_requests"))
+            logger.info(
+                "k6_complete",
+                scenario=scenario,
+                run_id=run_id,
+                p99=summary.get("metrics", {}).get("p99_latency_ms"),
+                total_requests=summary.get("metrics", {}).get("total_requests"),
+            )
             return summary
         except (json.JSONDecodeError, KeyError) as e:
             logger.error("k6_parse_failed", error=str(e), file=str(k6_files[-1]))
@@ -880,8 +923,10 @@ class K6Runner:
                 "app_duration_avg_ms": m.get("app_duration_ms", {}).get("values", {}).get("avg") or 0,
                 "app_duration_p50_ms": m.get("app_duration_ms", {}).get("values", {}).get("p(50)") or 0,
                 "app_duration_p95_ms": m.get("app_duration_ms", {}).get("values", {}).get("p(95)") or 0,
-                "app_duration_serverless_avg_ms": m.get("app_duration_serverless_ms", {}).get("values", {}).get("avg") or 0,
-                "app_duration_serverless_p95_ms": m.get("app_duration_serverless_ms", {}).get("values", {}).get("p(95)") or 0,
+                "app_duration_serverless_avg_ms": m.get("app_duration_serverless_ms", {}).get("values", {}).get("avg")
+                or 0,
+                "app_duration_serverless_p95_ms": m.get("app_duration_serverless_ms", {}).get("values", {}).get("p(95)")
+                or 0,
                 "app_duration_k8s_avg_ms": m.get("app_duration_k8s_ms", {}).get("values", {}).get("avg") or 0,
             },
         }
@@ -891,34 +936,35 @@ class K6Runner:
 # Metric exporter  (s2-3mc, s2-dx8)
 # ---------------------------------------------------------------------------
 
+
 class MetricExporter:
     """Export time-series metrics from Prometheus for a run window."""
 
     # Queries aligned with thesis Tables 3-4..3-7
     QUERIES = {
         # Performance (corroboration)
-        "prom_p99_ms": 'histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[1m])) by (le)) * 1000',
-        "prom_rps": 'sum(rate(http_requests_total[1m]))',
+        "prom_p99_ms": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[1m])) by (le)) * 1000",
+        "prom_rps": "sum(rate(http_requests_total[1m]))",
         # Routing daemon
-        "daemon_decisions": 'routing_daemon_decision_total',
+        "daemon_decisions": "routing_daemon_decision_total",
         "daemon_weight_k3s": 'routing_daemon_current_weight{backend="k3s"}',
         "daemon_weight_knative": 'routing_daemon_current_weight{backend="knative"}',
-        "daemon_predictions_used": 'routing_daemon_prediction_used_total',
-        "daemon_predictions_failed": 'routing_daemon_prediction_failed_total',
+        "daemon_predictions_used": "routing_daemon_prediction_used_total",
+        "daemon_predictions_failed": "routing_daemon_prediction_failed_total",
         # Algorithm 2 replica scaling
-        "k8s_desired_replicas": f'k8s_deployment_desired_replicas{{{K8S_DEPLOYMENT_FILTER}}}',
-        "k8s_available_replicas": f'k8s_deployment_available_replicas{{{K8S_DEPLOYMENT_FILTER}}}',
+        "k8s_desired_replicas": f"k8s_deployment_desired_replicas{{{K8S_DEPLOYMENT_FILTER}}}",
+        "k8s_available_replicas": f"k8s_deployment_available_replicas{{{K8S_DEPLOYMENT_FILTER}}}",
         "k8s_scale_up_success": 'k8s_scaling_events_total{direction="up",result="success"}',
         "k8s_scale_up_fail": 'k8s_scaling_events_total{direction="up",result="fail"}',
         "k8s_scale_down_success": 'k8s_scaling_events_total{direction="down",result="success"}',
         "k8s_scale_down_fail": 'k8s_scaling_events_total{direction="down",result="fail"}',
         # Control-loop metrics (Table 3-5)
-        "daemon_decision_latency_ms": 'routing_daemon_decision_latency_ms_sum / routing_daemon_decision_latency_ms_count',
+        "daemon_decision_latency_ms": "routing_daemon_decision_latency_ms_sum / routing_daemon_decision_latency_ms_count",
         # Resource metrics (Table 3-7)
         "cpu_usage_cores": 'sum(rate(container_cpu_usage_seconds_total{namespace="default",container="test-app-warm"}[1m]))',
         "memory_usage_bytes": 'sum(container_memory_working_set_bytes{namespace="default",container="test-app-warm"})',
         # Node provisioning metrics (v4)
-        "node_count_schedulable": 'count(kube_node_spec_unschedulable == 0)',
+        "node_count_schedulable": "count(kube_node_spec_unschedulable == 0)",
         "pods_pending_count": 'count(kube_pod_status_phase{phase="Pending",namespace="default"})',
     }
 
@@ -970,7 +1016,7 @@ class MetricExporter:
 
         # Weight change count
         k3s_ts = series.get("daemon_weight_k3s", [])
-        weight_changes = sum(1 for i in range(1, len(k3s_ts)) if k3s_ts[i][1] != k3s_ts[i-1][1])
+        weight_changes = sum(1 for i in range(1, len(k3s_ts)) if k3s_ts[i][1] != k3s_ts[i - 1][1])
 
         # k8s_replica_seconds: trapezoidal integral of desired replicas × time
         k8s_replica_seconds = self._weight_time_integral(series.get("k8s_desired_replicas", []))
@@ -978,15 +1024,15 @@ class MetricExporter:
         # knative_active_seconds: sum of time intervals where knative weight > 0
         knative_active_seconds = 0.0
         for i in range(1, len(kn_series)):
-            if kn_series[i][1] > 0 or kn_series[i-1][1] > 0:
-                knative_active_seconds += kn_series[i][0] - kn_series[i-1][0]
+            if kn_series[i][1] > 0 or kn_series[i - 1][1] > 0:
+                knative_active_seconds += kn_series[i][0] - kn_series[i - 1][0]
 
         # Oscillation index: direction changes in desired_replicas series
         desired_ts = series.get("k8s_desired_replicas", [])
         oscillations = 0
         for i in range(2, len(desired_ts)):
-            prev_dir = desired_ts[i-1][1] - desired_ts[i-2][1]
-            curr_dir = desired_ts[i][1] - desired_ts[i-1][1]
+            prev_dir = desired_ts[i - 1][1] - desired_ts[i - 2][1]
+            curr_dir = desired_ts[i][1] - desired_ts[i - 1][1]
             if (prev_dir > 0 and curr_dir < 0) or (prev_dir < 0 and curr_dir > 0):
                 oscillations += 1
 
@@ -1032,8 +1078,8 @@ class MetricExporter:
             return 0.0
         total = 0.0
         for i in range(1, len(ts)):
-            dt = ts[i][0] - ts[i-1][0]
-            avg_w = (ts[i][1] + ts[i-1][1]) / 2
+            dt = ts[i][0] - ts[i - 1][0]
+            avg_w = (ts[i][1] + ts[i - 1][1]) / 2
             total += avg_w * dt
         return total
 
@@ -1041,6 +1087,7 @@ class MetricExporter:
 # ---------------------------------------------------------------------------
 # Statistical analysis  (s2-sm0)
 # ---------------------------------------------------------------------------
+
 
 class StatisticalAnalyzer:
     """Welch t-test, Mann-Whitney U, bootstrap CI, Cohen's d, outlier detection."""
@@ -1051,10 +1098,19 @@ class StatisticalAnalyzer:
         """Returns (clean, excluded) results."""
         clean, excluded = [], []
         for r in results:
-            if (r.total_requests <= 0 or r.p99_latency_ms <= self.OUTLIER_P99_FLOOR_MS or not np.isfinite(r.p99_latency_ms)):
+            if (
+                r.total_requests <= 0
+                or r.p99_latency_ms <= self.OUTLIER_P99_FLOOR_MS
+                or not np.isfinite(r.p99_latency_ms)
+            ):
                 excluded.append(r)
-                logger.warning("outlier_detected", scenario=r.scenario, run_id=r.run_id,
-                             p99=r.p99_latency_ms, reason="invalid/empty metrics")
+                logger.warning(
+                    "outlier_detected",
+                    scenario=r.scenario,
+                    run_id=r.run_id,
+                    p99=r.p99_latency_ms,
+                    reason="invalid/empty metrics",
+                )
             else:
                 clean.append(r)
         return clean, excluded
@@ -1131,6 +1187,7 @@ class StatisticalAnalyzer:
 # Resource utilization poller  (s2-a2k)
 # ---------------------------------------------------------------------------
 
+
 class ResourcePoller:
     """Poll kubectl metrics-server API for per-pod CPU/memory during experiment runs."""
 
@@ -1170,8 +1227,7 @@ class ResourcePoller:
         """Single poll of metrics-server API via kubectl."""
         try:
             r = _run_cmd(
-                [KUBECTL_PATH, "get", "--raw",
-                 "/apis/metrics.k8s.io/v1beta1/namespaces/default/pods"],
+                [KUBECTL_PATH, "get", "--raw", "/apis/metrics.k8s.io/v1beta1/namespaces/default/pods"],
                 timeout=10,
             )
             if r.returncode != 0:
@@ -1242,6 +1298,7 @@ class ResourcePoller:
 
         # Aggregate per-timestamp (sum across pods), then compute avg/peak
         from collections import defaultdict
+
         ts_cpu: Dict[float, float] = defaultdict(float)
         ts_mem: Dict[float, float] = defaultdict(float)
         for s in samples:
@@ -1263,6 +1320,7 @@ class ResourcePoller:
 # ---------------------------------------------------------------------------
 # Main experiment runner
 # ---------------------------------------------------------------------------
+
 
 class ExperimentRunner:
     """Orchestrates Phase B experiments per methodology Section 3.5."""
@@ -1331,13 +1389,15 @@ class ExperimentRunner:
                 k6_stages_json=str(K6_STAGES),
                 replay_manifest=json.loads(REPLAY_MANIFEST.read_text()) if REPLAY_MANIFEST.exists() else {},
                 daemon_config={
-                    "interval": 15, "haproxy_host": HAPROXY_HOST,
-                    "haproxy_port": HAPROXY_SOCKET_PORT, "gru_url": GRU_URL,
+                    "interval": 15,
+                    "haproxy_host": HAPROXY_HOST,
+                    "haproxy_port": HAPROXY_SOCKET_PORT,
+                    "gru_url": GRU_URL,
                     "endpoint": K6_ENDPOINT,
-                    "gomaxprocs": 1, "fib_n": 34,
+                    "gomaxprocs": 1,
+                    "fib_n": 34,
                 },
-                scaling_config={"alpha": 0.04, "beta": 0.0, "buffer": 1.2,
-                               "min_replicas": 1, "max_replicas": 10},
+                scaling_config={"alpha": 0.04, "beta": 0.0, "buffer": 1.2, "min_replicas": 1, "max_replicas": 10},
                 timestamp=datetime.now().isoformat(),
             )
             with open(run_dir / "manifest.json", "w") as f:
@@ -1377,7 +1437,9 @@ class ExperimentRunner:
                 json.dump(provision_events, f, indent=2, default=str)
 
             first_pending_ts = next((e[0] for e in provision_events if e[1] == "pending_detected"), None)
-            first_provisioned_ts = next((e[0] for e in provision_events if e[1] in ("node_provisioned", "node_created")), None)
+            first_provisioned_ts = next(
+                (e[0] for e in provision_events if e[1] in ("node_provisioned", "node_created")), None
+            )
             first_provision_delay_sec = (
                 max(0.0, first_provisioned_ts - first_pending_ts)
                 if first_pending_ts is not None and first_provisioned_ts is not None
@@ -1490,20 +1552,26 @@ class ExperimentRunner:
             result.validity_gate_notes = run_notes
 
             # Fix 1 (s2-nsw): Compute prediction_usage_rate from daemon decision counts
-            total_decisions = (result.maintain_count + result.scale_out_count
-                               + result.predictive_count + result.optimize_cost_count)
+            total_decisions = (
+                result.maintain_count + result.scale_out_count + result.predictive_count + result.optimize_cost_count
+            )
             result.prediction_usage_rate = (
-                result.gru_predictions_used / total_decisions * 100
-            ) if total_decisions > 0 else 0.0
+                (result.gru_predictions_used / total_decisions * 100) if total_decisions > 0 else 0.0
+            )
 
             # Save result
             with open(run_dir / "result.json", "w") as f:
                 json.dump(asdict(result), f, indent=2)
 
-            logger.info("run_complete", scenario=scenario, run_id=run_id,
-                       p99=result.p99_latency_ms, error_rate=result.error_rate,
-                       run_valid=result.run_validity_passed,
-                       stress_valid=result.stress_validity_passed)
+            logger.info(
+                "run_complete",
+                scenario=scenario,
+                run_id=run_id,
+                p99=result.p99_latency_ms,
+                error_rate=result.error_rate,
+                run_valid=result.run_validity_passed,
+                stress_valid=result.stress_validity_passed,
+            )
             return result
 
         finally:
@@ -1543,29 +1611,49 @@ class ExperimentRunner:
                 conditions = hpa.get("status", {}).get("conditions", [])
                 for c in conditions:
                     if c.get("type") == "AbleToScale":
-                        logger.info("hpa_condition", type=c["type"],
-                                   status=c.get("status"), reason=c.get("reason"),
-                                   message=c.get("message", "")[:120])
+                        logger.info(
+                            "hpa_condition",
+                            type=c["type"],
+                            status=c.get("status"),
+                            reason=c.get("reason"),
+                            message=c.get("message", "")[:120],
+                        )
                 logger.info("hpa_kubectl_hpa", desired=hpa_desired, current=hpa_current)
 
             # Scale events: count from Kubernetes events
-            er = _kubectl(["get", "events", "--field-selector",
-                          f"involvedObject.name={DEPLOYMENT},reason=SuccessfulRescale",
-                          "-o", "json"], timeout=10)
+            er = _kubectl(
+                [
+                    "get",
+                    "events",
+                    "--field-selector",
+                    f"involvedObject.name={DEPLOYMENT},reason=SuccessfulRescale",
+                    "-o",
+                    "json",
+                ],
+                timeout=10,
+            )
             if er.returncode == 0:
                 events = json.loads(er.stdout).get("items", [])
-                scale_ups = sum(1 for e in events if "up" in e.get("message", "").lower()
-                               or "scaled up" in e.get("message", "").lower()
-                               or "New size:" in e.get("message", ""))
-                scale_downs = sum(1 for e in events if "down" in e.get("message", "").lower()
-                                 or "scaled down" in e.get("message", "").lower())
+                scale_ups = sum(
+                    1
+                    for e in events
+                    if "up" in e.get("message", "").lower()
+                    or "scaled up" in e.get("message", "").lower()
+                    or "New size:" in e.get("message", "")
+                )
+                scale_downs = sum(
+                    1
+                    for e in events
+                    if "down" in e.get("message", "").lower() or "scaled down" in e.get("message", "").lower()
+                )
                 # If message parsing didn't split, count all as scale events
                 if scale_ups == 0 and scale_downs == 0 and len(events) > 0:
                     scale_ups = len(events)
                 metrics["scale_up_success"] = scale_ups
                 metrics["scale_down_success"] = scale_downs
-                logger.info("hpa_kubectl_events", scale_ups=scale_ups,
-                           scale_downs=scale_downs, total_events=len(events))
+                logger.info(
+                    "hpa_kubectl_events", scale_ups=scale_ups, scale_downs=scale_downs, total_events=len(events)
+                )
 
         except Exception as e:
             logger.warning("hpa_metrics_collection_failed", error=str(e))
@@ -1685,14 +1773,12 @@ class ExperimentRunner:
         expected = weight_expect.get(scenario)
         if expected:
             if weights.get("k3s") != expected["k3s"] or weights.get("knative") != expected["knative"]:
-                logger.error("precondition_haproxy_weight_wrong",
-                            scenario=scenario, expected=expected, actual=weights)
+                logger.error("precondition_haproxy_weight_wrong", scenario=scenario, expected=expected, actual=weights)
                 return False
         else:
             # S3/S4 must retain baseline 80/20 split after reset + warmup.
             expected_hybrid = {"k3s": 80, "knative": 20}
-            if (weights.get("k3s") != expected_hybrid["k3s"]
-                    or weights.get("knative") != expected_hybrid["knative"]):
+            if weights.get("k3s") != expected_hybrid["k3s"] or weights.get("knative") != expected_hybrid["knative"]:
                 logger.error(
                     "precondition_hybrid_weight_wrong",
                     scenario=scenario,
@@ -1705,8 +1791,7 @@ class ExperimentRunner:
             r = requests.get(f"{DAEMON_API}/health", timeout=5)
             health = r.json()
             if health.get("scenario") != scenario:
-                logger.error("precondition_daemon_scenario_mismatch",
-                            expected=scenario, got=health.get("scenario"))
+                logger.error("precondition_daemon_scenario_mismatch", expected=scenario, got=health.get("scenario"))
                 return False
         except Exception as e:
             logger.error("precondition_daemon_health_failed", error=str(e))
@@ -1717,8 +1802,7 @@ class ExperimentRunner:
             r = requests.get(f"{DAEMON_API}/status", timeout=5)
             status = r.json()
             if status.get("decision_count", 999) >= 5:
-                logger.error("precondition_daemon_not_fresh",
-                            decision_count=status.get("decision_count"))
+                logger.error("precondition_daemon_not_fresh", decision_count=status.get("decision_count"))
                 return False
         except Exception as e:
             logger.error("precondition_daemon_status_failed", error=str(e))
@@ -1753,8 +1837,7 @@ class ExperimentRunner:
 
         results = []
         for idx, (scenario, run_id) in enumerate(schedule):
-            logger.info("run_progress", current=idx + 1, total=len(schedule),
-                       scenario=scenario, run_id=run_id)
+            logger.info("run_progress", current=idx + 1, total=len(schedule), scenario=scenario, run_id=run_id)
 
             result = self.run_single(scenario, run_id, idx, seed)
             if result:
@@ -1841,16 +1924,16 @@ class ExperimentRunner:
         comparisons: List[StatisticalComparison],
     ) -> str:
         lines = [
-            f"# Phase B: Replicated Comparison Results",
-            f"",
+            "# Phase B: Replicated Comparison Results",
+            "",
             f"**Date:** {datetime.now().isoformat()}",
             f"**Git:** {_git_commit_hash()}",
             f"**Runs:** {len(clean)} clean, {len(excluded)} excluded",
-            f"",
-            f"## Per-Scenario Summary",
-            f"",
-            f"| Scenario | n | p50 (ms) | p95 (ms) | p99 (ms) | Error% | RPS | SLO Violations | Scale-Up | Scale-Down |",
-            f"|----------|---|----------|----------|----------|--------|-----|----------------|----------|------------|",
+            "",
+            "## Per-Scenario Summary",
+            "",
+            "| Scenario | n | p50 (ms) | p95 (ms) | p99 (ms) | Error% | RPS | SLO Violations | Scale-Up | Scale-Down |",
+            "|----------|---|----------|----------|----------|--------|-----|----------------|----------|------------|",
         ]
 
         for s in SCENARIOS:
@@ -1871,10 +1954,12 @@ class ExperimentRunner:
             )
 
         lines.extend(["", "## Run Validity Gates", ""])
-        lines.extend([
-            "| Scenario | Run-Valid / Total |",
-            "|----------|-------------------|",
-        ])
+        lines.extend(
+            [
+                "| Scenario | Run-Valid / Total |",
+                "|----------|-------------------|",
+            ]
+        )
         for s in SCENARIOS:
             rs = [r for r in clean + excluded if r.scenario == s]
             if not rs:
@@ -1883,10 +1968,12 @@ class ExperimentRunner:
             lines.append(f"| {s} | {pass_count}/{len(rs)} |")
 
         lines.extend(["", "## Stress Validity Coverage", ""])
-        lines.extend([
-            "| Scenario | Stress-Valid / Run-Valid | Dynamic Nodes (sum) | Cross-node Runs |",
-            "|----------|--------------------------|---------------------|-----------------|",
-        ])
+        lines.extend(
+            [
+                "| Scenario | Stress-Valid / Run-Valid | Dynamic Nodes (sum) | Cross-node Runs |",
+                "|----------|--------------------------|---------------------|-----------------|",
+            ]
+        )
         for s in ("s1-k8s-only", "s3-hybrid-reactive", "s4-hybrid-predictive"):
             rs = [r for r in clean if r.scenario == s]
             if not rs:
@@ -1897,10 +1984,12 @@ class ExperimentRunner:
             lines.append(f"| {s} | {stress_count}/{len(rs)} | {dyn_sum} | {cross_runs}/{len(rs)} |")
 
         lines.extend(["", "## Analysis Set Coverage", ""])
-        lines.extend([
-            "| Scenario | Included in Inferential Set |",
-            "|----------|-----------------------------|",
-        ])
+        lines.extend(
+            [
+                "| Scenario | Included in Inferential Set |",
+                "|----------|-----------------------------|",
+            ]
+        )
         for s in SCENARIOS:
             total = len([r for r in clean if r.scenario == s])
             inc = len([r for r in analysis_set if r.scenario == s])
@@ -1924,23 +2013,25 @@ class ExperimentRunner:
 
         for c in comparisons:
             sig = "✅ Significant" if c.welch_p_value < 0.05 else "⚠️ Not significant"
-            lines.extend([
-                f"### {c.comparison_scenario} vs {c.baseline_scenario} ({c.metric})",
-                f"",
-                f"| Metric | Value |",
-                f"|--------|-------|",
-                f"| Baseline mean | {c.baseline_mean:.2f} (n={c.n_baseline}) |",
-                f"| Comparison mean | {c.comparison_mean:.2f} (n={c.n_comparison}) |",
-                f"| Difference | {c.difference:+.2f} ({c.percent_change:+.1f}%) |",
-                f"| Welch t-stat | {c.welch_t_stat:.3f} |",
-                f"| Welch p-value | {c.welch_p_value:.4f} |",
-                f"| Mann-Whitney U | {c.mannwhitney_u_stat:.1f} |",
-                f"| Mann-Whitney p | {c.mannwhitney_p_value:.4f} |",
-                f"| 95% CI | [{c.ci_lower:+.2f}, {c.ci_upper:+.2f}] |",
-                f"| Cohen's d | {c.cohens_d:.3f} ({c.effect_size_interpretation}) |",
-                f"| Verdict | {sig} |",
-                f"",
-            ])
+            lines.extend(
+                [
+                    f"### {c.comparison_scenario} vs {c.baseline_scenario} ({c.metric})",
+                    "",
+                    "| Metric | Value |",
+                    "|--------|-------|",
+                    f"| Baseline mean | {c.baseline_mean:.2f} (n={c.n_baseline}) |",
+                    f"| Comparison mean | {c.comparison_mean:.2f} (n={c.n_comparison}) |",
+                    f"| Difference | {c.difference:+.2f} ({c.percent_change:+.1f}%) |",
+                    f"| Welch t-stat | {c.welch_t_stat:.3f} |",
+                    f"| Welch p-value | {c.welch_p_value:.4f} |",
+                    f"| Mann-Whitney U | {c.mannwhitney_u_stat:.1f} |",
+                    f"| Mann-Whitney p | {c.mannwhitney_p_value:.4f} |",
+                    f"| 95% CI | [{c.ci_lower:+.2f}, {c.ci_upper:+.2f}] |",
+                    f"| Cohen's d | {c.cohens_d:.3f} ({c.effect_size_interpretation}) |",
+                    f"| Verdict | {sig} |",
+                    "",
+                ]
+            )
 
         if excluded:
             lines.extend(["## Excluded Runs", ""])
@@ -1948,8 +2039,13 @@ class ExperimentRunner:
                 if not r.run_validity_passed:
                     reason = "; ".join(r.run_validity_notes) if r.run_validity_notes else "run validity failure"
                     lines.append(f"- {r.scenario} run {r.run_id}: {reason}")
-                elif r.scenario in ("s1-k8s-only", "s3-hybrid-reactive", "s4-hybrid-predictive") and not r.stress_validity_passed:
-                    reason = "; ".join(r.stress_validity_notes) if r.stress_validity_notes else "stress validity failure"
+                elif (
+                    r.scenario in ("s1-k8s-only", "s3-hybrid-reactive", "s4-hybrid-predictive")
+                    and not r.stress_validity_passed
+                ):
+                    reason = (
+                        "; ".join(r.stress_validity_notes) if r.stress_validity_notes else "stress validity failure"
+                    )
                     lines.append(f"- {r.scenario} run {r.run_id}: {reason}")
                 else:
                     lines.append(f"- {r.scenario} run {r.run_id}: invalid/empty metrics")
@@ -1961,16 +2057,15 @@ class ExperimentRunner:
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main():
     parser = argparse.ArgumentParser(description="Phase B: Replicated Comparison Experiments")
     parser.add_argument("--phase", choices=["preflight", "experiments", "analysis", "full"], default="full")
     parser.add_argument("--runs", type=int, default=5, help="Runs per scenario")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for run order")
     parser.add_argument("--output", type=str, default=None, help="Output directory")
-    parser.add_argument("--scenarios", type=str, default=None,
-                       help="Comma-separated scenario list (default: all 4)")
-    parser.add_argument("--results-file", type=str, default=None,
-                       help="Path to results JSON for analysis-only mode")
+    parser.add_argument("--scenarios", type=str, default=None, help="Comma-separated scenario list (default: all 4)")
+    parser.add_argument("--results-file", type=str, default=None, help="Path to results JSON for analysis-only mode")
     args = parser.parse_args()
 
     datestamp = datetime.now().strftime("%Y-%m-%d")

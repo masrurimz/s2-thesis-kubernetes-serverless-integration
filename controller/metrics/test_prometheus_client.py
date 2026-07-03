@@ -20,6 +20,7 @@ def mock_response():
         if status_code >= 400:
             mock.raise_for_status.side_effect = Exception("HTTP Error")
         return mock
+
     return _make_response
 
 
@@ -49,6 +50,7 @@ class TestQueryInstant:
 
     def test_returns_none_on_connection_error(self, client):
         import requests
+
         with patch.object(client._session, "get", side_effect=requests.ConnectionError("Connection refused")):
             result = client.query_instant("up")
             assert result is None
@@ -100,6 +102,7 @@ class TestQueryRange:
 
     def test_returns_empty_list_on_error(self, client):
         import requests
+
         with patch.object(client._session, "get", side_effect=requests.Timeout("timeout")):
             result = client.query_range("up", 1609459200, 1609459230)
             assert result == []
@@ -177,16 +180,12 @@ class TestGetSloViolations:
             return None
 
         with patch.object(client, "query_instant", side_effect=mock_query):
-            with patch.object(
-                client, "get_latency_percentiles", return_value={"p50": 50, "p95": 100, "p99": 250}
-            ):
+            with patch.object(client, "get_latency_percentiles", return_value={"p50": 50, "p95": 100, "p99": 250}):
                 result = client.get_slo_violations(threshold_ms=200)
                 assert result == 1
 
     def test_no_violation_when_under_threshold(self, client):
         with patch.object(client, "query_instant", return_value=None):
-            with patch.object(
-                client, "get_latency_percentiles", return_value={"p50": 30, "p95": 80, "p99": 150}
-            ):
+            with patch.object(client, "get_latency_percentiles", return_value={"p50": 30, "p95": 80, "p99": 150}):
                 result = client.get_slo_violations(threshold_ms=200)
                 assert result == 0

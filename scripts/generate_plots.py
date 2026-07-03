@@ -18,11 +18,11 @@ from pathlib import Path
 from typing import Any
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
-from scipy import stats
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 PHASE_A1_REPORT = REPO_ROOT / "results/experiments/phase-a1/2026-02-12_predictive-trigger/report.md"
@@ -92,14 +92,16 @@ def parse_decision_log() -> list[dict[str, Any]]:
                 except ValueError:
                     ts = None
 
-                decisions.append({
-                    "num": decision_num,
-                    "action": action,
-                    "timestamp": ts,
-                    "p99_ms": p99,
-                    "k8s_weight": k8s_w,
-                    "serverless_weight": sless_w,
-                })
+                decisions.append(
+                    {
+                        "num": decision_num,
+                        "action": action,
+                        "timestamp": ts,
+                        "p99_ms": p99,
+                        "k8s_weight": k8s_w,
+                        "serverless_weight": sless_w,
+                    }
+                )
         elif in_table and not line.strip().startswith("|"):
             in_table = False
 
@@ -135,8 +137,15 @@ def plot_phase_a1_decision_timeline(decisions: list[dict], ax_main: plt.Axes) ->
 
     valid = [d for d in decisions if d["timestamp"] is not None]
     if not valid:
-        ax_main.text(0.5, 0.5, "No timestamped decisions found", ha="center", va="center",
-                     transform=ax_main.transAxes, fontsize=12)
+        ax_main.text(
+            0.5,
+            0.5,
+            "No timestamped decisions found",
+            ha="center",
+            va="center",
+            transform=ax_main.transAxes,
+            fontsize=12,
+        )
         return
 
     base_time = valid[0]["timestamp"]
@@ -151,8 +160,14 @@ def plot_phase_a1_decision_timeline(decisions: list[dict], ax_main: plt.Axes) ->
     ax_main.plot(t_p99, p99_clean, color="#333333", linewidth=1.5, alpha=0.6, zorder=2)
 
     # SLO threshold line
-    ax_main.axhline(y=SLO_THRESHOLD_MS, color="#e74c3c", linestyle="--", linewidth=1.2,
-                     alpha=0.7, label=f"SLO Threshold ({SLO_THRESHOLD_MS:.0f}ms)")
+    ax_main.axhline(
+        y=SLO_THRESHOLD_MS,
+        color="#e74c3c",
+        linestyle="--",
+        linewidth=1.2,
+        alpha=0.7,
+        label=f"SLO Threshold ({SLO_THRESHOLD_MS:.0f}ms)",
+    )
 
     # Decision markers
     for i, d in enumerate(valid):
@@ -160,12 +175,18 @@ def plot_phase_a1_decision_timeline(decisions: list[dict], ax_main: plt.Axes) ->
             color = action_colors.get(d["action"], "#999999")
             marker = action_markers.get(d["action"], "o")
             size = 180 if d["action"] == "PREDICTIVE" else 80
-            ax_main.scatter(t_sec[i], d["p99_ms"], c=color, marker=marker, s=size,
-                           zorder=5, edgecolors="black", linewidths=0.5)
+            ax_main.scatter(
+                t_sec[i], d["p99_ms"], c=color, marker=marker, s=size, zorder=5, edgecolors="black", linewidths=0.5
+            )
 
     # Fill violation region
-    ax_main.axhspan(SLO_THRESHOLD_MS, ax_main.get_ylim()[1] if ax_main.get_ylim()[1] > SLO_THRESHOLD_MS else 7000,
-                     alpha=0.05, color="#e74c3c", zorder=0)
+    ax_main.axhspan(
+        SLO_THRESHOLD_MS,
+        ax_main.get_ylim()[1] if ax_main.get_ylim()[1] > SLO_THRESHOLD_MS else 7000,
+        alpha=0.05,
+        color="#e74c3c",
+        zorder=0,
+    )
 
     ax_main.set_xlabel("Time (seconds from start)", fontsize=11)
     ax_main.set_ylabel("p99 Latency (ms)", fontsize=11, color="#333333")
@@ -175,8 +196,7 @@ def plot_phase_a1_decision_timeline(decisions: list[dict], ax_main: plt.Axes) ->
     # Secondary Y axis: serverless weight
     ax_weight = ax_main.twinx()
     ax_weight.fill_between(t_sec, sless_weights, alpha=0.15, color="#2ca02c", step="post")
-    ax_weight.step(t_sec, sless_weights, where="post", color="#2ca02c", linewidth=1.2,
-                   alpha=0.5, linestyle="-.")
+    ax_weight.step(t_sec, sless_weights, where="post", color="#2ca02c", linewidth=1.2, alpha=0.5, linestyle="-.")
     ax_weight.set_ylabel("Serverless Weight (%)", fontsize=11, color="#2ca02c")
     ax_weight.set_ylim(0, 100)
     ax_weight.tick_params(axis="y", labelcolor="#2ca02c")
@@ -229,15 +249,31 @@ def plot_phase_b_boxplots(experiments: list[dict], outliers: list[dict], ax: plt
             is_outlier = (r["scenario"], r["run_id"]) in outlier_keys
             jitter = np.random.uniform(-0.12, 0.12)
             if is_outlier:
-                ax.scatter(i + jitter, r["p99_latency_ms"], c="red", marker="x",
-                          s=60, linewidths=1.2, zorder=5, alpha=0.7)
+                ax.scatter(
+                    i + jitter, r["p99_latency_ms"], c="red", marker="x", s=60, linewidths=1.2, zorder=5, alpha=0.7
+                )
             else:
-                ax.scatter(i + jitter, r["p99_latency_ms"], c=SCENARIO_COLORS[scenario],
-                          marker="o", s=50, edgecolors="black", linewidths=0.8, zorder=5, alpha=0.9)
+                ax.scatter(
+                    i + jitter,
+                    r["p99_latency_ms"],
+                    c=SCENARIO_COLORS[scenario],
+                    marker="o",
+                    s=50,
+                    edgecolors="black",
+                    linewidths=0.8,
+                    zorder=5,
+                    alpha=0.9,
+                )
 
     # SLO line
-    ax.axhline(y=SLO_THRESHOLD_MS, color="#e74c3c", linestyle="--", linewidth=1, alpha=0.7,
-               label=f"SLO Threshold ({SLO_THRESHOLD_MS:.0f}ms)")
+    ax.axhline(
+        y=SLO_THRESHOLD_MS,
+        color="#e74c3c",
+        linestyle="--",
+        linewidth=1,
+        alpha=0.7,
+        label=f"SLO Threshold ({SLO_THRESHOLD_MS:.0f}ms)",
+    )
 
     ax.set_xticks(positions)
     ax.set_xticklabels([SCENARIO_LABELS[s] for s in SCENARIO_ORDER], fontsize=9, rotation=15, ha="right")
@@ -248,8 +284,16 @@ def plot_phase_b_boxplots(experiments: list[dict], outliers: list[dict], ax: plt
     # Legend for outlier marking
     legend_elements = [
         plt.Line2D([0], [0], marker="o", color="w", markerfacecolor="#666", markersize=7, label="Valid run"),
-        plt.Line2D([0], [0], marker="x", color="w", markerfacecolor="#999", markeredgecolor="red",
-                   markersize=7, label="Suspected stale data"),
+        plt.Line2D(
+            [0],
+            [0],
+            marker="x",
+            color="w",
+            markerfacecolor="#999",
+            markeredgecolor="red",
+            markersize=7,
+            label="Suspected stale data",
+        ),
         plt.Line2D([0], [0], color="#e74c3c", linestyle="--", label=f"SLO ({SLO_THRESHOLD_MS:.0f}ms)"),
     ]
     ax.legend(handles=legend_elements, loc="upper left", fontsize=8, framealpha=0.9)
@@ -290,15 +334,25 @@ def plot_scenario_dashboard(experiments: list[dict], axes: np.ndarray) -> None:
 
         x = np.arange(len(SCENARIO_ORDER))
         colors = [SCENARIO_COLORS[s] for s in SCENARIO_ORDER]
-        bars = ax.bar(x, means, yerr=[ci_lows, ci_highs], capsize=5, color=colors, alpha=0.75,
-                     edgecolor="black", linewidth=0.5, error_kw=dict(linewidth=1.2))
+        bars = ax.bar(
+            x,
+            means,
+            yerr=[ci_lows, ci_highs],
+            capsize=5,
+            color=colors,
+            alpha=0.75,
+            edgecolor="black",
+            linewidth=0.5,
+            error_kw=dict(linewidth=1.2),
+        )
 
         if metric_key == "p99_latency_ms":
             ax.axhline(y=SLO_THRESHOLD_MS, color="#e74c3c", linestyle="--", linewidth=1, alpha=0.7)
 
         ax.set_xticks(x)
-        ax.set_xticklabels([SCENARIO_LABELS[s].split(": ")[1] for s in SCENARIO_ORDER],
-                          fontsize=8, rotation=15, ha="right")
+        ax.set_xticklabels(
+            [SCENARIO_LABELS[s].split(": ")[1] for s in SCENARIO_ORDER], fontsize=8, rotation=15, ha="right"
+        )
         ax.set_ylabel(ylabel, fontsize=9)
         ax.set_title(title, fontsize=11, fontweight="bold")
         ax.grid(axis="y", alpha=0.3)
@@ -316,13 +370,11 @@ def plot_scenario_dashboard(experiments: list[dict], axes: np.ndarray) -> None:
         for scenario in SCENARIO_ORDER:
             v = [e[dtype] for e in experiments if e["scenario"] == scenario]
             vals.append(np.mean(v))
-        ax.bar(x, vals, bottom=bottoms, color=dcolor, alpha=0.75, label=dlabel,
-              edgecolor="black", linewidth=0.3)
+        ax.bar(x, vals, bottom=bottoms, color=dcolor, alpha=0.75, label=dlabel, edgecolor="black", linewidth=0.3)
         bottoms += np.array(vals)
 
     ax.set_xticks(x)
-    ax.set_xticklabels([SCENARIO_LABELS[s].split(": ")[1] for s in SCENARIO_ORDER],
-                      fontsize=8, rotation=15, ha="right")
+    ax.set_xticklabels([SCENARIO_LABELS[s].split(": ")[1] for s in SCENARIO_ORDER], fontsize=8, rotation=15, ha="right")
     ax.set_ylabel("Mean Decision Count", fontsize=9)
     ax.set_title("Decision Type Distribution", fontsize=11, fontweight="bold")
     ax.legend(fontsize=7, loc="upper left")
@@ -372,8 +424,9 @@ def main() -> int:
     # --- Plot 3: Scenario Dashboard ---
     fig3, axes3 = plt.subplots(2, 2, figsize=(14, 10))
     plot_scenario_dashboard(experiments, axes3)
-    fig3.suptitle("Phase B: Scenario Comparison Dashboard (5 runs × 4 scenarios)",
-                  fontsize=14, fontweight="bold", y=1.01)
+    fig3.suptitle(
+        "Phase B: Scenario Comparison Dashboard (5 runs × 4 scenarios)", fontsize=14, fontweight="bold", y=1.01
+    )
     fig3.tight_layout()
     path3 = FIGURES_DIR / "phase_b_scenario_dashboard.png"
     fig3.savefig(path3, dpi=200, bbox_inches="tight")
@@ -383,8 +436,9 @@ def main() -> int:
     path3_pdf = FIGURES_DIR / "phase_b_scenario_dashboard.pdf"
     fig3_pdf, axes3_pdf = plt.subplots(2, 2, figsize=(14, 10))
     plot_scenario_dashboard(experiments, axes3_pdf)
-    fig3_pdf.suptitle("Phase B: Scenario Comparison Dashboard (5 runs × 4 scenarios)",
-                      fontsize=14, fontweight="bold", y=1.01)
+    fig3_pdf.suptitle(
+        "Phase B: Scenario Comparison Dashboard (5 runs × 4 scenarios)", fontsize=14, fontweight="bold", y=1.01
+    )
     fig3_pdf.tight_layout()
     fig3_pdf.savefig(path3_pdf, bbox_inches="tight")
     plt.close(fig3_pdf)

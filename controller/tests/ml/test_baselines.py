@@ -1,4 +1,5 @@
 """Tests for baseline models."""
+
 import pytest
 import numpy as np
 
@@ -11,7 +12,7 @@ class TestNaivePredictor:
         predictor = NaivePredictor()
         series = np.array([10, 20, 30, 40, 50])
         predictions = predictor.predict_from_series(series)
-        
+
         assert predictions[1] == 10
         assert predictions[2] == 20
         assert predictions[4] == 40
@@ -33,7 +34,7 @@ class TestSeasonalNaivePredictor:
         predictor = SeasonalNaivePredictor(period=3)
         series = np.array([10, 20, 30, 40, 50, 60, 70])
         predictions = predictor.predict_from_series(series)
-        
+
         assert predictions[3] == 10
         assert predictions[4] == 20
         assert predictions[6] == 40
@@ -44,7 +45,7 @@ class TestMovingAveragePredictor:
         predictor = MovingAveragePredictor(window_size=3)
         series = np.array([10, 20, 30, 40, 50])
         predictions = predictor.predict_from_series(series)
-        
+
         assert predictions[3] == pytest.approx((10 + 20 + 30) / 3)
         assert predictions[4] == pytest.approx((20 + 30 + 40) / 3)
 
@@ -59,16 +60,16 @@ class TestExponentialMovingAveragePredictor:
         predictor = ExponentialMovingAveragePredictor(alpha=0.5)
         series = np.array([100, 100, 100, 100])
         predictions = predictor.predict_from_series(series)
-        
+
         assert all(p == 100 for p in predictions)
 
     def test_alpha_effect(self):
         high_alpha = ExponentialMovingAveragePredictor(alpha=0.9)
         low_alpha = ExponentialMovingAveragePredictor(alpha=0.1)
-        
+
         series = np.array([0, 100, 100, 100])
-        
+
         high_pred = high_alpha.predict_from_series(series)
         low_pred = low_alpha.predict_from_series(series)
-        
+
         assert high_pred[2] > low_pred[2]

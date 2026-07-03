@@ -36,7 +36,7 @@ import json
 import math
 import sys
 from collections import defaultdict
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -51,8 +51,8 @@ logger = structlog.get_logger(__name__)
 # ---------------------------------------------------------------------------
 # Pod resource configuration (from K8s manifests)
 # ---------------------------------------------------------------------------
-POD_CPU_REQUEST = 0.200       # vCPU (200m) — infrastructure/test-app/*.yaml
-POD_MEM_REQUEST_GIB = 0.125   # 128Mi
+POD_CPU_REQUEST = 0.200  # vCPU (200m) — infrastructure/test-app/*.yaml
+POD_MEM_REQUEST_GIB = 0.125  # 128Mi
 KNATIVE_TARGET_CONCURRENCY = 10  # autoscaling.knative.dev/target: "10"
 # EKS control plane (us-east-1, 2025)
 EKS_CONTROL_PLANE_RATE = 0.10  # $/hour
@@ -82,10 +82,10 @@ LAMBDA_MEM_GB = LAMBDA_MEM_MB / 1024
 # ---------------------------------------------------------------------------
 
 # AWS Lambda Provisioned Concurrency (x86, us-east-1, 2025 list prices)
-LAMBDA_PC_RATE = 0.0000041667       # $/GB-s provisioned (warm) capacity
+LAMBDA_PC_RATE = 0.0000041667  # $/GB-s provisioned (warm) capacity
 LAMBDA_PC_EXEC_RATE = 0.0000097222  # $/GB-s execution while provisioned
-LAMBDA_ONDEMAND_RATE = 0.0000166667 # $/GB-s on-demand (overflow)
-LAMBDA_REQUEST_RATE = 0.20          # $/1M requests
+LAMBDA_ONDEMAND_RATE = 0.0000166667  # $/GB-s on-demand (overflow)
+LAMBDA_REQUEST_RATE = 0.20  # $/1M requests
 
 # EC2 reference node
 EC2_T3_MEDIUM_RATE = 0.0416  # $/hour (2 vCPU, 4 GiB)
@@ -94,6 +94,7 @@ EC2_T3_MEDIUM_RATE = 0.0416  # $/hour (2 vCPU, 4 GiB)
 # ---------------------------------------------------------------------------
 # Data classes
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class CloudPricing:
@@ -110,6 +111,7 @@ class CloudPricing:
 @dataclass
 class CostBreakdown:
     """LEGACY: Used by old analyze_scenario(). Kept for backward compat."""
+
     scenario: str
     provider: str
     k8s_control_plane_cost: float
@@ -128,6 +130,7 @@ class CostBreakdown:
 @dataclass
 class ScenarioMetrics:
     """Actual measured metrics from experiment result.json + resource_utilization.json."""
+
     scenario: str
     duration_sec: float
     total_requests: int
@@ -175,6 +178,7 @@ class ScenarioMetrics:
 # ---------------------------------------------------------------------------
 # Experiment-based cost analysis (PRIMARY)
 # ---------------------------------------------------------------------------
+
 
 def load_experiment_metrics(result_path: Path) -> ScenarioMetrics:
     """Load metrics from experiment result.json + resource_utilization.json."""
@@ -298,9 +302,7 @@ def analyze_from_experiment(metrics: ScenarioMetrics) -> Dict[str, Any]:
 
     # --- Execution-time sizing ---
     metrics.cpu_per_request_sec = (
-        metrics.total_cpu_seconds / metrics.successful_requests
-        if metrics.successful_requests > 0
-        else 0
+        metrics.total_cpu_seconds / metrics.successful_requests if metrics.successful_requests > 0 else 0
     )
     cpu_derived_exec_time_sec = metrics.cpu_per_request_sec / POD_CPU_REQUEST + LAMBDA_OVERHEAD_SEC
 
@@ -382,9 +384,7 @@ def analyze_from_experiment(metrics: ScenarioMetrics) -> Dict[str, Any]:
     # === STRESS-HARNESS EC2 (appendix reference only) ===
     base_node_hours = duration_hours
     if metrics.nodes_provisioned > 0:
-        dynamic_hours = metrics.nodes_provisioned * (
-            metrics.duration_sec - metrics.first_provision_delay_sec
-        ) / 3600
+        dynamic_hours = metrics.nodes_provisioned * (metrics.duration_sec - metrics.first_provision_delay_sec) / 3600
     else:
         dynamic_hours = 0.0
     ec2_stress_total = (base_node_hours + dynamic_hours) * EC2_T3_MEDIUM_RATE
@@ -472,9 +472,14 @@ def run_experiment_analysis(experiment_dir: Path) -> int:
     print("\n" + "=" * 80)
     print("UNIFIED AWS COST ANALYSIS — {} Scenarios".format(len(results)))
     print("K8s → EKS + EC2 | Knative → Lambda PC | Lambda mem: {}MB".format(LAMBDA_MEM_MB))
-    print("EC2: {} (alloc {:.1f} vCPU) | EKS: ${:.2f}/hr | Lambda overhead: {}ms".format(
-        DEFAULT_CLOUD_NODE, CLOUD_NODES[DEFAULT_CLOUD_NODE]["allocatable_cpu"],
-        EKS_CONTROL_PLANE_RATE, int(LAMBDA_OVERHEAD_SEC * 1000)))
+    print(
+        "EC2: {} (alloc {:.1f} vCPU) | EKS: ${:.2f}/hr | Lambda overhead: {}ms".format(
+            DEFAULT_CLOUD_NODE,
+            CLOUD_NODES[DEFAULT_CLOUD_NODE]["allocatable_cpu"],
+            EKS_CONTROL_PLANE_RATE,
+            int(LAMBDA_OVERHEAD_SEC * 1000),
+        )
+    )
     print("=" * 80)
 
     # Resource consumption
@@ -511,7 +516,7 @@ def run_experiment_analysis(experiment_dir: Path) -> int:
         print()
 
     # Unified AWS cost breakdown
-    print(f"\n--- Unified AWS Cost Breakdown ---")
+    print("\n--- Unified AWS Cost Breakdown ---")
     for comp in ["eks_control_plane", "ec2_compute", "lambda_capacity", "lambda_execution", "lambda_requests", "total"]:
         label = comp.replace("_", " ").title()
         print(f"  {label:<28}", end="")
@@ -521,25 +526,25 @@ def run_experiment_analysis(experiment_dir: Path) -> int:
         print()
 
     # Per-request costs
-    print(f"\n--- $/1M Requests ---")
+    print("\n--- $/1M Requests ---")
     print(f"  {'AWS Total':<28}", end="")
     for r in results:
         print(f" ${r['per_million_requests']:>13.2f}", end="")
     print()
 
-    print(f"\n--- $/1M Successful Requests ---")
+    print("\n--- $/1M Successful Requests ---")
     print(f"  {'AWS Total':<28}", end="")
     for r in results:
         print(f" ${r['per_million_successful']:>13.2f}", end="")
     print()
 
-    print(f"\n--- $/1M SLO-Compliant Requests ---")
+    print("\n--- $/1M SLO-Compliant Requests ---")
     print(f"  {'AWS Total':<28}", end="")
     for r in results:
         print(f" ${r['per_million_slo_compliant']:>13.2f}", end="")
     print()
 
-    print(f"\n--- Fairness-Normalized Throughput per $ ---")
+    print("\n--- Fairness-Normalized Throughput per $ ---")
     print(f"  {'Successful req / $':<28}", end="")
     for r in results:
         print(f" {r['successful_requests_per_usd']:>14.2f}", end="")
@@ -548,14 +553,14 @@ def run_experiment_analysis(experiment_dir: Path) -> int:
     # Monthly projection
     if results:
         scale = 30 * 24 * 3600 / results[0]["duration_sec"]
-        print(f"\n--- Monthly Projection (30d continuous) ---")
+        print("\n--- Monthly Projection (30d continuous) ---")
         print(f"  {'AWS Total':<28}", end="")
         for r in results:
             print(f" ${r['aws_cost']['total'] * scale:>13.0f}", end="")
         print()
 
     # Stress-harness reference
-    print(f"\n--- Stress-Harness EC2 (appendix reference) ---")
+    print("\n--- Stress-Harness EC2 (appendix reference) ---")
     for comp in ["base_node", "dynamic_nodes", "total"]:
         label = comp.replace("_", " ").title()
         print(f"  {label:<28}", end="")
@@ -569,27 +574,31 @@ def run_experiment_analysis(experiment_dir: Path) -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
     output_file = output_dir / f"cost_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     with open(output_file, "w") as f:
-        json.dump({
-            "timestamp": datetime.now().isoformat(),
-            "experiment_dir": str(experiment_dir),
-            "config": {
-                "version": "v5",
-                "model": "unified_aws",
-                "architecture_mapping": "K8s→EKS+EC2, Knative→Lambda",
-                "lambda_mem_mb": LAMBDA_MEM_MB,
-                "lambda_overhead_ms": LAMBDA_OVERHEAD_SEC * 1000,
-                "pod_cpu_request": POD_CPU_REQUEST,
-                "pod_mem_request_gib": POD_MEM_REQUEST_GIB,
-                "target_cpu_util": TARGET_CPU_UTIL,
-                "target_mem_util": TARGET_MEM_UTIL,
-                "cloud_node_type": DEFAULT_CLOUD_NODE,
-                "cloud_node_allocatable_cpu": CLOUD_NODES[DEFAULT_CLOUD_NODE]["allocatable_cpu"],
-                "cloud_node_allocatable_mem_gib": CLOUD_NODES[DEFAULT_CLOUD_NODE]["allocatable_mem_gib"],
-                "cloud_node_rate": CLOUD_NODES[DEFAULT_CLOUD_NODE]["rate"],
-                "eks_control_plane_rate": EKS_CONTROL_PLANE_RATE,
+        json.dump(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "experiment_dir": str(experiment_dir),
+                "config": {
+                    "version": "v5",
+                    "model": "unified_aws",
+                    "architecture_mapping": "K8s→EKS+EC2, Knative→Lambda",
+                    "lambda_mem_mb": LAMBDA_MEM_MB,
+                    "lambda_overhead_ms": LAMBDA_OVERHEAD_SEC * 1000,
+                    "pod_cpu_request": POD_CPU_REQUEST,
+                    "pod_mem_request_gib": POD_MEM_REQUEST_GIB,
+                    "target_cpu_util": TARGET_CPU_UTIL,
+                    "target_mem_util": TARGET_MEM_UTIL,
+                    "cloud_node_type": DEFAULT_CLOUD_NODE,
+                    "cloud_node_allocatable_cpu": CLOUD_NODES[DEFAULT_CLOUD_NODE]["allocatable_cpu"],
+                    "cloud_node_allocatable_mem_gib": CLOUD_NODES[DEFAULT_CLOUD_NODE]["allocatable_mem_gib"],
+                    "cloud_node_rate": CLOUD_NODES[DEFAULT_CLOUD_NODE]["rate"],
+                    "eks_control_plane_rate": EKS_CONTROL_PLANE_RATE,
+                },
+                "scenarios": results,
             },
-            "scenarios": results,
-        }, f, indent=2)
+            f,
+            indent=2,
+        )
     print(f"\nResults saved to: {output_file}")
 
     return 0
@@ -660,7 +669,9 @@ def generate_crossover_graph(output_dir: Path) -> int:
 
         color = colors[idx % len(colors)]
         ax.plot(rps_values, s1_costs, color=color, linewidth=2.0, label=f"S1 EKS+EC2 {workload['label']}")
-        ax.plot(rps_values, s2_costs, color=color, linewidth=2.0, linestyle="--", label=f"S2 Lambda {workload['label']}")
+        ax.plot(
+            rps_values, s2_costs, color=color, linewidth=2.0, linestyle="--", label=f"S2 Lambda {workload['label']}"
+        )
 
         crossover = _find_crossover(rps_values, s1_costs, s2_costs)
         if crossover:
@@ -700,6 +711,7 @@ def generate_crossover_graph(output_dir: Path) -> int:
 # ---------------------------------------------------------------------------
 # LEGACY: Generic analysis (backward compatibility)
 # ---------------------------------------------------------------------------
+
 
 class CloudCostSimulator:
     """
@@ -771,7 +783,10 @@ class CloudCostSimulator:
             return {"requests": 0.0, "compute": 0.0, "total": 0.0}
         request_cost = (num_requests / 1_000_000) * self.pricing.serverless_request_cost_per_million
         exec_seconds = avg_execution_ms / 1000.0
-        if self.pricing.serverless_compute_cost_per_vcpu_second > 0 or self.pricing.serverless_compute_cost_per_gib_second > 0:
+        if (
+            self.pricing.serverless_compute_cost_per_vcpu_second > 0
+            or self.pricing.serverless_compute_cost_per_gib_second > 0
+        ):
             vcpu_seconds = num_requests * gcp_vcpu * exec_seconds
             gib_seconds = num_requests * (memory_mb / 1024.0) * exec_seconds
             compute_cost = (
@@ -796,16 +811,22 @@ class CloudCostSimulator:
         serverless_requests = total_requests - k8s_requests
         k8s_enabled = k8s_requests > 0
         avg_util = 0.30 if k8s_enabled else 0.0
-        k8s_costs = self.calculate_k8s_cost(duration_hours=duration_hours, enabled=k8s_enabled, avg_utilization=avg_util)
-        serverless_costs = self.calculate_serverless_cost(
-            num_requests=serverless_requests, avg_execution_ms=avg_latency_ms, memory_mb=512.0, gcp_vcpu=0.25,
+        k8s_costs = self.calculate_k8s_cost(
+            duration_hours=duration_hours, enabled=k8s_enabled, avg_utilization=avg_util
         )
-        data_transfer_gb = (total_requests * 1000) / (1024 ** 3)
+        serverless_costs = self.calculate_serverless_cost(
+            num_requests=serverless_requests,
+            avg_execution_ms=avg_latency_ms,
+            memory_mb=512.0,
+            gcp_vcpu=0.25,
+        )
+        data_transfer_gb = (total_requests * 1000) / (1024**3)
         data_transfer_cost = data_transfer_gb * self.pricing.data_transfer_cost_per_gb
         total_cost = k8s_costs["total"] + serverless_costs["total"] + data_transfer_cost
         cost_per_million = (total_cost / total_requests) * 1_000_000 if total_requests > 0 else 0.0
         return CostBreakdown(
-            scenario=scenario, provider=self.pricing.provider,
+            scenario=scenario,
+            provider=self.pricing.provider,
             k8s_control_plane_cost=float(k8s_costs["control_plane"]),
             k8s_nodes_cost=float(k8s_costs["nodes"]),
             k8s_total_cost=float(k8s_costs["total"]),
@@ -827,8 +848,11 @@ class CloudCostSimulator:
         results: Dict[str, CostBreakdown] = {}
         for name, cfg in scenarios.items():
             results[name] = self.analyze_scenario(
-                scenario=name, duration_hours=duration_hours,
-                total_requests=total_requests, k8s_percentage=cfg["k8s_pct"], avg_latency_ms=cfg["latency"],
+                scenario=name,
+                duration_hours=duration_hours,
+                total_requests=total_requests,
+                k8s_percentage=cfg["k8s_pct"],
+                avg_latency_ms=cfg["latency"],
             )
         s1_cost = results["S1 (K8s-Only)"].total_cost
         s2_cost = results["S2 (Serverless-Only)"].total_cost
@@ -846,7 +870,11 @@ def run_legacy_analysis() -> int:
         print(f"\n{'#' * 80}")
         print(f"# TIME PERIOD: {period_name} — {total_requests:,} requests")
         print(f"{'#' * 80}")
-        for pricing in (CloudCostSimulator.AWS_PRICING, CloudCostSimulator.GCP_PRICING, CloudCostSimulator.AZURE_PRICING):
+        for pricing in (
+            CloudCostSimulator.AWS_PRICING,
+            CloudCostSimulator.GCP_PRICING,
+            CloudCostSimulator.AZURE_PRICING,
+        ):
             sim = CloudCostSimulator(pricing)
             results = sim.compare_all_scenarios(duration_hours=hours, total_requests=total_requests)
             print(f"\n  {pricing.provider}:")
@@ -859,10 +887,12 @@ def run_legacy_analysis() -> int:
 # Entry point
 # ---------------------------------------------------------------------------
 
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Cloud Cost Analysis for Thesis Scenarios")
     parser.add_argument(
-        "--experiment-dir", type=Path,
+        "--experiment-dir",
+        type=Path,
         help="Path to experiment results directory containing per-scenario subdirs with result.json",
     )
     parser.add_argument(

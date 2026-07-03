@@ -24,6 +24,7 @@ def _default_kubectl_path() -> str:
 @dataclass
 class K8sScalerConfig:
     """Configuration for K8s scaler."""
+
     namespace: str = "default"
     deployment: str = "test-app-warm"
     kubectl_path: str = field(default_factory=_default_kubectl_path)
@@ -33,6 +34,7 @@ class K8sScalerConfig:
 @dataclass
 class DeploymentStatus:
     """Current deployment replica status."""
+
     spec_replicas: int
     available_replicas: int
     updated_replicas: int
@@ -84,11 +86,13 @@ class K8sScaler:
 
     def scale(self, replicas: int) -> bool:
         """Scale the deployment to the given replica count."""
-        output = self._run_kubectl([
-            "scale",
-            f"deployment/{self.config.deployment}",
-            f"--replicas={replicas}",
-        ])
+        output = self._run_kubectl(
+            [
+                "scale",
+                f"deployment/{self.config.deployment}",
+                f"--replicas={replicas}",
+            ]
+        )
         if output is not None:
             logger.info(
                 "k8s_scale_executed",
@@ -100,11 +104,14 @@ class K8sScaler:
 
     def get_deployment_status(self) -> Optional[DeploymentStatus]:
         """Query current deployment status via kubectl get -o json."""
-        output = self._run_kubectl([
-            "get",
-            f"deployment/{self.config.deployment}",
-            "-o", "json",
-        ])
+        output = self._run_kubectl(
+            [
+                "get",
+                f"deployment/{self.config.deployment}",
+                "-o",
+                "json",
+            ]
+        )
         if output is None:
             return None
 
@@ -142,8 +149,7 @@ class K8sScaler:
             data = json.loads(output)
             for item in data.get("items", []):
                 target = item.get("spec", {}).get("scaleTargetRef", {})
-                if (target.get("kind") == "Deployment"
-                        and target.get("name") == self.config.deployment):
+                if target.get("kind") == "Deployment" and target.get("name") == self.config.deployment:
                     logger.error(
                         "HPA conflict detected — Algorithm 2 manual scaling may conflict with HPA",
                         hpa_name=item.get("metadata", {}).get("name"),

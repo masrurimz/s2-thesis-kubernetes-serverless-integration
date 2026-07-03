@@ -17,10 +17,9 @@ import signal
 import threading
 import time
 from collections import deque
-from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import structlog
 import uvicorn
@@ -43,6 +42,7 @@ logger = structlog.get_logger(__name__)
 
 class Scenario(str, Enum):
     """Experiment scenarios."""
+
     S1_K8S_ONLY = "s1-k8s-only"
     S2_SERVERLESS_ONLY = "s2-serverless-only"
     S3_HYBRID_REACTIVE = "s3-hybrid-reactive"
@@ -52,6 +52,7 @@ class Scenario(str, Enum):
 @dataclass
 class ScenarioConfig:
     """Configuration for each scenario."""
+
     name: str
     k3s_weight: int
     knative_weight: int
@@ -110,6 +111,7 @@ def _get_or_create_metric(metric_class, name, description, labelnames=None, buck
     except ValueError:
         return REGISTRY._names_to_collectors.get(name)
 
+
 daemon_decision_total = _get_or_create_metric(
     Counter,
     "routing_daemon_decision_total",
@@ -165,6 +167,7 @@ k8s_available_replicas = _get_or_create_metric(
 
 class StatusResponse(BaseModel):
     """Status response model."""
+
     scenario: str
     scenario_description: str
     weights: Dict[str, int]
@@ -180,11 +183,13 @@ class StatusResponse(BaseModel):
 
 class SetScenarioRequest(BaseModel):
     """Request to change scenario."""
+
     scenario: str
 
 
 class HealthResponse(BaseModel):
     """Health check response."""
+
     status: str
     scenario: str
     haproxy_connected: bool
@@ -194,10 +199,10 @@ class HealthResponse(BaseModel):
 class RoutingDaemon:
     """
     Main routing daemon for experiment orchestration.
-    
+
     Runs Algorithm1Controller with scenario-specific configs.
     """
-    
+
     def __init__(
         self,
         scenario: str,
@@ -211,7 +216,7 @@ class RoutingDaemon:
     ):
         """
         Initialize the routing daemon.
-        
+
         Args:
             scenario: Scenario name (s1-k8s-only, s2-serverless-only, etc.)
             decision_interval: Seconds between decisions
@@ -226,18 +231,18 @@ class RoutingDaemon:
             self.scenario = Scenario(scenario)
         except ValueError:
             raise ValueError(f"Invalid scenario: {scenario}. Valid: {[s.value for s in Scenario]}")
-        
+
         self.scenario_config = SCENARIO_CONFIGS[self.scenario]
         self.decision_interval = decision_interval
         self.api_port = api_port
-        
+
         self.slo_monitor = SLOMonitor(
             config=SLOConfig(
                 prometheus_url=prometheus_url,
                 haproxy_stats_url=haproxy_stats_url,
             )
         )
-        
+
         self.algorithm_controller = Algorithm1Controller(
             slo_monitor=self.slo_monitor,
             config=Algorithm1Config(
@@ -247,20 +252,20 @@ class RoutingDaemon:
                 load_change_threshold=0.15 if self.scenario_config.use_predictions else 0.3,
             ),
         )
-        
+
         self.weight_adjuster = HAProxyWeightAdjuster(
             tcp_socket_host=haproxy_socket_host,
             tcp_socket_port=haproxy_socket_port,
             stats_url=haproxy_stats_url,
         )
-        
+
         self.gru_client = GRUClient(base_url=gru_server_url)
-        
+
         self.current_weights = {
             "k3s": self.scenario_config.k3s_weight,
             "knative": self.scenario_config.knative_weight,
         }
-        
+
         self.algorithm_controller.current_weights = self.current_weights.copy()
         self.algorithm_controller.serverless_enabled = self.current_weights["knative"] > 0
         self._running = False
@@ -282,7 +287,7 @@ class RoutingDaemon:
             self.cluster_controller = None
         self._last_scale_up_ts: Optional[float] = None
         self._last_scale_down_ts: Optional[float] = None
-        
+
         logger.info(
             "RoutingDaemon initialized",
             scenario=self.scenario.value,
@@ -291,14 +296,14 @@ class RoutingDaemon:
             use_predictions=self.scenario_config.use_predictions,
             decision_interval=decision_interval,
         )
-    
+
     def _apply_initial_weights(self) -> bool:
         """Apply initial weights for the scenario."""
         success = self.weight_adjuster.set_weights_with_retry(
             self.current_weights["k3s"],
             self.current_weights["knative"],
         )
-        
+
         if success:
             daemon_current_weight.labels(backend="k3s").set(self.current_weights["k3s"])
             daemon_current_weight.labels(backend="knative").set(self.current_weights["knative"])
@@ -309,21 +314,22 @@ class RoutingDaemon:
             )
         else:
             logger.warning("Failed to apply initial weights")
-        
+
         return success
-    
+
     def _get_current_load(self) -> Optional[float]:
         """Get current request load from history."""
         if self._load_history:
             return float(self._load_history[-1])
         return None
-    
+
     def _update_load_history(self) -> None:
         """Update load history from Prometheus (simplified)."""
         # Primary source: Prometheus request rate query.
         try:
             import requests
-            query = 'sum(rate(http_requests_total[1m]))'
+
+            query = "sum(rate(http_requests_total[1m]))"
             response = requests.get(
                 f"{self.slo_monitor.config.prometheus_url}/api/v1/query",
                 params={"query": query},
@@ -346,15 +352,15 @@ class RoutingDaemon:
                 return
 
             total_requests: Optional[int] = None
-            for line in response.strip().split('\n'):
-                if not line or line.startswith('#'):
+            for line in response.strip().split("\n"):
+                if not line or line.startswith("#"):
                     continue
 
-                fields = line.split(',')
+                fields = line.split(",")
                 if len(fields) < 8:
                     continue
 
-                if fields[0] == self.weight_adjuster.backend_name and fields[1] == 'BACKEND':
+                if fields[0] == self.weight_adjuster.backend_name and fields[1] == "BACKEND":
                     if fields[7].isdigit():
                         total_requests = int(fields[7])
                         break
@@ -373,7 +379,7 @@ class RoutingDaemon:
             self._last_total_requests_ts = now
         except Exception as e:
             logger.debug("Failed HAProxy fallback load history update", error=str(e))
-    
+
     def _update_k8s_replica_gauges(self) -> None:
         """Emit Prometheus replica gauges for all scenarios (including static S1/S2)."""
         try:
@@ -387,10 +393,10 @@ class RoutingDaemon:
     def _execute_decision_loop(self) -> None:
         """Execute single decision loop iteration."""
         start_time = time.perf_counter()
-        
+
         self._update_load_history()
         self._update_k8s_replica_gauges()
-        
+
         if not self.scenario_config.use_algorithm:
             self._last_decision_time = time.time()
             self._decision_count += 1
@@ -398,19 +404,19 @@ class RoutingDaemon:
                 scenario=self.scenario.value,
                 action="STATIC",
             ).inc()
-            
+
             logger.debug(
                 "Static scenario - no decision needed",
                 scenario=self.scenario.value,
                 weights=self.current_weights,
             )
             return
-        
+
         slo_status = self.slo_monitor.check_slo()
-        
+
         prediction = None
         current_load = self._get_current_load()
-        
+
         if self.scenario_config.use_predictions and self.gru_client.check_availability():
             history = list(self._load_history)
             if len(history) >= 5:
@@ -429,38 +435,36 @@ class RoutingDaemon:
                 else:
                     daemon_prediction_failed.inc()
                     logger.debug("GRU prediction failed", error=pred_result.error)
-        
+
         decision = self.algorithm_controller.make_decision(
             slo_status=slo_status,
             prediction=prediction,
             current_load=current_load,
         )
-        
+
         self._decision_count += 1
         self._last_decision_time = time.time()
-        
+
         daemon_decision_total.labels(
             scenario=self.scenario.value,
             action=decision.action,
         ).inc()
-        
+
         # Readiness gate: block OPTIMIZE_COST (increases K8s traffic)
         # if K8s pods are not fully ready
-        if (decision.action == "OPTIMIZE_COST"
-                and self.k8s_scaler is not None
-                and not self.k8s_scaler.is_ready()):
+        if decision.action == "OPTIMIZE_COST" and self.k8s_scaler is not None and not self.k8s_scaler.is_ready():
             logger.warning(
                 "Blocking traffic return: K8s not ready (available != desired)",
                 original_action=decision.action,
             )
             decision = self.algorithm_controller._maintain(slo_status)
-        
+
         if decision.weights != self.current_weights:
             success = self.weight_adjuster.set_weights_with_retry(
                 decision.weights["k3s"],
                 decision.weights["knative"],
             )
-            
+
             if success:
                 self.current_weights = decision.weights.copy()
                 self.algorithm_controller.commit_applied_decision(
@@ -469,7 +473,7 @@ class RoutingDaemon:
                 )
                 daemon_current_weight.labels(backend="k3s").set(self.current_weights["k3s"])
                 daemon_current_weight.labels(backend="knative").set(self.current_weights["knative"])
-                
+
                 logger.info(
                     "Weights updated",
                     action=decision.action,
@@ -478,20 +482,20 @@ class RoutingDaemon:
                 )
             else:
                 logger.error("Failed to apply weight update", weights=decision.weights)
-        
+
         # Algorithm 2: K8s replica scaling (S3/S4 only)
         self._execute_algorithm2(slo_status, prediction, current_load)
-        
+
         latency_ms = (time.perf_counter() - start_time) * 1000
         daemon_decision_latency.observe(latency_ms)
-        
+
         logger.debug(
             "Decision loop completed",
             action=decision.action,
             p99=slo_status.p99_latency_ms,
             latency_ms=round(latency_ms, 2),
         )
-    
+
     def _execute_algorithm2(
         self,
         slo_status,
@@ -518,14 +522,10 @@ class RoutingDaemon:
         x_obs = float(sum(recent) / len(recent)) if recent else 0.0
         scaling_signal = x_obs
 
-        if (self.scenario_config.use_predictions
-                and prediction is not None
-                and prediction.get("confidence", 0) >= 0.5):
+        if self.scenario_config.use_predictions and prediction is not None and prediction.get("confidence", 0) >= 0.5:
             scaling_signal = float(prediction["predicted_requests"])
 
-        scaling_decision = self.cluster_controller.evaluate(
-            scaling_signal, dep_status.spec_replicas
-        )
+        scaling_decision = self.cluster_controller.evaluate(scaling_signal, dep_status.spec_replicas)
 
         now = time.time()
         healthy_threshold = self.slo_monitor.config.p99_threshold_ms * self.algorithm_controller.config.healthy_margin
@@ -533,19 +533,16 @@ class RoutingDaemon:
         if scaling_decision.action == "SCALE_UP":
             if self._last_scale_up_ts is None or (now - self._last_scale_up_ts) >= 30:
                 success = self.k8s_scaler.scale(scaling_decision.target_replicas)
-                k8s_scaling_events_total.labels(
-                    direction="up", result="success" if success else "fail"
-                ).inc()
+                k8s_scaling_events_total.labels(direction="up", result="success" if success else "fail").inc()
                 if success:
                     self._last_scale_up_ts = now
 
         elif scaling_decision.action == "SCALE_DOWN":
-            if (self._last_scale_down_ts is None or (now - self._last_scale_down_ts) >= 60) \
-                    and slo_status.p99_latency_ms < healthy_threshold:
+            if (
+                self._last_scale_down_ts is None or (now - self._last_scale_down_ts) >= 60
+            ) and slo_status.p99_latency_ms < healthy_threshold:
                 success = self.k8s_scaler.scale(scaling_decision.target_replicas)
-                k8s_scaling_events_total.labels(
-                    direction="down", result="success" if success else "fail"
-                ).inc()
+                k8s_scaling_events_total.labels(direction="down", result="success" if success else "fail").inc()
                 if success:
                     self._last_scale_down_ts = now
 
@@ -553,42 +550,42 @@ class RoutingDaemon:
         """Main loop - runs until shutdown."""
         self._running = True
         self._start_time = time.time()
-        
+
         logger.info(
             "Starting routing daemon",
             scenario=self.scenario.value,
             interval=self.decision_interval,
         )
-        
+
         self._apply_initial_weights()
 
         # HPA guard: warn if HPA exists for target deployment (S3/S4 only)
         if self.k8s_scaler is not None and self.k8s_scaler.check_hpa_conflict():
             logger.error("HPA detected — Algorithm 2 scaling may conflict with HPA")
-        
+
         api_thread = threading.Thread(target=self._run_api_server, daemon=True)
         api_thread.start()
-        
+
         while not self._shutdown_event.is_set():
             try:
                 self._execute_decision_loop()
             except Exception as e:
                 logger.error("Decision loop error", error=str(e))
-            
+
             self._shutdown_event.wait(timeout=self.decision_interval)
-        
+
         self._running = False
         logger.info("Routing daemon stopped")
-    
+
     def stop(self) -> None:
         """Graceful shutdown."""
         logger.info("Stopping routing daemon...")
         self._shutdown_event.set()
-    
+
     def get_status(self) -> Dict:
         """Return current status, weights, metrics."""
         stats = self.algorithm_controller.get_statistics()
-        
+
         return {
             "scenario": self.scenario.value,
             "scenario_description": self.scenario_config.description,
@@ -602,37 +599,37 @@ class RoutingDaemon:
             "gru_available": self.gru_client.check_availability(),
             "last_decision_time": self._last_decision_time,
         }
-    
+
     def set_scenario(self, scenario: str) -> None:
         """Change scenario (for testing)."""
         try:
             new_scenario = Scenario(scenario)
         except ValueError:
             raise ValueError(f"Invalid scenario: {scenario}")
-        
+
         self.scenario = new_scenario
         self.scenario_config = SCENARIO_CONFIGS[new_scenario]
-        
+
         self.current_weights = {
             "k3s": self.scenario_config.k3s_weight,
             "knative": self.scenario_config.knative_weight,
         }
-        
+
         self._apply_initial_weights()
-        
+
         if self.scenario_config.use_algorithm:
             self.algorithm_controller.current_weights = self.current_weights.copy()
-        
+
         logger.info(
             "Scenario changed",
             scenario=self.scenario.value,
             weights=self.current_weights,
         )
-    
+
     def _run_api_server(self) -> None:
         """Run FastAPI server in background thread."""
         app = self._create_app()
-        
+
         config = uvicorn.Config(
             app,
             host="0.0.0.0",
@@ -640,25 +637,25 @@ class RoutingDaemon:
             log_level="warning",
         )
         server = uvicorn.Server(config)
-        
+
         asyncio.run(server.serve())
-    
+
     def _create_app(self) -> FastAPI:
         """Create FastAPI application."""
         daemon = self
-        
+
         app = FastAPI(
             title="Routing Daemon API",
             description="HTTP API for routing daemon control and monitoring",
             version="1.0.0",
         )
-        
+
         @app.get("/status", response_model=StatusResponse)
         async def get_status():
             """Get current daemon status."""
             status = daemon.get_status()
             return StatusResponse(**status)
-        
+
         @app.post("/set_scenario")
         async def set_scenario(request: SetScenarioRequest):
             """Change scenario (for testing)."""
@@ -667,7 +664,7 @@ class RoutingDaemon:
                 return {"status": "ok", "scenario": daemon.scenario.value}
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e))
-        
+
         @app.get("/health", response_model=HealthResponse)
         async def health_check():
             """Health check endpoint."""
@@ -675,9 +672,11 @@ class RoutingDaemon:
                 status="healthy" if daemon._running else "starting",
                 scenario=daemon.scenario.value,
                 haproxy_connected=daemon.weight_adjuster.socket_available,
-                gru_available=daemon.gru_client.check_availability() if daemon.scenario_config.use_predictions else False,
+                gru_available=daemon.gru_client.check_availability()
+                if daemon.scenario_config.use_predictions
+                else False,
             )
-        
+
         @app.get("/metrics")
         async def metrics():
             """Prometheus metrics endpoint."""
@@ -685,7 +684,7 @@ class RoutingDaemon:
                 content=generate_latest(),
                 media_type=CONTENT_TYPE_LATEST,
             )
-        
+
         return app
 
 
@@ -740,9 +739,9 @@ def main():
         default=settings.DAEMON_API_PORT,
         help=f"HTTP API port (default: {settings.DAEMON_API_PORT})",
     )
-    
+
     args = parser.parse_args()
-    
+
     daemon = RoutingDaemon(
         scenario=args.scenario,
         decision_interval=args.interval,
@@ -753,14 +752,14 @@ def main():
         gru_server_url=args.gru_url,
         api_port=args.api_port,
     )
-    
+
     def signal_handler(signum, frame):
         logger.info("Received shutdown signal")
         daemon.stop()
-    
+
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
-    
+
     daemon.run()
 
 
