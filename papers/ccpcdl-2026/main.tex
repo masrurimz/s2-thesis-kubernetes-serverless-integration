@@ -8,6 +8,8 @@
 \usepackage{xcolor}
 \usepackage{booktabs}
 \usepackage{multirow}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,fit,calc}
 \usepackage{url}
 \usepackage{hyperref}
 
@@ -84,6 +86,43 @@ The GRU model uses a two-layer architecture with 128 hidden units per layer, dro
 where $z_t$ is the update gate, $r_t$ is the reset gate, $\tilde{h}_t$ is the candidate activation, and $h_t$ is the output hidden state at time step $t$.
 
 Training uses the Adam optimizer with learning rate $5 \times 10^{-4}$, batch size 32, and early stopping with patience of 25 epochs (maximum 200). The input window length is 60 time steps; the prediction horizon is 30 seconds ahead. The dataset is split 70/15/15 into training, validation, and test sets using temporal ordering to prevent leakage.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    node distance=0.5cm,
+    gate/.style={draw, rounded corners, minimum width=1.4cm, minimum height=0.6cm, align=center, font=\footnotesize},
+    layer/.style={draw, rounded corners, minimum width=1.6cm, minimum height=0.6cm, align=center, font=\footnotesize, fill=blue!10},
+    arr/.style={->, >=stealth, font=\footnotesize},
+]
+% Input
+\node (x) {$x_t$};
+% First GRU layer
+\node[gate, right=0.8cm of x, fill=blue!15] (gru1) {GRU Layer 1\\(128 units)};
+% Dropout
+\node[gate, right=of gru1, fill=gray!15] (drop1) {Dropout\\(0.2)};
+% Second GRU layer
+\node[gate, right=of drop1, fill=blue!15] (gru2) {GRU Layer 2\\(128 units)};
+% Dropout
+\node[gate, right=of gru2, fill=gray!15] (drop2) {Dropout\\(0.2)};
+% FC layer
+\node[layer, right=of drop2] (fc) {FC\\(64$\to$1)};
+% Output
+\node[right=0.6cm of fc] (y) {$\hat{y}_{t+30}$};
+% Arrows
+\draw[arr] (x) -- (gru1);
+\draw[arr] (gru1) -- (drop1);
+\draw[arr] (drop1) -- (gru2);
+\draw[arr] (gru2) -- (drop2);
+\draw[arr] (drop2) -- (fc);
+\draw[arr] (fc) -- (y);
+% Window annotation
+\node[below=0.1cm of gru1, font=\scriptsize, text=gray] {60-step input window};
+\node[below=0.1cm of fc, font=\scriptsize, text=gray] {30s horizon};
+\end{tikzpicture}
+\caption{GRU model architecture: two-layer GRU (128 hidden units each) with dropout and a fully connected output layer. Input: 60 time steps of RPS; output: predicted RPS 30 seconds ahead.}
+\label{fig:gru_arch}
+\end{figure}
 
 \subsection{Training Data: Synthetic Workload Patterns}
 
@@ -264,31 +303,78 @@ Confidence Range & 0.72--0.88 & $>$0.6 & Met \\
 
 The 40\,ms inference latency confirms the model operates within the constraint for real-time routing decisions. Confidence scores (0.72--0.88) provide a meaningful gating mechanism: the routing controller uses these to modulate reliance on predictions, triggering predictive actions only when confidence exceeds 0.5.
 
+\subsection{Impact on Cold-Start Variance}
+
+When integrated into the hybrid system, the prediction pipeline's effect on tail-latency variance was measured via variance decomposition. Cold-start and routing overhead (excess variance beyond baseline scenarios) was isolated for reactive (S3) and predictive (S4) hybrid modes.
+
+For the reactive scenario (S3), 58.2\% of total tail-latency variance ($\sigma^2 = 88{,}171$) was attributable to cold-start and routing overhead. For the predictive scenario (S4), this dropped to 23.0\% ($\sigma^2 = 47{,}870$)---a 35 percentage-point reduction. Despite similar SCALE\_OUT counts (17--18 per run), the prediction pipeline produces substantially less excess variance, suggesting that confidence-modulated weight adjustments create more stable routing behavior even without explicitly triggering the PREDICTIVE action.
+
+The cold-start penalty itself was measured at 682--1{,}235\,ms (mean 959\,ms) for Knative pod initialization, compared to 133\,ms warm-state p99. This represents an 826\,ms overhead above warm-state baseline. In production deployments, setting \texttt{minScale=1} on Knative would eliminate this penalty entirely, though at the cost of eliminating scale-to-zero savings during idle periods.
+
 \section{System Integration}
 
 The trained GRU model is integrated into a hybrid Kubernetes--serverless architecture (Fig.~\ref{fig:architecture}) via an SLO-aware routing controller. The system uses three layers:
 
 \begin{figure}[htbp]
 \centering
-\fbox{\begin{minipage}{0.92\columnwidth}
-\centering
-\small
-\ttfamily
-GRU Predictor $\rightarrow$ Routing Controller $\rightarrow$ HAProxy\\[2pt]
-$\swarrow$ \hspace{2.5em} $\searrow$\\
-Kubernetes (K3s) \hspace{2em} Serverless (Knative)
-\end{minipage}}
-\caption{Hybrid architecture overview. The GRU feeds 30-second predictions to a routing controller that adjusts traffic weights between Kubernetes and serverless backends via HAProxy.}
+\begin{tikzpicture}[
+    node distance=0.4cm,
+    box/.style={draw, rounded corners, minimum width=2cm, minimum height=0.6cm, align=center, font=\footnotesize},
+    backend/.style={draw, rounded corners, minimum width=1.8cm, minimum height=0.7cm, align=center, font=\footnotesize, fill=gray!10},
+    arr/.style={->, >=stealth, thick},
+]
+\node[box, fill=blue!15] (gru) {GRU Predictor};
+\node[box, fill=orange!15, left=0.2cm of gru] (slo) {SLO Monitor};
+\node[box, fill=green!15, below=of gru] (ctrl) {Routing Controller};
+\node[box, below=of ctrl] (hap) {HAProxy};
+\node[backend, below left=0.3cm and 0.05cm of hap] (k8s) {K3s\\(warm)};
+\node[backend, below right=0.3cm and 0.05cm of hap] (kn) {Knative\\(scale-to-zero)};
+\draw[arr] (gru) -- node[right,font=\tiny]{pred} (ctrl);
+\draw[arr] (slo) -- (ctrl);
+\draw[arr] (ctrl) -- node[right,font=\tiny]{weights} (hap);
+\draw[arr] (hap) -- (k8s);
+\draw[arr] (hap) -- (kn);
+\draw[->,dashed,gray] (hap.west) to[bend left=40] node[left,font=\tiny,text=gray]{metrics} (slo.west);
+\end{tikzpicture}
+\caption{Hybrid system architecture. The GRU feeds 30-second predictions; the routing controller adjusts HAProxy weights between K3s and Knative based on SLO monitoring and predictions.}
 \label{fig:architecture}
 \end{figure}
 
-\textbf{Prediction Layer}: The GRU server receives real-time traffic metrics and outputs a 30-second-ahead forecast with a confidence score.
+\textbf{Prediction Layer}: The GRU server receives real-time traffic metrics (request rate, latency) and outputs a 30-second-ahead forecast with a confidence score in the range [0, 1]. The confidence is derived from the variance of recent predictions---low variance indicates high confidence.
 
-\textbf{Control Layer}: The routing controller implements a priority-based action hierarchy evaluated every 15 seconds: (1) SCALE\_OUT when $p99 > 200$\,ms, shifting traffic to serverless in 10-point increments; (2) PREDICTIVE when healthy and GRU predicts $\geq$30\% load increase; (3) OPTIMIZE\_COST when underutilized; (4) MAINTAIN otherwise.
+\textbf{Control Layer}: The routing controller implements a priority-based action hierarchy (Algorithm~1) evaluated every 15 seconds. Four actions are ordered by priority:
+\begin{enumerate}
+    \item \textbf{SCALE\_OUT} ($p99 > 200$\,ms): Shift traffic to serverless in 10-point increments ($100/0 \rightarrow 90/10 \rightarrow \ldots \rightarrow 50/50$).
+    \item \textbf{PREDICTIVE} ($p99 < 140$\,ms \& predicted $\geq$30\% increase): Maintain serverless engagement proactively.
+    \item \textbf{OPTIMIZE\_COST} (stable \& underutilized): Reclaim serverless capacity.
+    \item \textbf{MAINTAIN} (default): No action.
+\end{enumerate}
 
-\textbf{Execution Layer}: HAProxy distributes HTTP traffic between K3s (always-warm pods) and Knative (scale-to-zero, burst handling) according to dynamic weights.
+\textbf{Execution Layer}: HAProxy distributes HTTP traffic between K3s (always-warm pods) and Knative (scale-to-zero, burst handling) according to dynamic weights adjusted via the HAProxy Runtime API.
 
-In a ramp-load validation experiment, the PREDICTIVE action triggered at $p99 = 146$\,ms (below SLO threshold) when the GRU predicted a 47\% load increase with 72\% confidence---demonstrating proactive serverless engagement before any SLO violation occurred.
+\subsection{Routing Controller Algorithm}
+
+The routing controller evaluates system state every 15 seconds and selects an action based on the priority hierarchy. Algorithm~1 shows the decision logic.
+
+\begin{figure}[htbp]
+\centering
+\fbox{\begin{minipage}{0.92\columnwidth}
+\small
+\textbf{Algorithm 1:} Routing Controller Decision\\[2pt]
+\textbf{Input:} $p99$, GRU prediction $\hat{y}$, confidence $c$, current weights $w$\\[2pt]
+\textbf{repeat} every 15s:\\
+\quad \textbf{if} $p99 > 200$ms \textbf{then} SCALE\_OUT: shift $w$ toward serverless\\
+\quad \textbf{else if} $p99 < 140$ms \textbf{and} $\hat{y}$ predicts $\geq$30\% $\uparrow$ \textbf{and} $c > 0.5$\\
+\quad\quad \textbf{then} PREDICTIVE: maintain serverless weights\\
+\quad \textbf{else if} stable \textbf{and} underutilized \textbf{then} OPTIMIZE\_COST\\
+\quad \textbf{else} MAINTAIN\\
+\textbf{until} forever
+\end{minipage}}
+\caption{Routing controller decision logic.}
+\label{fig:algorithm}
+\end{figure}
+
+In a ramp-load validation experiment, the PREDICTIVE action triggered at $p99 = 146$\,ms (below SLO threshold) when the GRU predicted a 47\% load increase with 72\% confidence---demonstrating proactive serverless engagement before any SLO violation occurred. The system correctly shifted traffic weights from $100/0$ (pure K8s) through five SCALE\_OUT steps to $50/50$ (maximum serverless engagement) as load increased, then triggered PREDICTIVE to maintain readiness during the predicted surge.
 
 \section{Discussion}
 

@@ -7,6 +7,8 @@
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,fit,calc}
 \usepackage{url}
 \usepackage{hyperref}
 
@@ -51,6 +53,42 @@ This paper makes three contributions:
 \subsection{Overview}
 
 The proposed system integrates three subsystems: an offline GRU training pipeline, an online prediction and control plane, and a hybrid execution infrastructure. The architecture follows a two-layer design inspired by the ElaX framework~\cite{yang2019elax}, where Algorithm~1 governs traffic routing between execution platforms and Algorithm~2 manages cluster-level resource scaling. Both algorithms are integrated into a single routing daemon executing in a coordinated 15-second control loop.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    node distance=0.5cm,
+    box/.style={draw, rounded corners, minimum width=2.2cm, minimum height=0.7cm, align=center, font=\small},
+    backend/.style={draw, rounded corners, minimum width=2cm, minimum height=0.8cm, align=center, font=\small, fill=gray!10},
+    arr/.style={->, >=stealth, thick},
+]
+% Top: GRU Predictor
+\node[box, fill=blue!15] (gru) {GRU Predictor\\(30s forecast)};
+
+% Middle: Routing Controller
+\node[box, fill=green!15, below=of gru] (ctrl) {Routing Controller\\(Algorithm 1)};
+\node[box, fill=orange!15, left=0.3cm of ctrl] (slo) {SLO\\Monitor};
+
+% Bottom: HAProxy
+\node[box, below=of ctrl] (hap) {HAProxy};
+
+% Backends
+\node[backend, below left=0.4cm and 0.1cm of hap] (k8s) {K3s\\(always-warm)};
+\node[backend, below right=0.4cm and 0.1cm of hap] (kn) {Knative\\(scale-to-zero)};
+
+% Arrows
+\draw[arr] (gru) -- node[right,font=\tiny]{pred+conf} (ctrl);
+\draw[arr] (slo) -- (ctrl);
+\draw[arr] (ctrl) -- node[right,font=\tiny]{weights} (hap);
+\draw[arr] (hap) -- (k8s);
+\draw[arr] (hap) -- (kn);
+
+% Metrics feedback
+\draw[->, >=stealth, dashed, gray] (hap.west) to[bend left=40] node[left,font=\tiny,text=gray]{metrics} (slo.west);
+\end{tikzpicture}
+\caption{Hybrid system architecture. The GRU provides 30-second forecasts; the routing controller adjusts HAProxy weights between K3s and Knative based on SLO monitoring and predictions.}
+\label{fig:architecture}
+\end{figure}
 
 \subsection{Infrastructure Layer}
 
