@@ -29,6 +29,8 @@ This document presents experimental validation of two key hypotheses:
 
 ## Experiment Matrix
 
+> Note: Early experiment results (`infrastructure/results/`) were removed during repo cleanup. Data preserved in git history.
+
 | Experiment | Infrastructure | Workload | Results Location | Status |
 |------------|---------------|----------|------------------|--------|
 | **simulated-v1** | Custom Go activator | 100 RPS spike | `infrastructure/results/simulated-v1/` | ✅ Complete |
@@ -307,7 +309,8 @@ Simulation-based experiments are standard in systems research when:
 - Reproducibility enables peer verification
 - Proof-of-concept precedes production validation
 
-**Recommendation:** These results support thesis claims with clear documentation of simulation constraints. Follow-up experiments with real Knative (`infrastructure/results/knative-real/`) will provide production validation.
+**Recommendation:** These results support thesis claims with clear documentation of simulation constraints. Follow-up experiments with real Knative (data preserved in git history under `infrastructure/results/`) will provide production validation.
+
 
 ---
 
@@ -416,24 +419,11 @@ This behavior was observed in the experiments:
 
 ## Raw Data Files
 
-Results are organized by experiment type:
-
-### Simulation-Based (v1) - Current
-| File | Description |
-|------|-------------|
-| `infrastructure/results/simulated-v1/s1-k8s-only/` | S1 scenario metrics |
-| `infrastructure/results/simulated-v1/s2-serverless-only/` | S2 scenario metrics |
-| `infrastructure/results/simulated-v1/s3-spike-summary.json` | S3 scenario metrics |
-| `infrastructure/results/simulated-v1/s4-spike-summary.json` | S4 scenario metrics |
-| `infrastructure/results/simulated-v1/stress-test/` | Algorithm decision logs |
-| `infrastructure/results/simulated-v1/README.md` | Simulation setup documentation |
-
-### Real Knative - Pending
-| File | Description |
-|------|-------------|
-| `infrastructure/results/knative-real/README.md` | Target configuration for real Knative experiments |
-
----
+> **Note:** The original raw data files under `infrastructure/results/` were removed during repo cleanup. All data is preserved in git history. To retrieve:
+> ```bash
+> git log --all --full-history -- "infrastructure/results/"
+> git show <commit>:infrastructure/results/simulated-v1/...
+> ```
 
 ## Conclusion
 

@@ -67,4 +67,4 @@ EC2 nodes are sized from K8s CPU demand only: `nodes = max(ceil(avg_k8s_cpu / 1.
 
 ---
 
-*Evidence: `results/cost/2026-02-21_all-scenarios-rerun-v2-unified-aws-cost/cost_results.json` and `results/cost/2026-02-21_all-scenarios-rerun-v2-unified-aws-cost/report.md`. Source experiment: `results/experiments/phase-b/2026-02-21_all-scenarios-rerun-v2/results_final.json`. Analyzer: `thesis/scripts/cost_analyzer.py` v5.*
+*Evidence: `results/cost/2026-02-21_all-scenarios-rerun-v2-unified-aws-cost/cost_results.json` and `results/cost/2026-02-21_all-scenarios-rerun-v2-unified-aws-cost/report.md`. Source experiment: `results/experiments/phase-b/2026-02-21_all-scenarios-rerun-v2/results_final.json`. Analyzer: `scripts/cost_analyzer.py` v5.*

@@ -14,9 +14,7 @@ class PrometheusClient:
         self.prometheus_url = prometheus_url.rstrip("/")
         self._session = requests.Session()
 
-    def query_instant(
-        self, expr: str, timestamp: Optional[int] = None
-    ) -> Optional[float]:
+    def query_instant(self, expr: str, timestamp: Optional[int] = None) -> Optional[float]:
         """Query Prometheus instant query API.
 
         Args:
@@ -60,9 +58,7 @@ class PrometheusClient:
             logger.error("prometheus_parse_error", expr=expr, error=str(e))
             return None
 
-    def query_range(
-        self, expr: str, start: int, end: int, step: int = 15
-    ) -> list[tuple[int, float]]:
+    def query_range(self, expr: str, start: int, end: int, step: int = 15) -> list[tuple[int, float]]:
         """Query Prometheus range query API.
 
         Args:
@@ -140,10 +136,7 @@ class PrometheusClient:
         Returns:
             Error rate as float between 0 and 1
         """
-        expr = (
-            f'sum(rate(http_requests_total{{status=~"5.."}}[{window}])) / '
-            f"sum(rate(http_requests_total[{window}]))"
-        )
+        expr = f'sum(rate(http_requests_total{{status=~"5.."}}[{window}])) / sum(rate(http_requests_total[{window}]))'
         value = self.query_instant(expr)
         if value is None or value != value:  # NaN check
             return 0.0
@@ -173,8 +166,8 @@ class PrometheusClient:
         Returns:
             Count of violations as integer
         """
-        threshold_s = threshold_ms / 1000.0
-        expr = f"sum(increase(slo_violation_total[1h]))"
+        _ = threshold_ms / 1000.0  # noqa: F841 — threshold in seconds (for future Prometheus queries)
+        expr = "sum(increase(slo_violation_total[1h]))"
         value = self.query_instant(expr)
 
         if value is not None:

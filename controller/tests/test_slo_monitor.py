@@ -1,10 +1,11 @@
 """Tests for SLO monitor."""
+
 import pytest
 import time
 
 from unittest.mock import Mock, patch
 
-from monitoring_v2.slo_monitor import SLOMonitor, SLOConfig, SLOStatus, MockSLOMonitor
+from monitoring_v2.slo_monitor import SLOMonitor, SLOConfig, MockSLOMonitor
 
 
 class TestSLOConfig:
@@ -19,39 +20,39 @@ class TestMockSLOMonitor:
     @pytest.fixture
     def monitor(self):
         return MockSLOMonitor()
-    
+
     def test_check_slo_healthy(self, monitor):
         monitor.set_mock_metrics(p99=50.0)
         status = monitor.check_slo()
-        
+
         assert status.p99_latency_ms == 50.0
         assert status.is_violating is False
         assert status.recommendation == "OPTIMIZE_COST"  # Below healthy margin
-    
+
     def test_check_slo_violating(self, monitor):
         monitor.set_mock_metrics(p99=250.0)
         status = monitor.check_slo()
-        
+
         assert status.is_violating is True
-    
+
     def test_check_slo_sustained_violation(self, monitor):
         monitor.set_mock_metrics(p99=250.0)
-        
+
         # First check starts violation timer
         status1 = monitor.check_slo()
         assert status1.violation_duration_sec == 0
-        
+
         # Simulate time passing
         monitor.violation_start_time = int(time.time()) - 35
-        
+
         status2 = monitor.check_slo()
         assert status2.violation_duration_sec >= 30
         assert status2.recommendation == "SCALE_OUT"
-    
+
     def test_statistics(self, monitor):
         monitor.check_slo()
         monitor.check_slo()
-        
+
         stats = monitor.get_statistics()
         assert stats["total_checks"] == 2
 
@@ -86,6 +87,7 @@ class TestSLOMonitorSources:
 
         hap_priming = Mock()
         hap_priming.raise_for_status.return_value = None
+
         def make_haproxy_csv(stot: int, rtime: int, rtime_max: int) -> str:
             cols = [""] * 93
             cols[0] = "servers"

@@ -21,16 +21,17 @@ This is a **completed** Master's thesis research project implementing a hybrid k
 | `results/experiments/` | Experiment bundles (one folder per experiment run/batch) | Each bundle: `meta.yaml` + `raw/` + `report.md` |
 | `results/models/` | ML model training results | Same bundle convention |
 | `results/cost/` | Cost analysis results | Same bundle convention |
-| `thesis/` | **Narrative only** — thesis text, protocol, appendices | Links INTO `results/` for evidence. Never stores raw data. |
+| `thesis/` | **Narrative only** — thesis text, protocol, appendices | Links INTO `results/` for evidence. Never stores raw data. No scripts. |
 | `thesis/protocol/` | Preregistered experiment design + threats to validity | Update only to document new limitations |
-| `controller/` | Main controller code (prediction, routing, daemon, monitoring) | Active codebase |
-| `scripts/` | Thin wrappers delegating to `thesis/scripts/` | Don't duplicate; delegate |
+| `controller/` | Active Python system (workspace member): prediction, routing, daemon, monitoring, ML models | `uv sync` from repo root |
+| `controller/prediction/` | GRU serving + training + baselines (merged from `ml_models/`) | ML code lives here, not in a separate top-level dir |
+| `scripts/` | Canonical reproduction + analysis scripts (experiment runners, statistics, plotting) | Run from repo root: `uv run python scripts/<name>.py` |
 | `data/` | Datasets (ClarkNet, Calgary traces, synthetic) | Large files tracked via `.gitattributes` |
 | `infrastructure/` | k3d configs, HAProxy, load testing | Deployment configs |
-| `docs/` | Getting started, architecture docs | Points to `results/` for evidence |
-| `archived/` | Legacy sprint artifacts, deprecated code | **Read-only. Never add new work here.** |
-| `experiments/` | Experiment configurations | Config files only |
-| `ml_models/` | Model training scripts | GRU training code |
+| `infrastructure/load-tests/` | k6 load test suite (canonical/calibration/legacy subdirs) | See `load-tests/README.md` for manifest |
+| `docs/` | Current docs: setup guides, specs, deployment | Points to `results/` for evidence |
+| `archived/` | Curated historical context (experiments-framework, legacy docs) | **Read-only. Never add new work here.** |
+**Package-level AGENTS.md files** exist in `controller/`, `scripts/`, `infrastructure/`, and `data/`. Read the nearest one before editing files in that directory.
 
 **Key documents to read first:**
 - `results/README.md` — Evidence registry and experiment index
@@ -126,14 +127,13 @@ status: complete                        # complete | partial | failed
 
 ## Development Commands
 
-### Controller
+### Controller (uv workspace — run from repo root)
 
 ```bash
-cd controller
-uv sync                                                    # Install deps
+uv sync                                                    # Install all deps (workspace)
 uv run python -m prediction.prediction_server &            # Start prediction API
 uv run python -m daemon.routing_daemon --scenario s4 &     # Start routing daemon
-uv run python -m pytest                                    # Run tests
+uv run python -m pytest controller/tests/                  # Run tests
 ```
 
 ### Infrastructure
@@ -144,12 +144,11 @@ kubectl create deployment test-app --image=nginx:alpine
 kubectl expose deployment test-app --port=80 --target-port=80
 ```
 
-### Reproduction (see `thesis/README.md` for full details)
+### Reproduction (see `scripts/README.md` for full details)
 
 ```bash
-cd controller
 HSA_OVERRIDE_GFX_VERSION=11.0.0 \
-  uv run python ../scripts/run_phase_b_experiments.py --phase full --runs 5 --duration 300
+  uv run python scripts/run_phase_b_experiments.py --phase full --runs 5 --duration 300
 ```
 
 ---

@@ -206,9 +206,7 @@ class DynamicExperimentRunner:
 
     # ── k6 load test ──────────────────────────────────────
 
-    def run_k6_load_test(
-        self, scenario: str, run_id: int, run_results_dir: Path
-    ) -> Optional[Dict]:
+    def run_k6_load_test(self, scenario: str, run_id: int, run_results_dir: Path) -> Optional[Dict]:
         """Run k6 dynamic_burst.js and parse summary output."""
         run_results_dir.mkdir(parents=True, exist_ok=True)
 
@@ -302,13 +300,9 @@ class DynamicExperimentRunner:
 
             # Save daemon states
             if pre_status:
-                (run_dir / "daemon-pre.json").write_text(
-                    json.dumps(pre_status, indent=2)
-                )
+                (run_dir / "daemon-pre.json").write_text(json.dumps(pre_status, indent=2))
             if post_status:
-                (run_dir / "daemon-post.json").write_text(
-                    json.dumps(post_status, indent=2)
-                )
+                (run_dir / "daemon-post.json").write_text(json.dumps(post_status, indent=2))
 
             # Extract metrics from k6 summary
             metrics = self._extract_k6_metrics(k6_summary)
@@ -378,9 +372,7 @@ class DynamicExperimentRunner:
             "slo_violations": slo.get("values", slo).get("count", 0),
         }
 
-    def _extract_decision_counts(
-        self, pre: Optional[Dict], post: Optional[Dict]
-    ) -> Dict:
+    def _extract_decision_counts(self, pre: Optional[Dict], post: Optional[Dict]) -> Dict:
         """Extract decision count deltas between pre and post daemon status."""
         if not post:
             return {}
@@ -406,10 +398,7 @@ class DynamicExperimentRunner:
             "optimize_cost": get_count(post, "optimize_cost_count"),
         }
 
-        return {
-            k: post_counts[k] - pre_counts.get(k, 0)
-            for k in post_counts
-        }
+        return {k: post_counts[k] - pre_counts.get(k, 0) for k in post_counts}
 
     # ── Full experiment suite ─────────────────────────────
 
@@ -422,11 +411,7 @@ class DynamicExperimentRunner:
         """Run replicated experiments with randomized order."""
 
         # Build and shuffle schedule
-        schedule = [
-            (scenario, run_id)
-            for scenario in scenarios
-            for run_id in range(1, num_runs + 1)
-        ]
+        schedule = [(scenario, run_id) for scenario in scenarios for run_id in range(1, num_runs + 1)]
         random.shuffle(schedule)
 
         logger.info(
@@ -470,9 +455,7 @@ class DynamicExperimentRunner:
 
     # ── Output ────────────────────────────────────────────
 
-    def _save_results(
-        self, results: List[DynamicExperimentResult], filename: str
-    ) -> None:
+    def _save_results(self, results: List[DynamicExperimentResult], filename: str) -> None:
         """Save results to JSON."""
         path = self.results_dir / filename
         with open(path, "w") as f:
@@ -487,7 +470,7 @@ class DynamicExperimentRunner:
         report_lines = [
             "# Phase C: Dynamic Workload Experiment Summary",
             f"\n**Date:** {datetime.now().isoformat()}",
-            f"**Workload:** dynamic_burst (2 cycles × 3min = 6min per run)",
+            "**Workload:** dynamic_burst (2 cycles × 3min = 6min per run)",
             f"**Total runs:** {len(results)}",
             "",
         ]
@@ -499,25 +482,21 @@ class DynamicExperimentRunner:
 
             p99s = [r.p99_latency_ms for r in runs]
             report_lines.append(
-                f"- p99 latency: {min(p99s):.1f}–{max(p99s):.1f}ms "
-                f"(mean {sum(p99s)/len(p99s):.1f}ms)"
+                f"- p99 latency: {min(p99s):.1f}–{max(p99s):.1f}ms (mean {sum(p99s) / len(p99s):.1f}ms)"
             )
 
             errs = [r.error_rate for r in runs]
-            report_lines.append(f"- Error rate: {sum(errs)/len(errs):.4f}")
+            report_lines.append(f"- Error rate: {sum(errs) / len(errs):.4f}")
 
             preds = [r.predictive_count for r in runs]
-            report_lines.append(
-                f"- PREDICTIVE decisions: {preds} (total {sum(preds)})"
-            )
+            report_lines.append(f"- PREDICTIVE decisions: {preds} (total {sum(preds)})")
 
             slos = [r.slo_violations for r in runs]
             report_lines.append(f"- SLO violations: {slos}")
 
         report_lines.append("\n## Key Question")
         report_lines.append(
-            "Did S4 produce PREDICTIVE > 0? If yes, dynamic workload succeeds "
-            "where steady 100 RPS failed."
+            "Did S4 produce PREDICTIVE > 0? If yes, dynamic workload succeeds where steady 100 RPS failed."
         )
 
         report_path = self.results_dir / "report.md"
@@ -526,9 +505,7 @@ class DynamicExperimentRunner:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Phase C: Dynamic workload experiment (S3 vs S4)"
-    )
+    parser = argparse.ArgumentParser(description="Phase C: Dynamic workload experiment (S3 vs S4)")
     parser.add_argument(
         "--runs",
         type=int,
@@ -574,9 +551,7 @@ def main():
     )
 
     if args.dry_run:
-        schedule = [
-            (s, r) for s in scenarios for r in range(1, args.runs + 1)
-        ]
+        schedule = [(s, r) for s in scenarios for r in range(1, args.runs + 1)]
         random.shuffle(schedule)
         print("\n🔬 Phase C: Dynamic Workload Experiment (DRY RUN)")
         print("=" * 60)
@@ -585,7 +560,7 @@ def main():
         print(f"Total runs: {len(schedule)}")
         print(f"k6 script: {K6_SCRIPT}")
         print(f"Results dir: {runner.results_dir}")
-        print(f"\nRandomized schedule:")
+        print("\nRandomized schedule:")
         for i, (s, r) in enumerate(schedule, 1):
             print(f"  {i}. {s} run {r}")
         print(f"\nEstimated time: ~{len(schedule) * (6 + args.cooldown / 60):.0f} min")
@@ -602,7 +577,7 @@ def main():
     print("=" * 60)
     print(f"Scenarios: {scenarios}")
     print(f"Runs per scenario: {args.runs}")
-    print(f"Workload: dynamic_burst (2 cycles × 3min)")
+    print("Workload: dynamic_burst (2 cycles × 3min)")
     print(f"Results: {runner.results_dir}")
     print()
 

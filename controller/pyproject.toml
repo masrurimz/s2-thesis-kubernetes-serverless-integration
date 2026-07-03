@@ -1,40 +1,13 @@
 [project]
-name = "thesis-hybrid-controller"
+name = "thesis-controller"
 version = "0.1.0"
-description = "Intelligent routing controller for hybrid K8s-Serverless system with workload prediction"
+description = "Intelligent routing controller for hybrid K8s-Serverless system"
 requires-python = ">=3.12,<3.13"
-dependencies = [
-    "aiohttp>=3.12.15",
-    "fastapi>=0.116.1",
-    "joblib",
-    "pandas>=2.3.1",
-    "prometheus-client>=0.21.0",
-    "pydantic>=2.11.7",
-    "requests>=2.32.4",
-    "scikit-learn>=1.7.1",
-    "scipy>=1.16.1",
-    "structlog",
-    "torch==2.5.1+rocm6.2; sys_platform == 'linux' and platform_machine == 'x86_64'",
-    "pytorch-triton-rocm==3.1.0; sys_platform == 'linux' and platform_machine == 'x86_64'",
-    "pyyaml",
-    "uvicorn>=0.35.0",
-    "pytest>=8.0.0",
-    "pytest-asyncio>=0.24.0",
-    "pytest-cov>=6.0.0",
-    "httpx>=0.28.0",
-    "python-dotenv>=1.2.1",
-    "pydantic-settings>=2.12.0",
-    "pyarrow>=23.0.0",
-    "matplotlib>=3.10.8",
-]
+dependencies = []
 
 [project.scripts]
-# prediction-server: removed — prediction_engine moved to archived/prediction_engine_legacy/
-# prediction-server = "prediction_engine.prediction_server:main"
 gru-prediction-server = "prediction.prediction_server:main"
 routing-controller = "intelligent_router.routing_controller:main"
-# data-collector: removed — prediction_engine moved to archived/prediction_engine_legacy/
-# data-collector = "prediction_engine.data_collector:main"
 weight-adjuster = "intelligent_router.weight_adjuster:main"
 routing-daemon = "daemon.routing_daemon:main"
 
@@ -44,20 +17,3 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["intelligent_router", "prediction", "autoscaler", "monitoring_v2", "daemon", "scaling"]
-
-[dependency-groups]
-dev = [
-    "pytest>=9.0.2",
-]
-
-# AMD ROCm PyTorch index for GPU support
-[[tool.uv.index]]
-name = "pytorch-rocm"
-url = "https://download.pytorch.org/whl/rocm6.2"
-explicit = true
-
-[tool.uv.sources]
-torch = { index = "pytorch-rocm" }
-torchvision = { index = "pytorch-rocm" }
-torchaudio = { index = "pytorch-rocm" }
-pytorch-triton-rocm = { index = "pytorch-rocm" }

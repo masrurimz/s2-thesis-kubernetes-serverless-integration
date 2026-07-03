@@ -2,7 +2,7 @@
 
 **Date**: 2026-02-13  
 **Bead**: s2-29e  
-**Script**: `thesis/scripts/cold_start_analysis.py`  
+**Script**: `scripts/cold_start_analysis.py`  
 **Companion**: `COLD_START_ANALYSIS.md` (theoretical framework)
 
 ---
@@ -17,7 +17,7 @@
 | Warm state p99 (Phase A1) | **133ms** | After stabilization at 50/50 weights |
 | **Cold start overhead** | **826ms** | Above warm state baseline |
 
-**Source**: `infrastructure/results/knative-real/RESULTS-SUMMARY.md`
+**Source**: `infrastructure/results/knative-real/RESULTS-SUMMARY.md` *(deleted — preserved in git history)*
 
 ### Knative Configuration (explains cold start origin)
 
@@ -148,8 +148,8 @@ At 100 RPS over 300s (30,000 total requests):
 
 | Path | Description |
 |------|-------------|
-| `thesis/scripts/cold_start_analysis.py` | Analysis script (run with `uv run`) |
+| `scripts/cold_start_analysis.py` | Analysis script (run with `uv run`) |
 | `cold_start_decomposition.json` | Machine-readable output |
 | `COLD_START_ANALYSIS.md` | Theoretical framework (companion) |
-| `infrastructure/results/knative-real/RESULTS-SUMMARY.md` | Infrastructure cold start measurements |
+| `infrastructure/results/knative-real/RESULTS-SUMMARY.md` | *(deleted — infrastructure cold start measurements preserved in git history)* |
 | `results/experiments/phase-a1/2026-02-12_predictive-trigger/report.md` | Phase A1 decision log |

@@ -20,7 +20,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-RESULTS_DIR="$PROJECT_ROOT/infrastructure/results/knative-real/stress-test"
+RESULTS_DIR="$PROJECT_ROOT/results/stress-test-output"
 LOAD_TEST="$SCRIPT_DIR/stress.js"
 
 # Infrastructure endpoints
@@ -150,7 +150,7 @@ run_scenario() {
             log_info "S3: Hybrid Reactive - start K8s, algorithm adds serverless"
             set_haproxy_weights 100 0
             log_warn "Start routing daemon manually if not running:"
-            log_warn "  cd controller && uv run python -m daemon.routing_daemon --scenario s3-hybrid-reactive --prometheus-url $PROMETHEUS_URL --haproxy-host localhost --haproxy-port 19999 --interval 10"
+            log_warn "  uv run python -m daemon.routing_daemon --scenario s3-hybrid-reactive --prometheus-url $PROMETHEUS_URL --haproxy-host localhost --haproxy-port 19999 --interval 10"
             sleep 3
             ;;
         s4-hybrid-predictive)

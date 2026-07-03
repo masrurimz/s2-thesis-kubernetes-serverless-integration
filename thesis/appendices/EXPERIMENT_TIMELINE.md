@@ -15,7 +15,7 @@
 - ✅ Synthetic traffic generator created
 
 ### Key Commits
-- Initial GRU implementation (`ml_models/gru_predictor.py`)
+- Initial GRU implementation (`controller/prediction/gru_predictor.py`)
 - ROCm GPU support integration
 
 ---
