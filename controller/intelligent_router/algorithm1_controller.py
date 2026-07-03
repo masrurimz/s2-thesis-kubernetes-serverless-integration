@@ -37,7 +37,7 @@ class Algorithm1Config:
     # Real Knative integration settings
     default_k3s_weight: int = 100  # Default: 100% K8s
     default_knative_weight: int = 0  # Default: 0% serverless (disabled)
-    knative_host: str = "test-app.default.localhost"  # Knative service host header
+    knative_host: str = "test-app.default.127.0.0.1.sslip.io"  # Knative service host header
     knative_url: str = "http://localhost:8081"  # Kourier gateway URL (k3d mapped port)
     prewarm_timeout_sec: int = 30  # Timeout for Knative pre-warm request
 
@@ -74,13 +74,13 @@ class Algorithm1Controller:
         self.config = config or Algorithm1Config()
         
         # State tracking - default 100% K8s, 0% Knative (serverless disabled)
-        self.last_adjustment_time: Optional[int] = None
+        self.last_adjustment_time: Optional[int] = int(time.time())
         self.current_weights = {
             "k3s": self.config.default_k3s_weight,
             "knative": self.config.default_knative_weight
         }
         self.violation_detected_time: Optional[float] = None
-        self.serverless_enabled: bool = False  # Knative backend disabled by default
+        self.serverless_enabled: bool = self.current_weights["knative"] > 0
         self.prewarm_in_progress: bool = False
         
         # Metrics
@@ -130,15 +130,19 @@ class Algorithm1Controller:
             and can_adjust):
             return self._scale_out(current_time, slo_status)
         
-        # Priority 2: Use prediction if available (before cost optimization)
-        if prediction and can_adjust:
+        healthy_threshold = self.slo_monitor.config.p99_threshold_ms * self.config.healthy_margin
+
+        # Priority 2: Early-warning predictive window before sustained violation lock-in
+        warning_low = healthy_threshold
+        warning_high = self.slo_monitor.config.p99_threshold_ms
+        if (prediction and can_adjust and warning_low <= slo_status.p99_latency_ms < warning_high):
             decision = self._apply_prediction(current_time, prediction, current_load)
             if decision:
                 return decision
-        
+
         # Priority 3: Check for healthy state (optimize cost)
-        healthy_threshold = self.slo_monitor.config.p99_threshold_ms * self.config.healthy_margin
-        if slo_status.p99_latency_ms < healthy_threshold and can_adjust:
+        if (slo_status.p99_latency_ms < healthy_threshold and can_adjust
+            and current_load is not None and current_load > 0):
             return self._optimize_cost(current_time, slo_status)
         
         # Priority 4: No change
@@ -185,17 +189,14 @@ class Algorithm1Controller:
         )
         new_k3s = 100 - new_knative
         
-        self.current_weights = {"k3s": new_k3s, "knative": new_knative}
-        self.last_adjustment_time = current_time
-        
         logger.info("Algorithm 1: SCALE_OUT",
                    p99=slo_status.p99_latency_ms,
                    violation_sec=slo_status.violation_duration_sec,
-                   new_weights=self.current_weights,
+                   new_weights={"k3s": new_k3s, "knative": new_knative},
                    serverless_enabled=self.serverless_enabled)
         
         return RoutingDecision(
-            weights=self.current_weights.copy(),
+            weights={"k3s": new_k3s, "knative": new_knative},
             reason=f"SLO violation ({slo_status.p99_latency_ms:.0f}ms > 200ms) for {slo_status.violation_duration_sec}s",
             action="SCALE_OUT",
             metrics={"p99": slo_status.p99_latency_ms, "violation_sec": slo_status.violation_duration_sec},
@@ -220,22 +221,19 @@ class Algorithm1Controller:
         new_k3s = min(100, self.current_weights["k3s"] + step)  # Can go to 100%
         new_knative = 100 - new_k3s
         
-        self.current_weights = {"k3s": new_k3s, "knative": new_knative}
-        self.last_adjustment_time = current_time
         
-        # If knative weight is 0, disable serverless backend (allows scale-to-zero)
+        # If knative weight is 0, backend should be disabled after successful apply
         if new_knative == 0 and self.serverless_enabled:
             logger.info("Algorithm 1: Disabling serverless backend (weight=0, allow scale-to-zero)")
-            self.serverless_enabled = False
             backend_state_changed = True
         
         logger.info("Algorithm 1: OPTIMIZE_COST",
                    p99=slo_status.p99_latency_ms,
-                   new_weights=self.current_weights,
+                   new_weights={"k3s": new_k3s, "knative": new_knative},
                    serverless_enabled=self.serverless_enabled)
         
         return RoutingDecision(
-            weights=self.current_weights.copy(),
+            weights={"k3s": new_k3s, "knative": new_knative},
             reason=f"Healthy state ({slo_status.p99_latency_ms:.0f}ms < {200 * self.config.healthy_margin:.0f}ms), optimizing cost",
             action="OPTIMIZE_COST",
             metrics={"p99": slo_status.p99_latency_ms},
@@ -263,10 +261,20 @@ class Algorithm1Controller:
         
         if load_change > self.config.load_change_threshold:
             # Significant increase predicted - proactively scale out
-            self.predictive_count += 1
             backend_state_changed = False
-            
-            # Record Prometheus metrics
+
+            new_knative = min(
+                self.config.max_knative_weight,
+                self.current_weights["knative"] + self.config.weight_step
+            )
+            new_k3s = 100 - new_knative
+            proposed_weights = {"k3s": new_k3s, "knative": new_knative}
+
+            # Count predictive decisions only when they produce an effective weight change.
+            if proposed_weights == self.current_weights:
+                return None
+
+            self.predictive_count += 1
             routing_decision_total.labels(decision_type="PREDICTIVE").inc()
             
             # Enable serverless backend if disabled (preemptive)
@@ -276,24 +284,16 @@ class Algorithm1Controller:
                 backend_state_changed = True
                 self._prewarm_knative()
             
-            new_knative = min(
-                self.config.max_knative_weight,
-                self.current_weights["knative"] + self.config.weight_step
-            )
-            new_k3s = 100 - new_knative
-            
-            self.current_weights = {"k3s": new_k3s, "knative": new_knative}
-            self.last_adjustment_time = current_time
             
             logger.info("Algorithm 1: PREDICTIVE scale out",
                        predicted_load=predicted_load,
                        current_load=current_load,
                        load_change=load_change,
-                       new_weights=self.current_weights,
+                       new_weights=proposed_weights,
                        serverless_enabled=self.serverless_enabled)
             
             return RoutingDecision(
-                weights=self.current_weights.copy(),
+                weights=proposed_weights,
                 reason=f"Predicted {load_change*100:.0f}% load increase (confidence: {confidence:.0%})",
                 action="PREDICTIVE",
                 metrics={"predicted_load": predicted_load, "load_change": load_change, "confidence": confidence},
@@ -316,6 +316,19 @@ class Algorithm1Controller:
             metrics={"p99": slo_status.p99_latency_ms}
         )
     
+    def commit_applied_decision(self, decision: RoutingDecision, current_time: Optional[int] = None) -> None:
+        """Commit decision effects only after daemon successfully applies weights."""
+        self.current_weights = decision.weights.copy()
+        if decision.action in {"SCALE_OUT", "OPTIMIZE_COST", "PREDICTIVE"}:
+            now = current_time if current_time is not None else int(time.time())
+            self.last_adjustment_time = now
+
+        if decision.action in {"SCALE_OUT", "PREDICTIVE"} and decision.weights["knative"] > 0:
+            self.serverless_enabled = True
+        elif decision.action == "OPTIMIZE_COST" and decision.weights["knative"] == 0:
+            self.serverless_enabled = False
+
+
     def get_statistics(self) -> Dict:
         """Get decision statistics."""
         return {

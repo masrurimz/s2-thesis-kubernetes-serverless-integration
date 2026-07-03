@@ -164,6 +164,14 @@ class TestRoutingDaemon:
         assert daemon.scenario == Scenario.S4_HYBRID_PREDICTIVE
         assert daemon.scenario_config.use_predictions is True
     
+
+    def test_init_syncs_algorithm_controller_weights(self, mock_weight_adjuster):
+        """Controller must start from scenario baseline weights."""
+        daemon = RoutingDaemon(scenario="s3-hybrid-reactive")
+
+        assert daemon.current_weights == {"k3s": 80, "knative": 20}
+        assert daemon.algorithm_controller.current_weights == {"k3s": 80, "knative": 20}
+        assert daemon.algorithm_controller.serverless_enabled is True
     def test_init_invalid_scenario(self):
         """Invalid scenario raises error."""
         with pytest.raises(ValueError) as exc:
@@ -230,6 +238,43 @@ class TestDecisionLoop:
         
         assert daemon._decision_count == 1
         assert daemon.algorithm_controller.total_decisions == 1
+
+
+    @patch("requests.get")
+    def test_blocked_optimize_cost_does_not_apply_weights(self, mock_get, mock_weight_adjuster):
+        """Readiness gate must prevent blocked OPTIMIZE_COST from changing applied weights."""
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = {
+            "status": "success",
+            "data": {"result": [{"value": [0, "0"]}]},
+        }
+
+        daemon = RoutingDaemon(scenario="s3-hybrid-reactive")
+        daemon.current_weights = {"k3s": 100, "knative": 0}
+
+        blocked_decision = MagicMock()
+        blocked_decision.action = "OPTIMIZE_COST"
+        blocked_decision.weights = {"k3s": 55, "knative": 45}
+        blocked_decision.reason = "test"
+        daemon.algorithm_controller.make_decision = MagicMock(return_value=blocked_decision)
+        daemon.algorithm_controller._maintain = MagicMock(
+            return_value=MagicMock(
+                action="MAINTAIN",
+                weights={"k3s": 100, "knative": 0},
+                reason="maintain",
+            )
+        )
+        daemon.algorithm_controller.commit_applied_decision = MagicMock()
+
+        daemon.k8s_scaler = MagicMock()
+        daemon.k8s_scaler.is_ready.return_value = False
+        daemon.cluster_controller = MagicMock()
+
+        daemon._execute_decision_loop()
+
+        mock_weight_adjuster.set_weights_with_retry.assert_not_called()
+        daemon.algorithm_controller.commit_applied_decision.assert_not_called()
+        assert daemon.current_weights == {"k3s": 100, "knative": 0}
 
 
 class TestIntegration:

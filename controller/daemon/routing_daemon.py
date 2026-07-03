@@ -232,12 +232,20 @@ class RoutingDaemon:
         self.api_port = api_port
         
         self.slo_monitor = SLOMonitor(
-            config=SLOConfig(prometheus_url=prometheus_url)
+            config=SLOConfig(
+                prometheus_url=prometheus_url,
+                haproxy_stats_url=haproxy_stats_url,
+            )
         )
         
         self.algorithm_controller = Algorithm1Controller(
             slo_monitor=self.slo_monitor,
-            config=Algorithm1Config(cooldown_sec=decision_interval),
+            config=Algorithm1Config(
+                cooldown_sec=decision_interval,
+                default_k3s_weight=self.scenario_config.k3s_weight,
+                default_knative_weight=self.scenario_config.knative_weight,
+                load_change_threshold=0.15 if self.scenario_config.use_predictions else 0.3,
+            ),
         )
         
         self.weight_adjuster = HAProxyWeightAdjuster(
@@ -253,6 +261,8 @@ class RoutingDaemon:
             "knative": self.scenario_config.knative_weight,
         }
         
+        self.algorithm_controller.current_weights = self.current_weights.copy()
+        self.algorithm_controller.serverless_enabled = self.current_weights["knative"] > 0
         self._running = False
         self._shutdown_event = threading.Event()
         self._start_time = time.time()
@@ -453,6 +463,10 @@ class RoutingDaemon:
             
             if success:
                 self.current_weights = decision.weights.copy()
+                self.algorithm_controller.commit_applied_decision(
+                    decision,
+                    current_time=int(time.time()),
+                )
                 daemon_current_weight.labels(backend="k3s").set(self.current_weights["k3s"])
                 daemon_current_weight.labels(backend="knative").set(self.current_weights["knative"])
                 

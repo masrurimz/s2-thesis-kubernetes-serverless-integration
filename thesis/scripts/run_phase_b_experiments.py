@@ -636,6 +636,12 @@ class ScenarioResetter:
         k3s_w, kn_w = weight_map.get(scenario, (100, 0))
         import socket as _socket
         try:
+            reset_sock = _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM)
+            reset_sock.settimeout(5)
+            reset_sock.connect((HAPROXY_HOST, HAPROXY_SOCKET_PORT))
+            reset_sock.send(b"clear counters all\n")
+            reset_sock.recv(4096)
+            reset_sock.close()
             for server, weight in [("k3s", k3s_w), ("knative", kn_w)]:
                 sock = _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM)
                 sock.settimeout(5)
@@ -1683,18 +1689,17 @@ class ExperimentRunner:
                             scenario=scenario, expected=expected, actual=weights)
                 return False
         else:
-            # S3/S4: daemon may adjust weights during warmup (OPTIMIZE_COST
-            # can reduce knative to 0 if latency is healthy). Just verify k3s
-            # has weight > 0 (primary backend must be reachable).
-            if not weights.get("k3s", 0) > 0:
-                logger.error("precondition_hybrid_k3s_zero",
-                            scenario=scenario, actual=weights)
+            # S3/S4 must retain baseline 80/20 split after reset + warmup.
+            expected_hybrid = {"k3s": 80, "knative": 20}
+            if (weights.get("k3s") != expected_hybrid["k3s"]
+                    or weights.get("knative") != expected_hybrid["knative"]):
+                logger.error(
+                    "precondition_hybrid_weight_wrong",
+                    scenario=scenario,
+                    expected=expected_hybrid,
+                    actual=weights,
+                )
                 return False
-            if weights.get("knative", 0) == 0:
-                logger.warning("precondition_hybrid_knative_zero_ok",
-                              scenario=scenario, actual=weights,
-                              reason="daemon OPTIMIZE_COST during warmup")
-
         # 2. Daemon /health scenario matches
         try:
             r = requests.get(f"{DAEMON_API}/health", timeout=5)
