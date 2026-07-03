@@ -23,7 +23,7 @@
 - **Evidence (attempt 3 — VALID):** `results/experiments/phase-b/2026-02-15_clarknet-replay/reanalysis_report.md`
 - **Raw Data:** `results/experiments/phase-b/2026-02-15_clarknet-replay/results_final.json` (20 runs)
 - **Result:** S4 p99 = 2821.69 ± 424.33 ms vs S1 p99 = 5.89 ± 0.01 ms. S4 is significantly worse (p<0.001 Welch corrected, d=9.384). Hybrid routing with partial serverless engagement causes severe tail-latency inflation from cold-start/queueing effects.
-- **Reproduce:** `cd controller && uv run python ../thesis/scripts/reanalyze_phase_b.py --results-dir ../results/experiments/phase-b/2026-02-15_clarknet-replay`
+- **Reproduce:** `uv run python scripts/reanalyze_phase_b.py --results-dir results/experiments/phase-b/2026-02-15_clarknet-replay`
 - **Status:** ❌ H1 not supported for performance superiority — hybrid is worse than baselines on p99. This is a **valid negative result** with design implications (see Claim 3a).
 
 ### Claim 3a (Design Insight): Hybrid tail-latency caused by serverless cold-start interaction
@@ -47,7 +47,7 @@
 - **Evidence (attempt 3 — VALID):** `results/experiments/phase-b/2026-02-15_clarknet-replay/reanalysis_report.md`
 - **Raw Data:** `results/experiments/phase-b/2026-02-15_clarknet-replay/results_final.json`
 - **Result:** S4 SLO violations = 11302 ± 1974 vs S3 = 16519 ± 1521 → **31.6% reduction** (Welch p=0.0037 Holm-corrected, Cohen's d=-2.961 large effect). S4 gru_predictions_used=80/run, S3=0. S4 p99 14% lower but not significant (p=0.073).
-- **Reproduce:** `cd controller && uv run python ../thesis/scripts/reanalyze_phase_b.py --results-dir ../results/experiments/phase-b/2026-02-15_clarknet-replay`
+- **Reproduce:** `uv run python scripts/reanalyze_phase_b.py --results-dir results/experiments/phase-b/2026-02-15_clarknet-replay`
 - **Status:** ✅ H2 supported — GRU prediction significantly reduces SLO violations (mechanism + superiority validated)
 
 ---
@@ -67,7 +67,7 @@
   - Test RMSE% = 17.78% (target <10%) ❌
   - Test MAE% = 14.48% (target <5%) ❌
   - MAPE = 18.74% ❌
-- **Reproduce (real):** `cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python -c "import sys; sys.path.insert(0,'../ml_models'); from train_gru_real import main; main()"`
+- **Reproduce (real):** `HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python -m prediction.train_gru_real`
 - **Note:** GRU outperforms baselines on real data (baseline MAPE ~65% vs GRU 18.74%) but does not meet original thresholds. Gap is expected: real traces have non-stationarity and irregular bursts absent in synthetic data.
 - **Status:** ⚠️ Partially validated — mechanism works, thresholds not met on real data
 
@@ -103,7 +103,7 @@
 ### Claim 11a (Pipeline): Two-tier validity gates are emitted end-to-end
 - **Evidence:** `results/experiments/phase-b/2026-02-19_pilot-n2-validity-gates-rerun/report.md` — Run Validity, Stress Validity, and Analysis Set sections
 - **Raw Data:** `results/experiments/phase-b/2026-02-19_pilot-n2-validity-gates-rerun/results_final.json` (`run_validity_passed`, `stress_validity_passed`, `validity_gate_passed`)
-- **Reproduce:** `cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python ../thesis/scripts/run_phase_b_experiments.py --phase full --runs 2 --output /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/experiments/phase-b/2026-02-19_pilot-n2-validity-gates-rerun`
+- **Reproduce:** `HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python scripts/run_phase_b_experiments.py --phase full --runs 2 --output /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/experiments/phase-b/2026-02-19_pilot-n2-validity-gates-rerun`
 - **Status:** ✅ Validated — all scenarios 2/2 run-valid and 2/2 stress-valid in pilot
 
 ---
@@ -112,15 +112,15 @@
 
 ### Claim 12a (Cost Mechanism): CPU throttling + concurrency creates hidden serverless cost multiplier
 - **Evidence:** `results/cost/2026-02-17_three-model-cost-comparison/report.md` §Key Finding: CPU Throttling and Little's Law
-- **Raw Data:** `controller/results/cost_analysis/cost_analysis_20260217_144437.json`
+- **Raw Data:** `controller/results/cost_analysis/cost_analysis_20260217_144437.json` *(directory removed during repo restructuring; raw data preserved in git history)*
 - **Result:** Knative pod (200m CPU, target-concurrency=10) creates 50× CPU slowdown per request. Lambda bills wall-clock (2.515s for S2) not CPU time (9.77ms), creating ~364× cost multiplier. K8s pods also throttled: Little's Law service time S1=105ms, S3=262ms, S4=1.309s (not the naive 10ms hardcode).
 - **Status:** ✅ Validated — mechanism insight about serverless cost drivers
 
 ### Claim 12b (Cost Projection): Production cost comparison under t3.medium sizing
 - **Evidence:** `results/cost/2026-02-17_three-model-cost-comparison/report.md` §Model 3b, §Thesis Implications
-- **Raw Data:** `controller/results/cost_analysis/cost_analysis_20260217_144437.json`
+- **Raw Data:** `controller/results/cost_analysis/cost_analysis_20260217_144437.json` *(directory removed during repo restructuring; raw data preserved in git history)*
 - **Source Experiment:** `results/experiments/phase-b/2026-02-16_validation-metrics-fixes/`
-- **Reproduce:** `cd controller && uv run python ../thesis/scripts/cost_analyzer.py --experiment-dir ../results/experiments/phase-b/2026-02-16_validation-metrics-fixes`
+- **Reproduce:** `uv run python scripts/cost_analyzer.py --experiment-dir results/experiments/phase-b/2026-02-16_validation-metrics-fixes`
 - **Production Assumptions:** t3.medium ($0.0416/hr), 1.8 vCPU allocatable, +1 HA headroom node, EKS $0.10/hr
 - **Results (Model 3b EC2 Production — monthly):** S1 $162, S2 $192, S3 $192, S4 $222
 - **Results (Model 1 Lambda PC — monthly):** S1 $162, S2 $2,326, S3 $636, S4 $897
@@ -133,8 +133,8 @@
 - **Raw Data:** `results/cost/2026-02-18_fib34-unified-aws-cost/cost_results.json`, `results/cost/cost_crossover_rps.png`
 - **Source Experiment:** `results/experiments/phase-b/2026-02-18_fib34-validation/`
 - **Reproduce:**
-  - `cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python ../thesis/scripts/cost_analyzer.py --experiment-dir ../results/experiments/phase-b/2026-02-18_fib34-validation`
-  - `cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python ../thesis/scripts/cost_analyzer.py --crossover-graph`
+  - `HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python scripts/cost_analyzer.py --experiment-dir results/experiments/phase-b/2026-02-18_fib34-validation`
+  - `HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python scripts/cost_analyzer.py --crossover-graph`
 - **Result:** S1 vs S2 crossover at ~65.9 RPS for fib(34), inside the observed ~50–73 RPS range; fib(32) crossover at ~97.9 RPS remains outside the band.
 - **Status:** ✅ Validated — workload sensitivity shifts crossover into measurable range
 
@@ -142,7 +142,7 @@
 - **Evidence:** `results/cost/2026-02-19_pilot-n2-unified-aws-cost/report.md`
 - **Raw Data:** `results/cost/2026-02-19_pilot-n2-unified-aws-cost/cost_results.json`
 - **Source Experiment:** `results/experiments/phase-b/2026-02-19_pilot-n2-validity-gates-rerun/`
-- **Reproduce:** `cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python ../thesis/scripts/cost_analyzer.py --experiment-dir /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/experiments/phase-b/2026-02-19_pilot-n2-validity-gates-rerun`
+- **Reproduce:** `HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python scripts/cost_analyzer.py --experiment-dir /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/experiments/phase-b/2026-02-19_pilot-n2-validity-gates-rerun`
 - **Result:** `$ / 1M requests` and `$ / 1M successful` are populated for all scenarios; pilot directional result shows S4 better than S3 on `$ / 1M successful`.
 - **Status:** ✅ Validated for pipeline output (pilot n=2; not final inferential evidence)
 
@@ -152,7 +152,7 @@
   - `results/cost/2026-02-21_all-scenarios-rerun-v2-unified-aws-cost/cost_results.json`
   - `results/experiments/phase-b/2026-02-21_all-scenarios-rerun-v2/results_final.json`
 - **Source Experiment:** `results/experiments/phase-b/2026-02-21_all-scenarios-rerun-v2/`
-- **Reproduce:** `cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python ../thesis/scripts/cost_analyzer.py --experiment-dir /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/experiments/phase-b/2026-02-21_all-scenarios-rerun-v2`
+- **Reproduce:** `HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python scripts/cost_analyzer.py --experiment-dir /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/experiments/phase-b/2026-02-21_all-scenarios-rerun-v2`
 - **Result:** Analyzer uses app-duration-informed execution sizing (`execution_time_source=app_duration_avg`) for S2/S3/S4. Reported totals per 1200s run: S1=$0.061, S2=$0.169, S3=$0.486, S4=$0.432; S4 < S3 after correction.
 - **Interpretation Constraint:** n=1 per scenario; directional/pipeline-validating evidence, not final inferential ranking.
 - **Status:** ✅ Validated for model behavior and reporting pipeline
@@ -227,8 +227,7 @@ HSA_OVERRIDE_GFX_VERSION=11.0.0 PREDICTION_CONFIDENCE_THRESHOLD=0.6 \
 
 ### Full Phase B
 ```bash
-cd controller
-HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python ../thesis/scripts/run_phase_b_experiments.py \
+HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python scripts/run_phase_b_experiments.py \
   --phase full --runs 5 --duration 300
 ```
 

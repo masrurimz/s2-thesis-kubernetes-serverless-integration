@@ -128,9 +128,7 @@ class K6Runner:
                     http_req_duration_p99 = float(duration.get("p(99)", 0))
 
                 if "http_req_failed" in metrics:
-                    http_req_failed_rate = float(
-                        metrics["http_req_failed"].get("rate", 0)
-                    )
+                    http_req_failed_rate = float(metrics["http_req_failed"].get("rate", 0))
 
                 if "vus_max" in metrics:
                     vus_max = int(metrics["vus_max"].get("max", 0))
@@ -179,9 +177,7 @@ class K6Runner:
             metrics=metrics,
         )
 
-    def generate_trace_stages(
-        self, trace_file: str, interval_sec: int = 60
-    ) -> list[dict[str, str | int]]:
+    def generate_trace_stages(self, trace_file: str, interval_sec: int = 60) -> list[dict[str, str | int]]:
         trace_path = Path(trace_file)
         if not trace_path.exists():
             raise FileNotFoundError(f"Trace file not found: {trace_file}")
@@ -205,9 +201,7 @@ class K6Runner:
             if "rps" in df.columns:
                 stages = []
                 for _, row in df.iterrows():
-                    stages.append(
-                        {"duration": f"{interval_sec}s", "target": int(row["rps"])}
-                    )
+                    stages.append({"duration": f"{interval_sec}s", "target": int(row["rps"])})
                 return stages
 
             if len(df.columns) >= 2:
@@ -222,9 +216,7 @@ class K6Runner:
                     )
                 return stages
 
-            raise ValueError(
-                f"Cannot determine RPS column in trace file. Columns: {list(df.columns)}"
-            )
+            raise ValueError(f"Cannot determine RPS column in trace file. Columns: {list(df.columns)}")
         except ImportError:
             with open(trace_path) as f:
                 lines = f.readlines()

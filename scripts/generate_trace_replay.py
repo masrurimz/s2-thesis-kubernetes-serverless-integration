@@ -6,8 +6,8 @@ Pipeline (per thesis Section 3.2.4):
   Raw Parquet → 30s RPS Buckets → Scale → Trim → k6 Stages JSON + JS Script
 
 Usage:
-    cd controller && uv run python ../scripts/generate_trace_replay.py
-    cd controller && uv run python ../scripts/generate_trace_replay.py --duration-min 5 --dry-run
+    uv run python scripts/generate_trace_replay.py
+    uv run python scripts/generate_trace_replay.py --duration-min 5 --dry-run
 """
 
 import argparse
@@ -15,7 +15,6 @@ import json
 import sys
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -46,10 +45,7 @@ def select_window(
 ) -> pd.DataFrame:
     """Select a contiguous window of num_buckets from the bucketed data."""
     if start_idx + num_buckets > len(df):
-        raise ValueError(
-            f"Window exceeds data: start={start_idx}, "
-            f"buckets={num_buckets}, data_len={len(df)}"
-        )
+        raise ValueError(f"Window exceeds data: start={start_idx}, buckets={num_buckets}, data_len={len(df)}")
     return df.iloc[start_idx : start_idx + num_buckets].copy()
 
 
@@ -64,10 +60,7 @@ def apply_scaling(df: pd.DataFrame, scale_factor: float) -> pd.DataFrame:
 
 def generate_k6_stages(df: pd.DataFrame, bucket_sec: int = 30) -> list[dict]:
     """Convert scaled RPS buckets into k6 ramping-arrival-rate stages."""
-    return [
-        {"duration": f"{bucket_sec}s", "target": int(row["rps_scaled"])}
-        for _, row in df.iterrows()
-    ]
+    return [{"duration": f"{bucket_sec}s", "target": int(row["rps_scaled"])} for _, row in df.iterrows()]
 
 
 def generate_k6_script(stages_json_path: str, output_path: Path) -> None:
@@ -205,9 +198,7 @@ export function handleSummary(data) {{
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Generate k6 trace-driven replay from ClarkNet parquet"
-    )
+    parser = argparse.ArgumentParser(description="Generate k6 trace-driven replay from ClarkNet parquet")
     parser.add_argument(
         "--dataset",
         default="clarknet",
@@ -270,13 +261,14 @@ def main():
     print(f"📐 Selecting {num_buckets}-bucket window (start_idx={args.window_start})...")
     window = select_window(bucketed, args.window_start, num_buckets)
     print(f"   Time range: {window.index[0]} → {window.index[-1]}")
-    print(f"   Raw RPS: mean={window['rps'].mean():.2f}, "
-          f"range=[{window['rps'].min():.1f}, {window['rps'].max():.1f}]")
+    print(f"   Raw RPS: mean={window['rps'].mean():.2f}, range=[{window['rps'].min():.1f}, {window['rps'].max():.1f}]")
 
     print(f"⚖️  Applying scale factor g={args.scale_factor}...")
     scaled = apply_scaling(window, args.scale_factor)
-    print(f"   Scaled RPS: mean={scaled['rps_scaled'].mean():.0f}, "
-          f"range=[{scaled['rps_scaled'].min()}, {scaled['rps_scaled'].max()}]")
+    print(
+        f"   Scaled RPS: mean={scaled['rps_scaled'].mean():.0f}, "
+        f"range=[{scaled['rps_scaled'].min()}, {scaled['rps_scaled'].max()}]"
+    )
 
     stages = generate_k6_stages(scaled, args.bucket_sec)
 
@@ -284,8 +276,7 @@ def main():
         print(f"\n🔍 Dry run — {len(stages)} stages:")
         for i, s in enumerate(stages):
             print(f"  [{i:>2}] {s['target']:>4} RPS × {s['duration']}")
-        print(f"\nTotal duration: {len(stages) * args.bucket_sec}s "
-              f"({len(stages) * args.bucket_sec / 60:.1f} min)")
+        print(f"\nTotal duration: {len(stages) * args.bucket_sec}s ({len(stages) * args.bucket_sec / 60:.1f} min)")
         return 0
 
     # Write artifacts
@@ -336,10 +327,10 @@ def main():
         json.dump(manifest, f, indent=2)
     print(f"✅ Manifest: {manifest_path}")
 
-    print(f"\n🎯 Pipeline complete. Run with:")
+    print("\n🎯 Pipeline complete. Run with:")
     print(f"   k6 run {js_path.relative_to(PROJECT_ROOT)} \\")
-    print(f"     -e TARGET_URL=http://localhost:18082 \\")
-    print(f"     -e SCENARIO=s4-hybrid-predictive")
+    print("     -e TARGET_URL=http://localhost:18082 \\")
+    print("     -e SCENARIO=s4-hybrid-predictive")
 
     return 0
 

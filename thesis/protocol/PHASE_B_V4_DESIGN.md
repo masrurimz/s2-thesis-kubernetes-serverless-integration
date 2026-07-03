@@ -822,7 +822,7 @@ With node provisioning delay, we expect:
 - [ ] Update `infrastructure/test-app/test-app-warm-deployment.yaml` (nodeSelector)
 - [ ] Update `infrastructure/test-app/knative-service.yaml` (nodeSelector)
 - [ ] Verify HAProxy backend addresses work with multi-node
-- [ ] Add `NodeProvisioner` class to `thesis/scripts/run_phase_b_experiments.py`
+- [ ] Add `NodeProvisioner` class to `scripts/run_phase_b_experiments.py`
 - [ ] Update `ScenarioResetter` to integrate provisioner reset
 - [ ] Update `ExperimentRunner.run_single()` to manage provisioner lifecycle
 - [ ] Add provision event logging to run output

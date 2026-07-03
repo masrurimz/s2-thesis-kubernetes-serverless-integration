@@ -1,5 +1,4 @@
 """Tests for Algorithm 2: Cluster Controller."""
-import pytest
 
 from scaling.cluster_controller import ClusterController, ScalingConfig, ScalingDecision
 

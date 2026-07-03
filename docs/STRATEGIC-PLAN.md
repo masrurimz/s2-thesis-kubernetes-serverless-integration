@@ -94,7 +94,7 @@ This document is a planning artifact. Current thesis-facing claims should follow
 
 **Tasks**:
 - [ ] Download and process ClarkNet + Calgary datasets
-- [ ] Implement GRU training pipeline (`ml_models/gru_predictor.py`)
+- [ ] Implement GRU training pipeline (`controller/prediction/gru_predictor.py`)
 - [ ] Run offline comparison: GRU vs LR vs naive baselines
 - [ ] Generate thesis-ready comparison table (RMSE, MAE, MAPE)
 - [ ] Integrate best model into prediction_server
@@ -158,7 +158,7 @@ For each scenario [S1, S2, S3, S4]:
 │   ├── workloads/              # steady, spike, endurance configs
 │   ├── runs/                   # Timestamped run outputs
 │   └── experiments.db          # SQLite tracking
-├── ml_models/                   # ML model implementations
+├── controller/prediction/         # ML model implementations
 │   ├── baselines/
 │   │   ├── naive.py            # Last-value baseline
 │   │   └── moving_avg.py       # Moving average
@@ -279,7 +279,7 @@ uv run python -m intelligent_router.routing_controller --once
 ### Priority 2: Scenario Infrastructure
 ```bash
 # Create scenario configurations
-mkdir -p experiments/scenarios/{s1-k8s-only,s2-serverless-only,s3-hybrid-reactive,s4-hybrid-predictive}
+# NOTE: experiments/scenarios/ is now archived at archived/experiments-framework/
 
 # Create scenario runner script
 # ./run-scenario.sh [s1|s2|s3|s4] [steady|spike|endurance]

@@ -88,5 +88,5 @@ High MAPE is caused by many near-zero and zero-value intervals.
 ## Model Artifacts
 
 - Best model (ClarkNet 5-min): `controller/data/models/gru_model_real.pt`
-- Training script: `ml_models/train_gru_real.py`
+- Training script: `controller/prediction/train_gru_real.py`
 - Raw results: `raw/training_results.json`

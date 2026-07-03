@@ -1,0 +1,78 @@
+[project]
+name = "thesis-hybrid-k3s-serverless"
+version = "0.1.0"
+description = "Hybrid k3s-serverless architecture with GRU workload prediction"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    # Core framework
+    "fastapi>=0.116.1",
+    "uvicorn>=0.35.0",
+    "pydantic>=2.11.7",
+    "pydantic-settings>=2.12.0",
+    "structlog",
+    "python-dotenv>=1.2.1",
+    "pyyaml",
+    # HTTP / async
+    "aiohttp>=3.12.15",
+    "requests>=2.32.4",
+    "httpx>=0.28.0",
+    # Data / ML
+    "pandas>=2.3.1",
+    "numpy",
+    "scikit-learn>=1.7.1",
+    "scipy>=1.16.1",
+    "joblib",
+    "pyarrow>=23.0.0",
+    "torch==2.5.1+rocm6.2; sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "pytorch-triton-rocm==3.1.0; sys_platform == 'linux' and platform_machine == 'x86_64'",
+    # Monitoring
+    "prometheus-client>=0.21.0",
+    # Visualization
+    "matplotlib>=3.10.8",
+    # Dev / test
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    # Workspace members
+    "thesis-controller",
+]
+
+[tool.uv.workspace]
+members = ["controller"]
+
+
+# AMD ROCm PyTorch index for GPU support
+[[tool.uv.index]]
+name = "pytorch-rocm"
+url = "https://download.pytorch.org/whl/rocm6.2"
+explicit = true
+
+[tool.uv.sources]
+thesis-controller = { workspace = true }
+torch = { index = "pytorch-rocm" }
+torchvision = { index = "pytorch-rocm" }
+torchaudio = { index = "pytorch-rocm" }
+pytorch-triton-rocm = { index = "pytorch-rocm" }
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.20",
+    "ty>=0.0.56",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+extend-exclude = ["archived", ".venv", "results", "infrastructure/k3d/k3d_autoscaler.py"]
+
+[tool.ruff.lint]
+# E402: module-import-not-at-top (needed for sys.path.insert patterns)
+# F841: unused-variable (matplotlib bar assignments, debug vars in analysis scripts)
+ignore = ["E402"]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*.py" = ["F841"]
+"controller/tests/*.py" = ["F841"]
+
+[tool.ruff.format]
+quote-style = "double"

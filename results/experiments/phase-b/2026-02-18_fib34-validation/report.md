@@ -3,7 +3,7 @@
 **Date:** 2026-02-18
 **Experiment:** `results/experiments/phase-b/2026-02-18_fib34-validation/`
 **Workload:** ClarkNet trace replay, `fib(34)`, 1200s per scenario
-**Analyzer:** `thesis/scripts/cost_analyzer.py` v5 → `controller/results/cost_analysis/cost_analysis_20260218_182512.json`
+**Analyzer:** `scripts/cost_analyzer.py` v5 → `results/cost/2026-02-18_fib34-validation/cost_analysis_20260218_182512.json`
 
 ## Scenario Metrics
 
@@ -46,4 +46,4 @@ fib(34) shifts the crossover into the measured RPS band and reduces S2 cost due 
 - `results/experiments/phase-b/2026-02-18_fib34-validation/s2-serverless-only_run1/result.json`
 - `results/experiments/phase-b/2026-02-18_fib34-validation/s3-hybrid-reactive_run1/result.json`
 - `results/experiments/phase-b/2026-02-18_fib34-validation/s4-hybrid-predictive_run1/result.json`
-- `controller/results/cost_analysis/cost_analysis_20260218_182512.json`
+- `results/cost/2026-02-18_fib34-validation/cost_analysis_20260218_182512.json`

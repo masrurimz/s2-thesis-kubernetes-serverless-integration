@@ -1,7 +1,7 @@
 """Tests for K3d autoscaler with mocked subprocess calls."""
 
 import pytest
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock
 import subprocess
 
 from autoscaler.k3d_autoscaler import (
@@ -324,7 +324,6 @@ class TestPrometheusMetrics:
 
     def test_metrics_types(self):
         """Test metrics are correct types."""
-        from prometheus_client import Gauge, Counter, Histogram
 
         assert k3d_nodes._type == "gauge"
         assert k3d_scale_up_events_total._type == "counter"

@@ -2,7 +2,7 @@
 
 **Date:** 2026-02-19
 **Source experiment:** `results/experiments/phase-b/2026-02-19_pilot-n2-validity-gates-rerun/`
-**Analyzer:** `thesis/scripts/cost_analyzer.py` v5
+**Analyzer:** `scripts/cost_analyzer.py` v5
 
 ## Scope
 

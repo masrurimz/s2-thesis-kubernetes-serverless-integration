@@ -1,7 +1,7 @@
 # S4 Hybrid-Predictive Integration Guide
 
 **Status:** GRU Model Integrated ✅  
-**Model:** `controller/data/models/gru_model.pt` (621KB, PyTorch)  
+**Model:** `data/models/gru_model.pt` (621KB, PyTorch)  
 **Performance:** 6.01% RMSE, 0.88 avg confidence
 
 ---
@@ -47,7 +47,7 @@
 ```bash
 # Start the prediction server
 HSA_OVERRIDE_GFX_VERSION=11.0.0 sg render -c \
-  "cd controller && uv run python -m prediction.prediction_server"
+  "uv run python -m prediction.prediction_server"
 ```
 
 **Endpoints:**
@@ -69,7 +69,7 @@ curl -X POST http://localhost:8090/predict \
 ```bash
 # Run S4 scenario
 HSA_OVERRIDE_GFX_VERSION=11.0.0 sg render -c \
-  "cd controller && uv run python -m daemon.routing_daemon --scenario s4-hybrid-predictive"
+  "uv run python -m daemon.routing_daemon --scenario s4-hybrid-predictive"
 ```
 
 **S4 Configuration:**
@@ -98,8 +98,6 @@ The client queries the prediction server and provides:
 
 ### Step 1: Start Prediction Server
 ```bash
-cd /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/controller
-
 # Terminal 1: Start GRU prediction server
 HSA_OVERRIDE_GFX_VERSION=11.0.0 sg render -c \
   "uv run python -m prediction.prediction_server"
@@ -128,7 +126,7 @@ HSA_OVERRIDE_GFX_VERSION=11.0.0 sg render -c \
 ```python
 # test_s4_integration.py
 import sys
-sys.path.insert(0, 'controller')
+sys.path.insert(0, '.')
 
 from daemon.gru_client import GRUClient
 
@@ -149,7 +147,6 @@ print("\n🎉 S4 integration working!")
 
 ### Run Test
 ```bash
-cd /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration
 uv run python test_s4_integration.py
 ```
 
@@ -161,7 +158,7 @@ uv run python test_s4_integration.py
 **Solution:**
 ```bash
 # Verify model file exists
-ls -lh controller/data/models/gru_model.pt
+ls -lh data/models/gru_model.pt
 
 # Reload model via API
 curl -X POST http://localhost:8090/model/reload

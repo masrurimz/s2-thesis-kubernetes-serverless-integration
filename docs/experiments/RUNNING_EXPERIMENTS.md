@@ -41,12 +41,10 @@ cd infrastructure/monitoring
 docker-compose up -d
 
 # 5. Train and start GRU prediction server
-cd controller
-uv run python -m ml_models.train_gru  # If model not trained
-uv run python -m prediction_engine.server --port 8090
+uv run python -m prediction.train_gru  # If model not trained
+uv run gru-prediction-server
 
 # 6. Start routing daemon
-cd controller
 uv run python -m daemon.routing_daemon --scenario s4-hybrid-predictive
 ```
 
@@ -245,7 +243,6 @@ Metrics exposed by routing daemon (`localhost:9104/metrics`):
 curl http://localhost:9104/health
 
 # Restart routing daemon
-cd controller
 uv run python -m daemon.routing_daemon --scenario s3-hybrid-reactive
 ```
 
@@ -284,11 +281,10 @@ curl http://localhost:8082/  # HAProxy endpoint
 ls controller/data/models/gru_model.pt
 
 # Train model if missing
-cd controller
-uv run python -m ml_models.train_gru
+uv run python -m prediction.train_gru
 
 # Start prediction server
-uv run python -m prediction_engine.server --port 8090
+uv run gru-prediction-server
 ```
 
 ### Low proactive adjustment ratio
@@ -320,17 +316,15 @@ docker-compose -f infrastructure/haproxy/docker-compose.yml up -d
 docker-compose -f infrastructure/monitoring/docker-compose.yml up -d
 
 echo "=== Training GRU model ==="
-cd controller && uv run python -m ml_models.train_gru && cd ..
+uv run python -m prediction.train_gru
 
 echo "=== Starting GRU server (background) ==="
-cd controller && uv run python -m prediction_engine.server --port 8090 &
+uv run gru-prediction-server &
 GRU_PID=$!
-cd ..
 
 echo "=== Starting routing daemon (background) ==="
-cd controller && uv run python -m daemon.routing_daemon --scenario s4-hybrid-predictive &
+uv run python -m daemon.routing_daemon --scenario s4-hybrid-predictive &
 DAEMON_PID=$!
-cd ..
 
 sleep 10  # Wait for services to start
 

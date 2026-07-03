@@ -3,8 +3,8 @@
 **Date**: 2026-02-18 (v5 — unified AWS model)
 **Source experiment**: `results/experiments/phase-b/2026-02-16_validation-metrics-fixes/`
 **Duration**: 1200s per scenario, ClarkNet workload replay
-**Analyzer**: `thesis/scripts/cost_analyzer.py` → `controller/results/cost_analysis/cost_analysis_20260218_132358.json`
-**Reproduce**: `cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python ../thesis/scripts/cost_analyzer.py --experiment-dir ../results/experiments/phase-b/2026-02-16_validation-metrics-fixes`
+**Analyzer**: `scripts/cost_analyzer.py` → `results/cost/2026-02-17_three-model-cost-comparison/cost_analysis_20260218_132358.json` (data preserved in git history as `controller/results/cost_analysis/cost_analysis_20260218_132358.json`)
+**Reproduce**: `HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python scripts/cost_analyzer.py --experiment-dir results/experiments/phase-b/2026-02-16_validation-metrics-fixes`
 
 > **Architecture Mapping.** The experiment runs K8s HPA + Knative KPA on local k3s. For cost projection, this maps to AWS:
 > - K8s HPA pods → **EKS control plane** ($0.10/hr) + **EC2 nodes** (t3.medium, $0.0416/hr)
@@ -135,4 +135,4 @@ For reference, stress-harness k3d nodes (400m allocatable) produced these costs.
 
 ---
 
-*Evidence: `controller/results/cost_analysis/cost_analysis_20260218_132358.json`. Analyzer: `thesis/scripts/cost_analyzer.py` v5.*
+*Evidence: `results/cost/2026-02-17_three-model-cost-comparison/cost_analysis_20260218_132358.json` (preserved in git history as `controller/results/cost_analysis/cost_analysis_20260218_132358.json`). Analyzer: `scripts/cost_analyzer.py` v5.*
