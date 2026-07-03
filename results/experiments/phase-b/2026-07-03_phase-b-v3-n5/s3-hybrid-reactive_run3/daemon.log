@@ -1,0 +1,440 @@
+<frozen runpy>:128: RuntimeWarning: 'daemon.routing_daemon' found in sys.modules after import of package 'daemon', but prior to execution of 'daemon.routing_daemon'; this may result in unpredictable behaviour
+2026-07-04 05:08:24 [info     ] SLOMonitor initialized         threshold_ms=200.0 violation_window=30
+2026-07-04 05:08:24 [info     ] Algorithm1Controller initialized cooldown=15 weight_step=10
+2026-07-04 05:08:24 [info     ] HAProxyWeightAdjuster initialized backend=servers socket_path=/tmp/haproxy.sock tcp_socket=localhost:19999 tcp_socket_available=True unix_socket_available=False
+2026-07-04 05:08:24 [info     ] GRUClient initialized          base_url=http://localhost:8090
+2026-07-04 05:08:24 [info     ] K8sScaler initialized          deployment=test-app-warm namespace=default
+2026-07-04 05:08:24 [info     ] RoutingDaemon initialized      decision_interval=15 description='Algorithm 1 reactive routing without predictions' scenario=s3-hybrid-reactive use_algorithm=True use_predictions=False
+2026-07-04 05:08:24 [info     ] Starting routing daemon        interval=15 scenario=s3-hybrid-reactive
+2026-07-04 05:08:24 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2594
+2026-07-04 05:08:24 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-07-04 05:08:24 [debug    ] Weights already set correctly  k3s=80 knative=20
+2026-07-04 05:08:24 [info     ] Initial weights applied        k3s=80 knative=20
+2026-07-04 05:08:24 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2594
+2026-07-04 05:08:24 [debug    ] HAProxy fallback primed        total_requests=0
+2026-07-04 05:08:24 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=0.0 required_resources=0.0 target_replicas=1
+2026-07-04 05:08:24 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=75.08 p99=0.0
+2026-07-04 05:08:39 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2589
+2026-07-04 05:08:39 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=0.0 required_resources=0.0 target_replicas=1
+2026-07-04 05:08:39 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=76.73 p99=0.0
+2026-07-04 05:08:54 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2589
+2026-07-04 05:08:54 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=0.0 required_resources=0.0 target_replicas=1
+2026-07-04 05:08:54 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=75.07 p99=0.0
+2026-07-04 05:09:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2689
+2026-07-04 05:09:09 [debug    ] HAProxy fallback latency       delta_requests=445 interval_avg_ms=5992.0 max_rtime_ms=10846.0 p99_est=10846.0
+2026-07-04 05:09:09 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=14.725960307624357 required_resources=0.589 target_replicas=1
+2026-07-04 05:09:09 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=69.35 p99=10846.0
+2026-07-04 05:09:24 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2734
+2026-07-04 05:09:24 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.04 beta=0.0 buffer=1.2 current_replicas=1 predicted_load=25.5091090999573 required_resources=1.02 target_replicas=2
+2026-07-04 05:09:25 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=2
+2026-07-04 05:09:25 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=113.1 p99=10846.0
+2026-07-04 05:09:40 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2770
+2026-07-04 05:09:40 [debug    ] HAProxy fallback latency       delta_requests=518 interval_avg_ms=1715.33 max_rtime_ms=22066.0 p99_est=3430.65
+2026-07-04 05:09:40 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 70, 'knative': 30} p99=3430.6525096525097 serverless_enabled=True violation_sec=31
+2026-07-04 05:09:40 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2771
+2026-07-04 05:09:40 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-07-04 05:09:40 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2771
+2026-07-04 05:09:40 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 70' response_length=0
+2026-07-04 05:09:40 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2771
+2026-07-04 05:09:40 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 30' response_length=0
+2026-07-04 05:09:40 [debug    ] Weight commands sent via socket successfully k3s=70 knative=30
+2026-07-04 05:09:40 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2771
+2026-07-04 05:09:40 [debug    ] Current weights retrieved via socket weights={'k3s': 70, 'knative': 30}
+2026-07-04 05:09:40 [info     ] Weights updated successfully via HTTP new={'k3s': 70, 'knative': 30} previous={'k3s': 80, 'knative': 20}
+2026-07-04 05:09:40 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (3431ms > 200ms) for 31s' weights={'k3s': 70, 'knative': 30}
+2026-07-04 05:09:40 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=2 predicted_load=27.921212750453094 required_resources=1.117 target_replicas=2
+2026-07-04 05:09:40 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=580.72 p99=3430.6525096525097
+2026-07-04 05:09:55 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2775
+2026-07-04 05:09:55 [debug    ] HAProxy fallback latency       delta_requests=848 interval_avg_ms=513.48 max_rtime_ms=23605.0 p99_est=1026.97
+2026-07-04 05:09:55 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 60, 'knative': 40} p99=1026.9669811320755 serverless_enabled=True violation_sec=46
+2026-07-04 05:09:55 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2774
+2026-07-04 05:09:55 [debug    ] Current weights retrieved via socket weights={'k3s': 70, 'knative': 30}
+2026-07-04 05:09:55 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2774
+2026-07-04 05:09:55 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 60' response_length=0
+2026-07-04 05:09:55 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2772
+2026-07-04 05:09:55 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 40' response_length=0
+2026-07-04 05:09:55 [debug    ] Weight commands sent via socket successfully k3s=60 knative=40
+2026-07-04 05:09:56 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2775
+2026-07-04 05:09:56 [debug    ] Current weights retrieved via socket weights={'k3s': 60, 'knative': 40}
+2026-07-04 05:09:56 [info     ] Weights updated successfully via HTTP new={'k3s': 60, 'knative': 40} previous={'k3s': 70, 'knative': 30}
+2026-07-04 05:09:56 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (1027ms > 200ms) for 46s' weights={'k3s': 60, 'knative': 40}
+2026-07-04 05:09:56 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.04 beta=0.0 buffer=1.2 current_replicas=2 predicted_load=44.351449948313174 required_resources=1.774 target_replicas=3
+2026-07-04 05:09:56 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=3
+2026-07-04 05:09:56 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=618.1 p99=1026.9669811320755
+2026-07-04 05:10:11 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2783
+2026-07-04 05:10:11 [debug    ] HAProxy fallback latency       delta_requests=785 interval_avg_ms=4399.83 max_rtime_ms=23605.0 p99_est=8799.66
+2026-07-04 05:10:11 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=8799.658598726115 serverless_enabled=True violation_sec=62
+2026-07-04 05:10:11 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2787
+2026-07-04 05:10:11 [debug    ] Current weights retrieved via socket weights={'k3s': 60, 'knative': 40}
+2026-07-04 05:10:11 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2787
+2026-07-04 05:10:11 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 50' response_length=0
+2026-07-04 05:10:11 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2785
+2026-07-04 05:10:11 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 50' response_length=0
+2026-07-04 05:10:11 [debug    ] Weight commands sent via socket successfully k3s=50 knative=50
+2026-07-04 05:10:11 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2785
+2026-07-04 05:10:11 [debug    ] Current weights retrieved via socket weights={'k3s': 50, 'knative': 50}
+2026-07-04 05:10:11 [info     ] Weights updated successfully via HTTP new={'k3s': 50, 'knative': 50} previous={'k3s': 60, 'knative': 40}
+2026-07-04 05:10:11 [info     ] Weights updated                action=SCALE_OUT reason='SLO violation (8800ms > 200ms) for 62s' weights={'k3s': 50, 'knative': 50}
+2026-07-04 05:10:11 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=52.37646932703997 required_resources=2.095 target_replicas=3
+2026-07-04 05:10:11 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=579.04 p99=8799.658598726115
+2026-07-04 05:10:26 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2798
+2026-07-04 05:10:26 [debug    ] HAProxy fallback latency       delta_requests=755 interval_avg_ms=2491.05 max_rtime_ms=23605.0 p99_est=4982.11
+2026-07-04 05:10:26 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=4982.105960264901 serverless_enabled=True violation_sec=77
+2026-07-04 05:10:26 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=49.39343550774206 required_resources=1.976 target_replicas=3
+2026-07-04 05:10:26 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=76.41 p99=4982.105960264901
+2026-07-04 05:10:41 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2798
+2026-07-04 05:10:41 [debug    ] HAProxy fallback latency       delta_requests=406 interval_avg_ms=9412.32 max_rtime_ms=23605.0 p99_est=18824.63
+2026-07-04 05:10:41 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=18824.63054187192 serverless_enabled=True violation_sec=92
+2026-07-04 05:10:41 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=37.695129692683764 required_resources=1.508 target_replicas=2
+2026-07-04 05:10:41 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=76.09 p99=18824.63054187192
+2026-07-04 05:10:56 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2801
+2026-07-04 05:10:56 [debug    ] HAProxy fallback latency       delta_requests=477 interval_avg_ms=8805.49 max_rtime_ms=26887.0 p99_est=17610.98
+2026-07-04 05:10:56 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=17610.98113207547 serverless_enabled=True violation_sec=107
+2026-07-04 05:10:57 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=29.28356996404355 required_resources=1.171 target_replicas=2
+2026-07-04 05:10:57 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=74.54 p99=17610.98113207547
+2026-07-04 05:11:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2804
+2026-07-04 05:11:12 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=17610.98113207547 serverless_enabled=True violation_sec=123
+2026-07-04 05:11:12 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=32.56913730684014 required_resources=1.303 target_replicas=2
+2026-07-04 05:11:12 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=70.47 p99=17610.98113207547
+2026-07-04 05:11:27 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2803
+2026-07-04 05:11:27 [debug    ] HAProxy fallback latency       delta_requests=789 interval_avg_ms=1818.42 max_rtime_ms=26887.0 p99_est=3636.83
+2026-07-04 05:11:27 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=3636.833967046895 serverless_enabled=True violation_sec=138
+2026-07-04 05:11:27 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=42.92751414503812 required_resources=1.717 target_replicas=3
+2026-07-04 05:11:27 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=70.95 p99=3636.833967046895
+2026-07-04 05:11:42 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2809
+2026-07-04 05:11:42 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=3636.833967046895 serverless_enabled=True violation_sec=153
+2026-07-04 05:11:42 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=59.386210268138015 required_resources=2.375 target_replicas=3
+2026-07-04 05:11:42 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=73.91 p99=3636.833967046895
+2026-07-04 05:11:57 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2811
+2026-07-04 05:11:57 [debug    ] HAProxy fallback latency       delta_requests=580 interval_avg_ms=24909.57 max_rtime_ms=30938.0 p99_est=30938.0
+2026-07-04 05:11:57 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=30938.0 serverless_enabled=True violation_sec=168
+2026-07-04 05:11:57 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=52.48093851144121 required_resources=2.099 target_replicas=3
+2026-07-04 05:11:57 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=77.93 p99=30938.0
+2026-07-04 05:12:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2811
+2026-07-04 05:12:12 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=30938.0 serverless_enabled=True violation_sec=183
+2026-07-04 05:12:12 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=44.60707484819354 required_resources=1.784 target_replicas=3
+2026-07-04 05:12:12 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=71.94 p99=30938.0
+2026-07-04 05:12:27 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2842
+2026-07-04 05:12:27 [debug    ] HAProxy fallback latency       delta_requests=1015 interval_avg_ms=3973.82 max_rtime_ms=30938.0 p99_est=7947.63
+2026-07-04 05:12:27 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=7947.631527093596 serverless_enabled=True violation_sec=198
+2026-07-04 05:12:27 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=58.972874234935844 required_resources=2.359 target_replicas=3
+2026-07-04 05:12:27 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=75.77 p99=7947.631527093596
+2026-07-04 05:12:42 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2816
+2026-07-04 05:12:42 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=7947.631527093596 serverless_enabled=True violation_sec=213
+2026-07-04 05:12:42 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=57.98066761025504 required_resources=2.319 target_replicas=3
+2026-07-04 05:12:42 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=70.22 p99=7947.631527093596
+2026-07-04 05:12:57 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2848
+2026-07-04 05:12:57 [debug    ] HAProxy fallback latency       delta_requests=821 interval_avg_ms=28815.21 max_rtime_ms=30938.0 p99_est=30938.0
+2026-07-04 05:12:57 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=30938.0 serverless_enabled=True violation_sec=228
+2026-07-04 05:12:57 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=51.48362001087378 required_resources=2.059 target_replicas=3
+2026-07-04 05:12:57 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=84.07 p99=30938.0
+2026-07-04 05:13:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2823
+2026-07-04 05:13:12 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=30938.0 serverless_enabled=True violation_sec=243
+2026-07-04 05:13:12 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=57.63341753119483 required_resources=2.305 target_replicas=3
+2026-07-04 05:13:12 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=73.16 p99=30938.0
+2026-07-04 05:13:27 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2818
+2026-07-04 05:13:27 [debug    ] HAProxy fallback latency       delta_requests=774 interval_avg_ms=16273.81 max_rtime_ms=30938.0 p99_est=30938.0
+2026-07-04 05:13:27 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=30938.0 serverless_enabled=True violation_sec=258
+2026-07-04 05:13:27 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=56.068946374202795 required_resources=2.243 target_replicas=3
+2026-07-04 05:13:27 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=73.86 p99=30938.0
+2026-07-04 05:13:42 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2830
+2026-07-04 05:13:42 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=30938.0 serverless_enabled=True violation_sec=273
+2026-07-04 05:13:42 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=68.00182632165216 required_resources=2.72 target_replicas=4
+2026-07-04 05:13:42 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=4
+2026-07-04 05:13:42 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=114.35 p99=30938.0
+2026-07-04 05:13:57 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2827
+2026-07-04 05:13:57 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=30938.0 serverless_enabled=True violation_sec=288
+2026-07-04 05:13:57 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=90.88933001063651 required_resources=3.636 target_replicas=5
+2026-07-04 05:13:57 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=74.14 p99=30938.0
+2026-07-04 05:14:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2829
+2026-07-04 05:14:12 [debug    ] HAProxy fallback latency       delta_requests=1114 interval_avg_ms=45868.58 max_rtime_ms=34566.0 p99_est=34566.0
+2026-07-04 05:14:12 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=34566.0 serverless_enabled=True violation_sec=303
+2026-07-04 05:14:13 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=85.51202303255235 required_resources=3.42 target_replicas=5
+2026-07-04 05:14:13 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=5
+2026-07-04 05:14:13 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=117.55 p99=34566.0
+2026-07-04 05:14:28 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2838
+2026-07-04 05:14:28 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=34566.0 serverless_enabled=True violation_sec=319
+2026-07-04 05:14:28 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=97.97187063516215 required_resources=3.919 target_replicas=5
+2026-07-04 05:14:28 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=75.75 p99=34566.0
+2026-07-04 05:14:43 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2828
+2026-07-04 05:14:43 [debug    ] HAProxy fallback latency       delta_requests=761 interval_avg_ms=18745.81 max_rtime_ms=34566.0 p99_est=34566.0
+2026-07-04 05:14:43 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=34566.0 serverless_enabled=True violation_sec=334
+2026-07-04 05:14:43 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=86.22815518805851 required_resources=3.449 target_replicas=5
+2026-07-04 05:14:43 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=77.6 p99=34566.0
+2026-07-04 05:14:58 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2829
+2026-07-04 05:14:58 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=34566.0 serverless_enabled=True violation_sec=349
+2026-07-04 05:14:58 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=65.49767624163954 required_resources=2.62 target_replicas=4
+2026-07-04 05:14:58 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=73.15 p99=34566.0
+2026-07-04 05:15:13 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2826
+2026-07-04 05:15:13 [debug    ] HAProxy fallback latency       delta_requests=715 interval_avg_ms=76056.78 max_rtime_ms=34566.0 p99_est=34566.0
+2026-07-04 05:15:13 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=34566.0 serverless_enabled=True violation_sec=364
+2026-07-04 05:15:13 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=63.811154159965646 required_resources=2.552 target_replicas=4
+2026-07-04 05:15:13 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=78.3 p99=34566.0
+2026-07-04 05:15:28 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2835
+2026-07-04 05:15:28 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=34566.0 serverless_enabled=True violation_sec=379
+2026-07-04 05:15:28 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=60.82246818430892 required_resources=2.433 target_replicas=3
+2026-07-04 05:15:28 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=77.44 p99=34566.0
+2026-07-04 05:15:43 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2836
+2026-07-04 05:15:43 [debug    ] HAProxy fallback latency       delta_requests=484 interval_avg_ms=171823.45 max_rtime_ms=34566.0 p99_est=34566.0
+2026-07-04 05:15:43 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=34566.0 serverless_enabled=True violation_sec=394
+2026-07-04 05:15:43 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=53.25395623386877 required_resources=2.13 target_replicas=3
+2026-07-04 05:15:43 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=76.91 p99=34566.0
+2026-07-04 05:15:58 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2837
+2026-07-04 05:15:58 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=34566.0 serverless_enabled=True violation_sec=409
+2026-07-04 05:15:58 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=51.36930636508 required_resources=2.055 target_replicas=3
+2026-07-04 05:15:58 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=74.84 p99=34566.0
+2026-07-04 05:16:13 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2836
+2026-07-04 05:16:13 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=34566.0 serverless_enabled=True violation_sec=424
+2026-07-04 05:16:13 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=75.45260285551285 required_resources=3.018 target_replicas=4
+2026-07-04 05:16:13 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=76.96 p99=34566.0
+2026-07-04 05:16:28 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2838
+2026-07-04 05:16:28 [debug    ] HAProxy fallback latency       delta_requests=809 interval_avg_ms=123641.85 max_rtime_ms=34566.0 p99_est=34566.0
+2026-07-04 05:16:28 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=34566.0 serverless_enabled=True violation_sec=439
+2026-07-04 05:16:28 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=67.09469698277584 required_resources=2.684 target_replicas=4
+2026-07-04 05:16:28 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=79.29 p99=34566.0
+2026-07-04 05:16:43 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2842
+2026-07-04 05:16:43 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=34566.0 serverless_enabled=True violation_sec=454
+2026-07-04 05:16:43 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=71.85648473040533 required_resources=2.874 target_replicas=4
+2026-07-04 05:16:43 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=79.77 p99=34566.0
+2026-07-04 05:16:58 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2847
+2026-07-04 05:16:58 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=34566.0 serverless_enabled=True violation_sec=469
+2026-07-04 05:16:58 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=77.85389912743662 required_resources=3.114 target_replicas=4
+2026-07-04 05:16:58 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=77.88 p99=34566.0
+2026-07-04 05:17:13 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2839
+2026-07-04 05:17:13 [debug    ] HAProxy fallback latency       delta_requests=1225 interval_avg_ms=46491.94 max_rtime_ms=36897.0 p99_est=36897.0
+2026-07-04 05:17:13 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=36897.0 serverless_enabled=True violation_sec=484
+2026-07-04 05:17:13 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=73.58022755590483 required_resources=2.943 target_replicas=4
+2026-07-04 05:17:13 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=76.96 p99=36897.0
+2026-07-04 05:17:29 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2838
+2026-07-04 05:17:29 [debug    ] HAProxy fallback latency       delta_requests=1103 interval_avg_ms=28339.05 max_rtime_ms=51681.0 p99_est=51681.0
+2026-07-04 05:17:29 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=51681.0 serverless_enabled=True violation_sec=500
+2026-07-04 05:17:29 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=77.20049831005247 required_resources=3.088 target_replicas=4
+2026-07-04 05:17:29 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=72.77 p99=51681.0
+2026-07-04 05:17:44 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2846
+2026-07-04 05:17:44 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=51681.0 serverless_enabled=True violation_sec=515
+2026-07-04 05:17:44 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=85.44065697201995 required_resources=3.418 target_replicas=5
+2026-07-04 05:17:44 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=78.86 p99=51681.0
+2026-07-04 05:17:59 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2842
+2026-07-04 05:17:59 [debug    ] HAProxy fallback latency       delta_requests=648 interval_avg_ms=70828.7 max_rtime_ms=55945.0 p99_est=55945.0
+2026-07-04 05:17:59 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=530
+2026-07-04 05:17:59 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=70.44707820036245 required_resources=2.818 target_replicas=4
+2026-07-04 05:17:59 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=71.31 p99=55945.0
+2026-07-04 05:18:14 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2847
+2026-07-04 05:18:14 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=545
+2026-07-04 05:18:14 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=79.01350030579061 required_resources=3.161 target_replicas=4
+2026-07-04 05:18:14 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=78.84 p99=55945.0
+2026-07-04 05:18:29 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2841
+2026-07-04 05:18:29 [debug    ] HAProxy fallback latency       delta_requests=1129 interval_avg_ms=2055.56 max_rtime_ms=55945.0 p99_est=4111.12
+2026-07-04 05:18:29 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=4111.116031886625 serverless_enabled=True violation_sec=560
+2026-07-04 05:18:29 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=94.89674036710063 required_resources=3.796 target_replicas=5
+2026-07-04 05:18:29 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=74.76 p99=4111.116031886625
+2026-07-04 05:18:44 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2832
+2026-07-04 05:18:44 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=4111.116031886625 serverless_enabled=True violation_sec=575
+2026-07-04 05:18:44 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=89.74142365971286 required_resources=3.59 target_replicas=5
+2026-07-04 05:18:44 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=75.27 p99=4111.116031886625
+2026-07-04 05:18:59 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2849
+2026-07-04 05:18:59 [debug    ] HAProxy fallback latency       delta_requests=1396 interval_avg_ms=18515.52 max_rtime_ms=55945.0 p99_est=37031.05
+2026-07-04 05:18:59 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=37031.04727793696 serverless_enabled=True violation_sec=590
+2026-07-04 05:18:59 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=98.57292087424213 required_resources=3.943 target_replicas=5
+2026-07-04 05:18:59 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=77.52 p99=37031.04727793696
+2026-07-04 05:19:14 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2847
+2026-07-04 05:19:14 [debug    ] HAProxy fallback latency       delta_requests=1664 interval_avg_ms=3400.56 max_rtime_ms=55945.0 p99_est=6801.12
+2026-07-04 05:19:14 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=6801.1213942307695 serverless_enabled=True violation_sec=605
+2026-07-04 05:19:14 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=101.31478506056065 required_resources=4.053 target_replicas=5
+2026-07-04 05:19:14 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=77.6 p99=6801.1213942307695
+2026-07-04 05:19:29 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2843
+2026-07-04 05:19:29 [debug    ] HAProxy fallback latency       delta_requests=1336 interval_avg_ms=12475.89 max_rtime_ms=55945.0 p99_est=24951.77
+2026-07-04 05:19:29 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=24951.77395209581 serverless_enabled=True violation_sec=620
+2026-07-04 05:19:29 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=99.48218046136975 required_resources=3.979 target_replicas=5
+2026-07-04 05:19:29 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=70.49 p99=24951.77395209581
+2026-07-04 05:19:44 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2849
+2026-07-04 05:19:44 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=24951.77395209581 serverless_enabled=True violation_sec=635
+2026-07-04 05:19:44 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=67.32831893798124 required_resources=2.693 target_replicas=4
+2026-07-04 05:19:44 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=77.03 p99=24951.77395209581
+2026-07-04 05:19:59 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2844
+2026-07-04 05:19:59 [debug    ] HAProxy fallback latency       delta_requests=1662 interval_avg_ms=42463.9 max_rtime_ms=55945.0 p99_est=55945.0
+2026-07-04 05:19:59 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=650
+2026-07-04 05:19:59 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=77.94494411922821 required_resources=3.118 target_replicas=4
+2026-07-04 05:19:59 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=79.33 p99=55945.0
+2026-07-04 05:20:14 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2846
+2026-07-04 05:20:14 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=665
+2026-07-04 05:20:14 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=102.53144882796661 required_resources=4.101 target_replicas=5
+2026-07-04 05:20:14 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=74.34 p99=55945.0
+2026-07-04 05:20:29 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2843
+2026-07-04 05:20:29 [debug    ] HAProxy fallback latency       delta_requests=400 interval_avg_ms=297332.23 max_rtime_ms=55945.0 p99_est=55945.0
+2026-07-04 05:20:29 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=680
+2026-07-04 05:20:29 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=60.681284149761076 required_resources=2.427 target_replicas=3
+2026-07-04 05:20:29 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=74.43 p99=55945.0
+2026-07-04 05:20:44 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2842
+2026-07-04 05:20:45 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=696
+2026-07-04 05:20:45 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=38.93938259256822 required_resources=1.558 target_replicas=2
+2026-07-04 05:20:45 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=67.0 p99=55945.0
+2026-07-04 05:21:00 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2845
+2026-07-04 05:21:00 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=711
+2026-07-04 05:21:00 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=54.80872403758444 required_resources=2.192 target_replicas=3
+2026-07-04 05:21:00 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=73.68 p99=55945.0
+2026-07-04 05:21:15 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2842
+2026-07-04 05:21:15 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=726
+2026-07-04 05:21:15 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=67.67996023269124 required_resources=2.707 target_replicas=4
+2026-07-04 05:21:15 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=73.7 p99=55945.0
+2026-07-04 05:21:30 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2847
+2026-07-04 05:21:30 [debug    ] HAProxy fallback latency       delta_requests=1123 interval_avg_ms=51970.9 max_rtime_ms=55945.0 p99_est=55945.0
+2026-07-04 05:21:30 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=741
+2026-07-04 05:21:30 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=75.79305845182355 required_resources=3.032 target_replicas=4
+2026-07-04 05:21:30 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=76.92 p99=55945.0
+2026-07-04 05:21:45 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2843
+2026-07-04 05:21:45 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=756
+2026-07-04 05:21:45 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=73.99572853545509 required_resources=2.96 target_replicas=4
+2026-07-04 05:21:45 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=70.6 p99=55945.0
+2026-07-04 05:22:00 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2840
+2026-07-04 05:22:00 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=771
+2026-07-04 05:22:00 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=62.82186967019164 required_resources=2.513 target_replicas=4
+2026-07-04 05:22:00 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=75.16 p99=55945.0
+2026-07-04 05:22:15 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2835
+2026-07-04 05:22:15 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=786
+2026-07-04 05:22:15 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=49.36015431976975 required_resources=1.974 target_replicas=3
+2026-07-04 05:22:15 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=78.24 p99=55945.0
+2026-07-04 05:22:30 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2835
+2026-07-04 05:22:30 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=801
+2026-07-04 05:22:30 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=46.26310264601938 required_resources=1.851 target_replicas=3
+2026-07-04 05:22:30 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=73.95 p99=55945.0
+2026-07-04 05:22:45 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2839
+2026-07-04 05:22:45 [debug    ] HAProxy fallback latency       delta_requests=655 interval_avg_ms=20363.08 max_rtime_ms=55945.0 p99_est=40726.17
+2026-07-04 05:22:45 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=40726.1679389313 serverless_enabled=True violation_sec=816
+2026-07-04 05:22:45 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=44.705588909589956 required_resources=1.788 target_replicas=3
+2026-07-04 05:22:45 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=75.45 p99=40726.1679389313
+2026-07-04 05:23:00 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2844
+2026-07-04 05:23:00 [debug    ] HAProxy fallback latency       delta_requests=628 interval_avg_ms=85550.08 max_rtime_ms=55945.0 p99_est=55945.0
+2026-07-04 05:23:00 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=831
+2026-07-04 05:23:00 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=42.55415612031 required_resources=1.702 target_replicas=3
+2026-07-04 05:23:00 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=74.96 p99=55945.0
+2026-07-04 05:23:15 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2843
+2026-07-04 05:23:15 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=846
+2026-07-04 05:23:15 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=48.12408045579045 required_resources=1.925 target_replicas=3
+2026-07-04 05:23:15 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=74.8 p99=55945.0
+2026-07-04 05:23:30 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2842
+2026-07-04 05:23:30 [debug    ] HAProxy fallback latency       delta_requests=644 interval_avg_ms=53524.77 max_rtime_ms=55945.0 p99_est=55945.0
+2026-07-04 05:23:30 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=861
+2026-07-04 05:23:30 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=48.624163225577426 required_resources=1.945 target_replicas=3
+2026-07-04 05:23:30 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=76.83 p99=55945.0
+2026-07-04 05:23:45 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2838
+2026-07-04 05:23:45 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=876
+2026-07-04 05:23:45 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=57.044729151112094 required_resources=2.282 target_replicas=3
+2026-07-04 05:23:45 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=78.79 p99=55945.0
+2026-07-04 05:24:00 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2853
+2026-07-04 05:24:00 [debug    ] HAProxy fallback latency       delta_requests=1049 interval_avg_ms=105505.35 max_rtime_ms=55945.0 p99_est=55945.0
+2026-07-04 05:24:00 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=891
+2026-07-04 05:24:01 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=70.53322008568745 required_resources=2.821 target_replicas=4
+2026-07-04 05:24:01 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=74.74 p99=55945.0
+2026-07-04 05:24:16 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2851
+2026-07-04 05:24:16 [debug    ] HAProxy fallback latency       delta_requests=1288 interval_avg_ms=13611.29 max_rtime_ms=55945.0 p99_est=27222.58
+2026-07-04 05:24:16 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=27222.580745341616 serverless_enabled=True violation_sec=907
+2026-07-04 05:24:16 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=77.46894609642247 required_resources=3.099 target_replicas=4
+2026-07-04 05:24:16 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=90.02 p99=27222.580745341616
+2026-07-04 05:24:31 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2847
+2026-07-04 05:24:31 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=27222.580745341616 serverless_enabled=True violation_sec=922
+2026-07-04 05:24:31 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=74.39585113620882 required_resources=2.976 target_replicas=4
+2026-07-04 05:24:31 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=80.62 p99=27222.580745341616
+2026-07-04 05:24:46 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2853
+2026-07-04 05:24:46 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=27222.580745341616 serverless_enabled=True violation_sec=937
+2026-07-04 05:24:46 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=59.259556235326635 required_resources=2.37 target_replicas=3
+2026-07-04 05:24:46 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=82.3 p99=27222.580745341616
+2026-07-04 05:25:01 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2871
+2026-07-04 05:25:01 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=27222.580745341616 serverless_enabled=True violation_sec=952
+2026-07-04 05:25:01 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=78.10762371704766 required_resources=3.124 target_replicas=4
+2026-07-04 05:25:01 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=80.76 p99=27222.580745341616
+2026-07-04 05:25:16 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2853
+2026-07-04 05:25:16 [debug    ] HAProxy fallback latency       delta_requests=1436 interval_avg_ms=113350.91 max_rtime_ms=55945.0 p99_est=55945.0
+2026-07-04 05:25:16 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=967
+2026-07-04 05:25:16 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=98.20223039612524 required_resources=3.928 target_replicas=5
+2026-07-04 05:25:16 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=92.56 p99=55945.0
+2026-07-04 05:25:31 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2855
+2026-07-04 05:25:31 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=982
+2026-07-04 05:25:31 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=87.53091344835727 required_resources=3.501 target_replicas=5
+2026-07-04 05:25:31 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=72.9 p99=55945.0
+2026-07-04 05:25:46 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2847
+2026-07-04 05:25:46 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=997
+2026-07-04 05:25:46 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=71.20040721043186 required_resources=2.848 target_replicas=4
+2026-07-04 05:25:46 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=76.57 p99=55945.0
+2026-07-04 05:26:01 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2845
+2026-07-04 05:26:01 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=1012
+2026-07-04 05:26:01 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=54.79429713615056 required_resources=2.192 target_replicas=3
+2026-07-04 05:26:01 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=76.78 p99=55945.0
+2026-07-04 05:26:16 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2840
+2026-07-04 05:26:16 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=1027
+2026-07-04 05:26:16 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=45.235537210285514 required_resources=1.809 target_replicas=3
+2026-07-04 05:26:16 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=74.99 p99=55945.0
+2026-07-04 05:26:31 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2842
+2026-07-04 05:26:31 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=1042
+2026-07-04 05:26:31 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=43.64515176118623 required_resources=1.746 target_replicas=3
+2026-07-04 05:26:31 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=71.86 p99=55945.0
+2026-07-04 05:26:46 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2852
+2026-07-04 05:26:46 [debug    ] HAProxy fallback latency       delta_requests=760 interval_avg_ms=37322.16 max_rtime_ms=55945.0 p99_est=55945.0
+2026-07-04 05:26:46 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=1057
+2026-07-04 05:26:46 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=47.102667368807815 required_resources=1.884 target_replicas=3
+2026-07-04 05:26:46 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=73.96 p99=55945.0
+2026-07-04 05:27:01 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2850
+2026-07-04 05:27:01 [debug    ] HAProxy fallback latency       delta_requests=854 interval_avg_ms=33073.9 max_rtime_ms=55945.0 p99_est=55945.0
+2026-07-04 05:27:01 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=1072
+2026-07-04 05:27:01 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=53.539216978092824 required_resources=2.142 target_replicas=3
+2026-07-04 05:27:01 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=74.38 p99=55945.0
+2026-07-04 05:27:16 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2849
+2026-07-04 05:27:17 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=1088
+2026-07-04 05:27:17 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=52.70570569614703 required_resources=2.108 target_replicas=3
+2026-07-04 05:27:17 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=78.36 p99=55945.0
+2026-07-04 05:27:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2844
+2026-07-04 05:27:32 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=1103
+2026-07-04 05:27:32 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=43.81049617606052 required_resources=1.752 target_replicas=3
+2026-07-04 05:27:32 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=75.98 p99=55945.0
+2026-07-04 05:27:47 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2846
+2026-07-04 05:27:47 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=1118
+2026-07-04 05:27:47 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=38.634150706284245 required_resources=1.545 target_replicas=2
+2026-07-04 05:27:47 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=76.27 p99=55945.0
+2026-07-04 05:28:02 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2856
+2026-07-04 05:28:02 [debug    ] HAProxy fallback latency       delta_requests=602 interval_avg_ms=41908.96 max_rtime_ms=55945.0 p99_est=55945.0
+2026-07-04 05:28:02 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=1133
+2026-07-04 05:28:02 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=39.16790516369471 required_resources=1.567 target_replicas=2
+2026-07-04 05:28:02 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=75.91 p99=55945.0
+2026-07-04 05:28:17 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2849
+2026-07-04 05:28:17 [debug    ] HAProxy fallback latency       delta_requests=624 interval_avg_ms=25934.76 max_rtime_ms=55945.0 p99_est=51869.51
+2026-07-04 05:28:17 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=51869.51282051282 serverless_enabled=True violation_sec=1148
+2026-07-04 05:28:17 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=40.69314009009162 required_resources=1.628 target_replicas=2
+2026-07-04 05:28:17 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=70.3 p99=51869.51282051282
+2026-07-04 05:28:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2852
+2026-07-04 05:28:32 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=51869.51282051282 serverless_enabled=True violation_sec=1163
+2026-07-04 05:28:32 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=42.39175232232322 required_resources=1.696 target_replicas=3
+2026-07-04 05:28:32 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=81.58 p99=51869.51282051282
+2026-07-04 05:28:47 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2846
+2026-07-04 05:28:47 [debug    ] HAProxy fallback latency       delta_requests=637 interval_avg_ms=189644.8 max_rtime_ms=55945.0 p99_est=55945.0
+2026-07-04 05:28:47 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=1178
+2026-07-04 05:28:47 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=42.81673568381923 required_resources=1.713 target_replicas=3
+2026-07-04 05:28:47 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=76.07 p99=55945.0
+2026-07-04 05:29:02 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2843
+2026-07-04 05:29:02 [debug    ] HAProxy fallback latency       delta_requests=79 interval_avg_ms=2913118.44 max_rtime_ms=55945.0 p99_est=55945.0
+2026-07-04 05:29:02 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=1193
+2026-07-04 05:29:02 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=23.805866395412956 required_resources=0.952 target_replicas=2
+2026-07-04 05:29:02 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=75.46 p99=55945.0
+2026-07-04 05:29:17 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2858
+2026-07-04 05:29:17 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=1208
+2026-07-04 05:29:17 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=2.6531759223391864 required_resources=0.106 target_replicas=1
+2026-07-04 05:29:17 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=72.52 p99=55945.0
+2026-07-04 05:29:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2844
+2026-07-04 05:29:32 [debug    ] HAProxy fallback latency       delta_requests=45 interval_avg_ms=5865311.53 max_rtime_ms=55945.0 p99_est=55945.0
+2026-07-04 05:29:32 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=1223
+2026-07-04 05:29:32 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=1.4928147923877895 required_resources=0.06 target_replicas=1
+2026-07-04 05:29:32 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=73.16 p99=55945.0
+2026-07-04 05:29:47 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2846
+2026-07-04 05:29:47 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=1238
+2026-07-04 05:29:47 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=1.4928147923877895 required_resources=0.06 target_replicas=1
+2026-07-04 05:29:47 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=70.77 p99=55945.0
+2026-07-04 05:30:02 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2844
+2026-07-04 05:30:02 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=1253
+2026-07-04 05:30:02 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=0.0 required_resources=0.0 target_replicas=1
+2026-07-04 05:30:02 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=74.17 p99=55945.0
+2026-07-04 05:30:17 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2844
+2026-07-04 05:30:17 [info     ] Algorithm 1: SCALE_OUT         new_weights={'k3s': 50, 'knative': 50} p99=55945.0 serverless_enabled=True violation_sec=1268
+2026-07-04 05:30:17 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=0.0 required_resources=0.0 target_replicas=1
+2026-07-04 05:30:17 [debug    ] Decision loop completed        action=SCALE_OUT latency_ms=73.51 p99=55945.0
+2026-07-04 05:30:26 [info     ] Received shutdown signal
+2026-07-04 05:30:26 [info     ] Stopping routing daemon...
+2026-07-04 05:30:26 [info     ] Routing daemon stopped
