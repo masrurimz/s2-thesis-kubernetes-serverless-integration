@@ -26,7 +26,6 @@ thesis/
 ├── protocol/
 │   ├── EXPERIMENT_PROTOCOL.md # Preregistered design
 │   └── THREATS_TO_VALIDITY.md # Explicit limitations
-├── scripts/                   # Reproduction scripts
 └── appendices/
     └── EXPERIMENT_TIMELINE.md # Timeline context
 ```
@@ -38,7 +37,6 @@ thesis/
 ## Reproduction
 
 ```bash
-cd controller
 HSA_OVERRIDE_GFX_VERSION=11.0.0 \
-  uv run python ../thesis/scripts/run_phase_b_experiments.py --phase full --runs 5 --duration 300
+  uv run python scripts/run_phase_b_experiments.py --phase full --runs 5 --duration 300
 ```

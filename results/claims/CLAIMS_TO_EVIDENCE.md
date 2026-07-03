@@ -67,7 +67,7 @@
   - Test RMSE% = 17.78% (target <10%) ❌
   - Test MAE% = 14.48% (target <5%) ❌
   - MAPE = 18.74% ❌
-- **Reproduce (real):** `cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python -c "import sys; sys.path.insert(0,'../ml_models'); from train_gru_real import main; main()"`
+- **Reproduce (real):** `HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python -m prediction.train_gru_real`
 - **Note:** GRU outperforms baselines on real data (baseline MAPE ~65% vs GRU 18.74%) but does not meet original thresholds. Gap is expected: real traces have non-stationarity and irregular bursts absent in synthetic data.
 - **Status:** ⚠️ Partially validated — mechanism works, thresholds not met on real data
 

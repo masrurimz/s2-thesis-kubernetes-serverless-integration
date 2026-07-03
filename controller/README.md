@@ -20,13 +20,16 @@ GRU_HOST=localhost
 GRU_PORT=8090
 ```
 
-## Components
-
 | Package | Purpose | Status |
 |---------|---------|--------|
-| `prediction_engine/` | Traffic prediction with linear regression | 🔧 Needs validation |
-| `intelligent_router/` | HAProxy weight adjustment + decision logging | 🔧 Needs validation |
-| `monitoring_v2/` | Enhanced monitoring (stub) | 🔴 Not implemented |
+| `prediction/` | GRU serving, model loading, training, baselines | ✅ Active |
+| `prediction/baselines/` | Naive + moving average baselines (H3 comparison) | ✅ Active |
+| `intelligent_router/` | HAProxy weight adjustment + decision logging | ✅ Active |
+| `daemon/` | Routing daemon (experiment orchestration) | ✅ Active |
+| `scaling/` | Cluster controller + K8s scaler | ✅ Active |
+| `autoscaler/` | K3d autoscaler | ✅ Active |
+| `monitoring_v2/` | SLO monitoring | ✅ Active |
+| `workloads/` | k6 runner | ✅ Active |
 
 ## Architecture
 
@@ -38,32 +41,51 @@ GRU_PORT=8090
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-## Quick Start
+## Quick Start (uv workspace — run from repo root)
 
 ```bash
-cd controller
-
-# Install dependencies
-uv sync
+uv sync                                    # Install all deps (workspace)
 
 # Start prediction server
-uv run prediction-server
+uv run gru-prediction-server
 
 # Start routing controller
 uv run routing-controller
+
+# Start routing daemon
+uv run routing-daemon --scenario s4-hybrid-predictive
 ```
 
-## Scripts
+## Entry Points
 
 | Command | Description |
 |---------|-------------|
-| `uv run prediction-server` | Start FastAPI prediction API |
+| `uv run gru-prediction-server` | Start FastAPI GRU prediction API |
 | `uv run routing-controller` | Start intelligent routing loop |
-| `uv run data-collector` | Collect HAProxy stats |
-| `uv run weight-adjuster` | Adjust HAProxy weights |
+| `uv run routing-daemon` | Start routing daemon for experiment scenarios |
+| `uv run weight-adjuster` | Adjust HAProxy weights manually |
+
+## ML Models (merged from `ml_models/`)
+
+| Model | Purpose | Location |
+|-------|---------|----------|
+| GRU | Thesis proposed model (PyTorch, 128 hidden, 2 layers, dropout 0.2) | `prediction/gru_predictor.py` |
+| Linear Regression | Sprint 2 baseline | `prediction/model_loader.py` |
+| Naive (last value) | Lower bound baseline | `prediction/baselines/naive.py` |
+| Moving Average | Simple smoothing baseline | `prediction/baselines/moving_avg.py` |
+
+### Training
+
+```bash
+# Train on synthetic data
+HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python -m prediction.train_gru
+
+# Train on real ClarkNet/Calgary traces
+HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python -m prediction.train_gru_real
+```
 
 ## Thesis Mapping
 
 - **Algorithm 1** (Routing Controller): `intelligent_router/routing_controller.py`
 - **Algorithm 2** (Cluster Controller): Integrated into prediction + routing flow
-- **Resource Model** (R = αx + β): `prediction_engine/linear_model.py`
+- **Resource Model** (R = αx + β): `prediction/model_loader.py`

@@ -73,20 +73,17 @@ Rules:
 
 ### Full Phase B
 ```bash
-cd controller
 HSA_OVERRIDE_GFX_VERSION=11.0.0 \
-  uv run python ../thesis/scripts/run_phase_b_experiments.py --phase full --runs 5 --duration 300
+  uv run python scripts/run_phase_b_experiments.py --phase full --runs 5 --duration 300
 ```
 
 ### GRU Training
 ```bash
-cd controller
 HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python -m prediction.train_gru
 ```
 
 ### Live Validation
 ```bash
-cd controller
 HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python -m prediction.prediction_server &
 HSA_OVERRIDE_GFX_VERSION=11.0.0 PREDICTION_CONFIDENCE_THRESHOLD=0.6 \
   uv run python -m daemon.routing_daemon --scenario s4-hybrid-predictive
