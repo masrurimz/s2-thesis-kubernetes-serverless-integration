@@ -2,7 +2,7 @@
 
 **Date:** 2026-02-18
 **Source experiment:** `results/experiments/phase-b/2026-02-18_fib34-validation/`
-**Analyzer:** `thesis/scripts/cost_analyzer.py` v5 → `cost_results.json`
+**Analyzer:** `scripts/cost_analyzer.py` v5 → `cost_results.json`
 
 ## Unified AWS Cost per 1200s Run
 

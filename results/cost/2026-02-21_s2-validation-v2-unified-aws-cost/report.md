@@ -2,7 +2,7 @@
 
 **Date:** 2026-02-21
 **Source experiment:** `results/experiments/phase-b/2026-02-20_s2-serverless-validation-v2/`
-**Analyzer:** `thesis/scripts/cost_analyzer.py` v5 (execution source: app_duration_avg)
+**Analyzer:** `scripts/cost_analyzer.py` v5 (execution source: app_duration_avg)
 
 ## Scope
 

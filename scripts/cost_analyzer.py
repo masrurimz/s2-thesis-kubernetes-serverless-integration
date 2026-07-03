@@ -21,14 +21,14 @@ v5 corrections (vs v4):
 
 Usage:
     # Experiment-based analysis (PRIMARY — uses actual measured data)
-    uv run python thesis/scripts/cost_analyzer.py \\
+    uv run python scripts/cost_analyzer.py \\
         --experiment-dir results/experiments/phase-b/2026-02-16_validation-metrics-fixes
 
     # Analytical crossover sweep (S1 vs S2)
-    uv run python thesis/scripts/cost_analyzer.py --crossover-graph
+    uv run python scripts/cost_analyzer.py --crossover-graph
 
     # Legacy generic analysis (backward compat)
-    uv run python thesis/scripts/cost_analyzer.py --legacy
+    uv run python scripts/cost_analyzer.py --legacy
 """
 
 import argparse

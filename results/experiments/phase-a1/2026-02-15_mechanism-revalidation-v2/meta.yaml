@@ -14,7 +14,7 @@ claims:
     - "Algorithm 2 GRU prediction consumption"
     - "Scenario isolation (S1 static, S3 reactive, S4 predictive)"
 reproduce:
-  - "cd controller && KUBECTL_PATH=~/.local/share/mise/installs/kubectl/1.35.0/kubectl HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python -m daemon.routing_daemon --scenario SCENARIO --haproxy-host localhost --haproxy-port 19999 --haproxy-stats 'http://localhost:18404/stats;csv' --gru-url http://localhost:8090 --interval 15 --api-port 9104"
+  - "KUBECTL_PATH=~/.local/share/mise/installs/kubectl/1.35.0/kubectl HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python -m daemon.routing_daemon --scenario SCENARIO --haproxy-host localhost --haproxy-port 19999 --haproxy-stats 'http://localhost:18404/stats;csv' --gru-url http://localhost:8090 --interval 15 --api-port 9104"
   - "k6 run -e TARGET_URL=http://localhost:18082 -e ENDPOINT=/work?duration_ms=5 -e SCENARIO=SCENARIO /tmp/phase_a1_ramp.js"
 status: complete
 git_commit: f7c9fe6

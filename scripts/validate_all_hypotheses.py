@@ -9,7 +9,7 @@ Validates all three thesis hypotheses:
 
 Usage:
     HSA_OVERRIDE_GFX_VERSION=11.0.0 sg render -c \
-        "cd controller && uv run python ../scripts/validate_all_hypotheses.py"
+        "uv run python scripts/validate_all_hypotheses.py"
 """
 
 import json

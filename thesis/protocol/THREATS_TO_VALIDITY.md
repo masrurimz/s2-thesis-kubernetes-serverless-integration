@@ -120,7 +120,7 @@ Phase B experiments inadvertently compared **reactive-only** behaviors:
 
 ### Root Cause
 
-`thesis/scripts/run_phase_b_experiments.py` performs GRU server health check (line 127) but **does not start the server**. Infrastructure check may have been bypassed or failed silently.
+`scripts/run_phase_b_experiments.py` performs GRU server health check (line 127) but **does not start the server**. Infrastructure check may have been bypassed or failed silently.
 
 ### Mitigation
 

@@ -2,7 +2,7 @@
 
 **Date:** 2026-02-20
 **Source experiment:** `results/experiments/phase-b/2026-02-20_s2-serverless-validation/`
-**Analyzer:** `thesis/scripts/cost_analyzer.py` v5
+**Analyzer:** `scripts/cost_analyzer.py` v5
 
 ## Scope
 

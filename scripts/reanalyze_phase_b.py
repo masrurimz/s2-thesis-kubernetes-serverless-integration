@@ -8,8 +8,8 @@ Reads results_final.json and produces:
   - cost_analysis.json        (cost proxy analysis)
 
 Usage:
-    cd controller && uv run python ../thesis/scripts/reanalyze_phase_b.py \
-        --results-dir ../results/experiments/phase-b/2026-02-15_clarknet-replay
+    uv run python scripts/reanalyze_phase_b.py \
+        --results-dir results/experiments/phase-b/2026-02-15_clarknet-replay
 """
 
 import argparse

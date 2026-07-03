@@ -13,7 +13,7 @@ Data sources:
 - Knative config: minScale=0, scale-to-zero-grace-period=30s
 
 Usage:
-    uv run python thesis/scripts/cold_start_analysis.py
+    uv run python scripts/cold_start_analysis.py
 """
 
 import json

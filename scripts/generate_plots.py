@@ -8,7 +8,7 @@ Produces:
   3. Scenario Comparison Dashboard (2x2 grid: throughput, p99, violations, decisions)
 
 Usage:
-    cd controller && uv run python ../thesis/scripts/generate_plots.py
+    uv run python scripts/generate_plots.py
 """
 
 import json

@@ -11,10 +11,10 @@ Implements the experiment protocol from thesis Section 3.5.4:
 - Statistical analysis (Welch, Mann-Whitney U, bootstrap CI, Cohen's d)
 
 Usage:
-    cd controller && uv run python ../thesis/scripts/run_phase_b_experiments.py \\
+    uv run python scripts/run_phase_b_experiments.py \\
         --phase full --runs 5
 
-    cd controller && uv run python ../thesis/scripts/run_phase_b_experiments.py \\
+    uv run python scripts/run_phase_b_experiments.py \\
         --phase experiments --runs 5 --seed 42
 """
 

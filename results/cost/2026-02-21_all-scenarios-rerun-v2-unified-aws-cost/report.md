@@ -2,7 +2,7 @@
 
 **Date:** 2026-02-21
 **Source experiment:** `results/experiments/phase-b/2026-02-21_all-scenarios-rerun-v2/`
-**Analyzer:** `thesis/scripts/cost_analyzer.py` v5 (prefers app-duration execution time)
+**Analyzer:** `scripts/cost_analyzer.py` v5 (prefers app-duration execution time)
 
 ## Cost Summary (per 1200s run)
 

@@ -6,8 +6,8 @@ Pipeline (per thesis Section 3.2.4):
   Raw Parquet → 30s RPS Buckets → Scale → Trim → k6 Stages JSON + JS Script
 
 Usage:
-    cd controller && uv run python ../scripts/generate_trace_replay.py
-    cd controller && uv run python ../scripts/generate_trace_replay.py --duration-min 5 --dry-run
+    uv run python scripts/generate_trace_replay.py
+    uv run python scripts/generate_trace_replay.py --duration-min 5 --dry-run
 """
 
 import argparse

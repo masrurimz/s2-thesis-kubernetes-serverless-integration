@@ -81,7 +81,7 @@ fi
 if [[ "$SCENARIO" == "s4-hybrid-predictive" ]]; then
     if ! curl -sf "${GRU_URL}/health" > /dev/null 2>&1; then
         log_error "GRU server not responding at ${GRU_URL}"
-        echo "Start with: cd controller && uv run python -m prediction.prediction_server"
+        echo "Start with: uv run python -m prediction.prediction_server"
         exit 1
     fi
     log_success "GRU server responding"
@@ -91,7 +91,7 @@ fi
 if [[ "$SCENARIO" == "s3-hybrid-reactive" || "$SCENARIO" == "s4-hybrid-predictive" ]]; then
     if ! curl -sf "${DAEMON_URL}/health" > /dev/null 2>&1; then
         log_error "Routing daemon not responding at ${DAEMON_URL}"
-        echo "Start with: cd controller && uv run python -m daemon.routing_daemon --scenario $SCENARIO"
+        echo "Start with: uv run python -m daemon.routing_daemon --scenario $SCENARIO"
         exit 1
     fi
     log_success "Routing daemon responding"
@@ -110,7 +110,7 @@ echo ""
 
 # Create results directory
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-RESULTS_DIR="${SCRIPT_DIR}/../results/${SCENARIO}/${TIMESTAMP}"
+RESULTS_DIR="${SCRIPT_DIR}/../../results/load-test-output/${SCENARIO}/${TIMESTAMP}"
 mkdir -p "$RESULTS_DIR"
 
 # Record pre-test state
