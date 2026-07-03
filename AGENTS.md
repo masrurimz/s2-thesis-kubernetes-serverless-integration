@@ -31,6 +31,7 @@ This is a **completed** Master's thesis research project implementing a hybrid k
 | `infrastructure/load-tests/` | k6 load test suite (canonical/calibration/legacy subdirs) | See `load-tests/README.md` for manifest |
 | `docs/` | Current docs: setup guides, specs, deployment | Points to `results/` for evidence |
 | `archived/` | Curated historical context (experiments-framework, legacy docs) | **Read-only. Never add new work here.** |
+**Package-level AGENTS.md files** exist in `controller/`, `scripts/`, `infrastructure/`, and `data/`. Read the nearest one before editing files in that directory.
 
 **Key documents to read first:**
 - `results/README.md` — Evidence registry and experiment index
