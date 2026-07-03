@@ -51,6 +51,8 @@ class SLOMonitor:
         self._last_p99: float = 0.0
         self._total_checks: int = 0
         self._violations: int = 0
+        self._last_haproxy_total_requests: Optional[int] = None
+        self._last_haproxy_total_rtime_ms: Optional[float] = None
         
         logger.info("SLOMonitor initialized",
                    threshold_ms=self.config.p99_threshold_ms,
@@ -102,24 +104,22 @@ class SLOMonitor:
             return "MAINTAIN"
     
     def _get_p99_latency(self) -> float:
-        """Query HAProxy stats for latency, fallback to Prometheus."""
-        # HAProxy is more reliable for our setup - use it first
+        """Query Prometheus first, then HAProxy fallback if enabled."""
+        p99 = self._get_p99_from_prometheus()
+        if p99 > 0:
+            return p99
+
         if self.config.use_haproxy_fallback:
             p99 = self._get_latency_from_haproxy()
             if p99 > 0:
                 return p99
-        
-        # Fallback to Prometheus if HAProxy fails
-        p99 = self._get_p99_from_prometheus()
-        if p99 > 0:
-            return p99
-        
+
         return self._last_p99
     
     def _get_p99_from_prometheus(self) -> float:
         """Query Prometheus for p99 latency."""
         try:
-            query = 'histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[1m])) by (le)) * 1000'
+            query = 'histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[30s])) by (le)) * 1000'
             response = requests.get(
                 f"{self.config.prometheus_url}/api/v1/query",
                 params={"query": query},
@@ -139,30 +139,53 @@ class SLOMonitor:
             return 0.0
     
     def _get_latency_from_haproxy(self) -> float:
-        """Get response time from HAProxy stats (rtime column)."""
+        """Estimate recent latency from HAProxy cumulative counters per interval."""
         try:
             response = requests.get(self.config.haproxy_stats_url, timeout=5)
             response.raise_for_status()
-            
-            # Parse CSV - find BACKEND row for 'servers'
-            # Column indices (0-based): qtime=58, ctime=59, rtime=60, ttime=61
-            # rtime_max=92, ttime_max=93
+
             lines = response.text.strip().split('\n')
             for line in lines:
                 fields = line.split(',')
-                if len(fields) > 93 and fields[0] == 'servers' and fields[1] == 'BACKEND':
-                    rtime = fields[60]       # rtime: avg backend response time (ms)
-                    rtime_max = fields[92]   # rtime_max: max backend response time (ms)
-                    
-                    if rtime and rtime.isdigit():
-                        avg_time = int(rtime)
-                        max_time = int(rtime_max) if rtime_max.isdigit() else avg_time * 3
-                        estimated_p99 = min(avg_time * 2, max_time)
-                        logger.debug("HAProxy latency", avg_rtime=avg_time, max_rtime=max_time, p99_est=estimated_p99)
-                        return float(estimated_p99)
-            
+                if len(fields) <= 92:
+                    continue
+                if fields[0] != 'servers' or fields[1] != 'BACKEND':
+                    continue
+                if not fields[7].isdigit() or not fields[60].isdigit():
+                    continue
+
+                total_requests = int(fields[7])
+                avg_rtime_ms = float(fields[60])
+                max_rtime_ms = float(fields[92]) if fields[92].isdigit() else avg_rtime_ms
+                total_rtime_ms = total_requests * avg_rtime_ms
+
+                if self._last_haproxy_total_requests is None or self._last_haproxy_total_rtime_ms is None:
+                    self._last_haproxy_total_requests = total_requests
+                    self._last_haproxy_total_rtime_ms = total_rtime_ms
+                    logger.debug("HAProxy fallback primed", total_requests=total_requests)
+                    return 0.0
+
+                delta_requests = total_requests - self._last_haproxy_total_requests
+                delta_rtime_ms = total_rtime_ms - self._last_haproxy_total_rtime_ms
+                self._last_haproxy_total_requests = total_requests
+                self._last_haproxy_total_rtime_ms = total_rtime_ms
+
+                if delta_requests <= 0 or delta_rtime_ms <= 0:
+                    return 0.0
+
+                interval_avg_ms = delta_rtime_ms / delta_requests
+                estimated_p99 = min(interval_avg_ms * 2.0, max_rtime_ms)
+                logger.debug(
+                    "HAProxy fallback latency",
+                    delta_requests=delta_requests,
+                    interval_avg_ms=round(interval_avg_ms, 2),
+                    max_rtime_ms=max_rtime_ms,
+                    p99_est=round(estimated_p99, 2),
+                )
+                return float(max(0.0, estimated_p99))
+
             return 0.0
-            
+
         except Exception as e:
             logger.warning("HAProxy stats query failed", error=str(e))
             return 0.0
@@ -182,6 +205,8 @@ class SLOMonitor:
         self._last_p99 = 0.0
         self._total_checks = 0
         self._violations = 0
+        self._last_haproxy_total_requests = None
+        self._last_haproxy_total_rtime_ms = None
 
 
 class MockSLOMonitor(SLOMonitor):

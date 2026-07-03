@@ -18,6 +18,7 @@ class TestAlgorithm1Controller:
     def controller(self, monitor):
         controller = Algorithm1Controller(slo_monitor=monitor)
         controller._prewarm_knative = Mock(return_value=True)
+        controller.last_adjustment_time = None
         return controller
     
     def test_init(self, controller):
@@ -51,11 +52,43 @@ class TestAlgorithm1Controller:
         # p99 < 200 * 0.7 = 140ms
         monitor.set_mock_metrics(p99=100.0)
         
-        decision = controller.make_decision()
+        decision = controller.make_decision(current_load=100)
 
         assert decision.action == "OPTIMIZE_COST"
         assert decision.weights["k3s"] >= 100
     
+
+    def test_make_decision_does_not_mutate_weights_before_commit(self, controller, monitor):
+        monitor.set_mock_metrics(p99=100.0)
+        controller.current_weights = {"k3s": 90, "knative": 10}
+        before = controller.current_weights.copy()
+
+        decision = controller.make_decision(current_load=100)
+
+        assert decision.action == "OPTIMIZE_COST"
+        assert decision.weights != before
+        assert controller.current_weights == before
+
+    def test_no_optimize_cost_when_no_observed_load(self, controller, monitor):
+        monitor.set_mock_metrics(p99=100.0)
+
+        decision = controller.make_decision(current_load=0)
+
+        assert decision.action == "MAINTAIN"
+
+    def test_commit_applied_decision_updates_controller_state(self, controller):
+        decision = RoutingDecision(
+            weights={"k3s": 90, "knative": 10},
+            reason="test",
+            action="SCALE_OUT",
+            metrics={},
+        )
+
+        controller.commit_applied_decision(decision, current_time=123)
+
+        assert controller.current_weights == {"k3s": 90, "knative": 10}
+        assert controller.last_adjustment_time == 123
+        assert controller.serverless_enabled is True
     def test_predictive_scaling(self, controller, monitor):
         monitor.set_mock_metrics(p99=150.0)
         
@@ -72,6 +105,38 @@ class TestAlgorithm1Controller:
         assert decision.action == "PREDICTIVE"
         assert decision.weights["knative"] > 0
     
+
+    def test_predictive_only_in_warning_window(self, controller, monitor):
+        monitor.set_mock_metrics(p99=130.0)  # Healthy zone, not warning band
+
+        prediction = {
+            "predicted_requests": 200,
+            "confidence": 0.9,
+        }
+
+        decision = controller.make_decision(
+            prediction=prediction,
+            current_load=100,
+        )
+
+        assert decision.action != "PREDICTIVE"
+
+    def test_predictive_not_counted_when_no_weight_delta(self, controller, monitor):
+        monitor.set_mock_metrics(p99=150.0)
+        controller.current_weights = {"k3s": 50, "knative": 50}
+
+        prediction = {
+            "predicted_requests": 200,
+            "confidence": 0.9,
+        }
+
+        decision = controller.make_decision(
+            prediction=prediction,
+            current_load=100,
+        )
+
+        assert decision.action == "MAINTAIN"
+        assert controller.predictive_count == 0
     def test_prediction_ignored_low_confidence(self, controller, monitor):
         monitor.set_mock_metrics(p99=150.0)  # Above healthy_margin (140ms), below SLO (200ms)
         
@@ -92,11 +157,12 @@ class TestAlgorithm1Controller:
         monitor.set_mock_metrics(p99=100.0)
         
         # First decision
-        decision1 = controller.make_decision()
+        decision1 = controller.make_decision(current_load=100)
         assert decision1.action == "OPTIMIZE_COST"
-        
+        controller.commit_applied_decision(decision1, current_time=int(time.time()))
+
         # Immediate second call should maintain due to cooldown
-        decision2 = controller.make_decision()
+        decision2 = controller.make_decision(current_load=100)
         assert decision2.action == "MAINTAIN"
     
     def test_statistics(self, controller, monitor):
