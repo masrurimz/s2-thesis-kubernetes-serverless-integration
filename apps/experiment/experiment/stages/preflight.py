@@ -30,9 +30,9 @@ KUBECTL_PATH = os.environ.get(
 )
 
 # Project paths
-SCRIPT_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent / "scripts"
-PROJECT_ROOT = SCRIPT_DIR.parent
-K6_SCRIPT = PROJECT_ROOT / "infrastructure" / "load-tests" / "canonical" / "clarknet_replay.js"
+# Project paths — apps/experiment/experiment/stages/preflight.py → 5 levels up to root
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
+K6_SCRIPT = PROJECT_ROOT / "apps" / "experiment" / "experiment" / "load_tests" / "canonical" / "clarknet_replay.js"
 K6_STAGES = PROJECT_ROOT / "data" / "trace-replay" / "clarknet_k6_stages.json"
 
 DEPLOYMENT = "test-app-warm"
