@@ -13,6 +13,7 @@ Scenarios:
 
 import argparse
 import asyncio
+import os
 import signal
 import threading
 import time
@@ -31,6 +32,7 @@ from pydantic import BaseModel
 from monitoring_v2.slo_monitor import SLOMonitor, SLOConfig
 from intelligent_router.algorithm1_controller import Algorithm1Controller, Algorithm1Config
 from intelligent_router.algorithm1_controller_v2 import Algorithm1ControllerV2, Algorithm1ConfigV2
+from intelligent_router.algorithm1_controller_v3 import Algorithm1ControllerV3, Algorithm1ConfigV3
 from intelligent_router.weight_adjuster import HAProxyWeightAdjuster
 from daemon.gru_client import GRUClient
 from scaling.cluster_controller import ClusterController, ScalingConfig
@@ -244,7 +246,15 @@ class RoutingDaemon:
             )
         )
 
-        if self.scenario == Scenario.S4_HYBRID_PREDICTIVE:
+        controller_version = os.environ.get("CONTROLLER_VERSION", "v3")
+
+        if self.scenario == Scenario.S4_HYBRID_PREDICTIVE and controller_version == "v3":
+            self.algorithm_controller = Algorithm1ControllerV3(
+                slo_monitor=self.slo_monitor,
+                config=Algorithm1ConfigV3(cooldown_sec=decision_interval),
+            )
+            logger.info("Using V3 controller (Capacity-Driven) for S4", scenario=scenario, version=controller_version)
+        elif self.scenario == Scenario.S4_HYBRID_PREDICTIVE and controller_version == "v2":
             self.algorithm_controller = Algorithm1ControllerV2(
                 slo_monitor=self.slo_monitor,
                 config=Algorithm1ConfigV2(
@@ -252,7 +262,7 @@ class RoutingDaemon:
                     default_serverless_weight=self.scenario_config.knative_weight,
                 ),
             )
-            logger.info("Using V2 controller (PID + Feedforward) for S4", scenario=scenario)
+            logger.info("Using V2 controller (PID + Feedforward) for S4", scenario=scenario, version=controller_version)
         else:
             self.algorithm_controller = Algorithm1Controller(
                 slo_monitor=self.slo_monitor,
@@ -446,12 +456,27 @@ class RoutingDaemon:
                 else:
                     daemon_prediction_failed.inc()
                     logger.debug("GRU prediction failed", error=pred_result.error)
+        # Get available replicas for V3 capacity-driven routing
+        available_replicas = 1
+        if self.k8s_scaler is not None:
+            dep_status = self.k8s_scaler.get_deployment_status()
+            if dep_status is not None:
+                available_replicas = max(1, dep_status.available_replicas)
 
-        decision = self.algorithm_controller.make_decision(
-            slo_status=slo_status,
-            prediction=prediction,
-            current_load=current_load,
-        )
+        # V3 controller takes available_replicas; V1/V2 ignore it via default
+        if isinstance(self.algorithm_controller, Algorithm1ControllerV3):
+            decision = self.algorithm_controller.make_decision(
+                slo_status=slo_status,
+                prediction=prediction,
+                current_load=current_load,
+                available_replicas=available_replicas,
+            )
+        else:
+            decision = self.algorithm_controller.make_decision(
+                slo_status=slo_status,
+                prediction=prediction,
+                current_load=current_load,
+            )
 
         self._decision_count += 1
         self._last_decision_time = time.time()
