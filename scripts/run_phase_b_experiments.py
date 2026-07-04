@@ -625,8 +625,7 @@ class ScenarioResetter:
         _kubectl(["delete", "hpa", DEPLOYMENT, "--ignore-not-found"])
         time.sleep(2)
 
-        # Scale to baseline replicas (3 — enough for K8s baseline capacity)
-        baseline_replicas = 3
+        baseline_replicas = 2
         r = _kubectl(["scale", f"deployment/{DEPLOYMENT}", f"--replicas={baseline_replicas}"])
         if r.returncode != 0:
             logger.error("scale_baseline_failed", stderr=r.stderr.strip())
@@ -1780,16 +1779,21 @@ class ExperimentRunner:
                 logger.error("precondition_haproxy_weight_wrong", scenario=scenario, expected=expected, actual=weights)
                 return False
         else:
-            # S3/S4 must retain baseline 80/20 split after reset + warmup.
-            expected_hybrid = {"k3s": 80, "knative": 20}
-            if weights.get("k3s") != expected_hybrid["k3s"] or weights.get("knative") != expected_hybrid["knative"]:
-                logger.error(
-                    "precondition_hybrid_weight_wrong",
-                    scenario=scenario,
-                    expected=expected_hybrid,
-                    actual=weights,
-                )
-                return False
+            # S3/S4 weight check: V3 may adjust during warmup, so just verify K8s is reachable
+            controller_ver = os.environ.get("CONTROLLER_VERSION", "v3")
+            if controller_ver == "v3":
+                # V3 capacity-driven: just check K8s has weight > 0
+                if weights.get("k3s", 0) <= 0:
+                    logger.error("precondition_k8s_unreachable", scenario=scenario, actual=weights)
+                    return False
+            else:
+                # V1/V2: must retain baseline 80/20 split
+                expected_hybrid = {"k3s": 80, "knative": 20}
+                if weights.get("k3s") != expected_hybrid["k3s"] or weights.get("knative") != expected_hybrid["knative"]:
+                    logger.error(
+                        "precondition_hybrid_weight_wrong", scenario=scenario, expected=expected_hybrid, actual=weights
+                    )
+                    return False
         # 2. Daemon /health scenario matches
         try:
             r = requests.get(f"{DAEMON_API}/health", timeout=5)
