@@ -486,18 +486,17 @@ class RoutingDaemon:
             action=decision.action,
         ).inc()
 
-        # Readiness gate: block OPTIMIZE_COST/RECOVERY (increases K8s traffic)
-        # if K8s pods are not fully ready
-        if (
-            decision.action in ("OPTIMIZE_COST", "RECOVERY")
-            and self.k8s_scaler is not None
-            and not self.k8s_scaler.is_ready()
-        ):
-            logger.warning(
-                "Blocking traffic return: K8s not ready (available != desired)",
-                original_action=decision.action,
-            )
-            # Construct MAINTAIN inline — works for both V1 and V2 controllers
+        # Readiness gate: block RECOVERY only if fewer than 2 K8s pods ready.
+        # Previous version blocked when available != desired — too strict for V3.
+        should_block = False
+        if decision.action in ("OPTIMIZE_COST", "RECOVERY") and self.k8s_scaler is not None:
+            dep_status = self.k8s_scaler.get_deployment_status()
+            if dep_status is not None:
+                should_block = dep_status.available_replicas < 2
+            else:
+                should_block = not self.k8s_scaler.is_ready()
+        if should_block:
+            logger.warning("Blocking traffic return: K8s not ready", original_action=decision.action)
             from intelligent_router.algorithm1_controller import RoutingDecision as _RD
 
             decision = _RD(
@@ -586,10 +585,15 @@ class RoutingDaemon:
                     self._last_scale_up_ts = now
 
         elif scaling_decision.action == "SCALE_DOWN":
+            # Don't scale below 2 replicas (K8s baseline floor for V3 capacity-driven routing)
+            min_replicas = 2 if isinstance(self.algorithm_controller, Algorithm1ControllerV3) else 1
+            target = max(min_replicas, scaling_decision.target_replicas)
             if (
-                self._last_scale_down_ts is None or (now - self._last_scale_down_ts) >= 60
-            ) and slo_status.p99_latency_ms < healthy_threshold:
-                success = self.k8s_scaler.scale(scaling_decision.target_replicas)
+                (self._last_scale_down_ts is None or (now - self._last_scale_down_ts) >= 60)
+                and slo_status.p99_latency_ms < healthy_threshold
+                and target < dep_status.spec_replicas
+            ):
+                success = self.k8s_scaler.scale(target)
                 k8s_scaling_events_total.labels(direction="down", result="success" if success else "fail").inc()
                 if success:
                     self._last_scale_down_ts = now
