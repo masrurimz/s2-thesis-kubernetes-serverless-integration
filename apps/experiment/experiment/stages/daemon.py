@@ -34,10 +34,8 @@ KUBECTL_PATH = os.environ.get(
     str(Path.home() / ".local/share/mise/installs/kubectl/1.35.0/kubectl"),
 )
 
-# Project paths
-SCRIPT_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent / "scripts"
-PROJECT_ROOT = SCRIPT_DIR.parent
-CONTROLLER_DIR = PROJECT_ROOT / "controller"
+# Project paths — apps/experiment/experiment/stages/daemon.py → 5 levels up to root
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
 
 
 class DaemonStage(BaseStage):
@@ -113,7 +111,7 @@ class DaemonStage(BaseStage):
         cmd = [
             sys.executable,
             "-m",
-            "daemon.routing_daemon",
+            "routing.daemon.cli",
             "--scenario",
             scenario,
             "--haproxy-host",
@@ -134,7 +132,7 @@ class DaemonStage(BaseStage):
         log_file = open(log_path, "w")
         proc = subprocess.Popen(
             cmd,
-            cwd=str(CONTROLLER_DIR),
+            cwd=str(PROJECT_ROOT),
             env=env,
             stdout=log_file,
             stderr=subprocess.STDOUT,
