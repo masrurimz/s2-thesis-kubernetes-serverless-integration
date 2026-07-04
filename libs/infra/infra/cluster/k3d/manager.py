@@ -20,9 +20,7 @@ class K3dManager:
     def __init__(self, cluster_name: str = CLUSTER_NAME) -> None:
         self.cluster_name = cluster_name
         # Resolve the cluster.yaml path from package data
-        self._cluster_yaml = (
-            importlib.resources.files("infra").joinpath("cluster", "k3d", "cluster.yaml")
-        )
+        self._cluster_yaml = importlib.resources.files("infra").joinpath("cluster", "k3d", "cluster.yaml")
 
     # ------------------------------------------------------------------
     # Prerequisites
