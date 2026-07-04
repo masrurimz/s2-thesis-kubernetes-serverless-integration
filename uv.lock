@@ -16,6 +16,7 @@ members = [
     "routing",
     "shared",
     "thesis-hybrid-k3s-serverless",
+    "thesis-scripts",
 ]
 
 [[package]]
@@ -1140,6 +1141,7 @@ dependencies = [
     { name = "scipy" },
     { name = "shared" },
     { name = "structlog" },
+    { name = "thesis-scripts" },
     { name = "torch", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
     { name = "typer" },
     { name = "uvicorn" },
@@ -1181,6 +1183,7 @@ requires-dist = [
     { name = "scipy", specifier = ">=1.16.1" },
     { name = "shared", editable = "libs/shared" },
     { name = "structlog" },
+    { name = "thesis-scripts", editable = "apps/scripts" },
     { name = "torch", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = "==2.5.1+rocm6.2", index = "https://download.pytorch.org/whl/rocm6.2" },
     { name = "typer", specifier = ">=0.15.0" },
     { name = "uvicorn", specifier = ">=0.35.0" },
@@ -1190,6 +1193,37 @@ requires-dist = [
 dev = [
     { name = "ruff", specifier = ">=0.15.20" },
     { name = "ty", specifier = ">=0.0.56" },
+]
+
+[[package]]
+name = "thesis-scripts"
+version = "0.1.0"
+source = { editable = "apps/scripts" }
+dependencies = [
+    { name = "httpx" },
+    { name = "infra" },
+    { name = "numpy" },
+    { name = "prediction" },
+    { name = "requests" },
+    { name = "rich" },
+    { name = "routing" },
+    { name = "scipy" },
+    { name = "shared" },
+    { name = "structlog" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx" },
+    { name = "infra", editable = "libs/infra" },
+    { name = "numpy" },
+    { name = "prediction", editable = "apps/prediction" },
+    { name = "requests" },
+    { name = "rich" },
+    { name = "routing", editable = "apps/routing" },
+    { name = "scipy" },
+    { name = "shared", editable = "libs/shared" },
+    { name = "structlog" },
 ]
 
 [[package]]
