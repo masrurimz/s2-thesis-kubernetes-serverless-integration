@@ -1,4 +1,4 @@
-"""Tests for Algorithm 1 controller (V1 and V2)."""
+"""Tests for Algorithm 1 controller (V1, V2, and V3)."""
 
 import pytest
 import time
@@ -6,6 +6,7 @@ from unittest.mock import Mock
 
 from routing.algorithm.algorithm1_v1 import Algorithm1Controller, Algorithm1Config, RoutingDecision
 from routing.algorithm.algorithm1_v2 import Algorithm1ControllerV2, Algorithm1ConfigV2
+from routing.algorithm.algorithm1_v3 import Algorithm1ControllerV3, Algorithm1ConfigV3
 from routing.monitoring.slo_monitor import MockSLOMonitor
 
 
@@ -514,3 +515,155 @@ class TestAlgorithm1ConfigV2:
         assert config.ki == 0.01
         assert config.kd == 0.1
         assert config.kff == 0.2
+
+
+class TestAlgorithm1ControllerV3:
+    """Tests for capacity-driven V3 controller."""
+
+    @pytest.fixture
+    def monitor(self):
+        return MockSLOMonitor()
+
+    @pytest.fixture
+    def config(self):
+        return Algorithm1ConfigV3(
+            r_saturation_per_replica=30.0,
+            target_cpu_util=0.8,
+            min_k8s_replicas=2,
+            max_knative_weight=50,
+        )
+
+    @pytest.fixture
+    def controller(self, monitor, config):
+        ctrl = Algorithm1ControllerV3(slo_monitor=monitor, config=config)
+        ctrl._prewarm_knative = Mock(return_value=True)
+        ctrl.current_weights = {"k3s": 80, "knative": 20}
+        ctrl.serverless_enabled = True
+        return ctrl
+
+    def test_init(self, controller):
+        assert controller.current_weights == {"k3s": 80, "knative": 20}
+        assert controller.total_decisions == 0
+        assert controller.capacity_deficit is False
+
+    def test_r_effective_per_replica(self, controller):
+        assert controller.r_effective_per_replica == 24.0  # 30 * 0.8
+
+    def test_k8s_capacity_computation(self, controller):
+        cap = controller._compute_k8s_capacity(available_replicas=3)
+        assert cap == 72.0  # 3 * 24
+
+    def test_k8s_capacity_zero_replicas(self, controller):
+        cap = controller._compute_k8s_capacity(available_replicas=0)
+        assert cap == 0.0
+
+    def test_load_within_capacity_all_k8s(self, controller, monitor):
+        """Load < capacity should route 100% to K8s."""
+        monitor.set_mock_metrics(p99=100.0)
+        slo = monitor.check_slo()
+        decision = controller.make_decision(slo_status=slo, current_load=50, available_replicas=4)
+        assert decision.weights["knative"] == 0
+        assert decision.weights["k3s"] == 100
+
+    def test_burst_routing_to_knative(self, controller, monitor):
+        """Load > capacity should split between K8s and Knative."""
+        monitor.set_mock_metrics(p99=5000.0)
+        slo = monitor.check_slo()
+        # 4 replicas * 24 = 96 RPS capacity, load=150 → burst
+        decision = controller.make_decision(slo_status=slo, current_load=150, available_replicas=4)
+        assert decision.weights["knative"] > 0
+        assert decision.weights["k3s"] < 100
+        assert decision.weights["k3s"] + decision.weights["knative"] == 100
+
+    def test_max_knative_weight_cap(self, controller, monitor):
+        """Knative weight should not exceed max_knative_weight."""
+        monitor.set_mock_metrics(p99=50000.0)
+        slo = monitor.check_slo()
+        # 1 replica * 24 = 24 RPS capacity, load=1000 → 97.6% burst → cap at 50
+        decision = controller.make_decision(slo_status=slo, current_load=1000, available_replicas=1)
+        assert decision.weights["knative"] <= controller.config.max_knative_weight
+
+    def test_capacity_deficit_mode(self, controller, monitor):
+        """When burst exceeds cap, capacity_deficit should be True."""
+        monitor.set_mock_metrics(p99=50000.0)
+        slo = monitor.check_slo()
+        decision = controller.make_decision(slo_status=slo, current_load=1000, available_replicas=1)
+        assert controller.capacity_deficit is True
+
+    def test_prediction_drives_higher_load(self, controller, monitor):
+        """Prediction higher than observed should drive routing."""
+        monitor.set_mock_metrics(p99=100.0)
+        slo = monitor.check_slo()
+        pred = {"predicted_requests": 200, "confidence": 0.8}
+        # 4 replicas * 24 = 96 capacity, predicted=200 > observed=50
+        decision = controller.make_decision(slo_status=slo, prediction=pred, current_load=50, available_replicas=4)
+        assert decision.weights["knative"] > 0
+
+    def test_low_confidence_prediction_ignored(self, controller, monitor):
+        """Low confidence prediction should not affect routing."""
+        monitor.set_mock_metrics(p99=100.0)
+        slo = monitor.check_slo()
+        pred = {"predicted_requests": 200, "confidence": 0.3}
+        decision = controller.make_decision(slo_status=slo, prediction=pred, current_load=50, available_replicas=4)
+        assert decision.weights["knative"] == 0
+
+    def test_weights_sum_to_100(self, controller, monitor):
+        monitor.set_mock_metrics(p99=5000.0)
+        slo = monitor.check_slo()
+        decision = controller.make_decision(slo_status=slo, current_load=200, available_replicas=2)
+        assert sum(decision.weights.values()) == 100
+
+    def test_commit_applied_decision(self, controller):
+        decision = RoutingDecision(
+            weights={"k3s": 60, "knative": 40},
+            reason="test",
+            action="REACTIVE",
+            metrics={},
+        )
+        controller.commit_applied_decision(decision, current_time=100)
+        assert controller.current_weights == {"k3s": 60, "knative": 40}
+        assert controller.last_adjustment_time == 100
+
+    def test_get_statistics_v3(self, controller, monitor):
+        monitor.set_mock_metrics(p99=100.0)
+        controller.make_decision(current_load=50, available_replicas=4)
+        stats = controller.get_statistics()
+        assert stats["controller_version"] == "v3"
+        assert "cumulative_violations" in stats
+        assert "r_effective_per_replica" in stats
+
+    def test_no_traffic_maintains(self, controller, monitor):
+        """When p99=0 and no load, should maintain."""
+        monitor.set_mock_metrics(p99=0.0)
+        slo = monitor.check_slo()
+        decision = controller.make_decision(slo_status=slo, current_load=0, available_replicas=4)
+        assert decision.action == "MAINTAIN"
+
+    def test_serverless_disabled_when_no_burst(self, controller, monitor):
+        """When load fits on K8s, serverless should be disabled."""
+        controller.serverless_enabled = True
+        monitor.set_mock_metrics(p99=100.0)
+        slo = monitor.check_slo()
+        decision = controller.make_decision(slo_status=slo, current_load=50, available_replicas=4)
+        # Knative weight=0 should disable serverless
+        assert decision.weights["knative"] == 0
+
+
+class TestAlgorithm1ConfigV3:
+    def test_default_config(self):
+        config = Algorithm1ConfigV3()
+        assert config.r_saturation_per_replica == 35.0  # calibrated for 300m CPU pods
+        assert config.target_cpu_util == 0.8
+        assert config.min_k8s_replicas == 3
+        assert config.max_knative_weight == 50
+        assert config.prediction_confidence_threshold == 0.5
+
+    def test_custom_config(self):
+        config = Algorithm1ConfigV3(
+            r_saturation_per_replica=50.0,
+            target_cpu_util=0.6,
+            max_knative_weight=30,
+        )
+        assert config.r_saturation_per_replica == 50.0
+        assert config.target_cpu_util == 0.6
+        assert config.max_knative_weight == 30
