@@ -80,7 +80,7 @@ class MetricExporter:
     }
 
     def __init__(self, prometheus_url: Optional[str] = None):
-        from clients.prometheus import PrometheusClient
+        from infra.observability.prometheus import PrometheusClient
 
         self._client = PrometheusClient(prometheus_url or settings.PROMETHEUS_URL)
 

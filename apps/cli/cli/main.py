@@ -80,11 +80,21 @@ def _register_prediction() -> None:
     except ImportError:
         pass
 
+def _register_infra() -> None:
+    """Register the infra sub-app."""
+    try:
+        from infra.cli import app as infra_app
+
+        app.add_typer(infra_app, name="infra", help="Infrastructure management")
+    except ImportError:
+        pass
+
 
 # Register all available sub-apps
 _register_experiment()
 _register_routing()
 _register_prediction()
+_register_infra()
 
 
 if __name__ == "__main__":
