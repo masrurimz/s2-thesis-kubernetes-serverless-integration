@@ -1,0 +1,944 @@
+<frozen runpy>:128: RuntimeWarning: 'daemon.routing_daemon' found in sys.modules after import of package 'daemon', but prior to execution of 'daemon.routing_daemon'; this may result in unpredictable behaviour
+2026-07-04 12:20:22 [info     ] SLOMonitor initialized         threshold_ms=200.0 violation_window=30
+2026-07-04 12:20:22 [info     ] Algorithm1ControllerV3 initialized max_knative=50 r_saturation=30.0 target_cpu_util=0.8 total_budget=1000
+2026-07-04 12:20:22 [info     ] Using V3 controller (Capacity-Driven) for S4 scenario=s4-hybrid-predictive version=v3
+2026-07-04 12:20:22 [info     ] HAProxyWeightAdjuster initialized backend=servers socket_path=/tmp/haproxy.sock tcp_socket=localhost:19999 tcp_socket_available=True unix_socket_available=False
+2026-07-04 12:20:22 [info     ] GRUClient initialized          base_url=http://localhost:8090
+2026-07-04 12:20:22 [info     ] K8sScaler initialized          deployment=test-app-warm namespace=default
+2026-07-04 12:20:22 [info     ] RoutingDaemon initialized      decision_interval=15 description='Algorithm 1 with GRU predictions (Algorithm 2)' scenario=s4-hybrid-predictive use_algorithm=True use_predictions=True
+2026-07-04 12:20:22 [info     ] Starting routing daemon        interval=15 scenario=s4-hybrid-predictive
+2026-07-04 12:20:22 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2695
+2026-07-04 12:20:22 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-07-04 12:20:22 [debug    ] Weights already set correctly  k3s=80 knative=20
+2026-07-04 12:20:22 [info     ] Initial weights applied        k3s=80 knative=20
+2026-07-04 12:20:22 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2695
+2026-07-04 12:20:22 [debug    ] HAProxy fallback primed        total_requests=25
+2026-07-04 12:20:22 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=0.0 required_resources=0.0 target_replicas=1
+2026-07-04 12:20:22 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=2
+2026-07-04 12:20:22 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=163.36 p99=0.0
+2026-07-04 12:20:37 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2759
+2026-07-04 12:20:37 [debug    ] HAProxy fallback latency       delta_requests=950 interval_avg_ms=3328.87 max_rtime_ms=14880.0 p99_est=6657.74
+2026-07-04 12:20:37 [debug    ] burn_rate_adjustment           actual_burn=0.07 adjustment=-5 allowed_burn=0.83 budget_remaining=999 burn_error=-0.921 burn_ratio=0.079
+2026-07-04 12:20:37 [info     ] controller_decision_v3         action=REACTIVE available_replicas=1 budget_remaining=999 burn_adjustment=-5 burst_ratio=0.6154 capacity_deficit=True confidence=0 current_load=62.397235797000015 decision_id=8d5fd03b k8s_capacity=24.0 k8s_weight=55 knative_weight=45 p99=6657.7 predicted_load=0 r_effective=24.0 serverless_enabled=True total_load=62.4 weights_after={'k3s': 55, 'knative': 45} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 12:20:37 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2758
+2026-07-04 12:20:37 [debug    ] Current weights retrieved via socket weights={'k3s': 80, 'knative': 20}
+2026-07-04 12:20:37 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2758
+2026-07-04 12:20:37 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 55' response_length=0
+2026-07-04 12:20:37 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2758
+2026-07-04 12:20:37 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 45' response_length=0
+2026-07-04 12:20:37 [debug    ] Weight commands sent via socket successfully k3s=55 knative=45
+2026-07-04 12:20:38 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2763
+2026-07-04 12:20:38 [debug    ] Current weights retrieved via socket weights={'k3s': 55, 'knative': 45}
+2026-07-04 12:20:38 [info     ] Weights updated successfully via HTTP new={'k3s': 55, 'knative': 45} previous={'k3s': 80, 'knative': 20}
+2026-07-04 12:20:38 [info     ] Weights updated                action=REACTIVE reason='load=62RPS | k8s_cap=24RPS | CAPACITY-DEFICIT | (burst-routing)' weights={'k3s': 55, 'knative': 45}
+2026-07-04 12:20:38 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.04 beta=0.0 buffer=1.2 current_replicas=2 predicted_load=62.397235797000015 required_resources=2.496 target_replicas=3
+2026-07-04 12:20:38 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=3
+2026-07-04 12:20:38 [debug    ] Decision loop completed        action=REACTIVE latency_ms=680.2 p99=6657.736842105263
+2026-07-04 12:20:53 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2778
+2026-07-04 12:20:53 [debug    ] HAProxy fallback latency       delta_requests=1515 interval_avg_ms=5802.31 max_rtime_ms=23714.0 p99_est=11604.61
+2026-07-04 12:20:53 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-5 allowed_burn=0.83 budget_remaining=998 burn_error=-0.922 burn_ratio=0.078
+2026-07-04 12:20:53 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=998 burn_adjustment=-5 burst_ratio=0.2543 capacity_deficit=False confidence=0 current_load=96.55090887765984 decision_id=e1bf5171 k8s_capacity=72.0 k8s_weight=79 knative_weight=21 p99=11604.6 predicted_load=0 r_effective=24.0 serverless_enabled=True total_load=96.6 weights_after={'k3s': 79, 'knative': 21} weights_before={'k3s': 55, 'knative': 45}
+2026-07-04 12:20:53 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2780
+2026-07-04 12:20:53 [debug    ] Current weights retrieved via socket weights={'k3s': 55, 'knative': 45}
+2026-07-04 12:20:53 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2780
+2026-07-04 12:20:53 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 79' response_length=0
+2026-07-04 12:20:53 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2780
+2026-07-04 12:20:53 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 21' response_length=0
+2026-07-04 12:20:53 [debug    ] Weight commands sent via socket successfully k3s=79 knative=21
+2026-07-04 12:20:54 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2785
+2026-07-04 12:20:54 [debug    ] Current weights retrieved via socket weights={'k3s': 79, 'knative': 21}
+2026-07-04 12:20:54 [info     ] Weights updated successfully via HTTP new={'k3s': 79, 'knative': 21} previous={'k3s': 55, 'knative': 45}
+2026-07-04 12:20:54 [info     ] Weights updated                action=RECOVERY reason='load=97RPS | k8s_cap=72RPS | (reducing-serverless)' weights={'k3s': 79, 'knative': 21}
+2026-07-04 12:20:54 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=79.47407233732993 required_resources=3.179 target_replicas=4
+2026-07-04 12:20:54 [debug    ] Decision loop completed        action=RECOVERY latency_ms=658.8 p99=11604.613861386139
+2026-07-04 12:21:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2784
+2026-07-04 12:21:09 [debug    ] HAProxy fallback latency       delta_requests=1106 interval_avg_ms=4570.65 max_rtime_ms=23714.0 p99_est=9141.3
+2026-07-04 12:21:09 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-5 allowed_burn=0.83 budget_remaining=997 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:21:09 [info     ] controller_decision_v3         action=REACTIVE available_replicas=1 budget_remaining=997 burn_adjustment=-5 burst_ratio=0.6617 capacity_deficit=True confidence=0 current_load=70.95162225376357 decision_id=a7f9e855 k8s_capacity=24.0 k8s_weight=55 knative_weight=45 p99=9141.3 predicted_load=0 r_effective=24.0 serverless_enabled=True total_load=71.0 weights_after={'k3s': 55, 'knative': 45} weights_before={'k3s': 79, 'knative': 21}
+2026-07-04 12:21:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2783
+2026-07-04 12:21:09 [debug    ] Current weights retrieved via socket weights={'k3s': 79, 'knative': 21}
+2026-07-04 12:21:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2783
+2026-07-04 12:21:09 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 55' response_length=0
+2026-07-04 12:21:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2781
+2026-07-04 12:21:09 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 45' response_length=0
+2026-07-04 12:21:09 [debug    ] Weight commands sent via socket successfully k3s=55 knative=45
+2026-07-04 12:21:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2784
+2026-07-04 12:21:09 [debug    ] Current weights retrieved via socket weights={'k3s': 55, 'knative': 45}
+2026-07-04 12:21:09 [info     ] Weights updated successfully via HTTP new={'k3s': 55, 'knative': 45} previous={'k3s': 79, 'knative': 21}
+2026-07-04 12:21:09 [info     ] Weights updated                action=REACTIVE reason='load=71RPS | k8s_cap=24RPS | CAPACITY-DEFICIT | (burst-routing)' weights={'k3s': 55, 'knative': 45}
+2026-07-04 12:21:09 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.04 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=83.7512655657117 required_resources=3.35 target_replicas=5
+2026-07-04 12:21:09 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=5
+2026-07-04 12:21:09 [debug    ] Decision loop completed        action=REACTIVE latency_ms=672.17 p99=9141.30198915009
+2026-07-04 12:21:24 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2804
+2026-07-04 12:21:24 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-6 allowed_burn=0.83 budget_remaining=996 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:21:24 [info     ] controller_decision_v3         action=RECOVERY available_replicas=4 budget_remaining=996 burn_adjustment=-6 burst_ratio=0.147 capacity_deficit=False confidence=0 current_load=112.5501559166209 decision_id=3a498e9b k8s_capacity=96.0 k8s_weight=91 knative_weight=9 p99=9141.3 predicted_load=0 r_effective=24.0 serverless_enabled=True total_load=112.6 weights_after={'k3s': 91, 'knative': 9} weights_before={'k3s': 55, 'knative': 45}
+2026-07-04 12:21:25 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2803
+2026-07-04 12:21:25 [debug    ] Current weights retrieved via socket weights={'k3s': 55, 'knative': 45}
+2026-07-04 12:21:25 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2803
+2026-07-04 12:21:25 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 91' response_length=0
+2026-07-04 12:21:25 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2803
+2026-07-04 12:21:25 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 9' response_length=0
+2026-07-04 12:21:25 [debug    ] Weight commands sent via socket successfully k3s=91 knative=9
+2026-07-04 12:21:25 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2796
+2026-07-04 12:21:25 [debug    ] Current weights retrieved via socket weights={'k3s': 91, 'knative': 9}
+2026-07-04 12:21:25 [info     ] Weights updated successfully via HTTP new={'k3s': 91, 'knative': 9} previous={'k3s': 55, 'knative': 45}
+2026-07-04 12:21:25 [info     ] Weights updated                action=RECOVERY reason='load=113RPS | k8s_cap=96RPS | (reducing-serverless)' weights={'k3s': 91, 'knative': 9}
+2026-07-04 12:21:25 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=91.75088908519223 required_resources=3.67 target_replicas=5
+2026-07-04 12:21:25 [debug    ] Decision loop completed        action=RECOVERY latency_ms=659.21 p99=9141.30198915009
+2026-07-04 12:21:40 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2801
+2026-07-04 12:21:40 [debug    ] HAProxy fallback latency       delta_requests=1274 interval_avg_ms=8967.02 max_rtime_ms=26193.0 p99_est=17934.04
+2026-07-04 12:21:40 [debug    ] GRU prediction received        confidence=0.72 latency_ms=38.39 predicted=92
+2026-07-04 12:21:40 [debug    ] Using GRU prediction           confidence=0.72 predicted=92
+2026-07-04 12:21:40 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-6 allowed_burn=0.83 budget_remaining=995 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:21:40 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=3 budget_remaining=995 burn_adjustment=-6 burst_ratio=0.2174 capacity_deficit=False confidence=0.72 current_load=81.67987278895502 decision_id=3c83b746 k8s_capacity=72.0 k8s_weight=84 knative_weight=16 p99=17934.0 predicted_load=92 r_effective=24.0 serverless_enabled=True total_load=92 weights_after={'k3s': 84, 'knative': 16} weights_before={'k3s': 91, 'knative': 9}
+2026-07-04 12:21:40 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2802
+2026-07-04 12:21:40 [debug    ] Current weights retrieved via socket weights={'k3s': 91, 'knative': 9}
+2026-07-04 12:21:40 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2802
+2026-07-04 12:21:40 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 84' response_length=0
+2026-07-04 12:21:40 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2800
+2026-07-04 12:21:40 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 16' response_length=0
+2026-07-04 12:21:40 [debug    ] Weight commands sent via socket successfully k3s=84 knative=16
+2026-07-04 12:21:41 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2808
+2026-07-04 12:21:41 [debug    ] Current weights retrieved via socket weights={'k3s': 84, 'knative': 16}
+2026-07-04 12:21:41 [info     ] Weights updated successfully via HTTP new={'k3s': 84, 'knative': 16} previous={'k3s': 91, 'knative': 9}
+2026-07-04 12:21:41 [info     ] Weights updated                action=PREDICTIVE reason='load=92RPS | k8s_cap=72RPS | (prediction-driven)' weights={'k3s': 84, 'knative': 16}
+2026-07-04 12:21:41 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=92.0 required_resources=3.68 target_replicas=5
+2026-07-04 12:21:41 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=658.79 p99=17934.043956043955
+2026-07-04 12:21:56 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2809
+2026-07-04 12:21:56 [debug    ] HAProxy fallback latency       delta_requests=1004 interval_avg_ms=20512.62 max_rtime_ms=26193.0 p99_est=26193.0
+2026-07-04 12:21:56 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.43 predicted=88
+2026-07-04 12:21:56 [debug    ] Using GRU prediction           confidence=0.72 predicted=88
+2026-07-04 12:21:56 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=994 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:21:56 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=1 budget_remaining=994 burn_adjustment=-7 burst_ratio=0.7273 capacity_deficit=True confidence=0.72 current_load=64.05109170309001 decision_id=de53279a k8s_capacity=24.0 k8s_weight=57 knative_weight=43 p99=26193.0 predicted_load=88 r_effective=24.0 serverless_enabled=True total_load=88 weights_after={'k3s': 57, 'knative': 43} weights_before={'k3s': 84, 'knative': 16}
+2026-07-04 12:21:56 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2808
+2026-07-04 12:21:56 [debug    ] Current weights retrieved via socket weights={'k3s': 84, 'knative': 16}
+2026-07-04 12:21:56 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2808
+2026-07-04 12:21:56 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 57' response_length=0
+2026-07-04 12:21:56 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2806
+2026-07-04 12:21:56 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 43' response_length=0
+2026-07-04 12:21:56 [debug    ] Weight commands sent via socket successfully k3s=57 knative=43
+2026-07-04 12:21:56 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2809
+2026-07-04 12:21:56 [debug    ] Current weights retrieved via socket weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:21:56 [info     ] Weights updated successfully via HTTP new={'k3s': 57, 'knative': 43} previous={'k3s': 84, 'knative': 16}
+2026-07-04 12:21:56 [info     ] Weights updated                action=PREDICTIVE reason='load=88RPS | k8s_cap=24RPS | CAPACITY-DEFICIT | (prediction-driven)' weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:21:56 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=88.0 required_resources=3.52 target_replicas=5
+2026-07-04 12:21:56 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=655.71 p99=26193.0
+2026-07-04 12:22:11 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2808
+2026-07-04 12:22:11 [debug    ] GRU prediction received        confidence=0.72 latency_ms=40.63 predicted=91
+2026-07-04 12:22:11 [debug    ] Using GRU prediction           confidence=0.72 predicted=91
+2026-07-04 12:22:12 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=993 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:22:12 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=993 burn_adjustment=-7 burst_ratio=0.3635 capacity_deficit=False confidence=0.72 current_load=113.11758015370205 decision_id=a6a40aaa k8s_capacity=72.0 k8s_weight=70 knative_weight=30 p99=26193.0 predicted_load=91 r_effective=24.0 serverless_enabled=True total_load=113.1 weights_after={'k3s': 70, 'knative': 30} weights_before={'k3s': 57, 'knative': 43}
+2026-07-04 12:22:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2812
+2026-07-04 12:22:12 [debug    ] Current weights retrieved via socket weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:22:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2812
+2026-07-04 12:22:12 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 70' response_length=0
+2026-07-04 12:22:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2812
+2026-07-04 12:22:12 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 30' response_length=0
+2026-07-04 12:22:12 [debug    ] Weight commands sent via socket successfully k3s=70 knative=30
+2026-07-04 12:22:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2812
+2026-07-04 12:22:12 [debug    ] Current weights retrieved via socket weights={'k3s': 70, 'knative': 30}
+2026-07-04 12:22:12 [info     ] Weights updated successfully via HTTP new={'k3s': 70, 'knative': 30} previous={'k3s': 57, 'knative': 43}
+2026-07-04 12:22:12 [info     ] Weights updated                action=RECOVERY reason='load=113RPS | k8s_cap=72RPS | (reducing-serverless)' weights={'k3s': 70, 'knative': 30}
+2026-07-04 12:22:12 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=91.0 required_resources=3.64 target_replicas=5
+2026-07-04 12:22:12 [debug    ] Decision loop completed        action=RECOVERY latency_ms=740.29 p99=26193.0
+2026-07-04 12:22:27 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2820
+2026-07-04 12:22:27 [debug    ] HAProxy fallback latency       delta_requests=1251 interval_avg_ms=18412.23 max_rtime_ms=26193.0 p99_est=26193.0
+2026-07-04 12:22:27 [debug    ] GRU prediction received        confidence=0.72 latency_ms=38.86 predicted=89
+2026-07-04 12:22:27 [debug    ] Using GRU prediction           confidence=0.72 predicted=89
+2026-07-04 12:22:27 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:22:27 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=992 burn_adjustment=-7 burst_ratio=0.191 capacity_deficit=False confidence=0.72 current_load=79.67190148203031 decision_id=cd5e5ad0 k8s_capacity=72.0 k8s_weight=87 knative_weight=13 p99=26193.0 predicted_load=89 r_effective=24.0 serverless_enabled=True total_load=89 weights_after={'k3s': 87, 'knative': 13} weights_before={'k3s': 70, 'knative': 30}
+2026-07-04 12:22:27 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2819
+2026-07-04 12:22:27 [debug    ] Current weights retrieved via socket weights={'k3s': 70, 'knative': 30}
+2026-07-04 12:22:27 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2819
+2026-07-04 12:22:27 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 87' response_length=0
+2026-07-04 12:22:27 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2819
+2026-07-04 12:22:27 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 13' response_length=0
+2026-07-04 12:22:27 [debug    ] Weight commands sent via socket successfully k3s=87 knative=13
+2026-07-04 12:22:28 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2818
+2026-07-04 12:22:28 [debug    ] Current weights retrieved via socket weights={'k3s': 87, 'knative': 13}
+2026-07-04 12:22:28 [info     ] Weights updated successfully via HTTP new={'k3s': 87, 'knative': 13} previous={'k3s': 70, 'knative': 30}
+2026-07-04 12:22:28 [info     ] Weights updated                action=RECOVERY reason='load=89RPS | k8s_cap=72RPS | (reducing-serverless)' weights={'k3s': 87, 'knative': 13}
+2026-07-04 12:22:28 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=89.0 required_resources=3.56 target_replicas=5
+2026-07-04 12:22:28 [debug    ] Decision loop completed        action=RECOVERY latency_ms=696.27 p99=26193.0
+2026-07-04 12:22:43 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2822
+2026-07-04 12:22:43 [debug    ] HAProxy fallback latency       delta_requests=1344 interval_avg_ms=19538.12 max_rtime_ms=27857.0 p99_est=27857.0
+2026-07-04 12:22:43 [debug    ] GRU prediction received        confidence=0.73 latency_ms=39.8 predicted=89
+2026-07-04 12:22:43 [debug    ] Using GRU prediction           confidence=0.73 predicted=89
+2026-07-04 12:22:43 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=991 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:22:43 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=89.0 required_resources=3.56 target_replicas=5
+2026-07-04 12:22:43 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=152.4 p99=27857.0
+2026-07-04 12:22:58 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2819
+2026-07-04 12:22:58 [debug    ] GRU prediction received        confidence=0.72 latency_ms=40.77 predicted=87
+2026-07-04 12:22:58 [debug    ] Using GRU prediction           confidence=0.72 predicted=87
+2026-07-04 12:22:58 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=990 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:22:58 [info     ] controller_decision_v3         action=RECOVERY available_replicas=4 budget_remaining=990 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=70.08825638197011 decision_id=6c4c3f89 k8s_capacity=96.0 k8s_weight=100 knative_weight=0 p99=27857.0 predicted_load=87 r_effective=24.0 serverless_enabled=False total_load=87 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 87, 'knative': 13}
+2026-07-04 12:22:58 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2818
+2026-07-04 12:22:58 [debug    ] Current weights retrieved via socket weights={'k3s': 87, 'knative': 13}
+2026-07-04 12:22:58 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2818
+2026-07-04 12:22:58 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 100' response_length=0
+2026-07-04 12:22:58 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2820
+2026-07-04 12:22:58 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 0' response_length=0
+2026-07-04 12:22:58 [debug    ] Weight commands sent via socket successfully k3s=100 knative=0
+2026-07-04 12:22:59 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2818
+2026-07-04 12:22:59 [debug    ] Current weights retrieved via socket weights={'k3s': 100, 'knative': 0}
+2026-07-04 12:22:59 [info     ] Weights updated successfully via HTTP new={'k3s': 100, 'knative': 0} previous={'k3s': 87, 'knative': 13}
+2026-07-04 12:22:59 [info     ] Weights updated                action=RECOVERY reason='load=87RPS | k8s_cap=96RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-04 12:22:59 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=87.0 required_resources=3.48 target_replicas=5
+2026-07-04 12:22:59 [debug    ] Decision loop completed        action=RECOVERY latency_ms=701.97 p99=27857.0
+2026-07-04 12:23:14 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2827
+2026-07-04 12:23:14 [debug    ] HAProxy fallback latency       delta_requests=1759 interval_avg_ms=24221.17 max_rtime_ms=27857.0 p99_est=27857.0
+2026-07-04 12:23:14 [debug    ] GRU prediction received        confidence=0.73 latency_ms=39.21 predicted=89
+2026-07-04 12:23:14 [debug    ] Using GRU prediction           confidence=0.73 predicted=89
+2026-07-04 12:23:14 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=989 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:23:14 [info     ] Knative pre-warm OK            cold_start_ms=2.7
+2026-07-04 12:23:14 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=989 burn_adjustment=-7 burst_ratio=0.3562 capacity_deficit=False confidence=0.73 current_load=111.83050588666653 decision_id=f36a4217 k8s_capacity=72.0 k8s_weight=71 knative_weight=29 p99=27857.0 predicted_load=89 r_effective=24.0 serverless_enabled=True total_load=111.8 weights_after={'k3s': 71, 'knative': 29} weights_before={'k3s': 100, 'knative': 0}
+2026-07-04 12:23:14 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2826
+2026-07-04 12:23:14 [debug    ] Current weights retrieved via socket weights={'k3s': 100, 'knative': 0}
+2026-07-04 12:23:14 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2826
+2026-07-04 12:23:14 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 71' response_length=0
+2026-07-04 12:23:14 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2824
+2026-07-04 12:23:14 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 29' response_length=0
+2026-07-04 12:23:14 [debug    ] Weight commands sent via socket successfully k3s=71 knative=29
+2026-07-04 12:23:14 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2830
+2026-07-04 12:23:14 [debug    ] Current weights retrieved via socket weights={'k3s': 71, 'knative': 29}
+2026-07-04 12:23:14 [info     ] Weights updated successfully via HTTP new={'k3s': 71, 'knative': 29} previous={'k3s': 100, 'knative': 0}
+2026-07-04 12:23:14 [info     ] Weights updated                action=REACTIVE reason='load=112RPS | k8s_cap=72RPS | (burst-routing)' weights={'k3s': 71, 'knative': 29}
+2026-07-04 12:23:14 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=89.0 required_resources=3.56 target_replicas=5
+2026-07-04 12:23:14 [debug    ] Decision loop completed        action=REACTIVE latency_ms=662.74 p99=27857.0
+2026-07-04 12:23:29 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2836
+2026-07-04 12:23:29 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.95 predicted=93
+2026-07-04 12:23:29 [debug    ] Using GRU prediction           confidence=0.72 predicted=93
+2026-07-04 12:23:29 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=988 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:23:29 [info     ] controller_decision_v3         action=RECOVERY available_replicas=5 budget_remaining=988 burn_adjustment=-7 burst_ratio=0.0863 capacity_deficit=False confidence=0.72 current_load=131.33546104183594 decision_id=6c451779 k8s_capacity=120.0 k8s_weight=98 knative_weight=2 p99=27857.0 predicted_load=93 r_effective=24.0 serverless_enabled=True total_load=131.3 weights_after={'k3s': 98, 'knative': 2} weights_before={'k3s': 71, 'knative': 29}
+2026-07-04 12:23:29 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2834
+2026-07-04 12:23:29 [debug    ] Current weights retrieved via socket weights={'k3s': 71, 'knative': 29}
+2026-07-04 12:23:29 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2834
+2026-07-04 12:23:29 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 98' response_length=0
+2026-07-04 12:23:29 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2834
+2026-07-04 12:23:29 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 2' response_length=0
+2026-07-04 12:23:29 [debug    ] Weight commands sent via socket successfully k3s=98 knative=2
+2026-07-04 12:23:30 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2831
+2026-07-04 12:23:30 [debug    ] Current weights retrieved via socket weights={'k3s': 98, 'knative': 2}
+2026-07-04 12:23:30 [info     ] Weights updated successfully via HTTP new={'k3s': 98, 'knative': 2} previous={'k3s': 71, 'knative': 29}
+2026-07-04 12:23:30 [info     ] Weights updated                action=RECOVERY reason='load=131RPS | k8s_cap=120RPS | (reducing-serverless)' weights={'k3s': 98, 'knative': 2}
+2026-07-04 12:23:30 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=93.0 required_resources=3.72 target_replicas=5
+2026-07-04 12:23:30 [debug    ] Decision loop completed        action=RECOVERY latency_ms=705.09 p99=27857.0
+2026-07-04 12:23:45 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2829
+2026-07-04 12:23:45 [debug    ] HAProxy fallback latency       delta_requests=650 interval_avg_ms=131639.83 max_rtime_ms=27857.0 p99_est=27857.0
+2026-07-04 12:23:45 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.78 predicted=79
+2026-07-04 12:23:45 [debug    ] Using GRU prediction           confidence=0.72 predicted=79
+2026-07-04 12:23:45 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=987 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:23:45 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=2 budget_remaining=987 burn_adjustment=-7 burst_ratio=0.3924 capacity_deficit=False confidence=0.72 current_load=41.63973338060572 decision_id=f7ebefe0 k8s_capacity=48.0 k8s_weight=67 knative_weight=33 p99=27857.0 predicted_load=79 r_effective=24.0 serverless_enabled=True total_load=79 weights_after={'k3s': 67, 'knative': 33} weights_before={'k3s': 98, 'knative': 2}
+2026-07-04 12:23:45 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2828
+2026-07-04 12:23:45 [debug    ] Current weights retrieved via socket weights={'k3s': 98, 'knative': 2}
+2026-07-04 12:23:45 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2828
+2026-07-04 12:23:45 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 67' response_length=0
+2026-07-04 12:23:45 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2826
+2026-07-04 12:23:45 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 33' response_length=0
+2026-07-04 12:23:45 [debug    ] Weight commands sent via socket successfully k3s=67 knative=33
+2026-07-04 12:23:46 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2862
+2026-07-04 12:23:46 [debug    ] Current weights retrieved via socket weights={'k3s': 67, 'knative': 33}
+2026-07-04 12:23:46 [info     ] Weights updated successfully via HTTP new={'k3s': 67, 'knative': 33} previous={'k3s': 98, 'knative': 2}
+2026-07-04 12:23:46 [info     ] Weights updated                action=PREDICTIVE reason='load=79RPS | k8s_cap=48RPS | (prediction-driven)' weights={'k3s': 67, 'knative': 33}
+2026-07-04 12:23:46 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=79.0 required_resources=3.16 target_replicas=4
+2026-07-04 12:23:46 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=658.63 p99=27857.0
+2026-07-04 12:24:01 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2842
+2026-07-04 12:24:01 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.42 predicted=83
+2026-07-04 12:24:01 [debug    ] Using GRU prediction           confidence=0.72 predicted=83
+2026-07-04 12:24:01 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=986 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:24:01 [info     ] controller_decision_v3         action=RECOVERY available_replicas=4 budget_remaining=986 burn_adjustment=-7 burst_ratio=0.3038 capacity_deficit=False confidence=0.72 current_load=137.88416384151773 decision_id=6383355f k8s_capacity=96.0 k8s_weight=76 knative_weight=24 p99=27857.0 predicted_load=83 r_effective=24.0 serverless_enabled=True total_load=137.9 weights_after={'k3s': 76, 'knative': 24} weights_before={'k3s': 67, 'knative': 33}
+2026-07-04 12:24:01 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2841
+2026-07-04 12:24:01 [debug    ] Current weights retrieved via socket weights={'k3s': 67, 'knative': 33}
+2026-07-04 12:24:01 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2841
+2026-07-04 12:24:01 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 76' response_length=0
+2026-07-04 12:24:01 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2841
+2026-07-04 12:24:01 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 24' response_length=0
+2026-07-04 12:24:01 [debug    ] Weight commands sent via socket successfully k3s=76 knative=24
+2026-07-04 12:24:01 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2841
+2026-07-04 12:24:01 [debug    ] Current weights retrieved via socket weights={'k3s': 76, 'knative': 24}
+2026-07-04 12:24:01 [info     ] Weights updated successfully via HTTP new={'k3s': 76, 'knative': 24} previous={'k3s': 67, 'knative': 33}
+2026-07-04 12:24:01 [info     ] Weights updated                action=RECOVERY reason='load=138RPS | k8s_cap=96RPS | (reducing-serverless)' weights={'k3s': 76, 'knative': 24}
+2026-07-04 12:24:01 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=83.0 required_resources=3.32 target_replicas=4
+2026-07-04 12:24:01 [debug    ] Decision loop completed        action=RECOVERY latency_ms=703.81 p99=27857.0
+2026-07-04 12:24:16 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2843
+2026-07-04 12:24:16 [debug    ] GRU prediction received        confidence=0.72 latency_ms=40.23 predicted=85
+2026-07-04 12:24:16 [debug    ] Using GRU prediction           confidence=0.72 predicted=85
+2026-07-04 12:24:17 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=985 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:24:17 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=985 burn_adjustment=-7 burst_ratio=0.3483 capacity_deficit=False confidence=0.72 current_load=110.48118966265584 decision_id=3e175d06 k8s_capacity=72.0 k8s_weight=72 knative_weight=28 p99=27857.0 predicted_load=85 r_effective=24.0 serverless_enabled=True total_load=110.5 weights_after={'k3s': 72, 'knative': 28} weights_before={'k3s': 76, 'knative': 24}
+2026-07-04 12:24:17 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2845
+2026-07-04 12:24:17 [debug    ] Current weights retrieved via socket weights={'k3s': 76, 'knative': 24}
+2026-07-04 12:24:17 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2845
+2026-07-04 12:24:17 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 72' response_length=0
+2026-07-04 12:24:17 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2843
+2026-07-04 12:24:17 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 28' response_length=0
+2026-07-04 12:24:17 [debug    ] Weight commands sent via socket successfully k3s=72 knative=28
+2026-07-04 12:24:17 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2844
+2026-07-04 12:24:17 [debug    ] Current weights retrieved via socket weights={'k3s': 72, 'knative': 28}
+2026-07-04 12:24:17 [info     ] Weights updated successfully via HTTP new={'k3s': 72, 'knative': 28} previous={'k3s': 76, 'knative': 24}
+2026-07-04 12:24:17 [info     ] Weights updated                action=REACTIVE reason='load=110RPS | k8s_cap=72RPS | (burst-routing)' weights={'k3s': 72, 'knative': 28}
+2026-07-04 12:24:17 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=85.0 required_resources=3.4 target_replicas=5
+2026-07-04 12:24:17 [debug    ] Decision loop completed        action=REACTIVE latency_ms=662.41 p99=27857.0
+2026-07-04 12:24:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2837
+2026-07-04 12:24:32 [debug    ] HAProxy fallback latency       delta_requests=728 interval_avg_ms=87955.19 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:24:32 [debug    ] GRU prediction received        confidence=0.72 latency_ms=38.99 predicted=79
+2026-07-04 12:24:32 [debug    ] Using GRU prediction           confidence=0.72 predicted=79
+2026-07-04 12:24:32 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=984 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:24:32 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=2 budget_remaining=984 burn_adjustment=-7 burst_ratio=0.3924 capacity_deficit=False confidence=0.72 current_load=46.98930439655914 decision_id=1323c307 k8s_capacity=48.0 k8s_weight=67 knative_weight=33 p99=33843.0 predicted_load=79 r_effective=24.0 serverless_enabled=True total_load=79 weights_after={'k3s': 67, 'knative': 33} weights_before={'k3s': 72, 'knative': 28}
+2026-07-04 12:24:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2836
+2026-07-04 12:24:32 [debug    ] Current weights retrieved via socket weights={'k3s': 72, 'knative': 28}
+2026-07-04 12:24:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2836
+2026-07-04 12:24:32 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 67' response_length=0
+2026-07-04 12:24:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2834
+2026-07-04 12:24:32 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 33' response_length=0
+2026-07-04 12:24:32 [debug    ] Weight commands sent via socket successfully k3s=67 knative=33
+2026-07-04 12:24:33 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2836
+2026-07-04 12:24:33 [debug    ] Current weights retrieved via socket weights={'k3s': 67, 'knative': 33}
+2026-07-04 12:24:33 [info     ] Weights updated successfully via HTTP new={'k3s': 67, 'knative': 33} previous={'k3s': 72, 'knative': 28}
+2026-07-04 12:24:33 [info     ] Weights updated                action=PREDICTIVE reason='load=79RPS | k8s_cap=48RPS | (prediction-driven)' weights={'k3s': 67, 'knative': 33}
+2026-07-04 12:24:33 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=79.0 required_resources=3.16 target_replicas=4
+2026-07-04 12:24:33 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=657.53 p99=33843.0
+2026-07-04 12:24:48 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2843
+2026-07-04 12:24:48 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.84 predicted=82
+2026-07-04 12:24:48 [debug    ] Using GRU prediction           confidence=0.72 predicted=82
+2026-07-04 12:24:48 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=983 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:24:48 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=983 burn_adjustment=-7 burst_ratio=0.4504 capacity_deficit=False confidence=0.72 current_load=130.99510983040122 decision_id=46cb0033 k8s_capacity=72.0 k8s_weight=61 knative_weight=39 p99=33843.0 predicted_load=82 r_effective=24.0 serverless_enabled=True total_load=131.0 weights_after={'k3s': 61, 'knative': 39} weights_before={'k3s': 67, 'knative': 33}
+2026-07-04 12:24:48 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2842
+2026-07-04 12:24:48 [debug    ] Current weights retrieved via socket weights={'k3s': 67, 'knative': 33}
+2026-07-04 12:24:48 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2842
+2026-07-04 12:24:48 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 61' response_length=0
+2026-07-04 12:24:48 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2840
+2026-07-04 12:24:48 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 39' response_length=0
+2026-07-04 12:24:48 [debug    ] Weight commands sent via socket successfully k3s=61 knative=39
+2026-07-04 12:24:48 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2844
+2026-07-04 12:24:48 [debug    ] Current weights retrieved via socket weights={'k3s': 61, 'knative': 39}
+2026-07-04 12:24:48 [info     ] Weights updated successfully via HTTP new={'k3s': 61, 'knative': 39} previous={'k3s': 67, 'knative': 33}
+2026-07-04 12:24:48 [info     ] Weights updated                action=REACTIVE reason='load=131RPS | k8s_cap=72RPS | (burst-routing)' weights={'k3s': 61, 'knative': 39}
+2026-07-04 12:24:48 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=82.0 required_resources=3.28 target_replicas=4
+2026-07-04 12:24:48 [debug    ] Decision loop completed        action=REACTIVE latency_ms=652.41 p99=33843.0
+2026-07-04 12:25:03 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2844
+2026-07-04 12:25:03 [debug    ] HAProxy fallback latency       delta_requests=626 interval_avg_ms=56277.25 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:25:03 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.0 predicted=76
+2026-07-04 12:25:03 [debug    ] Using GRU prediction           confidence=0.72 predicted=76
+2026-07-04 12:25:03 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=982 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:25:03 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=1 budget_remaining=982 burn_adjustment=-7 burst_ratio=0.6842 capacity_deficit=True confidence=0.72 current_load=40.05661553672562 decision_id=a842ef2a k8s_capacity=24.0 k8s_weight=57 knative_weight=43 p99=33843.0 predicted_load=76 r_effective=24.0 serverless_enabled=True total_load=76 weights_after={'k3s': 57, 'knative': 43} weights_before={'k3s': 61, 'knative': 39}
+2026-07-04 12:25:03 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2843
+2026-07-04 12:25:03 [debug    ] Current weights retrieved via socket weights={'k3s': 61, 'knative': 39}
+2026-07-04 12:25:03 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2843
+2026-07-04 12:25:03 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 57' response_length=0
+2026-07-04 12:25:03 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2841
+2026-07-04 12:25:03 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 43' response_length=0
+2026-07-04 12:25:03 [debug    ] Weight commands sent via socket successfully k3s=57 knative=43
+2026-07-04 12:25:04 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2843
+2026-07-04 12:25:04 [debug    ] Current weights retrieved via socket weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:25:04 [info     ] Weights updated successfully via HTTP new={'k3s': 57, 'knative': 43} previous={'k3s': 61, 'knative': 39}
+2026-07-04 12:25:04 [info     ] Weights updated                action=PREDICTIVE reason='load=76RPS | k8s_cap=24RPS | CAPACITY-DEFICIT | (prediction-driven)' weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:25:04 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=76.0 required_resources=3.04 target_replicas=4
+2026-07-04 12:25:04 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=661.33 p99=33843.0
+2026-07-04 12:25:19 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2844
+2026-07-04 12:25:19 [debug    ] GRU prediction received        confidence=0.72 latency_ms=40.22 predicted=79
+2026-07-04 12:25:19 [debug    ] Using GRU prediction           confidence=0.72 predicted=79
+2026-07-04 12:25:19 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=981 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:25:19 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=79.0 required_resources=3.16 target_replicas=4
+2026-07-04 12:25:19 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=158.71 p99=33843.0
+2026-07-04 12:25:34 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2841
+2026-07-04 12:25:34 [debug    ] HAProxy fallback latency       delta_requests=528 interval_avg_ms=166849.27 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:25:34 [debug    ] GRU prediction received        confidence=0.72 latency_ms=40.0 predicted=73
+2026-07-04 12:25:34 [debug    ] Using GRU prediction           confidence=0.72 predicted=73
+2026-07-04 12:25:34 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=980 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:25:34 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=73.0 required_resources=2.92 target_replicas=4
+2026-07-04 12:25:34 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=151.72 p99=33843.0
+2026-07-04 12:25:49 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2845
+2026-07-04 12:25:49 [debug    ] GRU prediction received        confidence=0.72 latency_ms=38.36 predicted=75
+2026-07-04 12:25:49 [debug    ] Using GRU prediction           confidence=0.72 predicted=75
+2026-07-04 12:25:49 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=979 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:25:49 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=75.0 required_resources=3.0 target_replicas=4
+2026-07-04 12:25:49 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=150.01 p99=33843.0
+2026-07-04 12:26:05 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2852
+2026-07-04 12:26:05 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.6 predicted=77
+2026-07-04 12:26:05 [debug    ] Using GRU prediction           confidence=0.72 predicted=77
+2026-07-04 12:26:05 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=978 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:26:05 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=77.0 required_resources=3.08 target_replicas=4
+2026-07-04 12:26:05 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=161.63 p99=33843.0
+2026-07-04 12:26:20 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2850
+2026-07-04 12:26:20 [debug    ] HAProxy fallback latency       delta_requests=1314 interval_avg_ms=38885.84 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:26:20 [debug    ] GRU prediction received        confidence=0.72 latency_ms=40.39 predicted=78
+2026-07-04 12:26:20 [debug    ] Using GRU prediction           confidence=0.72 predicted=78
+2026-07-04 12:26:20 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=977 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:26:20 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=78.0 required_resources=3.12 target_replicas=4
+2026-07-04 12:26:20 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=153.73 p99=33843.0
+2026-07-04 12:26:35 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2847
+2026-07-04 12:26:35 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.86 predicted=79
+2026-07-04 12:26:35 [debug    ] Using GRU prediction           confidence=0.72 predicted=79
+2026-07-04 12:26:35 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=976 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:26:35 [info     ] controller_decision_v3         action=RECOVERY available_replicas=2 budget_remaining=976 burn_adjustment=-7 burst_ratio=0.4317 capacity_deficit=False confidence=0.72 current_load=84.46368623808424 decision_id=6beae33a k8s_capacity=48.0 k8s_weight=63 knative_weight=37 p99=33843.0 predicted_load=79 r_effective=24.0 serverless_enabled=True total_load=84.5 weights_after={'k3s': 63, 'knative': 37} weights_before={'k3s': 57, 'knative': 43}
+2026-07-04 12:26:35 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2846
+2026-07-04 12:26:35 [debug    ] Current weights retrieved via socket weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:26:35 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2846
+2026-07-04 12:26:35 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 63' response_length=0
+2026-07-04 12:26:35 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2846
+2026-07-04 12:26:35 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 37' response_length=0
+2026-07-04 12:26:35 [debug    ] Weight commands sent via socket successfully k3s=63 knative=37
+2026-07-04 12:26:35 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2848
+2026-07-04 12:26:35 [debug    ] Current weights retrieved via socket weights={'k3s': 63, 'knative': 37}
+2026-07-04 12:26:35 [info     ] Weights updated successfully via HTTP new={'k3s': 63, 'knative': 37} previous={'k3s': 57, 'knative': 43}
+2026-07-04 12:26:35 [info     ] Weights updated                action=RECOVERY reason='load=84RPS | k8s_cap=48RPS | (reducing-serverless)' weights={'k3s': 63, 'knative': 37}
+2026-07-04 12:26:36 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=79.0 required_resources=3.16 target_replicas=4
+2026-07-04 12:26:36 [debug    ] Decision loop completed        action=RECOVERY latency_ms=693.58 p99=33843.0
+2026-07-04 12:26:51 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2854
+2026-07-04 12:26:51 [debug    ] GRU prediction received        confidence=0.81 latency_ms=40.7 predicted=80
+2026-07-04 12:26:51 [debug    ] Using GRU prediction           confidence=0.81 predicted=80
+2026-07-04 12:26:51 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=975 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:26:51 [info     ] controller_decision_v3         action=REACTIVE available_replicas=1 budget_remaining=975 burn_adjustment=-7 burst_ratio=0.7346 capacity_deficit=True confidence=0.81 current_load=90.4241047227705 decision_id=a224e846 k8s_capacity=24.0 k8s_weight=57 knative_weight=43 p99=33843.0 predicted_load=80 r_effective=24.0 serverless_enabled=True total_load=90.4 weights_after={'k3s': 57, 'knative': 43} weights_before={'k3s': 63, 'knative': 37}
+2026-07-04 12:26:51 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2853
+2026-07-04 12:26:51 [debug    ] Current weights retrieved via socket weights={'k3s': 63, 'knative': 37}
+2026-07-04 12:26:51 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2853
+2026-07-04 12:26:51 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 57' response_length=0
+2026-07-04 12:26:51 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2851
+2026-07-04 12:26:51 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 43' response_length=0
+2026-07-04 12:26:51 [debug    ] Weight commands sent via socket successfully k3s=57 knative=43
+2026-07-04 12:26:51 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2855
+2026-07-04 12:26:51 [debug    ] Current weights retrieved via socket weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:26:51 [info     ] Weights updated successfully via HTTP new={'k3s': 57, 'knative': 43} previous={'k3s': 63, 'knative': 37}
+2026-07-04 12:26:51 [info     ] Weights updated                action=REACTIVE reason='load=90RPS | k8s_cap=24RPS | CAPACITY-DEFICIT | (burst-routing)' weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:26:51 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=80.0 required_resources=3.2 target_replicas=4
+2026-07-04 12:26:51 [debug    ] Decision loop completed        action=REACTIVE latency_ms=662.39 p99=33843.0
+2026-07-04 12:27:06 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2850
+2026-07-04 12:27:06 [debug    ] GRU prediction received        confidence=0.81 latency_ms=38.11 predicted=81
+2026-07-04 12:27:06 [debug    ] Using GRU prediction           confidence=0.81 predicted=81
+2026-07-04 12:27:06 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=974 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:27:06 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=81.0 required_resources=3.24 target_replicas=4
+2026-07-04 12:27:06 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=152.5 p99=33843.0
+2026-07-04 12:27:21 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2858
+2026-07-04 12:27:21 [debug    ] HAProxy fallback latency       delta_requests=988 interval_avg_ms=6223.73 max_rtime_ms=33843.0 p99_est=12447.46
+2026-07-04 12:27:21 [debug    ] GRU prediction received        confidence=0.79 latency_ms=40.94 predicted=79
+2026-07-04 12:27:21 [debug    ] Using GRU prediction           confidence=0.79 predicted=79
+2026-07-04 12:27:21 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=973 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:27:21 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=79.0 required_resources=3.16 target_replicas=4
+2026-07-04 12:27:21 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=160.49 p99=12447.455465587045
+2026-07-04 12:27:36 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2858
+2026-07-04 12:27:41 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:27:41 [debug    ] HAProxy fallback latency       delta_requests=2895 interval_avg_ms=65918.75 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:27:42 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.39 predicted=83
+2026-07-04 12:27:42 [debug    ] Using GRU prediction           confidence=0.72 predicted=83
+2026-07-04 12:27:42 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=972 burn_error=-0.924 burn_ratio=0.076
+2026-07-04 12:27:42 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=83.0 required_resources=3.32 target_replicas=4
+2026-07-04 12:27:42 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=5128.68 p99=33843.0
+2026-07-04 12:27:57 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2855
+2026-07-04 12:27:57 [debug    ] GRU prediction received        confidence=0.72 latency_ms=40.54 predicted=83
+2026-07-04 12:27:57 [debug    ] Using GRU prediction           confidence=0.72 predicted=83
+2026-07-04 12:27:57 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=971 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:27:57 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=83.0 required_resources=3.32 target_replicas=4
+2026-07-04 12:27:57 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=154.26 p99=33843.0
+2026-07-04 12:28:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2856
+2026-07-04 12:28:12 [debug    ] GRU prediction received        confidence=0.72 latency_ms=42.18 predicted=85
+2026-07-04 12:28:12 [debug    ] Using GRU prediction           confidence=0.72 predicted=85
+2026-07-04 12:28:12 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=970 burn_error=-0.923 burn_ratio=0.077
+2026-07-04 12:28:12 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=85.0 required_resources=3.4 target_replicas=5
+2026-07-04 12:28:12 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=156.22 p99=33843.0
+2026-07-04 12:28:27 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2856
+2026-07-04 12:28:32 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:28:32 [debug    ] HAProxy fallback latency       delta_requests=2385 interval_avg_ms=88436.49 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:28:32 [debug    ] GRU prediction received        confidence=0.72 latency_ms=41.17 predicted=88
+2026-07-04 12:28:32 [debug    ] Using GRU prediction           confidence=0.72 predicted=88
+2026-07-04 12:28:37 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:28:37 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=969 burn_error=-0.925 burn_ratio=0.075
+2026-07-04 12:28:42 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:28:42 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=15069.87 p99=33843.0
+2026-07-04 12:28:57 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2856
+2026-07-04 12:29:02 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:29:02 [debug    ] HAProxy fallback latency       delta_requests=3340 interval_avg_ms=11904.61 max_rtime_ms=33843.0 p99_est=23809.23
+2026-07-04 12:29:02 [debug    ] GRU prediction received        confidence=0.74 latency_ms=39.68 predicted=91
+2026-07-04 12:29:02 [debug    ] Using GRU prediction           confidence=0.74 predicted=91
+2026-07-04 12:29:07 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:29:07 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=968 burn_error=-0.927 burn_ratio=0.073
+2026-07-04 12:29:07 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=91.0 required_resources=3.64 target_replicas=5
+2026-07-04 12:29:07 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=10101.07 p99=23809.22634730539
+2026-07-04 12:29:22 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2864
+2026-07-04 12:29:22 [debug    ] GRU prediction received        confidence=0.76 latency_ms=39.3 predicted=88
+2026-07-04 12:29:22 [debug    ] Using GRU prediction           confidence=0.76 predicted=88
+2026-07-04 12:29:22 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=967 burn_error=-0.927 burn_ratio=0.073
+2026-07-04 12:29:22 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=88.0 required_resources=3.52 target_replicas=5
+2026-07-04 12:29:22 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=158.85 p99=23809.22634730539
+2026-07-04 12:29:37 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2860
+2026-07-04 12:29:37 [debug    ] GRU prediction received        confidence=0.73 latency_ms=40.06 predicted=86
+2026-07-04 12:29:37 [debug    ] Using GRU prediction           confidence=0.73 predicted=86
+2026-07-04 12:29:37 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=966 burn_error=-0.926 burn_ratio=0.074
+2026-07-04 12:29:37 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=86.0 required_resources=3.44 target_replicas=5
+2026-07-04 12:29:37 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=157.53 p99=23809.22634730539
+2026-07-04 12:29:52 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2862
+2026-07-04 12:29:57 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:29:57 [debug    ] HAProxy fallback latency       delta_requests=2502 interval_avg_ms=42563.88 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:29:57 [debug    ] GRU prediction received        confidence=0.72 latency_ms=38.84 predicted=90
+2026-07-04 12:29:57 [debug    ] Using GRU prediction           confidence=0.72 predicted=90
+2026-07-04 12:30:02 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:30:02 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=965 burn_error=-0.928 burn_ratio=0.072
+2026-07-04 12:30:07 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:30:07 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=15068.04 p99=33843.0
+2026-07-04 12:30:22 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2862
+2026-07-04 12:30:23 [debug    ] HAProxy fallback latency       delta_requests=3435 interval_avg_ms=42713.51 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:30:23 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.29 predicted=94
+2026-07-04 12:30:23 [debug    ] Using GRU prediction           confidence=0.72 predicted=94
+2026-07-04 12:30:23 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=964 burn_error=-0.928 burn_ratio=0.072
+2026-07-04 12:30:23 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=94.0 required_resources=3.76 target_replicas=5
+2026-07-04 12:30:23 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=163.15 p99=33843.0
+2026-07-04 12:30:38 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2855
+2026-07-04 12:30:38 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.45 predicted=77
+2026-07-04 12:30:38 [debug    ] Using GRU prediction           confidence=0.72 predicted=77
+2026-07-04 12:30:38 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=963 burn_error=-0.928 burn_ratio=0.072
+2026-07-04 12:30:38 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=77.0 required_resources=3.08 target_replicas=4
+2026-07-04 12:30:38 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=156.86 p99=33843.0
+2026-07-04 12:30:53 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2856
+2026-07-04 12:30:53 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.52 predicted=80
+2026-07-04 12:30:53 [debug    ] Using GRU prediction           confidence=0.72 predicted=80
+2026-07-04 12:30:53 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=962 burn_error=-0.928 burn_ratio=0.072
+2026-07-04 12:30:53 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=80.0 required_resources=3.2 target_replicas=4
+2026-07-04 12:30:53 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=160.13 p99=33843.0
+2026-07-04 12:31:08 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2869
+2026-07-04 12:31:08 [debug    ] HAProxy fallback latency       delta_requests=1393 interval_avg_ms=21629.73 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:31:08 [debug    ] GRU prediction received        confidence=0.72 latency_ms=40.63 predicted=81
+2026-07-04 12:31:08 [debug    ] Using GRU prediction           confidence=0.72 predicted=81
+2026-07-04 12:31:08 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=961 burn_error=-0.928 burn_ratio=0.072
+2026-07-04 12:31:08 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=81.0 required_resources=3.24 target_replicas=4
+2026-07-04 12:31:08 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=165.91 p99=33843.0
+2026-07-04 12:31:23 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2870
+2026-07-04 12:31:23 [debug    ] HAProxy fallback latency       delta_requests=1488 interval_avg_ms=58511.58 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:31:23 [debug    ] GRU prediction received        confidence=0.72 latency_ms=40.29 predicted=83
+2026-07-04 12:31:23 [debug    ] Using GRU prediction           confidence=0.72 predicted=83
+2026-07-04 12:31:23 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=960 burn_error=-0.927 burn_ratio=0.073
+2026-07-04 12:31:23 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=83.0 required_resources=3.32 target_replicas=4
+2026-07-04 12:31:23 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=159.35 p99=33843.0
+2026-07-04 12:31:38 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2863
+2026-07-04 12:31:43 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:31:43 [debug    ] HAProxy fallback latency       delta_requests=3693 interval_avg_ms=29333.04 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:31:43 [debug    ] GRU prediction received        confidence=0.72 latency_ms=40.61 predicted=87
+2026-07-04 12:31:43 [debug    ] Using GRU prediction           confidence=0.72 predicted=87
+2026-07-04 12:31:48 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:31:48 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=959 burn_error=-0.928 burn_ratio=0.072
+2026-07-04 12:31:53 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:31:53 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=15069.45 p99=33843.0
+2026-07-04 12:32:08 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2865
+2026-07-04 12:32:13 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:32:13 [debug    ] HAProxy fallback latency       delta_requests=4783 interval_avg_ms=14715.95 max_rtime_ms=33843.0 p99_est=29431.89
+2026-07-04 12:32:13 [debug    ] GRU prediction received        confidence=0.72 latency_ms=40.18 predicted=94
+2026-07-04 12:32:13 [debug    ] Using GRU prediction           confidence=0.72 predicted=94
+2026-07-04 12:32:18 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:32:18 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=958 burn_error=-0.93 burn_ratio=0.07
+2026-07-04 12:32:21 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=94.0 required_resources=3.76 target_replicas=5
+2026-07-04 12:32:21 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=13102.62 p99=29431.892536065232
+2026-07-04 12:32:36 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2866
+2026-07-04 12:32:41 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:32:41 [debug    ] HAProxy fallback latency       delta_requests=3329 interval_avg_ms=8283.02 max_rtime_ms=33843.0 p99_est=16566.03
+2026-07-04 12:32:42 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.64 predicted=99
+2026-07-04 12:32:42 [debug    ] Using GRU prediction           confidence=0.72 predicted=99
+2026-07-04 12:32:47 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:32:47 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=957 burn_error=-0.931 burn_ratio=0.069
+2026-07-04 12:32:52 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:32:52 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=15069.24 p99=16566.030039050765
+2026-07-04 12:33:07 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2867
+2026-07-04 12:33:08 [debug    ] HAProxy fallback latency       delta_requests=3187 interval_avg_ms=8401.48 max_rtime_ms=33843.0 p99_est=16802.96
+2026-07-04 12:33:08 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.2 predicted=103
+2026-07-04 12:33:08 [debug    ] Using GRU prediction           confidence=0.72 predicted=103
+2026-07-04 12:33:13 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:33:13 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=956 burn_error=-0.931 burn_ratio=0.069
+2026-07-04 12:33:18 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:33:18 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=11097.57 p99=16802.963915908378
+2026-07-04 12:33:33 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2867
+2026-07-04 12:33:38 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:33:38 [debug    ] HAProxy fallback latency       delta_requests=3770 interval_avg_ms=11992.95 max_rtime_ms=33843.0 p99_est=23985.9
+2026-07-04 12:33:38 [debug    ] GRU prediction received        confidence=0.74 latency_ms=39.92 predicted=108
+2026-07-04 12:33:38 [debug    ] Using GRU prediction           confidence=0.74 predicted=108
+2026-07-04 12:33:43 [error    ] kubectl command timed out      cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] timeout=5
+2026-07-04 12:33:43 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=955 burn_error=-0.933 burn_ratio=0.067
+2026-07-04 12:33:47 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.04 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=108.0 required_resources=4.32 target_replicas=6
+2026-07-04 12:33:47 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=6
+2026-07-04 12:33:47 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=14140.22 p99=23985.89549071618
+2026-07-04 12:34:02 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2858
+2026-07-04 12:34:02 [debug    ] HAProxy fallback latency       delta_requests=2185 interval_avg_ms=6420.02 max_rtime_ms=33843.0 p99_est=12840.03
+2026-07-04 12:34:02 [debug    ] GRU prediction received        confidence=0.72 latency_ms=40.31 predicted=104
+2026-07-04 12:34:02 [debug    ] Using GRU prediction           confidence=0.72 predicted=104
+2026-07-04 12:34:02 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=954 burn_error=-0.933 burn_ratio=0.067
+2026-07-04 12:34:02 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=104.0 required_resources=4.16 target_replicas=5
+2026-07-04 12:34:02 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=157.81 p99=12840.031121281465
+2026-07-04 12:34:17 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2865
+2026-07-04 12:34:17 [debug    ] GRU prediction received        confidence=0.76 latency_ms=40.14 predicted=100
+2026-07-04 12:34:17 [debug    ] Using GRU prediction           confidence=0.76 predicted=100
+2026-07-04 12:34:17 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=953 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 12:34:17 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=100.0 required_resources=4.0 target_replicas=5
+2026-07-04 12:34:17 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=162.18 p99=12840.031121281465
+2026-07-04 12:34:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2858
+2026-07-04 12:34:32 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.93 predicted=87
+2026-07-04 12:34:32 [debug    ] Using GRU prediction           confidence=0.72 predicted=87
+2026-07-04 12:34:32 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=952 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 12:34:32 [info     ] controller_decision_v3         action=RECOVERY available_replicas=2 budget_remaining=952 burn_adjustment=-7 burst_ratio=0.4483 capacity_deficit=False confidence=0.72 current_load=46.30035667328417 decision_id=8d279f94 k8s_capacity=48.0 k8s_weight=62 knative_weight=38 p99=12840.0 predicted_load=87 r_effective=24.0 serverless_enabled=True total_load=87 weights_after={'k3s': 62, 'knative': 38} weights_before={'k3s': 57, 'knative': 43}
+2026-07-04 12:34:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2857
+2026-07-04 12:34:32 [debug    ] Current weights retrieved via socket weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:34:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2857
+2026-07-04 12:34:32 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 62' response_length=0
+2026-07-04 12:34:32 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2857
+2026-07-04 12:34:32 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 38' response_length=0
+2026-07-04 12:34:32 [debug    ] Weight commands sent via socket successfully k3s=62 knative=38
+2026-07-04 12:34:33 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2856
+2026-07-04 12:34:33 [debug    ] Current weights retrieved via socket weights={'k3s': 62, 'knative': 38}
+2026-07-04 12:34:33 [info     ] Weights updated successfully via HTTP new={'k3s': 62, 'knative': 38} previous={'k3s': 57, 'knative': 43}
+2026-07-04 12:34:33 [info     ] Weights updated                action=RECOVERY reason='load=87RPS | k8s_cap=48RPS | (reducing-serverless)' weights={'k3s': 62, 'knative': 38}
+2026-07-04 12:34:33 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=87.0 required_resources=3.48 target_replicas=5
+2026-07-04 12:34:33 [debug    ] Decision loop completed        action=RECOVERY latency_ms=689.52 p99=12840.031121281465
+2026-07-04 12:34:48 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2869
+2026-07-04 12:34:48 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.0 predicted=88
+2026-07-04 12:34:48 [debug    ] Using GRU prediction           confidence=0.72 predicted=88
+2026-07-04 12:34:48 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=951 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 12:34:48 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=1 budget_remaining=951 burn_adjustment=-7 burst_ratio=0.7273 capacity_deficit=True confidence=0.72 current_load=86.03913478063525 decision_id=c710cd45 k8s_capacity=24.0 k8s_weight=57 knative_weight=43 p99=12840.0 predicted_load=88 r_effective=24.0 serverless_enabled=True total_load=88 weights_after={'k3s': 57, 'knative': 43} weights_before={'k3s': 62, 'knative': 38}
+2026-07-04 12:34:48 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2868
+2026-07-04 12:34:48 [debug    ] Current weights retrieved via socket weights={'k3s': 62, 'knative': 38}
+2026-07-04 12:34:48 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2868
+2026-07-04 12:34:48 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 57' response_length=0
+2026-07-04 12:34:48 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2868
+2026-07-04 12:34:48 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 43' response_length=0
+2026-07-04 12:34:48 [debug    ] Weight commands sent via socket successfully k3s=57 knative=43
+2026-07-04 12:34:48 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2866
+2026-07-04 12:34:48 [debug    ] Current weights retrieved via socket weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:34:48 [info     ] Weights updated successfully via HTTP new={'k3s': 57, 'knative': 43} previous={'k3s': 62, 'knative': 38}
+2026-07-04 12:34:48 [info     ] Weights updated                action=PREDICTIVE reason='load=88RPS | k8s_cap=24RPS | CAPACITY-DEFICIT | (prediction-driven)' weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:34:48 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=88.0 required_resources=3.52 target_replicas=5
+2026-07-04 12:34:48 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=659.06 p99=12840.031121281465
+2026-07-04 12:35:03 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2864
+2026-07-04 12:35:03 [debug    ] HAProxy fallback latency       delta_requests=1459 interval_avg_ms=30288.11 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:35:04 [debug    ] GRU prediction received        confidence=0.72 latency_ms=38.64 predicted=89
+2026-07-04 12:35:04 [debug    ] Using GRU prediction           confidence=0.72 predicted=89
+2026-07-04 12:35:04 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=950 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 12:35:04 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=950 burn_adjustment=-7 burst_ratio=0.2273 capacity_deficit=False confidence=0.72 current_load=93.17747465300371 decision_id=bedd938d k8s_capacity=72.0 k8s_weight=84 knative_weight=16 p99=33843.0 predicted_load=89 r_effective=24.0 serverless_enabled=True total_load=93.2 weights_after={'k3s': 84, 'knative': 16} weights_before={'k3s': 57, 'knative': 43}
+2026-07-04 12:35:04 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2863
+2026-07-04 12:35:04 [debug    ] Current weights retrieved via socket weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:35:04 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2863
+2026-07-04 12:35:04 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 84' response_length=0
+2026-07-04 12:35:04 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2863
+2026-07-04 12:35:04 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 16' response_length=0
+2026-07-04 12:35:04 [debug    ] Weight commands sent via socket successfully k3s=84 knative=16
+2026-07-04 12:35:04 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2863
+2026-07-04 12:35:04 [debug    ] Current weights retrieved via socket weights={'k3s': 84, 'knative': 16}
+2026-07-04 12:35:04 [info     ] Weights updated successfully via HTTP new={'k3s': 84, 'knative': 16} previous={'k3s': 57, 'knative': 43}
+2026-07-04 12:35:04 [info     ] Weights updated                action=RECOVERY reason='load=93RPS | k8s_cap=72RPS | (reducing-serverless)' weights={'k3s': 84, 'knative': 16}
+2026-07-04 12:35:04 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=89.0 required_resources=3.56 target_replicas=5
+2026-07-04 12:35:04 [debug    ] Decision loop completed        action=RECOVERY latency_ms=699.1 p99=33843.0
+2026-07-04 12:35:19 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2866
+2026-07-04 12:35:19 [debug    ] HAProxy fallback latency       delta_requests=1038 interval_avg_ms=371555.03 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:35:19 [debug    ] GRU prediction received        confidence=0.72 latency_ms=41.28 predicted=86
+2026-07-04 12:35:19 [debug    ] Using GRU prediction           confidence=0.72 predicted=86
+2026-07-04 12:35:19 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=949 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 12:35:19 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=1 budget_remaining=949 burn_adjustment=-7 burst_ratio=0.7209 capacity_deficit=True confidence=0.72 current_load=66.24370088378063 decision_id=129ce5a2 k8s_capacity=24.0 k8s_weight=57 knative_weight=43 p99=33843.0 predicted_load=86 r_effective=24.0 serverless_enabled=True total_load=86 weights_after={'k3s': 57, 'knative': 43} weights_before={'k3s': 84, 'knative': 16}
+2026-07-04 12:35:19 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2864
+2026-07-04 12:35:19 [debug    ] Current weights retrieved via socket weights={'k3s': 84, 'knative': 16}
+2026-07-04 12:35:19 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2864
+2026-07-04 12:35:19 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 57' response_length=0
+2026-07-04 12:35:19 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2862
+2026-07-04 12:35:19 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 43' response_length=0
+2026-07-04 12:35:19 [debug    ] Weight commands sent via socket successfully k3s=57 knative=43
+2026-07-04 12:35:20 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2862
+2026-07-04 12:35:20 [debug    ] Current weights retrieved via socket weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:35:20 [info     ] Weights updated successfully via HTTP new={'k3s': 57, 'knative': 43} previous={'k3s': 84, 'knative': 16}
+2026-07-04 12:35:20 [info     ] Weights updated                action=PREDICTIVE reason='load=86RPS | k8s_cap=24RPS | CAPACITY-DEFICIT | (prediction-driven)' weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:35:20 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=86.0 required_resources=3.44 target_replicas=5
+2026-07-04 12:35:20 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=659.66 p99=33843.0
+2026-07-04 12:35:35 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2861
+2026-07-04 12:35:35 [debug    ] GRU prediction received        confidence=0.72 latency_ms=41.2 predicted=85
+2026-07-04 12:35:35 [debug    ] Using GRU prediction           confidence=0.72 predicted=85
+2026-07-04 12:35:35 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=948 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 12:35:35 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=948 burn_adjustment=-7 burst_ratio=0.1529 capacity_deficit=False confidence=0.72 current_load=66.66943121884586 decision_id=4bc9681c k8s_capacity=72.0 k8s_weight=91 knative_weight=9 p99=33843.0 predicted_load=85 r_effective=24.0 serverless_enabled=True total_load=85 weights_after={'k3s': 91, 'knative': 9} weights_before={'k3s': 57, 'knative': 43}
+2026-07-04 12:35:35 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2858
+2026-07-04 12:35:35 [debug    ] Current weights retrieved via socket weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:35:35 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2858
+2026-07-04 12:35:35 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 91' response_length=0
+2026-07-04 12:35:35 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2858
+2026-07-04 12:35:35 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 9' response_length=0
+2026-07-04 12:35:35 [debug    ] Weight commands sent via socket successfully k3s=91 knative=9
+2026-07-04 12:35:35 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2854
+2026-07-04 12:35:35 [debug    ] Current weights retrieved via socket weights={'k3s': 91, 'knative': 9}
+2026-07-04 12:35:35 [info     ] Weights updated successfully via HTTP new={'k3s': 91, 'knative': 9} previous={'k3s': 57, 'knative': 43}
+2026-07-04 12:35:35 [info     ] Weights updated                action=RECOVERY reason='load=85RPS | k8s_cap=72RPS | (reducing-serverless)' weights={'k3s': 91, 'knative': 9}
+2026-07-04 12:35:35 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=85.0 required_resources=3.4 target_replicas=5
+2026-07-04 12:35:35 [debug    ] Decision loop completed        action=RECOVERY latency_ms=703.46 p99=33843.0
+2026-07-04 12:35:50 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2854
+2026-07-04 12:35:51 [debug    ] GRU prediction received        confidence=0.76 latency_ms=39.0 predicted=84
+2026-07-04 12:35:51 [debug    ] Using GRU prediction           confidence=0.76 predicted=84
+2026-07-04 12:35:51 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=947 burn_error=-0.931 burn_ratio=0.069
+2026-07-04 12:35:51 [info     ] controller_decision_v3         action=RECOVERY available_replicas=4 budget_remaining=947 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.76 current_load=67.43381168295805 decision_id=add216c7 k8s_capacity=96.0 k8s_weight=100 knative_weight=0 p99=33843.0 predicted_load=84 r_effective=24.0 serverless_enabled=False total_load=84 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 91, 'knative': 9}
+2026-07-04 12:35:51 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2853
+2026-07-04 12:35:51 [debug    ] Current weights retrieved via socket weights={'k3s': 91, 'knative': 9}
+2026-07-04 12:35:51 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2853
+2026-07-04 12:35:51 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 100' response_length=0
+2026-07-04 12:35:51 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2855
+2026-07-04 12:35:51 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 0' response_length=0
+2026-07-04 12:35:51 [debug    ] Weight commands sent via socket successfully k3s=100 knative=0
+2026-07-04 12:35:51 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2856
+2026-07-04 12:35:51 [debug    ] Current weights retrieved via socket weights={'k3s': 100, 'knative': 0}
+2026-07-04 12:35:51 [info     ] Weights updated successfully via HTTP new={'k3s': 100, 'knative': 0} previous={'k3s': 91, 'knative': 9}
+2026-07-04 12:35:51 [info     ] Weights updated                action=RECOVERY reason='load=84RPS | k8s_cap=96RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-04 12:35:51 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=84.0 required_resources=3.36 target_replicas=5
+2026-07-04 12:35:51 [debug    ] Decision loop completed        action=RECOVERY latency_ms=688.22 p99=33843.0
+2026-07-04 12:36:06 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2857
+2026-07-04 12:36:06 [debug    ] HAProxy fallback latency       delta_requests=543 interval_avg_ms=859881.89 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:36:06 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.07 predicted=78
+2026-07-04 12:36:06 [debug    ] Using GRU prediction           confidence=0.72 predicted=78
+2026-07-04 12:36:06 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=946 burn_error=-0.931 burn_ratio=0.069
+2026-07-04 12:36:06 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=78.0 required_resources=3.12 target_replicas=4
+2026-07-04 12:36:06 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=153.97 p99=33843.0
+2026-07-04 12:36:21 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2854
+2026-07-04 12:36:21 [debug    ] GRU prediction received        confidence=0.72 latency_ms=41.16 predicted=79
+2026-07-04 12:36:21 [debug    ] Using GRU prediction           confidence=0.72 predicted=79
+2026-07-04 12:36:21 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=945 burn_error=-0.931 burn_ratio=0.069
+2026-07-04 12:36:21 [info     ] Knative pre-warm OK            cold_start_ms=2.6
+2026-07-04 12:36:21 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=1 budget_remaining=945 burn_adjustment=-7 burst_ratio=0.6962 capacity_deficit=True confidence=0.72 current_load=66.31613008703506 decision_id=9de55a6e k8s_capacity=24.0 k8s_weight=57 knative_weight=43 p99=33843.0 predicted_load=79 r_effective=24.0 serverless_enabled=True total_load=79 weights_after={'k3s': 57, 'knative': 43} weights_before={'k3s': 100, 'knative': 0}
+2026-07-04 12:36:21 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2853
+2026-07-04 12:36:21 [debug    ] Current weights retrieved via socket weights={'k3s': 100, 'knative': 0}
+2026-07-04 12:36:21 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2853
+2026-07-04 12:36:21 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 57' response_length=0
+2026-07-04 12:36:21 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2849
+2026-07-04 12:36:21 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 43' response_length=0
+2026-07-04 12:36:21 [debug    ] Weight commands sent via socket successfully k3s=57 knative=43
+2026-07-04 12:36:22 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2855
+2026-07-04 12:36:22 [debug    ] Current weights retrieved via socket weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:36:22 [info     ] Weights updated successfully via HTTP new={'k3s': 57, 'knative': 43} previous={'k3s': 100, 'knative': 0}
+2026-07-04 12:36:22 [info     ] Weights updated                action=PREDICTIVE reason='load=79RPS | k8s_cap=24RPS | CAPACITY-DEFICIT | (prediction-driven)' weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:36:22 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=79.0 required_resources=3.16 target_replicas=4
+2026-07-04 12:36:22 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=663.19 p99=33843.0
+2026-07-04 12:36:37 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2863
+2026-07-04 12:36:37 [debug    ] GRU prediction received        confidence=0.72 latency_ms=40.72 predicted=74
+2026-07-04 12:36:37 [debug    ] Using GRU prediction           confidence=0.72 predicted=74
+2026-07-04 12:36:37 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=944 burn_error=-0.931 burn_ratio=0.069
+2026-07-04 12:36:37 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=74.0 required_resources=2.96 target_replicas=4
+2026-07-04 12:36:37 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=175.22 p99=33843.0
+2026-07-04 12:36:52 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2865
+2026-07-04 12:36:52 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.91 predicted=76
+2026-07-04 12:36:52 [debug    ] Using GRU prediction           confidence=0.72 predicted=76
+2026-07-04 12:36:52 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=943 burn_error=-0.931 burn_ratio=0.069
+2026-07-04 12:36:52 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=943 burn_adjustment=-7 burst_ratio=0.2947 capacity_deficit=False confidence=0.72 current_load=102.08539498012101 decision_id=027d2167 k8s_capacity=72.0 k8s_weight=77 knative_weight=23 p99=33843.0 predicted_load=76 r_effective=24.0 serverless_enabled=True total_load=102.1 weights_after={'k3s': 77, 'knative': 23} weights_before={'k3s': 57, 'knative': 43}
+2026-07-04 12:36:52 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2864
+2026-07-04 12:36:52 [debug    ] Current weights retrieved via socket weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:36:52 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2864
+2026-07-04 12:36:52 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 77' response_length=0
+2026-07-04 12:36:52 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2864
+2026-07-04 12:36:52 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 23' response_length=0
+2026-07-04 12:36:52 [debug    ] Weight commands sent via socket successfully k3s=77 knative=23
+2026-07-04 12:36:53 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2862
+2026-07-04 12:36:53 [debug    ] Current weights retrieved via socket weights={'k3s': 77, 'knative': 23}
+2026-07-04 12:36:53 [info     ] Weights updated successfully via HTTP new={'k3s': 77, 'knative': 23} previous={'k3s': 57, 'knative': 43}
+2026-07-04 12:36:53 [info     ] Weights updated                action=RECOVERY reason='load=102RPS | k8s_cap=72RPS | (reducing-serverless)' weights={'k3s': 77, 'knative': 23}
+2026-07-04 12:36:53 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=76.0 required_resources=3.04 target_replicas=4
+2026-07-04 12:36:53 [debug    ] Decision loop completed        action=RECOVERY latency_ms=703.01 p99=33843.0
+2026-07-04 12:37:08 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2861
+2026-07-04 12:37:08 [debug    ] HAProxy fallback latency       delta_requests=477 interval_avg_ms=853493.84 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:37:08 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.05 predicted=73
+2026-07-04 12:37:08 [debug    ] Using GRU prediction           confidence=0.72 predicted=73
+2026-07-04 12:37:08 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=942 burn_error=-0.931 burn_ratio=0.069
+2026-07-04 12:37:08 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=1 budget_remaining=942 burn_adjustment=-7 burst_ratio=0.6712 capacity_deficit=True confidence=0.72 current_load=30.56694559078124 decision_id=422c5a1c k8s_capacity=24.0 k8s_weight=57 knative_weight=43 p99=33843.0 predicted_load=73 r_effective=24.0 serverless_enabled=True total_load=73 weights_after={'k3s': 57, 'knative': 43} weights_before={'k3s': 77, 'knative': 23}
+2026-07-04 12:37:08 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2860
+2026-07-04 12:37:08 [debug    ] Current weights retrieved via socket weights={'k3s': 77, 'knative': 23}
+2026-07-04 12:37:08 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2860
+2026-07-04 12:37:08 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 57' response_length=0
+2026-07-04 12:37:08 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2858
+2026-07-04 12:37:08 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 43' response_length=0
+2026-07-04 12:37:08 [debug    ] Weight commands sent via socket successfully k3s=57 knative=43
+2026-07-04 12:37:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2869
+2026-07-04 12:37:09 [debug    ] Current weights retrieved via socket weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:37:09 [info     ] Weights updated successfully via HTTP new={'k3s': 57, 'knative': 43} previous={'k3s': 77, 'knative': 23}
+2026-07-04 12:37:09 [info     ] Weights updated                action=PREDICTIVE reason='load=73RPS | k8s_cap=24RPS | CAPACITY-DEFICIT | (prediction-driven)' weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:37:09 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=73.0 required_resources=2.92 target_replicas=4
+2026-07-04 12:37:09 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=658.37 p99=33843.0
+2026-07-04 12:37:24 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2864
+2026-07-04 12:37:24 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.17 predicted=73
+2026-07-04 12:37:24 [debug    ] Using GRU prediction           confidence=0.72 predicted=73
+2026-07-04 12:37:24 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=941 burn_error=-0.931 burn_ratio=0.069
+2026-07-04 12:37:24 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=73.0 required_resources=2.92 target_replicas=4
+2026-07-04 12:37:24 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=150.35 p99=33843.0
+2026-07-04 12:37:39 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2872
+2026-07-04 12:37:39 [debug    ] GRU prediction received        confidence=0.72 latency_ms=42.15 predicted=73
+2026-07-04 12:37:39 [debug    ] Using GRU prediction           confidence=0.72 predicted=73
+2026-07-04 12:37:39 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=940 burn_error=-0.931 burn_ratio=0.069
+2026-07-04 12:37:39 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=73.0 required_resources=2.92 target_replicas=4
+2026-07-04 12:37:39 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=156.07 p99=33843.0
+2026-07-04 12:37:54 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2867
+2026-07-04 12:37:54 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.6 predicted=73
+2026-07-04 12:37:54 [debug    ] Using GRU prediction           confidence=0.72 predicted=73
+2026-07-04 12:37:54 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=939 burn_error=-0.93 burn_ratio=0.07
+2026-07-04 12:37:54 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=73.0 required_resources=2.92 target_replicas=4
+2026-07-04 12:37:54 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=156.93 p99=33843.0
+2026-07-04 12:38:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2878
+2026-07-04 12:38:09 [debug    ] HAProxy fallback latency       delta_requests=663 interval_avg_ms=654990.33 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:38:09 [debug    ] GRU prediction received        confidence=0.72 latency_ms=40.23 predicted=72
+2026-07-04 12:38:09 [debug    ] Using GRU prediction           confidence=0.72 predicted=72
+2026-07-04 12:38:09 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=938 burn_error=-0.93 burn_ratio=0.07
+2026-07-04 12:38:09 [info     ] controller_decision_v3         action=RECOVERY available_replicas=2 budget_remaining=938 burn_adjustment=-7 burst_ratio=0.3333 capacity_deficit=False confidence=0.72 current_load=43.74392115187239 decision_id=04ddd522 k8s_capacity=48.0 k8s_weight=73 knative_weight=27 p99=33843.0 predicted_load=72 r_effective=24.0 serverless_enabled=True total_load=72 weights_after={'k3s': 73, 'knative': 27} weights_before={'k3s': 57, 'knative': 43}
+2026-07-04 12:38:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2877
+2026-07-04 12:38:09 [debug    ] Current weights retrieved via socket weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:38:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2877
+2026-07-04 12:38:09 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 73' response_length=0
+2026-07-04 12:38:09 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2877
+2026-07-04 12:38:09 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 27' response_length=0
+2026-07-04 12:38:09 [debug    ] Weight commands sent via socket successfully k3s=73 knative=27
+2026-07-04 12:38:10 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2877
+2026-07-04 12:38:10 [debug    ] Current weights retrieved via socket weights={'k3s': 73, 'knative': 27}
+2026-07-04 12:38:10 [info     ] Weights updated successfully via HTTP new={'k3s': 73, 'knative': 27} previous={'k3s': 57, 'knative': 43}
+2026-07-04 12:38:10 [info     ] Weights updated                action=RECOVERY reason='load=72RPS | k8s_cap=48RPS | (reducing-serverless)' weights={'k3s': 73, 'knative': 27}
+2026-07-04 12:38:10 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=72.0 required_resources=2.88 target_replicas=4
+2026-07-04 12:38:10 [debug    ] Decision loop completed        action=RECOVERY latency_ms=692.22 p99=33843.0
+2026-07-04 12:38:25 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2872
+2026-07-04 12:38:25 [debug    ] GRU prediction received        confidence=0.75 latency_ms=38.38 predicted=71
+2026-07-04 12:38:25 [debug    ] Using GRU prediction           confidence=0.75 predicted=71
+2026-07-04 12:38:25 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=937 burn_error=-0.93 burn_ratio=0.07
+2026-07-04 12:38:25 [info     ] controller_decision_v3         action=RECOVERY available_replicas=2 budget_remaining=937 burn_adjustment=-7 burst_ratio=0.3239 capacity_deficit=False confidence=0.75 current_load=43.26772768195594 decision_id=b862d689 k8s_capacity=48.0 k8s_weight=74 knative_weight=26 p99=33843.0 predicted_load=71 r_effective=24.0 serverless_enabled=True total_load=71 weights_after={'k3s': 74, 'knative': 26} weights_before={'k3s': 73, 'knative': 27}
+2026-07-04 12:38:25 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2871
+2026-07-04 12:38:25 [debug    ] Current weights retrieved via socket weights={'k3s': 73, 'knative': 27}
+2026-07-04 12:38:25 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2871
+2026-07-04 12:38:25 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 74' response_length=0
+2026-07-04 12:38:25 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2871
+2026-07-04 12:38:25 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 26' response_length=0
+2026-07-04 12:38:25 [debug    ] Weight commands sent via socket successfully k3s=74 knative=26
+2026-07-04 12:38:25 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2870
+2026-07-04 12:38:25 [debug    ] Current weights retrieved via socket weights={'k3s': 74, 'knative': 26}
+2026-07-04 12:38:25 [info     ] Weights updated successfully via HTTP new={'k3s': 74, 'knative': 26} previous={'k3s': 73, 'knative': 27}
+2026-07-04 12:38:25 [info     ] Weights updated                action=RECOVERY reason='load=71RPS | k8s_cap=48RPS | (reducing-serverless)' weights={'k3s': 74, 'knative': 26}
+2026-07-04 12:38:25 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=71.0 required_resources=2.84 target_replicas=4
+2026-07-04 12:38:25 [debug    ] Decision loop completed        action=RECOVERY latency_ms=695.7 p99=33843.0
+2026-07-04 12:38:40 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2877
+2026-07-04 12:38:40 [debug    ] HAProxy fallback latency       delta_requests=666 interval_avg_ms=91875.89 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:38:40 [debug    ] GRU prediction received        confidence=0.73 latency_ms=41.19 predicted=71
+2026-07-04 12:38:40 [debug    ] Using GRU prediction           confidence=0.73 predicted=71
+2026-07-04 12:38:41 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=936 burn_error=-0.93 burn_ratio=0.07
+2026-07-04 12:38:41 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=1 budget_remaining=936 burn_adjustment=-7 burst_ratio=0.662 capacity_deficit=True confidence=0.73 current_load=42.36858046537153 decision_id=3ab37dff k8s_capacity=24.0 k8s_weight=57 knative_weight=43 p99=33843.0 predicted_load=71 r_effective=24.0 serverless_enabled=True total_load=71 weights_after={'k3s': 57, 'knative': 43} weights_before={'k3s': 74, 'knative': 26}
+2026-07-04 12:38:41 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2876
+2026-07-04 12:38:41 [debug    ] Current weights retrieved via socket weights={'k3s': 74, 'knative': 26}
+2026-07-04 12:38:41 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2876
+2026-07-04 12:38:41 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 57' response_length=0
+2026-07-04 12:38:41 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2876
+2026-07-04 12:38:41 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 43' response_length=0
+2026-07-04 12:38:41 [debug    ] Weight commands sent via socket successfully k3s=57 knative=43
+2026-07-04 12:38:41 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2877
+2026-07-04 12:38:41 [debug    ] Current weights retrieved via socket weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:38:41 [info     ] Weights updated successfully via HTTP new={'k3s': 57, 'knative': 43} previous={'k3s': 74, 'knative': 26}
+2026-07-04 12:38:41 [info     ] Weights updated                action=PREDICTIVE reason='load=71RPS | k8s_cap=24RPS | CAPACITY-DEFICIT | (prediction-driven)' weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:38:41 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=71.0 required_resources=2.84 target_replicas=4
+2026-07-04 12:38:41 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=667.16 p99=33843.0
+2026-07-04 12:38:56 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2869
+2026-07-04 12:38:56 [debug    ] GRU prediction received        confidence=0.8 latency_ms=39.23 predicted=71
+2026-07-04 12:38:56 [debug    ] Using GRU prediction           confidence=0.8 predicted=71
+2026-07-04 12:38:56 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=935 burn_error=-0.93 burn_ratio=0.07
+2026-07-04 12:38:56 [info     ] controller_decision_v3         action=RECOVERY available_replicas=2 budget_remaining=935 burn_adjustment=-7 burst_ratio=0.3239 capacity_deficit=False confidence=0.8 current_load=56.03989549909236 decision_id=9280ae26 k8s_capacity=48.0 k8s_weight=74 knative_weight=26 p99=33843.0 predicted_load=71 r_effective=24.0 serverless_enabled=True total_load=71 weights_after={'k3s': 74, 'knative': 26} weights_before={'k3s': 57, 'knative': 43}
+2026-07-04 12:38:56 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2868
+2026-07-04 12:38:56 [debug    ] Current weights retrieved via socket weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:38:56 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2868
+2026-07-04 12:38:56 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 74' response_length=0
+2026-07-04 12:38:56 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2868
+2026-07-04 12:38:56 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 26' response_length=0
+2026-07-04 12:38:56 [debug    ] Weight commands sent via socket successfully k3s=74 knative=26
+2026-07-04 12:38:57 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2868
+2026-07-04 12:38:57 [debug    ] Current weights retrieved via socket weights={'k3s': 74, 'knative': 26}
+2026-07-04 12:38:57 [info     ] Weights updated successfully via HTTP new={'k3s': 74, 'knative': 26} previous={'k3s': 57, 'knative': 43}
+2026-07-04 12:38:57 [info     ] Weights updated                action=RECOVERY reason='load=71RPS | k8s_cap=48RPS | (reducing-serverless)' weights={'k3s': 74, 'knative': 26}
+2026-07-04 12:38:57 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=71.0 required_resources=2.84 target_replicas=4
+2026-07-04 12:38:57 [debug    ] Decision loop completed        action=RECOVERY latency_ms=695.23 p99=33843.0
+2026-07-04 12:39:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2873
+2026-07-04 12:39:12 [debug    ] HAProxy fallback latency       delta_requests=608 interval_avg_ms=316216.46 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:39:12 [debug    ] GRU prediction received        confidence=0.78 latency_ms=40.84 predicted=70
+2026-07-04 12:39:12 [debug    ] Using GRU prediction           confidence=0.78 predicted=70
+2026-07-04 12:39:12 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=934 burn_error=-0.93 burn_ratio=0.07
+2026-07-04 12:39:12 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=1 budget_remaining=934 burn_adjustment=-7 burst_ratio=0.6571 capacity_deficit=True confidence=0.78 current_load=38.801524577670385 decision_id=42d36db7 k8s_capacity=24.0 k8s_weight=57 knative_weight=43 p99=33843.0 predicted_load=70 r_effective=24.0 serverless_enabled=True total_load=70 weights_after={'k3s': 57, 'knative': 43} weights_before={'k3s': 74, 'knative': 26}
+2026-07-04 12:39:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2872
+2026-07-04 12:39:12 [debug    ] Current weights retrieved via socket weights={'k3s': 74, 'knative': 26}
+2026-07-04 12:39:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2872
+2026-07-04 12:39:12 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 57' response_length=0
+2026-07-04 12:39:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2870
+2026-07-04 12:39:12 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 43' response_length=0
+2026-07-04 12:39:12 [debug    ] Weight commands sent via socket successfully k3s=57 knative=43
+2026-07-04 12:39:12 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2871
+2026-07-04 12:39:12 [debug    ] Current weights retrieved via socket weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:39:12 [info     ] Weights updated successfully via HTTP new={'k3s': 57, 'knative': 43} previous={'k3s': 74, 'knative': 26}
+2026-07-04 12:39:12 [info     ] Weights updated                action=PREDICTIVE reason='load=70RPS | k8s_cap=24RPS | CAPACITY-DEFICIT | (prediction-driven)' weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:39:12 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=70.0 required_resources=2.8 target_replicas=4
+2026-07-04 12:39:12 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=658.29 p99=33843.0
+2026-07-04 12:39:27 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2896
+2026-07-04 12:39:27 [debug    ] HAProxy fallback latency       delta_requests=751 interval_avg_ms=228624.39 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:39:28 [debug    ] GRU prediction received        confidence=0.78 latency_ms=39.63 predicted=70
+2026-07-04 12:39:28 [debug    ] Using GRU prediction           confidence=0.78 predicted=70
+2026-07-04 12:39:28 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=933 burn_error=-0.93 burn_ratio=0.07
+2026-07-04 12:39:28 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=70.0 required_resources=2.8 target_replicas=4
+2026-07-04 12:39:28 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=165.72 p99=33843.0
+2026-07-04 12:39:43 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2866
+2026-07-04 12:39:43 [debug    ] GRU prediction received        confidence=0.77 latency_ms=39.6 predicted=69
+2026-07-04 12:39:43 [debug    ] Using GRU prediction           confidence=0.77 predicted=69
+2026-07-04 12:39:43 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=932 burn_error=-0.93 burn_ratio=0.07
+2026-07-04 12:39:43 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=69.0 required_resources=2.76 target_replicas=4
+2026-07-04 12:39:43 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=158.68 p99=33843.0
+2026-07-04 12:39:58 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2868
+2026-07-04 12:39:58 [debug    ] HAProxy fallback latency       delta_requests=602 interval_avg_ms=96841.08 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:39:58 [debug    ] GRU prediction received        confidence=0.76 latency_ms=39.91 predicted=68
+2026-07-04 12:39:58 [debug    ] Using GRU prediction           confidence=0.76 predicted=68
+2026-07-04 12:39:58 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=931 burn_error=-0.93 burn_ratio=0.07
+2026-07-04 12:39:58 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=68.0 required_resources=2.72 target_replicas=4
+2026-07-04 12:39:58 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=157.21 p99=33843.0
+2026-07-04 12:40:13 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2874
+2026-07-04 12:40:13 [debug    ] HAProxy fallback latency       delta_requests=605 interval_avg_ms=195550.82 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:40:13 [debug    ] GRU prediction received        confidence=0.82 latency_ms=38.78 predicted=68
+2026-07-04 12:40:13 [debug    ] Using GRU prediction           confidence=0.82 predicted=68
+2026-07-04 12:40:13 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=930 burn_error=-0.929 burn_ratio=0.071
+2026-07-04 12:40:13 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=68.0 required_resources=2.72 target_replicas=4
+2026-07-04 12:40:13 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=156.64 p99=33843.0
+2026-07-04 12:40:28 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2868
+2026-07-04 12:40:28 [debug    ] GRU prediction received        confidence=0.82 latency_ms=38.76 predicted=68
+2026-07-04 12:40:28 [debug    ] Using GRU prediction           confidence=0.82 predicted=68
+2026-07-04 12:40:28 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=929 burn_error=-0.929 burn_ratio=0.071
+2026-07-04 12:40:28 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=68.0 required_resources=2.72 target_replicas=4
+2026-07-04 12:40:28 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=151.74 p99=33843.0
+2026-07-04 12:40:43 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2874
+2026-07-04 12:40:43 [debug    ] HAProxy fallback latency       delta_requests=497 interval_avg_ms=26621.67 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:40:43 [debug    ] GRU prediction received        confidence=0.84 latency_ms=40.32 predicted=67
+2026-07-04 12:40:43 [debug    ] Using GRU prediction           confidence=0.84 predicted=67
+2026-07-04 12:40:43 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=928 burn_error=-0.929 burn_ratio=0.071
+2026-07-04 12:40:43 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=67.0 required_resources=2.68 target_replicas=4
+2026-07-04 12:40:43 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=159.19 p99=33843.0
+2026-07-04 12:40:58 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2877
+2026-07-04 12:40:58 [debug    ] HAProxy fallback latency       delta_requests=512 interval_avg_ms=223695.98 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:40:58 [debug    ] GRU prediction received        confidence=0.82 latency_ms=38.47 predicted=66
+2026-07-04 12:40:58 [debug    ] Using GRU prediction           confidence=0.82 predicted=66
+2026-07-04 12:40:58 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=927 burn_error=-0.929 burn_ratio=0.071
+2026-07-04 12:40:59 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=66.0 required_resources=2.64 target_replicas=4
+2026-07-04 12:40:59 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=154.55 p99=33843.0
+2026-07-04 12:41:14 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2862
+2026-07-04 12:41:14 [debug    ] HAProxy fallback latency       delta_requests=36 interval_avg_ms=3768944.39 max_rtime_ms=33843.0 p99_est=33843.0
+2026-07-04 12:41:14 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.7 predicted=64
+2026-07-04 12:41:14 [debug    ] Using GRU prediction           confidence=0.72 predicted=64
+2026-07-04 12:41:14 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=926 burn_error=-0.929 burn_ratio=0.071
+2026-07-04 12:41:14 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=64.0 required_resources=2.56 target_replicas=4
+2026-07-04 12:41:14 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=155.05 p99=33843.0
+2026-07-04 12:41:29 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2865
+2026-07-04 12:41:29 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.61 predicted=62
+2026-07-04 12:41:29 [debug    ] Using GRU prediction           confidence=0.72 predicted=62
+2026-07-04 12:41:29 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=925 burn_error=-0.929 burn_ratio=0.071
+2026-07-04 12:41:29 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=925 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=0 decision_id=29501d98 k8s_capacity=72.0 k8s_weight=100 knative_weight=0 p99=33843.0 predicted_load=62 r_effective=24.0 serverless_enabled=False total_load=62 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 57, 'knative': 43}
+2026-07-04 12:41:29 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2864
+2026-07-04 12:41:29 [debug    ] Current weights retrieved via socket weights={'k3s': 57, 'knative': 43}
+2026-07-04 12:41:29 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2864
+2026-07-04 12:41:29 [debug    ] HAProxy TCP command sent       command='set server servers/k3s weight 100' response_length=0
+2026-07-04 12:41:29 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2866
+2026-07-04 12:41:29 [debug    ] HAProxy TCP command sent       command='set server servers/knative weight 0' response_length=0
+2026-07-04 12:41:29 [debug    ] Weight commands sent via socket successfully k3s=100 knative=0
+2026-07-04 12:41:29 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2864
+2026-07-04 12:41:29 [debug    ] Current weights retrieved via socket weights={'k3s': 100, 'knative': 0}
+2026-07-04 12:41:29 [info     ] Weights updated successfully via HTTP new={'k3s': 100, 'knative': 0} previous={'k3s': 57, 'knative': 43}
+2026-07-04 12:41:29 [info     ] Weights updated                action=RECOVERY reason='load=62RPS | k8s_cap=72RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-04 12:41:29 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=62.0 required_resources=2.48 target_replicas=3
+2026-07-04 12:41:29 [debug    ] Decision loop completed        action=RECOVERY latency_ms=695.45 p99=33843.0
+2026-07-04 12:41:44 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2865
+2026-07-04 12:41:44 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.78 predicted=61
+2026-07-04 12:41:44 [debug    ] Using GRU prediction           confidence=0.72 predicted=61
+2026-07-04 12:41:44 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=924 burn_error=-0.929 burn_ratio=0.071
+2026-07-04 12:41:45 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=61.0 required_resources=2.44 target_replicas=3
+2026-07-04 12:41:45 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=152.28 p99=33843.0
+2026-07-04 12:42:00 [debug    ] HAProxy TCP command sent       command='show stat' response_length=2865
+2026-07-04 12:42:00 [debug    ] GRU prediction received        confidence=0.72 latency_ms=44.96 predicted=61
+2026-07-04 12:42:00 [debug    ] Using GRU prediction           confidence=0.72 predicted=61
+2026-07-04 12:42:00 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=923 burn_error=-0.929 burn_ratio=0.071
+2026-07-04 12:42:00 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.04 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=61.0 required_resources=2.44 target_replicas=3
+2026-07-04 12:42:00 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=180.12 p99=33843.0
+2026-07-04 12:42:02 [info     ] Received shutdown signal
+2026-07-04 12:42:02 [info     ] Stopping routing daemon...
+2026-07-04 12:42:02 [info     ] Routing daemon stopped
