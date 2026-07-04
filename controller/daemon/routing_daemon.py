@@ -307,7 +307,7 @@ class RoutingDaemon:
             if controller_ver == "v3" and self.scenario == Scenario.S4_HYBRID_PREDICTIVE:
                 self.cluster_controller = ClusterController(
                     config=ScalingConfig(
-                        alpha=0.02,  # 500m CPU: ~60 RPS/pod → 1/60 ≈ 0.017, rounded to 0.02
+                        alpha=0.03,  # 300m CPU: ~35 RPS/pod → 1/35 ≈ 0.029
                         beta=0.0,
                         buffer=1.2,
                         min_replicas=3,

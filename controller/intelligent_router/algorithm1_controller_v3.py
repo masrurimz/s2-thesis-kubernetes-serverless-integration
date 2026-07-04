@@ -65,11 +65,11 @@ class Algorithm1ConfigV3:
         prewarm_timeout_sec: Timeout for Knative pre-warm request.
     """
 
-    # K8s capacity model — calibrated for 500m CPU pods
-    # At 500m CPU, /fib?n=34 pods handle ~60 RPS before p99 > 200ms
-    r_saturation_per_replica: float = 60.0
-    target_cpu_util: float = 0.8  # r_effective = 60 * 0.8 = 48 RPS/pod
-    min_k8s_replicas: int = 2  # 2 pods × 48 = 96 RPS (covers mean 73 RPS)
+    # K8s capacity model — calibrated for 300m CPU pods
+    # At 300m CPU, /fib?n=34 pods handle ~35 RPS before p99 > 200ms
+    r_saturation_per_replica: float = 35.0
+    target_cpu_util: float = 0.8  # r_effective = 35 * 0.8 = 28 RPS/pod
+    min_k8s_replicas: int = 3  # 3 pods × 28 = 84 RPS (covers mean 73 RPS)
     max_k8s_replicas: int = 10
 
     # Routing limits
