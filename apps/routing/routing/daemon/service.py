@@ -26,7 +26,7 @@ from routing.algorithm.algorithm1_v2 import Algorithm1ControllerV2, Algorithm1Co
 from routing.algorithm.weight_adjuster import HAProxyWeightAdjuster
 from routing.clients.gru_client import GRUClient
 from routing.scaling.cluster_controller import ClusterController, ScalingConfig
-from infra.kubernetes import K8sScaler
+from clients.kubernetes import K8sScaler
 from shared.scenarios import Scenario, SCENARIO_CONFIGS
 from routing.daemon.metrics import (
     daemon_decision_total,

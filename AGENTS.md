@@ -17,7 +17,7 @@ This is a **completed** Master's thesis research project implementing a hybrid k
 | Directory | Purpose | Rule |
 |-----------|---------|------|
 | `libs/shared/` | **Foundation package** — Pydantic models, config, scenarios, protocols, storage | Never import from `apps/`. Every other package depends on this. |
-| `libs/infra/` | **Infrastructure adapters** — Prometheus, HAProxy, k8s, k6 clients | Shared by routing and experiment packages |
+| `libs/clients/` | **Infrastructure clients** — Prometheus, HAProxy, k8s, k6 Python clients | Shared by routing and experiment packages |
 | `apps/prediction/` | **GRU prediction service** — FastAPI server, model loader, training | Deployable service (port 8090) |
 | `apps/routing/` | **Routing daemon** — Algorithm 1 V1/V2, SLO monitor, scaling | Deployable service (port 9104) |
 | `apps/experiment/` | **Experiment orchestration** — composable pipeline stages | CLI tool for running experiments |
@@ -25,7 +25,7 @@ This is a **completed** Master's thesis research project implementing a hybrid k
 | `results/` | **Single source of truth for ALL experiment evidence** | If it's experiment output, it lives here |
 | `thesis/` | **Narrative only** — thesis text, protocol, appendices | Links INTO `results/` for evidence |
 | `data/` | Datasets (ClarkNet, Calgary traces, synthetic) | Large files tracked via `.gitattributes` |
-| `infrastructure/` | k3d configs, HAProxy, load testing | Deployment configs |
+| `deploy/` | k3d configs, HAProxy, load testing, cluster setup scripts | Deployment configs and ops tooling |
 | `docs/` | Setup guides, specs, architecture docs | Points to `results/` for evidence |
 | `archived/` | Legacy sprint artifacts, deprecated code | **Read-only. Never add new work here.** |
 
@@ -38,11 +38,11 @@ This is a **completed** Master's thesis research project implementing a hybrid k
 ```
 libs/shared              (no internal deps; pydantic, structlog)
   ↑
-  ├── libs/infra         (depends on shared; requests)
+  ├── libs/clients       (depends on shared; requests)
   │     ↑
   │     ├── apps/prediction   (depends on shared; fastapi, torch, numpy)
-  │     ├── apps/routing      (depends on shared, infra; fastapi, prometheus-client)
-  │     └── apps/experiment   (depends on shared, infra; scipy, rich, typer)
+  │     ├── apps/routing      (depends on shared, clients; fastapi, prometheus-client)
+  │     └── apps/experiment   (depends on shared, clients; scipy, rich, typer)
   │
   └── apps/cli           (depends on shared; typer, rich; lazily imports other apps)
 ```
@@ -123,8 +123,8 @@ results/experiments/<phase>/<YYYY-MM-DD_slug>/
 - One report per experiment — no duplicate summaries
 
 ### 2. Package Boundaries
-- `libs/shared` never imports from `apps/` or `libs/infra/`
-- `libs/infra` depends on `shared` only
+- `libs/shared` never imports from `apps/` or `libs/clients/`
+- `libs/clients` depends on `shared` only
 - `apps/` packages can import from `libs/`
 - Inter-module communication via HTTP (services) or Protocols (in-process)
 

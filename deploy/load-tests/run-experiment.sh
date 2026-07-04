@@ -55,7 +55,7 @@ log_info "Checking prerequisites..."
 # Check HAProxy
 if ! curl -sf "${HAPROXY_URL}/health" > /dev/null 2>&1; then
     log_error "HAProxy not responding at ${HAPROXY_URL}"
-    echo "Start with: cd infrastructure/haproxy && docker-compose up -d"
+    echo "Start with: cd deploy/haproxy && docker-compose up -d"
     exit 1
 fi
 log_success "HAProxy responding"

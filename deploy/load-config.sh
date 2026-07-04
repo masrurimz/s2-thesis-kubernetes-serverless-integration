@@ -9,8 +9,8 @@ _find_config() {
     for path in \
         "${script_dir}/config.env" \
         "${script_dir}/../config.env" \
-        "${script_dir}/../../infrastructure/config.env" \
-        "${script_dir}/../infrastructure/config.env"; do
+        "${script_dir}/../../deploy/config.env" \
+        "${script_dir}/../deploy/config.env"; do
         if [[ -f "$path" ]]; then
             echo "$path"
             return 0

@@ -1,8 +1,8 @@
-# libs/infra — Infrastructure Adapters
+# libs/clients — Infrastructure Clients
 
 ## What This Is
 
-Shared infrastructure clients used by both routing and experiment packages. Avoids duplicating Prometheus/HAProxy/k8s/k6 helpers.
+Python clients for external services (Prometheus, HAProxy, Kubernetes, k6). Used by routing and experiment packages. Not to be confused with `deploy/` which contains deployment configs and shell scripts.
 
 ## Module Map
 

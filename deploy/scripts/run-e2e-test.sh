@@ -32,7 +32,7 @@ echo ""
 
 # Step 2: Start HAProxy
 echo "[2/5] Starting HAProxy..."
-cd "$PROJECT_ROOT/infrastructure/haproxy"
+cd "$PROJECT_ROOT/deploy/haproxy"
 docker-compose up -d
 sleep 2
 echo "  ✓ HAProxy started on :8082"
@@ -87,7 +87,7 @@ if command -v k6 &> /dev/null; then
     echo "  Starting k6 with $WORKLOAD workload..."
     k6 run --duration 30s \
         -e BASE_URL=http://localhost:8082 \
-        "infrastructure/load-tests/${WORKLOAD}.js" 2>&1 | tail -20
+        "deploy/load-tests/${WORKLOAD}.js" 2>&1 | tail -20
     
     echo "  ✓ Load test complete"
 else
@@ -105,5 +105,5 @@ echo "HAProxy Stats:    http://localhost:8404/stats"
 echo "Prediction API:   http://localhost:8003"
 echo ""
 echo "To stop services:"
-echo "  docker-compose -f infrastructure/haproxy/docker-compose.yml down"
+echo "  docker-compose -f deploy/haproxy/docker-compose.yml down"
 echo "  kill $PRED_PID"

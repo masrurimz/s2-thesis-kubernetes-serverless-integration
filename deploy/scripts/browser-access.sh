@@ -6,7 +6,7 @@ echo ""
 # Option 1: Domain mapping (requires setup)
 echo "🌐 Option 1: Browser-friendly domain mapping"
 echo "Setup:"
-echo "  kubectl apply -f infrastructure/serverless/domain-mapping.yaml"
+echo "  kubectl apply -f deploy/serverless/domain-mapping.yaml"
 echo "  echo '127.0.0.1 serverless.localhost' | sudo tee -a /etc/hosts"
 echo "Access:"
 echo "  http://serverless.localhost:8081"
@@ -44,7 +44,7 @@ if [[ "$1" == "--proxy" ]]; then
     done
 elif [[ "$1" == "--setup-domain" ]]; then
     echo "Setting up domain mapping..."
-    kubectl apply -f infrastructure/serverless/domain-mapping.yaml
+    kubectl apply -f deploy/serverless/domain-mapping.yaml
     echo "Add this to /etc/hosts (requires sudo):"
     echo "127.0.0.1 serverless.localhost"
     echo ""

@@ -26,7 +26,7 @@ fi
 cd "$PROJECT_ROOT"
 k6 run --out json="results/load-tests/${TEST_TYPE}-metrics.json" \
     -e BASE_URL="$BASE_URL" \
-    "infrastructure/load-tests/${TEST_TYPE}.js"
+    "deploy/load-tests/${TEST_TYPE}.js"
 
 echo ""
 echo "Results saved to results/load-tests/"

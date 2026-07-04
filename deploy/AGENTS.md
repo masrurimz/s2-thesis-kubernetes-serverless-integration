@@ -1,4 +1,4 @@
-# infrastructure/ — Platform and Traffic Generation
+# deploy/ — Platform and Traffic Generation
 
 ## What This Is
 
@@ -8,7 +8,7 @@ K3s/K3d cluster configs, HAProxy routing, Knative serverless, Prometheus monitor
 
 ```bash
 # Cluster setup
-cd infrastructure && ./scripts/setup.sh
+cd deploy && ./scripts/setup.sh
 
 # Run load tests
 ./load-tests/run-load-tests.sh steady
@@ -35,7 +35,7 @@ See `load-tests/README.md` for the full manifest with used-by references.
 ## Conventions
 
 - **Shell scripts** at `load-tests/` root are the runners — don't move them into subdirs.
-- **`scripts/`** here is infra setup/teardown (not analysis scripts — those are in top-level `scripts/`).
+- **`scripts/`** here is deploy setup/teardown (analysis scripts now live in apps/experiment/).
 - **`config.env`** + `load-config.sh` centralize port/host configuration.
 - **Don't edit k6 scripts in legacy/** unless fixing a bug that affects historical bundle interpretation.
 
