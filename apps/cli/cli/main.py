@@ -80,6 +80,7 @@ def _register_prediction() -> None:
     except ImportError:
         pass
 
+
 def _register_infra() -> None:
     """Register the infra sub-app."""
     try:

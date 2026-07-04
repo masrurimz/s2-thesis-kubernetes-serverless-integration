@@ -73,26 +73,74 @@ class KnativeInstaller:
     def _install_knative_serving(self) -> bool:
         v = self.knative_version
         # CRDs
-        run(["kubectl", "apply", "-f", f"https://github.com/knative/serving/releases/download/knative-v{v}/serving-crds.yaml"], check=True)
+        run(
+            [
+                "kubectl",
+                "apply",
+                "-f",
+                f"https://github.com/knative/serving/releases/download/knative-v{v}/serving-crds.yaml",
+            ],
+            check=True,
+        )
         # Core
-        run(["kubectl", "apply", "-f", f"https://github.com/knative/serving/releases/download/knative-v{v}/serving-core.yaml"], check=True)
+        run(
+            [
+                "kubectl",
+                "apply",
+                "-f",
+                f"https://github.com/knative/serving/releases/download/knative-v{v}/serving-core.yaml",
+            ],
+            check=True,
+        )
         return True
 
     def _install_kourier(self) -> bool:
         v = self.kourier_version
-        run(["kubectl", "apply", "-f", f"https://github.com/knative-extensions/net-kourier/releases/download/knative-v{v}/kourier.yaml"], check=True)
-        run(["kubectl", "patch", "configmap/config-network", "-n", "knative-serving", "--type=merge",
-             "-p", '{"data":{"ingress-class":"kourier.ingress.networking.knative.dev"}}'])
+        run(
+            [
+                "kubectl",
+                "apply",
+                "-f",
+                f"https://github.com/knative-extensions/net-kourier/releases/download/knative-v{v}/kourier.yaml",
+            ],
+            check=True,
+        )
+        run(
+            [
+                "kubectl",
+                "patch",
+                "configmap/config-network",
+                "-n",
+                "knative-serving",
+                "--type=merge",
+                "-p",
+                '{"data":{"ingress-class":"kourier.ingress.networking.knative.dev"}}',
+            ]
+        )
         return True
 
     def _configure_dns(self) -> bool:
-        run(["kubectl", "apply", "-f", "https://github.com/knative/serving/releases/download/knative-v1.12.0/serving-default-domain.yaml"], check=False)
+        run(
+            [
+                "kubectl",
+                "apply",
+                "-f",
+                "https://github.com/knative/serving/releases/download/knative-v1.12.0/serving-default-domain.yaml",
+            ],
+            check=False,
+        )
         return True
 
     def _configure_autoscaling(self) -> bool:
-        run([
-            "kubectl", "apply", "-f", "-",
-        ], check=False)
+        run(
+            [
+                "kubectl",
+                "apply",
+                "-f",
+                "-",
+            ],
+            check=False,
+        )
         # Fallback: just log that autoscaling defaults should be configured manually
         console.print("[dim]Configure autoscaling defaults via kubectl if needed.[/dim]")
         return True
