@@ -231,6 +231,10 @@ class Algorithm1ControllerV2:
             slo_status = self.slo_monitor.check_slo()
 
         p99 = slo_status.p99_latency_ms
+        # No-traffic guard: if p99=0 (no requests), don't adjust weights
+        # This prevents the controller from drifting during warmup/idle periods
+        if p99 <= 0:
+            return self._maintain(0.0, self._compute_adaptive_target(), 0.0, str(uuid.uuid4())[:8])
 
         # Track warmup baseline for adaptive target
         self._track_warmup(p99, current_time)
