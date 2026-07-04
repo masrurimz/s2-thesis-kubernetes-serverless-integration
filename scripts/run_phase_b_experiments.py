@@ -528,10 +528,17 @@ class ScenarioResetter:
     def reset(self, scenario: str, provisioner=None) -> bool:
         logger.info("scenario_reset_start", scenario=scenario)
 
+        controller_ver = os.environ.get("CONTROLLER_VERSION", "v3")
         if provisioner and scenario in ("s1-k8s-only", "s3-hybrid-reactive", "s4-hybrid-predictive"):
-            if not provisioner.reset():
-                logger.error("node_provisioner_reset_failed", scenario=scenario)
-                return False
+            if scenario == "s4-hybrid-predictive" and controller_ver == "v3":
+                # V3 capacity-driven: keep 1 dynamic node alive for immediate K8s capacity
+                # Instead of full reset (deletes all nodes), just cordon extras
+                provisioner.stop()
+                logger.info("V3 soft reset: keeping dynamic nodes alive", scenario=scenario)
+            else:
+                if not provisioner.reset():
+                    logger.error("node_provisioner_reset_failed", scenario=scenario)
+                    return False
 
         if scenario == "s1-k8s-only":
             ok = self._reset_s1()
