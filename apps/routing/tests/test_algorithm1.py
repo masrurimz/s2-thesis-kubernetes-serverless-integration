@@ -667,3 +667,144 @@ class TestAlgorithm1ConfigV3:
         assert config.r_saturation_per_replica == 50.0
         assert config.target_cpu_util == 0.6
         assert config.max_knative_weight == 30
+
+
+class TestV3WithClarkNetTrace:
+    """Test V3 controller routing decisions with real ClarkNet workload data."""
+
+    @pytest.fixture
+    def monitor(self):
+        return MockSLOMonitor()
+
+    @pytest.fixture
+    def controller(self, monitor):
+        config = Algorithm1ConfigV3(
+            r_saturation_per_replica=35.0,
+            target_cpu_util=0.8,
+            min_k8s_replicas=3,
+            max_knative_weight=50,
+        )
+        ctrl = Algorithm1ControllerV3(slo_monitor=monitor, config=config)
+        ctrl._prewarm_knative = Mock(return_value=True)
+        ctrl.current_weights = {"k3s": 80, "knative": 20}
+        ctrl.serverless_enabled = True
+        return ctrl
+
+    def test_low_load_all_k8s(self, controller, monitor):
+        """ClarkNet low stages (24-48 RPS) should route 100% to K8s."""
+        monitor.set_mock_metrics(p99=100.0)
+        slo = monitor.check_slo()
+        for load in [24, 31, 48]:
+            decision = controller.make_decision(slo_status=slo, current_load=load, available_replicas=3)
+            controller.commit_applied_decision(decision)
+            assert decision.weights["knative"] == 0, f"load={load} should be 100% K8s"
+
+    def test_peak_load_burst_routing(self, controller, monitor):
+        """ClarkNet peak (164 RPS) should route burst to Knative."""
+        monitor.set_mock_metrics(p99=5000.0)
+        slo = monitor.check_slo()
+        decision = controller.make_decision(slo_status=slo, current_load=164, available_replicas=3)
+        # 3 pods * 28 = 84 capacity, load=164 → burst=49% → capped at 50
+        assert decision.weights["knative"] > 0
+        assert decision.weights["knative"] <= 50
+
+    def test_mean_load_within_capacity(self, controller, monitor):
+        """ClarkNet mean (73 RPS) with 3 replicas (84 cap) → 100% K8s."""
+        monitor.set_mock_metrics(p99=100.0)
+        slo = monitor.check_slo()
+        decision = controller.make_decision(slo_status=slo, current_load=73, available_replicas=3)
+        assert decision.weights["knative"] == 0
+
+    def test_mean_load_exceeds_2_replica_capacity(self, controller, monitor):
+        """ClarkNet mean (73 RPS) with 2 replicas (56 cap) → burst to Knative."""
+        monitor.set_mock_metrics(p99=5000.0)
+        slo = monitor.check_slo()
+        decision = controller.make_decision(slo_status=slo, current_load=73, available_replicas=2)
+        # 2 pods * 28 = 56, load=73 → burst=23% → ~23% Knative
+        assert decision.weights["knative"] > 0
+        assert decision.weights["knative"] < 50
+
+    def test_gru_prediction_drives_routing(self, controller, monitor):
+        """GRU prediction above observed load should drive burst routing."""
+        monitor.set_mock_metrics(p99=100.0)
+        slo = monitor.check_slo()
+        pred = {"predicted_requests": 120, "confidence": 0.8}
+        # observed=50, predicted=120 → total=120 > 84 capacity
+        decision = controller.make_decision(slo_status=slo, prediction=pred, current_load=50, available_replicas=3)
+        assert decision.weights["knative"] > 0
+
+    def test_capacity_deficit_at_extreme_load(self, controller, monitor):
+        """Extreme load with 1 replica → capacity deficit mode."""
+        monitor.set_mock_metrics(p99=50000.0)
+        slo = monitor.check_slo()
+        decision = controller.make_decision(slo_status=slo, current_load=200, available_replicas=1)
+        assert controller.capacity_deficit is True
+        assert decision.weights["knative"] == 50  # capped at max
+
+    def test_all_weights_sum_to_100(self, controller, monitor):
+        """Every routing decision must have weights summing to 100."""
+        monitor.set_mock_metrics(p99=5000.0)
+        slo = monitor.check_slo()
+        for load in [0, 24, 48, 73, 100, 164]:
+            decision = controller.make_decision(slo_status=slo, current_load=load, available_replicas=3)
+            controller.commit_applied_decision(decision)
+            assert sum(decision.weights.values()) == 100, f"load={load} weights don't sum to 100"
+
+
+class TestAlgorithm2ScalingForV3:
+    """Test Algorithm 2 scaling logic with V3 parameters."""
+
+    def test_scale_up_from_2_to_3(self):
+        """With min_replicas=3, load=73 should scale from 2→3+."""
+        from routing.scaling.cluster_controller import ClusterController, ScalingConfig
+
+        ctrl = ClusterController(
+            config=ScalingConfig(
+                alpha=0.03,
+                min_replicas=3,
+                scale_down_threshold=0.5,
+            )
+        )
+        decision = ctrl.evaluate(predicted_load=73, current_replicas=2)
+        assert decision.action == "SCALE_UP"
+        assert decision.target_replicas >= 3
+
+    def test_scale_up_for_peak_load(self):
+        """Peak load 164 RPS should target 6+ replicas."""
+        from routing.scaling.cluster_controller import ClusterController, ScalingConfig
+
+        ctrl = ClusterController(config=ScalingConfig(alpha=0.03))
+        decision = ctrl.evaluate(predicted_load=164, current_replicas=3)
+        assert decision.action == "SCALE_UP"
+        # ceil(164 * 0.03 * 1.2) = ceil(5.9) = 6
+        assert decision.target_replicas >= 6
+
+    def test_no_scale_down_below_min(self):
+        """With min_replicas=3, scale-down target should be clamped to 3."""
+        from routing.scaling.cluster_controller import ClusterController, ScalingConfig
+
+        ctrl = ClusterController(
+            config=ScalingConfig(
+                alpha=0.03,
+                min_replicas=3,
+                scale_down_threshold=0.5,
+            )
+        )
+        decision = ctrl.evaluate(predicted_load=10, current_replicas=5)
+        # target = ceil(10 * 0.03 * 1.2) = ceil(0.36) = 1, but clamped to min=3
+        assert decision.target_replicas >= 3
+
+    def test_maintain_when_target_within_threshold(self):
+        """When target is within scale_down_threshold of current, maintain."""
+        from routing.scaling.cluster_controller import ClusterController, ScalingConfig
+
+        ctrl = ClusterController(
+            config=ScalingConfig(
+                alpha=0.03,
+                scale_down_threshold=0.5,
+            )
+        )
+        decision = ctrl.evaluate(predicted_load=73, current_replicas=4)
+        # target = ceil(73 * 0.03 * 1.2) = ceil(2.63) = 3
+        # 3 < 4 * 0.5 = 2? No → MAINTAIN
+        assert decision.action == "MAINTAIN"

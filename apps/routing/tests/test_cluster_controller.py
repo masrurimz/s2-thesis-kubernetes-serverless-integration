@@ -6,7 +6,7 @@ from routing.scaling.cluster_controller import ClusterController, ScalingConfig,
 class TestScalingConfig:
     def test_defaults(self):
         cfg = ScalingConfig()
-        assert cfg.alpha == 0.0167
+        assert cfg.alpha == 0.04
         assert cfg.beta == 0.0
         assert cfg.buffer == 1.2
         assert cfg.min_replicas == 1

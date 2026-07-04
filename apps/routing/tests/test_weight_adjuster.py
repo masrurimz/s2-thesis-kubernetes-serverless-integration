@@ -158,6 +158,8 @@ class TestWeightAdjusterRetry:
 
         assert result is False
         assert mock_set.call_count == 3
+
+
 class TestServerManagement:
     """Tests for server enable/disable functionality."""
 
@@ -166,6 +168,7 @@ class TestServerManagement:
         """Create adjuster with mocked connectivity."""
         with patch.object(HAProxyWeightAdjuster, "_test_connection", return_value=False):
             return HAProxyWeightAdjuster()
+
     def test_disable_server_success(self, mock_send, adjuster):
         """Test disabling a server."""
         mock_send.return_value = "OK"
