@@ -37,13 +37,24 @@ dependencies = [
     "pytest-asyncio>=0.24.0",
     "pytest-cov>=6.0.0",
     # Workspace members
-    "thesis-controller",
+    "shared",
+    "infra",
+    "prediction",
+    "routing",
+    "experiment",
+    "cli",
+    "thesis-scripts",
 ]
 
 [tool.uv.workspace]
 members = [
-    "controller",
     "libs/shared",
+    "libs/infra",
+    "apps/prediction",
+    "apps/routing",
+    "apps/experiment",
+    "apps/scripts",
+    "apps/cli",
 ]
 
 
@@ -51,11 +62,16 @@ members = [
 [[tool.uv.index]]
 name = "pytorch-rocm"
 url = "https://download.pytorch.org/whl/rocm6.2"
-thesis-controller = { workspace = true }
-shared = { workspace = true }
+explicit = true
 
 [tool.uv.sources]
-thesis-controller = { workspace = true }
+shared = { workspace = true }
+infra = { workspace = true }
+prediction = { workspace = true }
+routing = { workspace = true }
+experiment = { workspace = true }
+cli = { workspace = true }
+thesis-scripts = { workspace = true }
 torch = { index = "pytorch-rocm" }
 torchvision = { index = "pytorch-rocm" }
 torchaudio = { index = "pytorch-rocm" }
@@ -70,7 +86,7 @@ dev = [
 [tool.ruff]
 target-version = "py312"
 line-length = 120
-extend-exclude = ["archived", ".venv", "results", "infrastructure/k3d/k3d_autoscaler.py"]
+extend-exclude = ["archived", ".venv", "results"]
 
 [tool.ruff.lint]
 # E402: module-import-not-at-top (needed for sys.path.insert patterns)
@@ -78,8 +94,9 @@ extend-exclude = ["archived", ".venv", "results", "infrastructure/k3d/k3d_autosc
 ignore = ["E402"]
 
 [tool.ruff.lint.per-file-ignores]
-"scripts/*.py" = ["F841"]
-"controller/tests/*.py" = ["F841"]
+"apps/routing/tests/*.py" = ["F841"]
+"apps/prediction/tests/*.py" = ["F841"]
+"apps/scripts/scripts/*.py" = ["F841"]
 
 [tool.ruff.format]
 quote-style = "double"
