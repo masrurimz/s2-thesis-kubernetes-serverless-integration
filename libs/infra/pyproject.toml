@@ -1,0 +1,32 @@
+[project]
+name = "infra"
+version = "0.1.0"
+description = "Infrastructure management: cluster, serverless, networking, observability, workloads, diagnostics"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "shared",
+    "requests>=2.32.4",
+    "rich>=13.0.0",
+    "typer>=0.15.0",
+]
+
+[project.scripts]
+thesis-infra = "infra.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["infra"]
+include = [
+    "infra/**/*.yaml",
+    "infra/**/*.yml",
+    "infra/**/*.cfg",
+    "infra/**/*.conf",
+    "infra/**/*.html",
+    "infra/**/*.go",
+    "infra/**/*.mod",
+    "infra/**/*.sum",
+    "infra/**/*.json",
+]
