@@ -2084,9 +2084,9 @@ def main():
     parser.add_argument(
         "--controller",
         type=str,
-        default="v2",
-        choices=["v1", "v2"],
-        help="Controller version for S4 (v1=bang-bang, v2=PID+feedforward). Default: v2",
+        default="v3",
+        choices=["v1", "v2", "v3"],
+        help="Controller version for S4 (v1=bang-bang, v2=PID+feedforward, v3=capacity-driven). Default: v3",
     )
     parser.add_argument("--skip-cost", action="store_true", help="Skip cost analysis after experiments")
     args = parser.parse_args()
