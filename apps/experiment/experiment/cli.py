@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """Experiment orchestration CLI.
 
 Provides typer commands for running, analyzing, and validating experiments.
@@ -6,6 +7,7 @@ Entry point: thesis-experiment (via pyproject.toml [project.scripts]).
 """
 
 import json
+import os
 import random
 import time
 from datetime import datetime
@@ -16,6 +18,7 @@ import typer
 import structlog
 
 from shared.models.experiment import ExperimentConfig, ExperimentResult
+
 if TYPE_CHECKING:
     from shared.models.pipeline import PipelineContext
 
@@ -64,6 +67,7 @@ def run(
             border_style="cyan",
         )
     )
+    os.environ["CONTROLLER_VERSION"] = controller
 
     config = ExperimentConfig(
         phase=phase,

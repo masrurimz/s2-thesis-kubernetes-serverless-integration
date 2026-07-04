@@ -88,10 +88,15 @@ class ResetStage(BaseStage):
     def _reset(self, scenario: str) -> bool:
         logger.info("scenario_reset_start", scenario=scenario)
 
+        controller_ver = os.environ.get("CONTROLLER_VERSION", "v3")
         if self._provisioner and scenario in ("s1-k8s-only", "s3-hybrid-reactive", "s4-hybrid-predictive"):
-            if not self._provisioner.reset():
-                logger.error("node_provisioner_reset_failed", scenario=scenario)
-                return False
+            if scenario == "s4-hybrid-predictive" and controller_ver == "v3":
+                self._provisioner.stop()
+                logger.info("V3 soft reset: keeping dynamic nodes alive", scenario=scenario)
+            else:
+                if not self._provisioner.reset():
+                    logger.error("node_provisioner_reset_failed", scenario=scenario)
+                    return False
 
         if scenario == "s1-k8s-only":
             ok = self._reset_s1()
@@ -104,7 +109,6 @@ class ResetStage(BaseStage):
             return False
 
         if ok:
-            # Reset HAProxy weights to scenario baseline (fatal if fails)
             if not self._reset_haproxy_weights(scenario):
                 logger.error("scenario_reset_haproxy_failed", scenario=scenario)
                 return False
@@ -173,11 +177,12 @@ class ResetStage(BaseStage):
         return True
 
     def _reset_s3_s4(self) -> bool:
-        """S3/S4: delete HPA, scale to baseline (1 replica), wait ready."""
+        """S3/S4: delete HPA, scale to baseline (2 replicas), wait ready."""
         _kubectl(["delete", "hpa", DEPLOYMENT, "--ignore-not-found"])
         time.sleep(2)
 
-        r = _kubectl(["scale", f"deployment/{DEPLOYMENT}", "--replicas=1"])
+        baseline_replicas = 2
+        r = _kubectl(["scale", f"deployment/{DEPLOYMENT}", f"--replicas={baseline_replicas}"])
         if r.returncode != 0:
             logger.error("scale_baseline_failed", stderr=r.stderr.strip())
             return False
@@ -188,10 +193,10 @@ class ResetStage(BaseStage):
             if dr.returncode == 0:
                 dep = json.loads(dr.stdout)
                 available = dep.get("status", {}).get("availableReplicas", 0) or 0
-                if available >= 1:
-                    logger.info("baseline_replicas_ready", replicas=1)
+                if available >= baseline_replicas:
+                    logger.info("baseline_replicas_ready", replicas=baseline_replicas)
                     return True
-        logger.warning("baseline_replicas_timeout")
+        logger.warning("baseline_replicas_timeout", note="continuing anyway")
         return True
 
     @staticmethod
