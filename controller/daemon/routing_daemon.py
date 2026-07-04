@@ -30,6 +30,7 @@ from pydantic import BaseModel
 
 from monitoring_v2.slo_monitor import SLOMonitor, SLOConfig
 from intelligent_router.algorithm1_controller import Algorithm1Controller, Algorithm1Config
+from intelligent_router.algorithm1_controller_v2 import Algorithm1ControllerV2, Algorithm1ConfigV2
 from intelligent_router.weight_adjuster import HAProxyWeightAdjuster
 from daemon.gru_client import GRUClient
 from scaling.cluster_controller import ClusterController, ScalingConfig
@@ -243,15 +244,25 @@ class RoutingDaemon:
             )
         )
 
-        self.algorithm_controller = Algorithm1Controller(
-            slo_monitor=self.slo_monitor,
-            config=Algorithm1Config(
-                cooldown_sec=decision_interval,
-                default_k3s_weight=self.scenario_config.k3s_weight,
-                default_knative_weight=self.scenario_config.knative_weight,
-                load_change_threshold=0.15 if self.scenario_config.use_predictions else 0.3,
-            ),
-        )
+        if self.scenario == Scenario.S4_HYBRID_PREDICTIVE:
+            self.algorithm_controller = Algorithm1ControllerV2(
+                slo_monitor=self.slo_monitor,
+                config=Algorithm1ConfigV2(
+                    cooldown_sec=decision_interval,
+                    default_serverless_weight=self.scenario_config.knative_weight,
+                ),
+            )
+            logger.info("Using V2 controller (PID + Feedforward) for S4", scenario=scenario)
+        else:
+            self.algorithm_controller = Algorithm1Controller(
+                slo_monitor=self.slo_monitor,
+                config=Algorithm1Config(
+                    cooldown_sec=decision_interval,
+                    default_k3s_weight=self.scenario_config.k3s_weight,
+                    default_knative_weight=self.scenario_config.knative_weight,
+                    load_change_threshold=0.15 if self.scenario_config.use_predictions else 0.3,
+                ),
+            )
 
         self.weight_adjuster = HAProxyWeightAdjuster(
             tcp_socket_host=haproxy_socket_host,
@@ -450,14 +461,26 @@ class RoutingDaemon:
             action=decision.action,
         ).inc()
 
-        # Readiness gate: block OPTIMIZE_COST (increases K8s traffic)
+        # Readiness gate: block OPTIMIZE_COST/RECOVERY (increases K8s traffic)
         # if K8s pods are not fully ready
-        if decision.action == "OPTIMIZE_COST" and self.k8s_scaler is not None and not self.k8s_scaler.is_ready():
+        if (
+            decision.action in ("OPTIMIZE_COST", "RECOVERY")
+            and self.k8s_scaler is not None
+            and not self.k8s_scaler.is_ready()
+        ):
             logger.warning(
                 "Blocking traffic return: K8s not ready (available != desired)",
                 original_action=decision.action,
             )
-            decision = self.algorithm_controller._maintain(slo_status)
+            # Construct MAINTAIN inline — works for both V1 and V2 controllers
+            from intelligent_router.algorithm1_controller import RoutingDecision as _RD
+
+            decision = _RD(
+                weights=self.current_weights.copy(),
+                reason="Blocked: K8s not ready for traffic return",
+                action="MAINTAIN",
+                metrics={"p99": slo_status.p99_latency_ms},
+            )
 
         if decision.weights != self.current_weights:
             success = self.weight_adjuster.set_weights_with_retry(
