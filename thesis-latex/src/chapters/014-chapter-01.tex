@@ -1,0 +1,83 @@
+%--------------------------------------------------------------------%
+% Page          : Chapter 1 - Pendahuluan (Introduction)
+%--------------------------------------------------------------------%
+
+\chapter{PENDAHULUAN}
+\label{sec:pendahuluan}
+
+Bab ini membahas mengenai hal-hal yang menjadi dasar dari penelitian. Hal tersebut meliputi latar belakang yang membahas mengenai identifikasi masalah penelitian beserta referensi penelitian sebagai penelitian terdahulu, rumusan masalah, tujuan penelitian, batasan masalah, hingga manfaat penelitian.
+
+\section{Latar Belakang}
+\label{sec:latar-belakang}
+
+Arsitektur \emph{cloud} modern mengubah bagaimana aplikasi web dikembangkan, digunakan, dan dikelola; menawarkan tingkat fleksibilitas, skalabilitas, dan efisiensi yang belum pernah terjadi sebelumnya \citep{smit2013supporting}. Evolusi ini ditandai dengan pergeseran dari penyediaan infrastruktur dasar seperti mesin virtual (\emph{Virtual Machine} atau VM) atau \emph{Virtual Private Server} (VPS), menjadi lebih skalabel dengan \emph{Container}, dan edge worker yang tersebar menggunakan model \emph{serverless}. Ini didorong oleh kebutuhan akan sumber daya komputasi yang lebih efisien, pengurangan biaya operasional, dan peningkatan kinerja serta skalabilitas untuk mengakomodasi kompleksitas dan basis pengguna yang berkembang karena model tradisional kesulitan untuk mengikuti.
+
+Kubernetes adalah sistem manajemen \emph{cluster} berdasarkan teknologi \emph{container}. Popularitasnya merupakan hasil dari kemampuan skalabilitas berdasarkan permintaan. Namun, algoritma skalabilitas tradisional yang ditawarkan oleh penyedia layanan \emph{cloud} tidak dapat memenuhi lonjakan lalu lintas mendadak karena waktu \emph{startup container} yang lambat, sering kali menyebabkan peningkatan latensi dan alokasi sumber daya berlebihan yang tidak terpakai ketika lalu lintas menurun \citep{yang2019elax}. Penundaan waktu respons aplikasi dapat merusak pengalaman pengguna, akibatnya menyebabkan kerugian dalam bisnis.
+
+Bersamaan dengan \emph{Kubernetes}, komputasi \emph{Serverless}, atau \emph{Function as a Service (FaaS)} telah mendapatkan traksi dalam beberapa tahun terakhir. Model ini menangani penyediaan dan \emph{scalling} infrastruktur secara otomatis, memungkinkan aplikasi dapat berjalan dengan tingkat ketersediaan tinggi tanpa kerumitan dalam pengelolaan server. Sehingga pengembang dan organisasi dapat sepenuhnya fokus pada layanan aplikasi \citep{sadaqat2018serverless, savage2018going, sewak2018winning}. Selain itu, berdasarkan \emph{benchmark} \citet{yu2020characterizing} fungsi \emph{serverless} dapat diskalakan dari nol ke kapasitas target dalam hitungan detik, dengan rata-rata waktu \emph{cold start} dari 300 ms hingga 8 detik untuk sebagian besar platform tergantung pada \emph{runtime} yang digunakan.
+
+Dalam konteks evolusi arsitektur \emph{cloud} yang terus berkembang, muncul tantangan signifikan yang melibatkan \emph{tradeoff} antara Skalabilitas dan Efisiensi, di mana upaya mencapai skalabilitas tinggi untuk menanggulangi lonjakan lalu lintas yang tak terprediksi sering kali bertentangan dengan efisiensi penggunaan sumber daya untuk mengoptimalkan biaya. Strategi skalabilitas tradisional, seperti \emph{over-provisioning} kluster Kubernetes, dengan cara mengalokasikan sumber daya berlebih pada sebuah kluster, untuk menangani lonjakan lalu lintas yang tidak terprediksi, mengakibatkan penggunaan sumber daya yang kurang optimal ketika tidak terdapat lalu lintas tinggi, meningkatkan biaya tanpa meningkatkan performa \citep{zhang2021zeus}.
+
+Untuk mengevaluasi dan mengoptimalkan aplikasi cloud secara efektif, beberapa metrik digunakan. \emph{Tail latency}, mengukur waktu yang diperlukan untuk memproses permintaan yang paling lambat dalam sistem, digunakan untuk memahami kinerja terburuk dan memastikan bahwa semua permintaan pengguna memenuhi waktu respons yang dapat diterima \citep{aslanpour2020performance}. \emph{Running time}, durasi total untuk menjalankan tugas atau fungsi tertentu. Alokasi sumber daya yang efektif, termasuk distribusi CPU, memori, dan penyimpanan, digabungkan dengan penggunaan CPU di seluruh \emph{cluster} membantu mengidentifikasi kemungkinan ketidakefisienan sumber daya.
+
+Perkembangan terbaru dalam komputasi awan telah memperkenalkan berbagai metode untuk mengatasi masalah latensi dan skalabilitas pada arsitektur \emph{Kubernetes} dan \emph{Serverless}. \citet{yang2019elax} memanfaatkan algoritma pembelajaran mesin berbasis LSTM (\emph{Long Short-Term Memory}) untuk melakukan peramalan beban kerja sebagai bagian dari algoritma yang diusulkan. Hasilnya menunjukkan kurang dari 18\% sumber daya yang mengalami \emph{over-provisioning}. \citet{yuan2024time} memanfaatkan peramalan deret waktu untuk mengantisipasi kebutuhan sumber daya, secara signifikan memangkas waktu \emph{cold start serverless}. Sementara itu, \citet{he2020novel} menggunakan algoritma prediktif untuk mengoptimalkan jumlah instansi sebelum terjadi fluktuasi permintaan. \citet{mondal2023toward} memanfaatkan model GRU (\emph{Gated Recurrent Unit}) untuk memprediksi beban kerja Kubernetes secara \emph{custom}.
+
+LSTM (\emph{Long Short-Term Memory}) adalah jenis jaringan saraf dalam yang dirancang khusus untuk mengatasi masalah pada data deret waktu. LSTM sangat berguna untuk kasus-kasus prediksi di mana data memiliki dependensi temporal yang panjang, seperti dalam prediksi beban kerja server cloud. Selain LSTM, terdapat juga \emph{Gated Recurrent Unit} (GRU) yang memiliki struktur lebih sederhana dan memerlukan sumber daya lebih sedikit dibandingkan LSTM, namun tetap mampu memberikan performa prediksi yang tidak identik \citep{mondal2023toward}. GRU memilih informasi yang relevan untuk disimpan atau dibuang, menghasilkan prediksi yang lebih efisien dalam konteks komputasi awan.
+
+Untuk membuat model prediksi dalam cloud computing yang efektif, diperlukan dataset yang menggambarkan kondisi sistem. \citet{yang2019elax} menggunakan dataset berupa volume \emph{request} dari Calgary Trace dan ClarkNet dalam mengembangkan bagian \emph{traffic predictor} pada metode scalling yang diusulkan. Calgary Trace menyediakan data lalu lintas jaringan dari University of Calgary, berisi lebih dari 4 juta \emph{request} HTTP. ClarkNet dataset berfokus pada penggunaan web, menyediakan data rinci tentang permintaan HTTP ke server WWW ClarkNet.
+
+Penelitian ini mengusulkan strategi distribusi lalu lintas antara kluster Kubernetes dan serverless, bertujuan untuk meningkatkan efisiensi biaya dan mengurangi waktu respons selama lonjakan lalu lintas jaringan yang tidak terduga. Berdasarkan metode Elax, studi ini akan menggabungkan Prediktor Beban Kerja berbasis GRU untuk peramalan beban kerja yang tepat, ditambah dengan mekanisme Reservasi Sumber Daya untuk alokasi sumber daya yang optimal. Sebuah Pengontrol akan melepaskan sumber daya yang tidak terpakai berdasarkan umpan balik dengan tetap memastikan persyaratan \emph{tail-latency} terpenuhi.
+
+\section{Rumusan Masalah}
+\label{sec:rumusan-masalah}
+
+Berdasarkan latar belakang yang telah dipaparkan, terdapat beberapa rumusan masalah yang dirumuskan sebagai berikut:
+
+\begin{enumerate}
+    \item Bagaimana merancang prediksi beban \emph{traffic} pada sebuah aplikasi dengan menggunakan GRU?
+    \item Bagaimana merancang dan melakukan pengambilan keputusan dengan melakukan modifikasi Elax untuk \emph{scaling} pada server cluster dan mendistribusikan traffic ke jenis kluster yang berbeda?
+    \item Bagaimana mengevaluasi mekanisme Elax yang dimodifikasi untuk \emph{automatic scalling} dan \emph{load distribution} pada integrasi kubernetes dan serverless pada sebuah aplikasi?
+\end{enumerate}
+
+\section{Tujuan Penelitian}
+\label{sec:tujuan-penelitian}
+
+Berdasarkan rumusan masalah yang telah dijelaskan, tujuan besar dari penelitian tugas akhir ini adalah sebagai berikut:
+
+\begin{enumerate}
+    \item Menganalisis dampak integrasi Kubernetes dan serverless dalam mengatasi tantangan efisiensi dan scallability aplikasi.
+    \item Menilai performa integrasi Kubernetes dan Serverless dalam meningkatkan kemampuan Scalling aplikasi sehingga bisa mengurangi masalah Latency dan Over-provisioning.
+    \item Mengukur dan mengevaluasi pendekatan ini dibandingkan dengan model lain dalam menangani permasalahan latency dan \emph{over-provisioning}.
+    \item Mengembangkan metode scalling dan routing traffic yang mengintegrasikan Kubernetes dan Serverless.
+\end{enumerate}
+
+\section{Manfaat Penelitian}
+\label{sec:manfaat-penelitian}
+
+Adapun manfaat yang bisa diperoleh dari penelitian ini dipaparkan sebagai berikut:
+
+\begin{enumerate}
+    \item Memahami bagaimana \emph{dynamic scaling and routing} dengan menggabungkan Kubernetes dan Serverless dapat meningkatkan kemampuan Scalling dan efisiensi pada aplikasi.
+    \item Memberikan pemahaman dan wawasan tentang bagaimana \emph{dynamic scaling and routing} dengan mengintegrasikan Kubernetes dan Serverless bisa mengatasi tantangan scalling dan efisiensi pada aplikasi.
+\end{enumerate}
+
+\section{Kontribusi Penelitian}
+\label{sec:kontribusi-penelitian}
+
+Adapun kontribusi yang diperoleh dari penelitian ini sebagai berikut:
+
+\begin{enumerate}
+    \item Merancang metode prediksi beban \emph{traffic} pada aplikasi dengan mempertimbangkan history volume permintaan per detik.
+    \item Membuat sebuah metode \emph{scalling} dan \emph{dynamic routing} dengan menggabungkan Kluster Kubernetes dan Serverless yang berbasis metode Elax.
+\end{enumerate}
+
+\section{Batasan Masalah}
+\label{sec:batasan-masalah}
+
+Agar penelitian yang dilakukan dapat berjalan sesuai dengan tujuan yang dipaparkan, ditetapkan beberapa batasan masalah sebagai berikut:
+
+\begin{enumerate}
+    \item Dataset yang digunakan merupakan dataset traffic dari ClarkNet dan Calgary trace.
+    \item Cloud provider yang digunakan adalah Google Cloud dengan menggunakan Google Kubernetes Engine untuk Kubernetes dan Cloud Function untuk Serverless deployment.
+    \item Basis metode dan algoritma yang digunakan ada Elax dengan modifikasi pada output yang menambahkan decision untuk routing ke Serverless, Pre-Emptive Cold Start, dan Tuning Scaling logic.
+\end{enumerate}
