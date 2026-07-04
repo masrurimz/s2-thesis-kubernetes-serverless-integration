@@ -303,7 +303,20 @@ class RoutingDaemon:
         # Algorithm 2 scaling logic only runs when use_algorithm=True.
         self.k8s_scaler = K8sScaler()
         if self.scenario_config.use_algorithm:
-            self.cluster_controller = ClusterController(config=ScalingConfig())
+            controller_ver = os.environ.get("CONTROLLER_VERSION", "v3")
+            if controller_ver == "v3" and self.scenario == Scenario.S4_HYBRID_PREDICTIVE:
+                self.cluster_controller = ClusterController(
+                    config=ScalingConfig(
+                        alpha=0.02,  # 500m CPU: ~60 RPS/pod → 1/60 ≈ 0.017, rounded to 0.02
+                        beta=0.0,
+                        buffer=1.2,
+                        min_replicas=3,
+                        max_replicas=10,
+                        scale_down_threshold=0.5,
+                    )
+                )
+            else:
+                self.cluster_controller = ClusterController(config=ScalingConfig())
         else:
             self.cluster_controller = None
         self._last_scale_up_ts: Optional[float] = None
@@ -561,16 +574,20 @@ class RoutingDaemon:
         k8s_available_replicas.set(dep_status.available_replicas)
 
         # Determine scaling signal:
-        # S4 (predictive) → use GRU prediction, fallback to observed load
-        # S3 (reactive)   → use observed load (mean of history)
-        # Thesis §3.4.3.2: x_obs = mean observed RPS over last 30s
+        # V3: use max(observed, predicted) — ensures we never under-provision
+        # S3: use observed load only
         n_samples = max(1, min(len(self._load_history), -(-30 // self.decision_interval)))
         recent = list(self._load_history)[-n_samples:]
         x_obs = float(sum(recent) / len(recent)) if recent else 0.0
         scaling_signal = x_obs
 
         if self.scenario_config.use_predictions and prediction is not None and prediction.get("confidence", 0) >= 0.5:
-            scaling_signal = float(prediction["predicted_requests"])
+            x_pred = float(prediction["predicted_requests"])
+            if isinstance(self.algorithm_controller, Algorithm1ControllerV3):
+                # V3: use max(observed, predicted) — never under-provision
+                scaling_signal = max(x_obs, x_pred)
+            else:
+                scaling_signal = x_pred
 
         scaling_decision = self.cluster_controller.evaluate(scaling_signal, dep_status.spec_replicas)
 
@@ -578,18 +595,21 @@ class RoutingDaemon:
         healthy_threshold = self.slo_monitor.config.p99_threshold_ms * self.algorithm_controller.config.healthy_margin
 
         if scaling_decision.action == "SCALE_UP":
-            if self._last_scale_up_ts is None or (now - self._last_scale_up_ts) >= 30:
+            scale_up_cooldown = 15
+            if self._last_scale_up_ts is None or (now - self._last_scale_up_ts) >= scale_up_cooldown:
                 success = self.k8s_scaler.scale(scaling_decision.target_replicas)
                 k8s_scaling_events_total.labels(direction="up", result="success" if success else "fail").inc()
                 if success:
                     self._last_scale_up_ts = now
 
         elif scaling_decision.action == "SCALE_DOWN":
-            # Don't scale below 2 replicas (K8s baseline floor for V3 capacity-driven routing)
-            min_replicas = 2 if isinstance(self.algorithm_controller, Algorithm1ControllerV3) else 1
+            # V3: min 3 replicas, 300s cooldown (don't scale down frequently)
+            is_v3 = isinstance(self.algorithm_controller, Algorithm1ControllerV3)
+            min_replicas = 3 if is_v3 else 1
+            scale_down_cooldown = 300 if is_v3 else 60
             target = max(min_replicas, scaling_decision.target_replicas)
             if (
-                (self._last_scale_down_ts is None or (now - self._last_scale_down_ts) >= 60)
+                (self._last_scale_down_ts is None or (now - self._last_scale_down_ts) >= scale_down_cooldown)
                 and slo_status.p99_latency_ms < healthy_threshold
                 and target < dep_status.spec_replicas
             ):
