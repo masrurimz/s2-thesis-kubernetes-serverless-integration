@@ -641,7 +641,12 @@ class ScenarioResetter:
                 if available >= baseline_replicas:
                     logger.info("baseline_replicas_ready", replicas=baseline_replicas)
                     return True
-        logger.warning("baseline_replicas_timeout", available=available, target=baseline_replicas)
+        logger.warning(
+            "baseline_replicas_timeout",
+            available=available,
+            target=baseline_replicas,
+            note="continuing anyway — V3 handles 0 replicas",
+        )
         return True
 
     @staticmethod
