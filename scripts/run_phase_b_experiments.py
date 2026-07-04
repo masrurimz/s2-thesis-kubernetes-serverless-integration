@@ -619,28 +619,29 @@ class ScenarioResetter:
         return True  # Proceed anyway
 
     def _reset_s3_s4(self) -> bool:
-        """S3/S4: delete HPA, scale to baseline (1 replica), wait ready."""
+        """S3/S4: delete HPA, scale to baseline (3 replicas), wait ready."""
         # Delete HPA
         _kubectl(["delete", "hpa", DEPLOYMENT, "--ignore-not-found"])
         time.sleep(2)
 
-        # Scale to baseline replicas (1 — resource-constrained, Algorithm 2 scales up)
-        r = _kubectl(["scale", f"deployment/{DEPLOYMENT}", "--replicas=1"])
+        # Scale to baseline replicas (3 — enough for K8s baseline capacity)
+        baseline_replicas = 3
+        r = _kubectl(["scale", f"deployment/{DEPLOYMENT}", f"--replicas={baseline_replicas}"])
         if r.returncode != 0:
             logger.error("scale_baseline_failed", stderr=r.stderr.strip())
             return False
 
-        # Wait for readyReplicas == 1
+        # Wait for readyReplicas >= baseline
         for _ in range(30):
             time.sleep(2)
             dr = _kubectl(["get", f"deployment/{DEPLOYMENT}", "-o", "json"])
             if dr.returncode == 0:
                 dep = json.loads(dr.stdout)
                 available = dep.get("status", {}).get("availableReplicas", 0) or 0
-                if available >= 1:
-                    logger.info("baseline_replicas_ready", replicas=1)
+                if available >= baseline_replicas:
+                    logger.info("baseline_replicas_ready", replicas=baseline_replicas)
                     return True
-        logger.warning("baseline_replicas_timeout")
+        logger.warning("baseline_replicas_timeout", available=available, target=baseline_replicas)
         return True
 
     @staticmethod
