@@ -2090,6 +2090,8 @@ def main():
     )
     parser.add_argument("--skip-cost", action="store_true", help="Skip cost analysis after experiments")
     args = parser.parse_args()
+    # Set controller version for daemon (S4 only)
+    os.environ["CONTROLLER_VERSION"] = args.controller
 
     datestamp = datetime.now().strftime("%Y-%m-%d")
     output_dir = args.output or f"results/experiments/phase-b/{datestamp}_clarknet-replay"
