@@ -61,6 +61,7 @@ KUBECTL_PATH = os.environ.get(
 # Infrastructure defaults
 K6_SCRIPT = PROJECT_ROOT / "infrastructure" / "load-tests" / "canonical" / "clarknet_replay.js"
 K6_STAGES = PROJECT_ROOT / "data" / "trace-replay" / "clarknet_k6_stages.json"
+K6_STAGES_TEST = PROJECT_ROOT / "data" / "trace-replay" / "clarknet_k6_stages_test.json"
 REPLAY_MANIFEST = PROJECT_ROOT / "data" / "trace-replay" / "clarknet_replay_manifest.json"
 
 HAPROXY_HOST = "localhost"
@@ -851,6 +852,8 @@ class K6Runner:
             f"RUN_ID={run_id}",
             "-e",
             f"RESULTS_DIR={k6_results_dir}",
+            "-e",
+            f"K6_STAGES_PATH={K6_STAGES}",
             str(K6_SCRIPT),
         ]
 
@@ -2090,9 +2093,14 @@ def main():
         help="Controller version for S4 (v1=bang-bang, v2=PID+feedforward, v3=capacity-driven). Default: v3",
     )
     parser.add_argument("--skip-cost", action="store_true", help="Skip cost analysis after experiments")
+    parser.add_argument("--quick", action="store_true", help="Use 2-min test stages instead of 20-min full replay")
     args = parser.parse_args()
-    # Set controller version for daemon (S4 only)
-    os.environ["CONTROLLER_VERSION"] = args.controller
+    # Swap to test stages for quick runs (2 min vs 20 min)
+    if args.quick:
+        global K6_STAGES
+        K6_STAGES = K6_STAGES_TEST
+        os.environ["EXPERIMENT_DURATION_SEC"] = "120"
+        print("⚡ Quick mode: 2-min test stages")
 
     datestamp = datetime.now().strftime("%Y-%m-%d")
     output_dir = args.output or f"results/experiments/phase-b/{datestamp}_clarknet-replay"
