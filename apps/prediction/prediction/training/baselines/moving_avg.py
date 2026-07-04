@@ -20,7 +20,7 @@ class MovingAveragePredictor:
         self.window_size = window_size
         self.history = []
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> "MovingAveragePredictor":
+    def fit(self, X: np.ndarray | None, y: np.ndarray) -> "MovingAveragePredictor":
         """Store recent history for MA calculation."""
         self.history = list(y[-self.window_size :])
         return self
@@ -56,7 +56,7 @@ class ExponentialMovingAveragePredictor:
         self.alpha = alpha
         self.ema = None
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> "ExponentialMovingAveragePredictor":
+    def fit(self, X: np.ndarray | None, y: np.ndarray) -> "ExponentialMovingAveragePredictor":
         """Calculate initial EMA from training data."""
         if len(y) == 0:
             self.ema = 0

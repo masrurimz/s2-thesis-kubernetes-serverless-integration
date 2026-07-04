@@ -1,8 +1,5 @@
 """Go-based Knative cold-start activator."""
 
-try:
-    from .manager import ActivatorManager
-except ImportError:
-    pass
+from .manager import ActivatorManager
 
 __all__ = ["ActivatorManager"]
