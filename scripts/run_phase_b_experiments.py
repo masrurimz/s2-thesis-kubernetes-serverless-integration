@@ -41,11 +41,11 @@ from scipy import stats as scipy_stats
 logger = structlog.get_logger(__name__)
 
 # Add path for k3d autoscaler module
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "infrastructure" / "k3d"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "infrastructure" / "k3d"))
 from k3d_autoscaler import K3dAutoscalerAdapter
 
-SCRIPT_DIR = Path(__file__).resolve().parent  # thesis/scripts/
-PROJECT_ROOT = SCRIPT_DIR.parent.parent  # repo root
+SCRIPT_DIR = Path(__file__).resolve().parent  # scripts/
+PROJECT_ROOT = SCRIPT_DIR.parent  # repo root
 CONTROLLER_DIR = PROJECT_ROOT / "controller"
 
 # Tool paths (mise-managed)
@@ -59,7 +59,7 @@ KUBECTL_PATH = os.environ.get(
 )
 
 # Infrastructure defaults
-K6_SCRIPT = PROJECT_ROOT / "infrastructure" / "load-tests" / "clarknet_replay.js"
+K6_SCRIPT = PROJECT_ROOT / "infrastructure" / "load-tests" / "canonical" / "clarknet_replay.js"
 K6_STAGES = PROJECT_ROOT / "data" / "trace-replay" / "clarknet_k6_stages.json"
 REPLAY_MANIFEST = PROJECT_ROOT / "data" / "trace-replay" / "clarknet_replay_manifest.json"
 
@@ -2059,6 +2059,21 @@ class ExperimentRunner:
 
 
 def main():
+    try:
+        from rich.console import Console
+        from rich.panel import Panel
+        from rich.table import Table
+
+        console = Console()
+    except ImportError:
+        console = None
+
+    def _print(msg, **kwargs):
+        if console:
+            console.print(msg, **kwargs)
+        else:
+            print(msg)
+
     parser = argparse.ArgumentParser(description="Phase B: Replicated Comparison Experiments")
     parser.add_argument("--phase", choices=["preflight", "experiments", "analysis", "full"], default="full")
     parser.add_argument("--runs", type=int, default=5, help="Runs per scenario")
@@ -2066,38 +2081,66 @@ def main():
     parser.add_argument("--output", type=str, default=None, help="Output directory")
     parser.add_argument("--scenarios", type=str, default=None, help="Comma-separated scenario list (default: all 4)")
     parser.add_argument("--results-file", type=str, default=None, help="Path to results JSON for analysis-only mode")
+    parser.add_argument(
+        "--controller",
+        type=str,
+        default="v2",
+        choices=["v1", "v2"],
+        help="Controller version for S4 (v1=bang-bang, v2=PID+feedforward). Default: v2",
+    )
     args = parser.parse_args()
 
     datestamp = datetime.now().strftime("%Y-%m-%d")
     output_dir = args.output or f"results/experiments/phase-b/{datestamp}_clarknet-replay"
     scenarios = args.scenarios.split(",") if args.scenarios else SCENARIOS
 
+    # Header
+    if console:
+        _print(
+            Panel.fit(
+                f"[bold]Phase B Experiments[/bold]\n"
+                f"Runs: {args.runs} × Scenarios: {len(scenarios)}\n"
+                f"Controller: {args.controller}  |  Seed: {args.seed}\n"
+                f"Output: {output_dir}",
+                border_style="cyan",
+            )
+        )
+    else:
+        print(
+            f"\nPhase B: {args.runs} runs × {len(scenarios)} scenarios | Controller: {args.controller} | Seed: {args.seed}"
+        )
+
     runner = ExperimentRunner(output_dir=str(PROJECT_ROOT / output_dir))
 
     # Preflight
     if args.phase in ("preflight", "full"):
-        print("\n" + "=" * 70)
-        print("PREFLIGHT CHECKS")
-        print("=" * 70)
+        _print("\n[bold cyan]Preflight Checks[/bold cyan]" if console else "\nPREFLIGHT CHECKS")
         ok, checks = runner.preflight.check_all()
+        if console:
+            table = Table(show_header=True, header_style="bold")
+            table.add_column("Check")
+            table.add_column("Status", justify="center")
+            for k, v in checks.items():
+                table.add_row(k, "[green]✅[/green]" if v else "[red]❌[/red]")
+            _print(table)
+        else:
+            for k, v in checks.items():
+                print(f"  {'✅' if v else '❌'} {k}")
+
         if not ok:
             failed = [k for k, v in checks.items() if not v]
-            print(f"\n❌ Preflight failed: {failed}")
+            _print(f"\n[red]Preflight failed: {failed}[/red]" if console else f"\n❌ Preflight failed: {failed}")
             if args.phase == "full":
                 return 1
         else:
-            print("\n✅ All preflight checks passed")
+            _print("\n[green]All preflight checks passed[/green]" if console else "\n✅ All preflight checks passed")
 
     # Experiments
     results = []
     if args.phase in ("experiments", "full"):
-        print("\n" + "=" * 70)
-        print(f"PHASE B EXPERIMENTS — {args.runs} runs × {len(scenarios)} scenarios")
-        print(f"Seed: {args.seed}  |  Output: {output_dir}")
-        print("=" * 70)
-
+        _print(f"\n[bold cyan]Running {args.runs * len(scenarios)} experiments...[/bold cyan]")
         results = runner.run_replicated(scenarios, args.runs, args.seed)
-        print(f"\n✅ {len(results)} runs completed")
+        _print(f"\n[green]✅ {len(results)} runs completed[/green]")
 
     # Analysis
     if args.phase in ("analysis", "full"):
@@ -2107,13 +2150,11 @@ def main():
             results = [ExperimentResult(**r) for r in raw]
 
         if results:
-            print("\n" + "=" * 70)
-            print("STATISTICAL ANALYSIS")
-            print("=" * 70)
+            _print("\n[bold cyan]Statistical Analysis[/bold cyan]" if console else "\nSTATISTICAL ANALYSIS")
             report = runner.run_analysis(results)
-            print("\n" + report)
+            _print("\n" + report)
         else:
-            print("❌ No results to analyze")
+            _print("[red]❌ No results to analyze[/red]" if console else "❌ No results to analyze")
 
     return 0
 
