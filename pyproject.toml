@@ -37,11 +37,23 @@ dependencies = [
     "pytest-asyncio>=0.24.0",
     "pytest-cov>=6.0.0",
     # Workspace members
-    "thesis-controller",
+    "shared",
+    "infra",
+    "prediction",
+    "routing",
+    "experiment",
+    "cli",
 ]
 
 [tool.uv.workspace]
-members = ["controller"]
+members = [
+    "libs/shared",
+    "libs/infra",
+    "apps/prediction",
+    "apps/routing",
+    "apps/experiment",
+    "apps/cli",
+]
 
 
 # AMD ROCm PyTorch index for GPU support
@@ -51,7 +63,12 @@ url = "https://download.pytorch.org/whl/rocm6.2"
 explicit = true
 
 [tool.uv.sources]
-thesis-controller = { workspace = true }
+shared = { workspace = true }
+infra = { workspace = true }
+prediction = { workspace = true }
+routing = { workspace = true }
+experiment = { workspace = true }
+cli = { workspace = true }
 torch = { index = "pytorch-rocm" }
 torchvision = { index = "pytorch-rocm" }
 torchaudio = { index = "pytorch-rocm" }
@@ -74,8 +91,8 @@ extend-exclude = ["archived", ".venv", "results", "infrastructure/k3d/k3d_autosc
 ignore = ["E402"]
 
 [tool.ruff.lint.per-file-ignores]
-"scripts/*.py" = ["F841"]
-"controller/tests/*.py" = ["F841"]
+"apps/routing/tests/*.py" = ["F841"]
+"apps/prediction/tests/*.py" = ["F841"]
 
 [tool.ruff.format]
 quote-style = "double"
