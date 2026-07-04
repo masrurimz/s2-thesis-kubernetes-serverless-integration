@@ -26,7 +26,7 @@ const sloViolations = new Counter('slo_violations');
 const SLO_THRESHOLD_MS = 200;
 
 // Load stages from generated JSON
-const stages = JSON.parse(open('../../data/trace-replay/clarknet_k6_stages.json'));
+const stages = JSON.parse(open('../../../data/trace-replay/clarknet_k6_stages.json'));
 
 export const options = {
     scenarios: {
