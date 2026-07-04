@@ -2088,6 +2088,7 @@ def main():
         choices=["v1", "v2"],
         help="Controller version for S4 (v1=bang-bang, v2=PID+feedforward). Default: v2",
     )
+    parser.add_argument("--skip-cost", action="store_true", help="Skip cost analysis after experiments")
     args = parser.parse_args()
 
     datestamp = datetime.now().strftime("%Y-%m-%d")
@@ -2155,6 +2156,20 @@ def main():
             _print("\n" + report)
         else:
             _print("[red]❌ No results to analyze[/red]" if console else "❌ No results to analyze")
+    # Cost Analysis
+    if args.phase in ("analysis", "full") and not args.skip_cost:
+        _print("\n[bold cyan]Cost Analysis[/bold cyan]" if console else "\nCOST ANALYSIS")
+        try:
+            sys.path.insert(0, str(SCRIPT_DIR))
+            from cost_analyzer import run_experiment_analysis
+
+            experiment_path = PROJECT_ROOT / output_dir
+            if experiment_path.exists():
+                run_experiment_analysis(experiment_path)
+            else:
+                _print("[yellow]Skipping cost analysis: experiment directory not found[/yellow]")
+        except Exception as e:
+            _print(f"[yellow]Cost analysis skipped: {e}[/yellow]" if console else f"Cost analysis skipped: {e}")
 
     return 0
 
