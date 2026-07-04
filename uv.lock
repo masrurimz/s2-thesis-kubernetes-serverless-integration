@@ -10,8 +10,8 @@ resolution-markers = [
 [manifest]
 members = [
     "cli",
+    "clients",
     "experiment",
-    "infra",
     "prediction",
     "routing",
     "shared",
@@ -180,6 +180,21 @@ wheels = [
 ]
 
 [[package]]
+name = "clients"
+version = "0.1.0"
+source = { editable = "libs/clients" }
+dependencies = [
+    { name = "requests" },
+    { name = "shared" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "requests", specifier = ">=2.32.4" },
+    { name = "shared", editable = "libs/shared" },
+]
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 source = { registry = "https://pypi.org/simple" }
@@ -248,7 +263,7 @@ name = "experiment"
 version = "0.1.0"
 source = { editable = "apps/experiment" }
 dependencies = [
-    { name = "infra" },
+    { name = "clients" },
     { name = "numpy" },
     { name = "requests" },
     { name = "rich" },
@@ -260,7 +275,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "infra", editable = "libs/infra" },
+    { name = "clients", editable = "libs/clients" },
     { name = "numpy" },
     { name = "requests", specifier = ">=2.32.4" },
     { name = "rich", specifier = ">=13.0.0" },
@@ -390,21 +405,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/cd/63/9496c57188a2ee585e0f1db071d75089a11e98aa86eb99d9d7618fc1edce/idna-3.18.tar.gz", hash = "sha256:ffb385a7e039654cef1ab9ef32c6fafe283c0c0467bba1d9029738ce4a14a848", size = 196711, upload-time = "2026-06-02T14:34:07.794Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1e/5e/d4e9f1a599fb8e573b7b87160658329fbf28d19eac2718f51fc3def3aa5a/idna-3.18-py3-none-any.whl", hash = "sha256:7f952cbe720b688055e3f87de14f5c3e5fdaa8bc3928985c4077ca689de849a2", size = 65455, upload-time = "2026-06-02T14:34:06.319Z" },
-]
-
-[[package]]
-name = "infra"
-version = "0.1.0"
-source = { editable = "libs/infra" }
-dependencies = [
-    { name = "requests" },
-    { name = "shared" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "requests", specifier = ">=2.32.4" },
-    { name = "shared", editable = "libs/shared" },
 ]
 
 [[package]]
@@ -934,8 +934,8 @@ name = "routing"
 version = "0.1.0"
 source = { editable = "apps/routing" }
 dependencies = [
+    { name = "clients" },
     { name = "fastapi" },
-    { name = "infra" },
     { name = "prometheus-client" },
     { name = "requests" },
     { name = "shared" },
@@ -945,8 +945,8 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "clients", editable = "libs/clients" },
     { name = "fastapi", specifier = ">=0.116.1" },
-    { name = "infra", editable = "libs/infra" },
     { name = "prometheus-client", specifier = ">=0.21.0" },
     { name = "requests", specifier = ">=2.32.4" },
     { name = "shared", editable = "libs/shared" },
@@ -1108,10 +1108,10 @@ source = { virtual = "." }
 dependencies = [
     { name = "aiohttp" },
     { name = "cli" },
+    { name = "clients" },
     { name = "experiment" },
     { name = "fastapi" },
     { name = "httpx" },
-    { name = "infra" },
     { name = "joblib" },
     { name = "matplotlib" },
     { name = "numpy" },
@@ -1149,10 +1149,10 @@ dev = [
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.12.15" },
     { name = "cli", editable = "apps/cli" },
+    { name = "clients", editable = "libs/clients" },
     { name = "experiment", editable = "apps/experiment" },
     { name = "fastapi", specifier = ">=0.116.1" },
     { name = "httpx", specifier = ">=0.28.0" },
-    { name = "infra", editable = "libs/infra" },
     { name = "joblib" },
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "numpy" },

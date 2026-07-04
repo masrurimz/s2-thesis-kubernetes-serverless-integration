@@ -7,9 +7,9 @@
  * - Saturation ceiling
  *
  * Usage:
- *   k6 run infrastructure/load-tests/t7-capacity-envelope.js \
+ *   k6 run deploy/load-tests/t7-capacity-envelope.js \
  *     -e ENDPOINT=/work?duration_ms=5
- *   k6 run infrastructure/load-tests/t7-capacity-envelope.js \
+ *   k6 run deploy/load-tests/t7-capacity-envelope.js \
  *     -e ENDPOINT=/fib?n=25
  */
 

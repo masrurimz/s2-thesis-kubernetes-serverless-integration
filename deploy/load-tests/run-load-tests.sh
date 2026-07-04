@@ -44,7 +44,7 @@ check_prerequisites() {
     # Check if system is running
     if ! curl -s "${HAPROXY_URL}" > /dev/null; then
         log_error "Hybrid system not running at ${HAPROXY_URL}"
-        log_error "Please start the system first: cd ../infrastructure/haproxy && docker-compose up -d"
+        log_error "Please start the system first: cd ../deploy/haproxy && docker-compose up -d"
         exit 1
     fi
     

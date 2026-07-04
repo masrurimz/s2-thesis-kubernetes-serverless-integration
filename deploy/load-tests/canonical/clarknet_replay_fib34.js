@@ -6,7 +6,7 @@
  * the ClarkNet HTTP trace (Section 3.2.4 of thesis methodology).
  *
  * Usage:
- *   k6 run infrastructure/load-tests/clarknet_replay_fib34.js \
+ *   k6 run deploy/load-tests/clarknet_replay_fib34.js \
  *     -e TARGET_URL=http://localhost:18082 \
  *     -e SCENARIO=s4-hybrid-predictive
  */

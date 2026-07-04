@@ -18,13 +18,13 @@ Hybrid K8s-Serverless platform infrastructure for thesis evaluation.
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    TRAFFIC ROUTER (HAProxy)                  │
-│                    infrastructure/haproxy/                   │
+│                    deploy/haproxy/                           │
 └─────────────┬───────────────────────────┬───────────────────┘
               │                           │
               ▼                           ▼
 ┌─────────────────────────┐   ┌─────────────────────────┐
 │   KUBERNETES (K3s)      │   │     SERVERLESS          │
-│   infrastructure/k3s/   │   │   infrastructure/       │
+│   deploy/k3s/           │   │   deploy/               │
 │   • Baseline warm       │   │   serverless/           │
 │   • Predictable capacity│   │   • Elastic scale       │
 │   • Steady load         │   │   • Burst handling      │
@@ -34,7 +34,7 @@ Hybrid K8s-Serverless platform infrastructure for thesis evaluation.
 ## Quick Start
 
 ```bash
-cd infrastructure
+cd deploy
 
 # Deploy full stack
 ./scripts/setup.sh

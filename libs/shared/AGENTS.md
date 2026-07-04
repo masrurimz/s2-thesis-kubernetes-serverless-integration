@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Shared Pydantic models, configuration, protocols, and storage utilities. Every other package depends on this. Zero internal dependencies — never imports from `apps/` or `libs/infra/`.
+Shared Pydantic models, configuration, protocols, and storage utilities. Every other package depends on this. Zero internal dependencies — never imports from `apps/` or `libs/clients/`.
 
 ## Module Map
 
@@ -33,5 +33,5 @@ Shared Pydantic models, configuration, protocols, and storage utilities. Every o
 ## Boundaries
 
 - **Never import from `apps/`** — this is the foundation, apps depend on it
-- **Never import from `libs/infra/`** — infra depends on shared, not the other way
+- **Never import from `libs/clients/`** — clients depends on shared, not the other way
 - Models are Pydantic v2 BaseModels for schema validation and JSON serialization
