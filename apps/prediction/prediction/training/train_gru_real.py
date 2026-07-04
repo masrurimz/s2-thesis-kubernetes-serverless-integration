@@ -12,6 +12,7 @@ the best granularity for each dataset.
 import json
 from pathlib import Path
 from datetime import datetime
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -224,6 +225,8 @@ def main():
     # ---- Save best model ----
     MODEL_DIR.mkdir(parents=True, exist_ok=True)
     model_path = MODEL_DIR / "gru_model_real.pt"
+    if best_predictor is None:
+        raise RuntimeError("No best predictor found during training")
     best_predictor.save_model(model_path)
     print(f"\nBest model ({best_label}) saved: {model_path}")
 
@@ -250,7 +253,7 @@ def main():
     print(fmt.format("Dataset", "RMSE", "RMSE%", "MAE", "MAE%", "MAPE", "N"))
     print("-" * 78)
     for key, r in all_results.items():
-        m = r["test"]
+        m = cast(dict, r["test"])
         print(
             fmt.format(
                 m["dataset"],

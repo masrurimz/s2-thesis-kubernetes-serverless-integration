@@ -4,7 +4,7 @@ The pipeline is a thin coordinator (~80 lines) that chains composable
 pipeline stages, fails fast on stage failure, and supports dry-run mode.
 """
 
-from typing import List
+from collections.abc import Sequence
 
 import structlog
 
@@ -25,12 +25,12 @@ class Pipeline:
         results = pipeline.run()
     """
 
-    def __init__(self, stages: List[Stage], ctx: PipelineContext):
+    def __init__(self, stages: Sequence[Stage], ctx: PipelineContext):
         self.stages = stages
         self.ctx = ctx
-        self.results: List[StageResult] = []
+        self.results: list[StageResult] = []
 
-    def run(self) -> List[StageResult]:
+    def run(self) -> list[StageResult]:
         """Execute all stages sequentially. Fail fast on first failure."""
         self.results = []
         for stage in self.stages:
@@ -54,7 +54,7 @@ class Pipeline:
             )
         return self.results
 
-    def dry_run(self) -> List[StageResult]:
+    def dry_run(self) -> list[StageResult]:
         """Simulate full pipeline without side effects."""
         self.results = []
         for stage in self.stages:

@@ -212,6 +212,12 @@ class GRUModelLoader:
         if not self.is_loaded:
             raise RuntimeError("Model not loaded")
 
+        if self.config is None:
+            raise RuntimeError("Model config not loaded")
+
+        if self.model is None:
+            raise RuntimeError("Model not loaded")
+
         if len(history) < self.config.sequence_length:
             padding_size = self.config.sequence_length - len(history)
             padding = [self.scaler_mean] * padding_size
@@ -242,6 +248,8 @@ class GRUModelLoader:
                     adjusted_seq = current_seq
 
                 X = adjusted_seq.reshape(1, -1)
+                if self.model is None:
+                    raise RuntimeError("No model loaded for prediction")
                 pred_norm = self.model.predict(X)[0]
 
             pred_denorm = float(self._denormalize(pred_norm))

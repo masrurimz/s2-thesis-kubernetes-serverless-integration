@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Experiment orchestration CLI.
 
 Provides typer commands for running, analyzing, and validating experiments.
@@ -9,12 +10,14 @@ import random
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import typer
 import structlog
 
 from shared.models.experiment import ExperimentConfig, ExperimentResult
+if TYPE_CHECKING:
+    from shared.models.pipeline import PipelineContext
 
 app = typer.Typer(help="Experiment orchestration")
 logger = structlog.get_logger(__name__)

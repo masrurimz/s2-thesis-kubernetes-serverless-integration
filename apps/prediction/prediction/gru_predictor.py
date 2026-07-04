@@ -324,6 +324,8 @@ class GRUPredictor:
                 X = torch.FloatTensor(normalized).reshape(1, -1, 1).to(self.device)
                 pred_norm = self.model(X).cpu().numpy()[0]
         else:
+            if self.model is None:
+                raise RuntimeError("No model loaded for prediction")
             X = normalized.reshape(1, -1)
             pred_norm = self.model.predict(X)[0]
 

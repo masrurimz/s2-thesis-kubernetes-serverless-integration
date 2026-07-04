@@ -295,7 +295,7 @@ class ResourcePoller:
             self._thread.join(timeout=5)
             self._thread = None
 
-    def get_summary(self, output_dir: Path) -> Dict[str, float]:
+    def get_summary(self, output_dir: Path) -> Dict[str, float | str]:
         """Compute avg/peak CPU and memory, save raw samples to JSON."""
         with self._lock:
             samples = list(self._samples)
@@ -384,8 +384,8 @@ class CollectStage(BaseStage):
         )
 
         # Store full summaries for downstream stages to read
-        ctx.metrics.series = []  # type: ignore[attr-defined]
-        ctx.metrics.series = []  # type: ignore[attr-defined]
+        ctx.metrics.weight_timeline = []  # reset for downstream
+        ctx.metrics.resource_samples = []  # reset for downstream
 
         # Attach raw summaries to the result for the report stage
         if ctx.result is not None:
@@ -409,10 +409,10 @@ class CollectStage(BaseStage):
             ctx.result.knative_active_seconds = prom_summary.get("knative_active_seconds", 0)
             ctx.result.gru_predictions_used = prom_summary.get("predictions_used", 0)
             ctx.result.gru_predictions_failed = prom_summary.get("predictions_failed", 0)
-            ctx.result.avg_cpu_millicores = resource_summary.get("avg_cpu_millicores", 0)
-            ctx.result.peak_cpu_millicores = resource_summary.get("peak_cpu_millicores", 0)
-            ctx.result.avg_memory_mib = resource_summary.get("avg_memory_mib", 0)
-            ctx.result.peak_memory_mib = resource_summary.get("peak_memory_mib", 0)
-            ctx.result.resource_utilization_path = resource_summary.get("resource_utilization_path", "")
+            ctx.result.avg_cpu_millicores = float(resource_summary.get("avg_cpu_millicores", 0))
+            ctx.result.peak_cpu_millicores = float(resource_summary.get("peak_cpu_millicores", 0))
+            ctx.result.avg_memory_mib = float(resource_summary.get("avg_memory_mib", 0))
+            ctx.result.peak_memory_mib = float(resource_summary.get("peak_memory_mib", 0))
+            ctx.result.resource_utilization_path = str(resource_summary.get("resource_utilization_path", ""))
             ctx.result.prom_export_path = prom_summary.get("export_path", "")
             ctx.result.replica_timeline_path = str(prom_dir / "prometheus_export.json")

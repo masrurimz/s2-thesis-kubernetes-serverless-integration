@@ -16,7 +16,7 @@ class NaivePredictor:
         self.name = "Naive Last-Value"
         self.last_value = None
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> "NaivePredictor":
+    def fit(self, X: np.ndarray | None, y: np.ndarray) -> "NaivePredictor":
         """Fit is a no-op for naive predictor."""
         if len(y) > 0:
             self.last_value = y[-1]
@@ -48,7 +48,7 @@ class SeasonalNaivePredictor:
         self.period = period
         self.history = None
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> "SeasonalNaivePredictor":
+    def fit(self, X: np.ndarray | None, y: np.ndarray) -> "SeasonalNaivePredictor":
         """Store history for seasonal prediction."""
         self.history = y.copy()
         return self

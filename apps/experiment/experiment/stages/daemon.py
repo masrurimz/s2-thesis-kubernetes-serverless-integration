@@ -51,6 +51,7 @@ class DaemonStage(BaseStage):
 
     def __init__(self):
         self._proc: Optional[subprocess.Popen] = None
+        self._log_files: dict[int, Any] = {}
 
     def _run(self, ctx: PipelineContext) -> None:
         """Start the daemon. Stop is handled separately via stop_daemon()."""
@@ -139,7 +140,7 @@ class DaemonStage(BaseStage):
             stderr=subprocess.STDOUT,
             start_new_session=True,
         )
-        proc._log_file = log_file  # type: ignore[attr-defined]
+        self._log_files[proc.pid] = log_file
 
         # Wait for daemon API + validate scenario and freshness
         for _ in range(20):
@@ -169,8 +170,7 @@ class DaemonStage(BaseStage):
         self._stop(proc)
         return None
 
-    @staticmethod
-    def _stop(proc: Optional[subprocess.Popen]) -> None:
+    def _stop(self, proc: Optional[subprocess.Popen]) -> None:
         if proc is None:
             return
         try:
@@ -185,6 +185,6 @@ class DaemonStage(BaseStage):
             except (ProcessLookupError, OSError):
                 proc.kill()
             proc.wait()
-        if hasattr(proc, "_log_file"):
-            proc._log_file.close()  # type: ignore[attr-defined]
+        if proc.pid in self._log_files:
+            self._log_files.pop(proc.pid).close()
         logger.info("daemon_stopped")

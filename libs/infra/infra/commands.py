@@ -13,7 +13,6 @@ def run(
     dry_run: bool = False,
     cwd: str | None = None,
     check: bool = False,
-    **kwargs: object,
 ) -> subprocess.CompletedProcess[str]:
     """Run a command with Rich logging and optional dry-run.
 
@@ -22,12 +21,17 @@ def run(
         dry_run: If True, log the command but don't execute it.
         cwd: Working directory for the subprocess.
         check: If True, raise on non-zero exit.
-        **kwargs: Extra args passed to subprocess.run.
     """
     console.print(f"[dim]$ {' '.join(cmd)}[/dim]")
     if dry_run:
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
-    result = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd, **kwargs)  # noqa: S603
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        cwd=cwd,
+        check=False,  # noqa: S603 — cmd is always a list, never shell=True
+    )
     if check and result.returncode != 0:
         console.print(f"[red]Command failed (rc={result.returncode}): {result.stderr.strip()}[/red]")
         result.check_returncode()

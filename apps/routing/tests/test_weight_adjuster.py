@@ -12,9 +12,8 @@ class TestHAProxyWeightAdjuster:
     @pytest.fixture
     def adjuster(self):
         """Create adjuster with mocked connectivity."""
-        with patch.object(HAProxyWeightAdjuster, "_test_socket_connectivity", return_value=False):
-            with patch.object(HAProxyWeightAdjuster, "_test_tcp_socket_connectivity", return_value=False):
-                return HAProxyWeightAdjuster()
+        with patch.object(HAProxyWeightAdjuster, "_test_connection", return_value=False):
+            return HAProxyWeightAdjuster()
 
     def test_init(self, adjuster):
         """Test adjuster initialization."""
@@ -104,28 +103,20 @@ servers,other-server,0,0,0,1,100,1000,50000,100000,0,0,0,0,0,0,0,UP,50,1
 class TestTCPSocketConnection:
     """Tests for TCP socket functionality."""
 
-    def test_send_command_tcp_connection_refused(self):
+    def test_send_command_connection_refused(self):
         """Test TCP command when connection refused."""
-        with patch.object(HAProxyWeightAdjuster, "_test_socket_connectivity", return_value=False):
-            with patch.object(HAProxyWeightAdjuster, "_test_tcp_socket_connectivity", return_value=False):
-                adjuster = HAProxyWeightAdjuster(tcp_socket_port=65432)
+        adjuster = HAProxyWeightAdjuster(tcp_socket_port=65432)
+        adjuster.socket_available = False
 
-        result = adjuster._send_command_tcp("show info")
+        result = adjuster._send_command("show info")
         assert result is None
 
-    def test_test_socket_connectivity_failure(self):
-        """Test Unix socket connectivity check when socket doesn't exist."""
-        with patch.object(HAProxyWeightAdjuster, "_test_tcp_socket_connectivity", return_value=False):
-            adjuster = HAProxyWeightAdjuster(socket_path="/nonexistent/socket.sock")
+    def test_test_connection_failure(self):
+        """Test connectivity check when port not available."""
+        adjuster = HAProxyWeightAdjuster(tcp_socket_port=65000)
+        adjuster.socket_available = False
 
-        assert adjuster._test_socket_connectivity() is False
-
-    def test_test_tcp_socket_connectivity_failure(self):
-        """Test TCP socket connectivity check when port not available."""
-        with patch.object(HAProxyWeightAdjuster, "_test_socket_connectivity", return_value=False):
-            adjuster = HAProxyWeightAdjuster(tcp_socket_port=65000)
-
-        assert adjuster._test_tcp_socket_connectivity() is False
+        assert adjuster._test_connection() is False
 
 
 class TestWeightAdjusterRetry:
@@ -134,11 +125,9 @@ class TestWeightAdjusterRetry:
     @pytest.fixture
     def adjuster(self):
         """Create adjuster with mocked connectivity."""
-        with patch.object(HAProxyWeightAdjuster, "_test_socket_connectivity", return_value=False):
-            with patch.object(HAProxyWeightAdjuster, "_test_tcp_socket_connectivity", return_value=False):
-                adj = HAProxyWeightAdjuster()
-                adj.retry_delay = 0.01
-                return adj
+        with patch.object(HAProxyWeightAdjuster, "_test_connection", return_value=False):
+            adj = HAProxyWeightAdjuster()
+            return adj
 
     @patch.object(HAProxyWeightAdjuster, "set_weights")
     def test_set_weights_with_retry_success(self, mock_set, adjuster):
@@ -168,20 +157,15 @@ class TestWeightAdjusterRetry:
         result = adjuster.set_weights_with_retry(80, 20)
 
         assert result is False
-        assert mock_set.call_count == adjuster.retry_attempts
-
-
+        assert mock_set.call_count == 3
 class TestServerManagement:
     """Tests for server enable/disable functionality."""
 
     @pytest.fixture
     def adjuster(self):
         """Create adjuster with mocked connectivity."""
-        with patch.object(HAProxyWeightAdjuster, "_test_socket_connectivity", return_value=False):
-            with patch.object(HAProxyWeightAdjuster, "_test_tcp_socket_connectivity", return_value=False):
-                return HAProxyWeightAdjuster()
-
-    @patch.object(HAProxyWeightAdjuster, "_send_command")
+        with patch.object(HAProxyWeightAdjuster, "_test_connection", return_value=False):
+            return HAProxyWeightAdjuster()
     def test_disable_server_success(self, mock_send, adjuster):
         """Test disabling a server."""
         mock_send.return_value = "OK"
