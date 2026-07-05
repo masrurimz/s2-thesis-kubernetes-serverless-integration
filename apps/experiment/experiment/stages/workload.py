@@ -76,6 +76,7 @@ class WorkloadStage(BaseStage):
             p99_latency_ms=metrics.get("p99_latency_ms", 0.0),
             error_rate=metrics.get("error_rate", 0.0),
             throughput_rps=metrics.get("actual_rps", 0.0),
+            slo_violations=metrics.get("slo_violations", 0),
             app_duration_avg_ms=metrics.get("app_duration_avg_ms", 0.0),
             app_duration_p50_ms=metrics.get("app_duration_p50_ms", 0.0),
             app_duration_p95_ms=metrics.get("app_duration_p95_ms", 0.0),
