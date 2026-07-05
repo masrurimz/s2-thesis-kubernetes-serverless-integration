@@ -30,9 +30,10 @@ class CalibrationConfig(BaseModel):
 
     # Capacity model — MEASURED from t7-capacity-envelope test (no CPU limits)
     # fib(32): p99 < 200ms up to 200 RPS (66.7/pod), cliff at 250 RPS (83.3/pod)
-    # target_cpu_util=0.6 → cap = 3 × 67 × 0.6 = 120 RPS (between mean 73 and peak 155)
+    # target_cpu_util=0.4 → cap = 3 × 67 × 0.4 = 80.4 RPS (just above ClarkNet mean 73)
+    # Peaks (>80 RPS) overflow to serverless → meaningful cost differentiation between S1/S4
     r_saturation_per_replica: float = 67.0  # Measured: last good level before p99 cliff
-    target_cpu_util: float = 0.6  # Conservative — overflow to serverless at 120 RPS
+    target_cpu_util: float = 0.4  # Aggressive — overflow to serverless at 80 RPS
 
     # Replica bounds
     min_k8s_replicas: int = 3
