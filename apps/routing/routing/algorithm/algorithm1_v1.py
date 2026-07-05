@@ -38,7 +38,7 @@ class Algorithm1Config:
     default_k3s_weight: int = 100  # Default: 100% K8s
     default_knative_weight: int = 0  # Default: 0% serverless (disabled)
     knative_host: str = "test-app.default.127.0.0.1.sslip.io"  # Knative service host header
-    knative_url: str = "http://localhost:8081"  # Kourier gateway URL (k3d mapped port)
+    knative_url: str = "http://localhost:8083"  # Kourier gateway URL (k3d mapped port)
     prewarm_timeout_sec: int = 30  # Timeout for Knative pre-warm request
 
 

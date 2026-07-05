@@ -14,6 +14,7 @@ from typing import Dict, Optional
 import structlog
 
 from shared.config import settings
+from shared.models.calibration import CALIBRATION
 from shared.models.pipeline import PipelineContext, WorkloadResult
 
 from experiment.stages.base import BaseStage
@@ -43,7 +44,7 @@ K6_STAGES = PROJECT_ROOT / "data" / "trace-replay" / _WORKLOAD_MAP.get(_WORKLOAD
 
 # Service endpoints
 TARGET_URL = f"http://localhost:{settings.HAPROXY_HTTP_PORT}"
-K6_ENDPOINT = "/fib?n=34"
+K6_ENDPOINT = CALIBRATION.endpoint
 
 
 class WorkloadStage(BaseStage):

@@ -29,6 +29,7 @@ from routing.algorithm.weight_adjuster import HAProxyWeightAdjuster
 from routing.clients.gru_client import GRUClient
 from routing.scaling.cluster_controller import ClusterController, ScalingConfig
 from infra.cluster.k8s import K8sScaler
+from shared.models.calibration import CALIBRATION
 from shared.scenarios import Scenario, SCENARIO_CONFIGS
 from routing.daemon.metrics import (
     daemon_decision_total,
@@ -97,7 +98,7 @@ class RoutingDaemon:
         if self.scenario in (Scenario.S3_HYBRID_REACTIVE, Scenario.S4_HYBRID_PREDICTIVE) and controller_version == "v3":
             self.algorithm_controller = Algorithm1ControllerV3(
                 slo_monitor=self.slo_monitor,
-                config=Algorithm1ConfigV3(cooldown_sec=decision_interval),
+                config=Algorithm1ConfigV3(cooldown_sec=decision_interval, **CALIBRATION.to_v3_config_overrides()),
             )
             logger.info("Using V3 controller (Capacity-Driven)", scenario=scenario, version=controller_version)
         elif self.scenario == Scenario.S4_HYBRID_PREDICTIVE and controller_version == "v2":
@@ -152,14 +153,7 @@ class RoutingDaemon:
             controller_ver = os.environ.get("CONTROLLER_VERSION", "v3")
             if controller_ver == "v3" and self.scenario in (Scenario.S3_HYBRID_REACTIVE, Scenario.S4_HYBRID_PREDICTIVE):
                 self.cluster_controller = ClusterController(
-                    config=ScalingConfig(
-                        alpha=0.03,  # 300m CPU: ~35 RPS/pod → 1/35 ≈ 0.029
-                        beta=0.0,
-                        buffer=1.2,
-                        min_replicas=3,
-                        max_replicas=10,
-                        scale_down_threshold=0.5,
-                    )
+                    config=ScalingConfig(**CALIBRATION.to_scaling_config_overrides())
                 )
             else:
                 self.cluster_controller = ClusterController(config=ScalingConfig())

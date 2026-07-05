@@ -4,6 +4,7 @@ Replaces deploy/k3d/knative-install.sh.
 """
 
 import os
+import subprocess
 
 import structlog
 
@@ -22,9 +23,19 @@ class KnativeInstaller:
         self,
         knative_version: str = KNATIVE_VERSION,
         kourier_version: str = KOURIER_VERSION,
+        context: str = "",
     ) -> None:
         self.knative_version = knative_version
         self.kourier_version = kourier_version
+        self.context = context
+
+    def _kubectl(self, args: list[str], check: bool = False) -> subprocess.CompletedProcess[str]:
+        """Run a kubectl command, optionally targeting a specific cluster context."""
+        cmd = ["kubectl"]
+        if self.context:
+            cmd += ["--context", self.context]
+        cmd += args
+        return run(cmd, check=check)
 
     # ------------------------------------------------------------------
     # Installation
@@ -55,7 +66,7 @@ class KnativeInstaller:
 
     def is_installed(self) -> bool:
         """Check whether Knative serving pods are running."""
-        result = run(["kubectl", "get", "pods", "-n", "knative-serving", "--no-headers"])
+        result = self._kubectl(["get", "pods", "-n", "knative-serving", "--no-headers"])
         if result.returncode != 0:
             return False
         lines = [line for line in result.stdout.strip().splitlines() if line.strip()]
@@ -66,7 +77,7 @@ class KnativeInstaller:
     # ------------------------------------------------------------------
 
     def _check_cluster(self) -> bool:
-        result = run(["kubectl", "cluster-info"])
+        result = self._kubectl(["cluster-info"])
         if result.returncode != 0:
             console.print("[red]No kubernetes cluster detected. Create one first.[/red]")
             return False
@@ -75,9 +86,8 @@ class KnativeInstaller:
     def _install_knative_serving(self) -> bool:
         v = self.knative_version
         # CRDs
-        run(
+        self._kubectl(
             [
-                "kubectl",
                 "apply",
                 "-f",
                 f"https://github.com/knative/serving/releases/download/knative-v{v}/serving-crds.yaml",
@@ -85,9 +95,8 @@ class KnativeInstaller:
             check=True,
         )
         # Core
-        run(
+        self._kubectl(
             [
-                "kubectl",
                 "apply",
                 "-f",
                 f"https://github.com/knative/serving/releases/download/knative-v{v}/serving-core.yaml",
@@ -98,18 +107,16 @@ class KnativeInstaller:
 
     def _install_kourier(self) -> bool:
         v = self.kourier_version
-        run(
+        self._kubectl(
             [
-                "kubectl",
                 "apply",
                 "-f",
                 f"https://github.com/knative-extensions/net-kourier/releases/download/knative-v{v}/kourier.yaml",
             ],
             check=True,
         )
-        run(
+        self._kubectl(
             [
-                "kubectl",
                 "patch",
                 "configmap/config-network",
                 "-n",
@@ -122,9 +129,8 @@ class KnativeInstaller:
         return True
 
     def _configure_dns(self) -> bool:
-        run(
+        self._kubectl(
             [
-                "kubectl",
                 "apply",
                 "-f",
                 "https://github.com/knative/serving/releases/download/knative-v1.12.0/serving-default-domain.yaml",
@@ -134,9 +140,8 @@ class KnativeInstaller:
         return True
 
     def _configure_autoscaling(self) -> bool:
-        run(
+        self._kubectl(
             [
-                "kubectl",
                 "apply",
                 "-f",
                 "-",
@@ -149,9 +154,8 @@ class KnativeInstaller:
 
     def _configure_node_isolation(self) -> None:
         """Enable podspec-nodeselector and pin Kourier gateway to the infra node."""
-        run(
+        self._kubectl(
             [
-                "kubectl",
                 "patch",
                 "configmap/config-features",
                 "-n",
@@ -162,9 +166,8 @@ class KnativeInstaller:
             ],
             check=True,
         )
-        run(
+        self._kubectl(
             [
-                "kubectl",
                 "-n",
                 "kourier-system",
                 "patch",

@@ -15,11 +15,10 @@ spec:
         prometheus.io/port: "8080"
         prometheus.io/path: "/metrics"
     spec:
-      nodeSelector:
-        node-type: infra
       containerConcurrency: 10
       containers:
         - image: k3d-registry.localhost:5000/test-app:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
           env:
@@ -30,13 +29,12 @@ spec:
             - name: WORK_DURATION_MS
               value: "10"
             - name: FIB_N
-              value: "34"
+              value: "32"
           resources:
             requests:
-              cpu: 200m
+              cpu: 300m
               memory: 64Mi
             limits:
-              cpu: 200m
               memory: 128Mi
           readinessProbe:
             httpGet:

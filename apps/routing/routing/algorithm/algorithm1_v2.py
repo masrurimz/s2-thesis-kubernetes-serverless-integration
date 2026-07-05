@@ -119,7 +119,7 @@ class Algorithm1ConfigV2:
     # Knative integration (same as V1)
     healthy_margin: float = 0.7  # For daemon compatibility (Algorithm 2 readiness gate)
     knative_host: str = "test-app.default.127.0.0.1.sslip.io"
-    knative_url: str = "http://localhost:8081"
+    knative_url: str = "http://localhost:8083"
     prewarm_timeout_sec: int = 30
 
 

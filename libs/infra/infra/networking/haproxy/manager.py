@@ -33,7 +33,7 @@ class HAProxyManager:
     def start(self) -> bool:
         """Start HAProxy via docker-compose."""
         console.print(f"[bold]Starting HAProxy (mode={self.mode})...[/bold]")
-        result = run(["docker-compose", "-f", self._compose_file, "up", "-d"])
+        result = run(["docker", "compose", "-f", self._compose_file, "up", "-d"])
         if result.returncode != 0:
             logger.error("haproxy_start_failed", stderr=result.stderr)
             return False
@@ -44,7 +44,7 @@ class HAProxyManager:
     def stop(self) -> bool:
         """Stop HAProxy via docker-compose."""
         console.print("[bold]Stopping HAProxy...[/bold]")
-        result = run(["docker-compose", "-f", self._compose_file, "down"])
+        result = run(["docker", "compose", "-f", self._compose_file, "down"])
         if result.returncode != 0:
             logger.error("haproxy_stop_failed", stderr=result.stderr)
             return False
@@ -54,5 +54,5 @@ class HAProxyManager:
 
     def is_running(self) -> bool:
         """Check if HAProxy containers are running."""
-        result = run(["docker-compose", "-f", self._compose_file, "ps", "--services", "--filter", "status=running"])
+        result = run(["docker", "compose", "-f", self._compose_file, "ps", "--services", "--filter", "status=running"])
         return bool(result.stdout.strip())

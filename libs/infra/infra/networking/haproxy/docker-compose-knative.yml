@@ -4,9 +4,9 @@ services:
     image: haproxy:2.4-alpine
     container_name: sprint1-haproxy
     ports:
-      - "18082:8082"  # Main traffic endpoint (avoid k3d port conflict)
-      - "18404:8404"  # Stats interface
-      - "19999:9999"  # HAProxy admin socket (TCP)
+      - "18082:8082"
+      - "18404:8404"
+      - "19999:9999"
     volumes:
       - ./haproxy-knative.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
       - /tmp:/tmp
@@ -19,8 +19,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
-      - hybrid-network
+      - k3d-thesis-hybrid
 
 networks:
-  hybrid-network:
-    driver: bridge
+  k3d-thesis-hybrid:
+    external: true
