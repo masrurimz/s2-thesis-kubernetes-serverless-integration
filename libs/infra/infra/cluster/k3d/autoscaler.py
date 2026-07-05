@@ -169,8 +169,6 @@ class K3dAutoscaler:
             self.k3s_image,
             "--k3s-node-label",
             "node-type=workload",
-            "--k3s-arg",
-            "--kubelet-arg=system-reserved=cpu=15600m",
             "--wait",
         ]
 
@@ -188,6 +186,16 @@ class K3dAutoscaler:
         if not self._ensure_workload_label(k8s_node_name):
             self._record_event("node_label_failed", {"node": k8s_node_name})
             return False
+        # Apply Docker CPU/memory limits to mimic cloud VM sizing
+        container_name = f"k3d-{self.cluster_name}-{name}-0"
+        r = self._run_cmd(
+            ["docker", "update", "--cpus", "1.0", "--memory", "1g", "--memory-swap", "1g", container_name], timeout=30
+        )
+        if r.returncode != 0:
+            logger.warning("docker_update_failed", container=container_name, stderr=r.stderr.strip())
+            self._record_event("docker_update_failed", {"container": container_name, "stderr": r.stderr.strip()})
+        else:
+            self._record_event("node_resource_applied", {"container": container_name, "cpus": "1.0", "memory": "1g"})
 
         with self._lock:
             if name not in self._dynamic_nodes:
