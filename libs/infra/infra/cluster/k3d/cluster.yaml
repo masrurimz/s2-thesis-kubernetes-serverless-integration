@@ -46,6 +46,16 @@ options:
         nodeFilters:
           - server:*
           - agent:*
+      # system-reserved calibrates kubelet allocatable reporting (Docker --cpus limits actual CPU via CFS,
+      # but the kubelet doesn't detect cgroup limits — it still reports host capacity).
+      # agent:0 (infra, 2.0 CPU Docker): 16000m - 14000m reserved = ~2000m allocatable
+      - arg: --kubelet-arg=system-reserved=cpu=14000m
+        nodeFilters:
+          - agent:0
+      # agent:1 (workload, 1.0 CPU Docker): 16000m - 15000m reserved = ~1000m allocatable
+      - arg: --kubelet-arg=system-reserved=cpu=15000m
+        nodeFilters:
+          - agent:1
   kubeconfig:
     updateDefaultKubeconfig: true
     switchCurrentContext: true

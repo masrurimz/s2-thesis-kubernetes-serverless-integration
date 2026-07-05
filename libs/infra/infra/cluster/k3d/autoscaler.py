@@ -169,6 +169,8 @@ class K3dAutoscaler:
             self.k3s_image,
             "--k3s-node-label",
             "node-type=workload",
+            "--k3s-arg",
+            "--kubelet-arg=system-reserved=cpu=15000m",
             "--wait",
         ]
 
@@ -196,6 +198,7 @@ class K3dAutoscaler:
             self._record_event("docker_update_failed", {"container": container_name, "stderr": r.stderr.strip()})
         else:
             self._record_event("node_resource_applied", {"container": container_name, "cpus": "1.0", "memory": "1g"})
+
 
         with self._lock:
             if name not in self._dynamic_nodes:
