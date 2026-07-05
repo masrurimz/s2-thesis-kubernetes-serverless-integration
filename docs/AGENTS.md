@@ -18,6 +18,7 @@ Current documentation: setup guides, specs, deployment, architecture. Points to 
 
 ## Rules
 
-- Docs link INTO `results/` for evidence — never store raw data here
-- Before creating a new doc, search for existing ones
-- Update in-place — don't create parallel versions
+* Docs link INTO `results/` for evidence — never store raw data here
+* Before creating a new doc, search for existing ones
+* Update in-place — don't create parallel versions
+* `references/` — cited papers (PDF via Git LFS). Every PDF needs a row in `references/REFERENCES.md` with `Paper | File | arxiv/DOI | Key Insight`; name files `<slug>-<title>-<year>.pdf`. See root `AGENTS.md` → "References & Cited Papers"
