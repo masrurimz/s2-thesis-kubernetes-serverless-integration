@@ -228,6 +228,142 @@ def validate(
     console.print(f"\n[green]{valid_count}/{len(result_files)} results validated[/green]")
 
 
+@app.command(name="calibrate")
+def calibrate(
+    scenarios: str = typer.Option("s1-k8s-only,s3-hybrid-reactive", help="Comma-separated scenarios to test"),
+    rps_levels: str = typer.Option("50,100,150,200", help="Comma-separated RPS levels to test"),
+    duration: int = typer.Option(180, help="Duration per test in seconds"),
+    output: Optional[str] = typer.Option(None, help="Output file for calibration results"),
+) -> None:
+    """Workload calibration: find the Goldilocks RPS for experiments."""
+    from rich.console import Console
+
+    from experiment.calibration import analyze_results, run_full_calibration
+
+    console = Console()
+    scenario_list = [s.strip() for s in scenarios.split(",")]
+    rps_list = [int(r.strip()) for r in rps_levels.split(",")]
+
+    console.print("[bold cyan]Workload Calibration[/bold cyan]")
+    console.print(f"Scenarios: {scenario_list}  |  RPS: {rps_list}  |  Duration: {duration}s")
+
+    results = run_full_calibration(scenario_list, rps_list, duration)
+    analysis = analyze_results(results)
+
+    out_path = Path(output) if output else Path("results/calibration/analysis.json")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w") as f:
+        json.dump(analysis, f, indent=2)
+
+    for r in results:
+        console.print(
+            f"  {r.scenario} @ {r.rps} RPS: p99={r.p99_ms:.1f}ms "
+            f"err={r.error_rate:.2%} [{r.stress_level}]"
+            f" {'✅' if r.recommended else '❌'}"
+        )
+    console.print(f"\n[green]Goldilocks load: {analysis['goldilocks_rps']} RPS[/green]")
+    console.print(f"[dim]Results: {out_path}[/dim]")
+
+
+@app.command(name="dynamic")
+def dynamic(
+    runs: int = typer.Option(3, help="Replicates per scenario"),
+    scenarios: str = typer.Option("s3-hybrid-reactive,s4-hybrid-predictive", help="Comma-separated scenarios"),
+    cooldown: int = typer.Option(30, help="Cooldown seconds between runs"),
+    manage_daemon: bool = typer.Option(
+        True, "--manage-daemon/--no-manage-daemon", help="Start/stop routing daemon per run"
+    ),
+    results_dir: Optional[str] = typer.Option(None, help="Override results directory"),
+    dry_run: bool = typer.Option(False, help="Show schedule only"),
+) -> None:
+    """Phase C dynamic ramp/burst workload experiment (S3 vs S4)."""
+    import random as _random
+
+    from rich.console import Console
+
+    from experiment.dynamic import RESULTS_BASE, K6_SCRIPT, run_dynamic_experiment
+
+    console = Console()
+    scenario_list = [s.strip() for s in scenarios.split(",")]
+
+    if dry_run:
+        schedule = [(s, r) for s in scenario_list for r in range(1, runs + 1)]
+        _random.shuffle(schedule)
+        console.print("[bold cyan]Phase C: Dynamic Workload (DRY RUN)[/bold cyan]")
+        console.print(f"Scenarios: {scenario_list}  |  Runs: {runs}  |  k6: {K6_SCRIPT}")
+        for i, (s, r) in enumerate(schedule, 1):
+            console.print(f"  {i}. {s} run {r}")
+        return
+
+    rd = Path(results_dir) if results_dir else None
+    results = run_dynamic_experiment(
+        scenarios=scenario_list,
+        num_runs=runs,
+        cooldown_sec=cooldown,
+        manage_daemon=manage_daemon,
+        results_dir=rd,
+    )
+    console.print(f"\n[green]✅ {len(results)} runs completed[/green]")
+    final_dir = rd or (RESULTS_BASE / f"{datetime.now().strftime('%Y-%m-%d')}_dynamic-workload")
+    console.print(f"[dim]Results: {final_dir}[/dim]")
+    for s in scenario_list:
+        total = sum(r.predictive_count for r in results if r.scenario == s)
+        console.print(f"  {s}: PREDICTIVE={total}")
+
+
+@app.command(name="validate-realtime")
+def validate_realtime(
+    results_dir: Optional[str] = typer.Option(None, help="Override results directory"),
+) -> None:
+    """Real-time hypothesis validation (H3 GRU check; H1/H2 pending live runs)."""
+    from rich.console import Console
+    from rich.panel import Panel
+
+    from experiment.validation import run_realtime_validation
+
+    console = Console()
+    console.print(Panel.fit("[bold]Real-Time Hypothesis Validation[/bold]", border_style="cyan"))
+
+    rd = Path(results_dir) if results_dir else None
+    results = run_realtime_validation(results_dir=rd)
+
+    h3 = results["h3"]
+    console.print(f"\n[bold]H3 (GRU prediction adequacy):[/bold] {'✅ VALIDATED' if h3['proven'] else '❌ FAILED'}")
+    console.print(f"Confidence: {h3['confidence']}")
+    console.print(f"Evidence: {json.dumps(h3['evidence'], indent=2)}")
+    for lim in h3.get("limitations", []):
+        console.print(f"  [dim]- {lim}[/dim]")
+
+    console.print("\n[yellow]H1/H2: pending live experiments[/yellow]")
+    console.print(f"[dim]Report: {results['report_path']}[/dim]")
+
+
+@app.command(name="trace-replay")
+def trace_replay(
+    duration_min: int = typer.Option(20, help="Replay duration in minutes"),
+    dry_run: bool = typer.Option(False, help="Print stages without writing files"),
+    window_start_idx: int = typer.Option(14470, help="Start index in 30s-bucketed data"),
+    scaling_factor: float = typer.Option(33.0, help="RPS scaling factor g"),
+    dataset: str = typer.Option("clarknet", help="Dataset: clarknet|calgary"),
+) -> None:
+    """Generate k6 trace-replay artifacts (stages JSON + JS) from ClarkNet parquet."""
+    from rich.console import Console
+
+    from experiment.trace_replay import generate_trace_replay
+
+    console = Console()
+    console.print(f"[bold cyan]Trace-Replay Generation[/bold cyan]  dataset={dataset} duration={duration_min}min")
+    rc = generate_trace_replay(
+        dataset=dataset,
+        window_start=window_start_idx,
+        scale_factor=scaling_factor,
+        duration_min=duration_min,
+        dry_run=dry_run,
+    )
+    if rc != 0:
+        raise typer.Exit(rc)
+
+
 def _make_ctx(
     config: ExperimentConfig,
     scenario: str,

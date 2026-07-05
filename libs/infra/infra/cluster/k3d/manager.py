@@ -59,9 +59,15 @@ class K3dManager:
         if result.returncode != 0:
             logger.error("k3d_create_failed", stderr=result.stderr)
             return False
-
         logger.info("k3d_create_ok", cluster=self.cluster_name)
         console.print(f"[green]✓ Cluster '{self.cluster_name}' created.[/green]")
+
+        console.print("[bold]Applying Docker CPU/memory limits to nodes...[/bold]")
+        self._apply_node_resources()
+
+        console.print("[bold]Labeling nodes (system/infra/workload)...[/bold]")
+        self._label_nodes()
+
         return True
 
     def delete(self) -> bool:
