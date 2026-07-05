@@ -41,7 +41,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
-
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -179,6 +178,25 @@ class ScenarioMetrics:
 # ---------------------------------------------------------------------------
 
 
+def _compute_actual_serverless_pct(result: Dict[str, Any]) -> float:
+    """Compute actual serverless traffic split from HAProxy weight-time products.
+
+    HAProxy WRR distributes traffic proportionally to weights.
+    time_in_serverless_pct (fraction of scrapes where Knative weight > 0) is NOT
+    the traffic split — it overcounts when Knative has any weight but low share.
+    Weight-time integral gives the true traffic allocation ratio.
+    """
+    k8s_wt = result.get("k8s_weight_time_product", 0)
+    kn_wt = result.get("serverless_weight_time_product", 0)
+    total_wt = k8s_wt + kn_wt
+    if total_wt > 0:
+        return kn_wt / total_wt * 100
+    # Fallback for scenarios without weight data
+    if result.get("scenario", "").startswith("s2"):
+        return 100.0
+    return 0.0
+
+
 def load_experiment_metrics(result_path: Path) -> ScenarioMetrics:
     """Load metrics from experiment result.json + resource_utilization.json."""
     with open(result_path) as f:
@@ -254,7 +272,7 @@ def load_experiment_metrics(result_path: Path) -> ScenarioMetrics:
         avg_k8s_pods=avg_k8s_pods,
         avg_kn_pods=avg_kn_pods,
         max_kn_pods=max_kn_pods,
-        serverless_traffic_pct=result.get("time_in_serverless_pct", 0),
+        serverless_traffic_pct=_compute_actual_serverless_pct(result),
         nodes_provisioned=result.get("nodes_provisioned", 0),
         first_provision_delay_sec=result.get("first_provision_delay_sec", 0),
         desired_replicas_final=result.get("desired_replicas_final", 0),
@@ -465,6 +483,12 @@ def run_experiment_analysis(experiment_dir: Path) -> int:
         logger.info("loading_scenario", path=str(rf))
         metrics = load_experiment_metrics(rf)
         analysis = analyze_from_experiment(metrics)
+        # Attach cluster utilization from result.json (not in ScenarioMetrics)
+        with open(rf) as f:
+            raw_result = json.load(f)
+        analysis["avg_cluster_cpu_pct"] = raw_result.get("avg_cluster_cpu_utilization_pct", 0)
+        analysis["peak_cluster_cpu_pct"] = raw_result.get("peak_cluster_cpu_utilization_pct", 0)
+        analysis["avg_cluster_mem_pct"] = raw_result.get("avg_cluster_mem_utilization_pct", 0)
         results.append(analysis)
 
     # Print summary
@@ -500,8 +524,9 @@ def run_experiment_analysis(experiment_dir: Path) -> int:
         ("Serverless requests", "serverless_requests", "{:>14,}"),
         ("K8s CPU-seconds", "k8s_cpu_seconds", "{:>14.1f}"),
         ("Knative CPU-seconds", "knative_cpu_seconds", "{:>14.1f}"),
-        ("Total CPU-seconds", "total_cpu_seconds", "{:>14.1f}"),
-        ("K8s mem GiB-seconds", "k8s_mem_gib_seconds", "{:>14.1f}"),
+        ("Cluster CPU util %", "avg_cluster_cpu_pct", "{:>13.1f}%"),
+        ("Peak cluster CPU %", "peak_cluster_cpu_pct", "{:>13.1f}%"),
+        ("Cluster mem util %", "avg_cluster_mem_pct", "{:>13.1f}%"),
         ("Knative mem GiB-seconds", "knative_mem_gib_seconds", "{:>14.1f}"),
         ("CPU/request (ms@1vCPU)", "cpu_per_request_ms", "{:>14.2f}"),
         ("Lambda exec time (ms)", "lambda_exec_time_ms", "{:>14.1f}"),

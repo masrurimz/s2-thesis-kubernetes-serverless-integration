@@ -74,6 +74,10 @@ class ExperimentResult(BaseModel):
     avg_memory_mib: float = 0.0
     peak_memory_mib: float = 0.0
     resource_utilization_path: str = ""
+    avg_cluster_cpu_utilization_pct: float = 0.0
+    peak_cluster_cpu_utilization_pct: float = 0.0
+    avg_cluster_mem_utilization_pct: float = 0.0
+    avg_pod_density: float = 0.0
 
     # Run metadata
     duration_sec: int = 0

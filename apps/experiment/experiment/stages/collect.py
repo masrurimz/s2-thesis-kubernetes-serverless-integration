@@ -214,7 +214,7 @@ class ResourcePoller:
         self._poll_interval = poll_interval_sec
         self._stop_event = threading.Event()
         self._thread: Optional[threading.Thread] = None
-        self._samples: List[Dict[str, Any]] = []
+        self._node_samples: List[Dict[str, Any]] = []
         self._lock = threading.Lock()
 
     @staticmethod
@@ -244,6 +244,11 @@ class ResourcePoller:
 
     def _poll_once(self) -> None:
         """Single poll of metrics-server API via kubectl."""
+        self._poll_pods()
+        self._poll_nodes()
+
+    def _poll_pods(self) -> None:
+        """Poll per-pod CPU/memory from metrics-server."""
         try:
             r = _run_cmd(
                 [KUBECTL_PATH, "get", "--raw", "/apis/metrics.k8s.io/v1beta1/namespaces/default/pods"],
@@ -275,6 +280,39 @@ class ResourcePoller:
         except Exception as e:
             logger.debug("resource_poll_failed", error=str(e))
 
+    def _poll_nodes(self) -> None:
+        """Poll per-node CPU/memory utilization via kubectl top nodes."""
+        try:
+            r = _run_cmd(
+                [KUBECTL_PATH, "top", "nodes", "--no-headers"],
+                timeout=10,
+            )
+            if r.returncode != 0:
+                return
+            ts = time.time()
+            for line in r.stdout.strip().splitlines():
+                parts = line.split()
+                if len(parts) < 5:
+                    continue
+                node_name = parts[0]
+                cpu_cores = self._parse_cpu(parts[1]) / 1000  # millicores → cores
+                cpu_pct = float(parts[2].rstrip("%"))
+                mem_mib = self._parse_memory(parts[3])
+                mem_pct = float(parts[4].rstrip("%"))
+                with self._lock:
+                    self._node_samples.append(
+                        {
+                            "timestamp": ts,
+                            "node": node_name,
+                            "cpu_cores": cpu_cores,
+                            "cpu_pct": cpu_pct,
+                            "memory_mib": mem_mib,
+                            "memory_pct": mem_pct,
+                        }
+                    )
+        except Exception as e:
+            logger.debug("node_poll_failed", error=str(e))
+
     def _poll_loop(self) -> None:
         """Background polling loop."""
         while not self._stop_event.is_set():
@@ -282,9 +320,9 @@ class ResourcePoller:
             self._stop_event.wait(self._poll_interval)
 
     def start(self) -> None:
-        """Start background polling thread."""
         with self._lock:
             self._samples = []
+            self._node_samples = []
         self._stop_event.clear()
         self._thread = threading.Thread(target=self._poll_loop, daemon=True)
         self._thread.start()
@@ -331,6 +369,56 @@ class ResourcePoller:
             "avg_memory_mib": float(np.mean(mem_vals)),
             "peak_memory_mib": float(max(mem_vals)),
             "resource_utilization_path": str(save_path),
+        }
+
+    def get_node_summary(self, output_dir: Path) -> Dict[str, Any]:
+        """Compute cluster-level utilization from node polls, save to JSON.
+
+        Excludes control-plane nodes (node role contains 'control-plane' or 'master')
+        to report only workload-bearing node utilization.
+        """
+        with self._lock:
+            node_samples = list(self._node_samples)
+
+        if output_dir:
+            output_dir.mkdir(parents=True, exist_ok=True)
+            save_path = output_dir / "node_utilization.json"
+            with open(save_path, "w") as f:
+                json.dump(node_samples if node_samples else [], f, indent=2)
+
+        if not node_samples:
+            return {
+                "avg_cluster_cpu_pct": 0.0,
+                "peak_cluster_cpu_pct": 0.0,
+                "avg_cluster_mem_pct": 0.0,
+                "avg_pod_density": 0.0,
+                "node_utilization_path": str(output_dir / "node_utilization.json") if output_dir else "",
+            }
+
+        # Exclude control-plane nodes
+        workload_nodes = [s for s in node_samples if "server" not in s["node"].lower()]
+        if not workload_nodes:
+            workload_nodes = node_samples
+
+        cpu_pcts = [s["cpu_pct"] for s in workload_nodes]
+        mem_pcts = [s["memory_pct"] for s in workload_nodes]
+
+        # Pod density: count unique workload nodes, then estimate pods per node
+        # from total pod samples / total node samples ratio
+        unique_nodes = set(s["node"] for s in workload_nodes)
+        with self._lock:
+            pod_count = len(self._samples)
+        node_poll_count = len(workload_nodes) / max(1, len(unique_nodes))
+        avg_pod_density = (
+            pod_count / max(1, len(unique_nodes) / max(1, node_poll_count)) if node_poll_count > 0 else 0.0
+        )
+
+        return {
+            "avg_cluster_cpu_pct": float(np.mean(cpu_pcts)),
+            "peak_cluster_cpu_pct": float(max(cpu_pcts)),
+            "avg_cluster_mem_pct": float(np.mean(mem_pcts)),
+            "avg_pod_density": round(avg_pod_density, 1),
+            "node_utilization_path": str(output_dir / "node_utilization.json") if output_dir else "",
         }
 
 
@@ -380,6 +468,9 @@ class CollectStage(BaseStage):
         # Collect resource utilization from poller
         resource_summary = self._resource_poller.get_summary(run_dir)
 
+        # Collect node-level utilization
+        node_summary = self._resource_poller.get_node_summary(run_dir)
+
         ctx.metrics = MetricsExport(
             p99_latency_ms=prom_summary.get("prom_p99_ms", 0.0),
         )
@@ -414,6 +505,10 @@ class CollectStage(BaseStage):
             ctx.result.peak_cpu_millicores = float(resource_summary.get("peak_cpu_millicores", 0))
             ctx.result.avg_memory_mib = float(resource_summary.get("avg_memory_mib", 0))
             ctx.result.peak_memory_mib = float(resource_summary.get("peak_memory_mib", 0))
+            ctx.result.avg_cluster_cpu_utilization_pct = float(node_summary.get("avg_cluster_cpu_pct", 0))
+            ctx.result.peak_cluster_cpu_utilization_pct = float(node_summary.get("peak_cluster_cpu_pct", 0))
+            ctx.result.avg_cluster_mem_utilization_pct = float(node_summary.get("avg_cluster_mem_pct", 0))
+            ctx.result.avg_pod_density = float(node_summary.get("avg_pod_density", 0))
             ctx.result.resource_utilization_path = str(resource_summary.get("resource_utilization_path", ""))
             ctx.result.prom_export_path = prom_summary.get("export_path", "")
             ctx.result.replica_timeline_path = str(prom_dir / "prometheus_export.json")
