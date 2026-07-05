@@ -199,6 +199,7 @@ class K3dAutoscaler:
         else:
             self._record_event("node_resource_applied", {"container": container_name, "cpus": "1.0", "memory": "1g"})
 
+
         with self._lock:
             if name not in self._dynamic_nodes:
                 self._dynamic_nodes.append(name)
