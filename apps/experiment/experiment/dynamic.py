@@ -1,24 +1,20 @@
-#!/usr/bin/env python3
-"""
-Phase C: Dynamic Workload Experiment — S3 vs S4 with ramp/burst pattern.
+"""Phase C: dynamic ramp/burst workload experiment (S3 vs S4).
 
-Phase B used steady 100 RPS which never triggered PREDICTIVE (0 in all 20 runs).
-This experiment uses a dynamic ramp/burst workload that creates repeated
-"healthy → surge" windows, giving the GRU predictor a fair chance to trigger.
+Steady 100 RPS never triggered PREDICTIVE in Phase B. This runner uses a
+dynamic ramp/burst workload (load_tests/canonical/dynamic_burst.js) that
+creates repeated "healthy -> surge" windows, giving the GRU predictor a fair
+chance to fire. Runs S3 (reactive) and S4 (predictive) with replicated runs
+in randomized order, recording k6 latency/error metrics and daemon
+decision-count deltas.
 
-Runs S3 (reactive) and S4 (predictive) with 3-5 replicates each in randomized
-order, using the k6 dynamic_burst.js load test.
-
-Usage:
-    cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 \
-        uv run python ../scripts/run_dynamic_experiment.py --runs 3
-
-    # Dry run (show schedule only):
-    uv run python ../scripts/run_dynamic_experiment.py --runs 3 --dry-run
+Ported from scripts/run_dynamic_experiment.py. This is a standalone CLI
+workflow (not a pipeline Stage). Entry point: run_dynamic_experiment().
 """
 
-import argparse
+from __future__ import annotations
+
 import json
+import os
 import random
 import subprocess
 import sys
@@ -31,13 +27,25 @@ from typing import Dict, List, Optional
 import requests
 import structlog
 
+from shared.config import settings
+
 logger = structlog.get_logger(__name__)
 
-# Project root (relative to this script in scripts/)
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-CONTROLLER_DIR = PROJECT_ROOT / "controller"
-K6_SCRIPT = PROJECT_ROOT / "infrastructure" / "load-tests" / "dynamic_burst.js"
+# apps/experiment/experiment/dynamic.py -> 4 levels up to repo root
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+K6_SCRIPT = Path(__file__).resolve().parent / "load_tests" / "canonical" / "dynamic_burst.js"
 RESULTS_BASE = PROJECT_ROOT / "results" / "experiments" / "phase-c"
+
+DAEMON_API = f"http://localhost:{settings.DAEMON_API_PORT}"
+PROMETHEUS_URL = settings.PROMETHEUS_URL
+GRU_URL = settings.GRU_SERVICE_URL
+HAPROXY_URL = f"http://localhost:{settings.HAPROXY_HTTP_PORT}"
+
+# k6 binary path (mirrors experiment.stages.workload)
+K6_PATH = os.environ.get(
+    "K6_PATH",
+    str(Path.home() / ".local/share/mise/installs/k6/1.6.0/k6-v1.6.0-linux-amd64/k6"),
+)
 
 
 @dataclass
@@ -71,6 +79,44 @@ class DynamicExperimentResult:
     timestamp: str
 
 
+def set_scenario(scenario: str, daemon_api: str = DAEMON_API) -> bool:
+    """Set the daemon's active scenario via its HTTP API (daemon must be running)."""
+    try:
+        resp = requests.post(f"{daemon_api}/scenario", json={"scenario": scenario}, timeout=5)
+        return resp.status_code == 200
+    except Exception:
+        return False
+
+
+def extract_decision_counts(pre: Optional[Dict], post: Optional[Dict]) -> Dict:
+    """Compute decision-count deltas between pre/post daemon status snapshots."""
+    if not post:
+        return {}
+
+    def get_count(status: Optional[Dict], key: str) -> int:
+        if not status:
+            return 0
+        # Daemon may nest under "decision_counts" or at top level
+        counts = status.get("decision_counts", status)
+        return counts.get(key, 0)
+
+    pre_counts = {
+        "maintain": get_count(pre, "maintain_count"),
+        "scale_out": get_count(pre, "scale_out_count"),
+        "predictive": get_count(pre, "predictive_count"),
+        "optimize_cost": get_count(pre, "optimize_cost_count"),
+    }
+
+    post_counts = {
+        "maintain": get_count(post, "maintain_count"),
+        "scale_out": get_count(post, "scale_out_count"),
+        "predictive": get_count(post, "predictive_count"),
+        "optimize_cost": get_count(post, "optimize_cost_count"),
+    }
+
+    return {k: post_counts[k] - pre_counts.get(k, 0) for k in post_counts}
+
+
 class DynamicExperimentRunner:
     """Runs Phase C dynamic workload experiments."""
 
@@ -82,30 +128,24 @@ class DynamicExperimentRunner:
         today = datetime.now().strftime("%Y-%m-%d")
         self.results_dir = results_dir or RESULTS_BASE / f"{today}_dynamic-workload"
         self.results_dir.mkdir(parents=True, exist_ok=True)
-
-        self.daemon_api = "http://localhost:9104"
-        self.prometheus_url = "http://localhost:9090"
-        self.gru_url = "http://localhost:8090"
-        self.haproxy_url = "http://localhost:18082"
         self.cooldown_sec = cooldown_sec
 
-    # ── Infrastructure checks ─────────────────────────────
+    # -- Infrastructure checks --------------------------------------------
 
     def check_infrastructure(self, scenario: str, skip_daemon: bool = False) -> bool:
         """Check all required services are running."""
-        checks = {}
-
         endpoints = {
-            "haproxy": f"{self.haproxy_url}/health",
-            "prometheus": f"{self.prometheus_url}/-/healthy",
+            "haproxy": f"{HAPROXY_URL}/health",
+            "prometheus": f"{PROMETHEUS_URL}/-/healthy",
         }
 
         if not skip_daemon and scenario in ("s3-hybrid-reactive", "s4-hybrid-predictive"):
-            endpoints["daemon"] = f"{self.daemon_api}/health"
+            endpoints["daemon"] = f"{DAEMON_API}/health"
 
         if scenario == "s4-hybrid-predictive":
-            endpoints["gru"] = f"{self.gru_url}/health"
+            endpoints["gru"] = f"{GRU_URL}/health"
 
+        checks = {}
         for name, url in endpoints.items():
             try:
                 resp = requests.get(url, timeout=5)
@@ -121,32 +161,32 @@ class DynamicExperimentRunner:
 
         return all_ok
 
-    # ── Daemon lifecycle ──────────────────────────────────
+    # -- Daemon lifecycle -------------------------------------------------
 
     def start_daemon(self, scenario: str) -> Optional[subprocess.Popen]:
         """Start routing daemon for scenario."""
         cmd = [
-            "uv",
-            "run",
-            "python",
+            sys.executable,
             "-m",
-            "daemon.routing_daemon",
+            "routing.daemon.cli",
             "--scenario",
             scenario,
             "--haproxy-host",
-            "localhost",
+            settings.HAPROXY_HOST,
             "--haproxy-port",
-            "19999",
+            str(settings.HAPROXY_SOCKET_PORT),
             "--haproxy-stats",
-            "http://localhost:18404/stats;csv",
+            settings.HAPROXY_STATS_URL,
             "--gru-url",
-            self.gru_url,
+            GRU_URL,
             "--interval",
             "15",
+            "--api-port",
+            str(settings.DAEMON_API_PORT),
         ]
 
         env = {
-            **dict(subprocess.os.environ),
+            **os.environ,
             "HSA_OVERRIDE_GFX_VERSION": "11.0.0",
             "PREDICTION_CONFIDENCE_THRESHOLD": "0.6",
         }
@@ -154,14 +194,14 @@ class DynamicExperimentRunner:
         try:
             proc = subprocess.Popen(
                 cmd,
-                cwd=str(CONTROLLER_DIR),
+                cwd=str(PROJECT_ROOT),
                 env=env,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
             time.sleep(5)
 
-            resp = requests.get(f"{self.daemon_api}/health", timeout=5)
+            resp = requests.get(f"{DAEMON_API}/health", timeout=5)
             if resp.status_code == 200:
                 logger.info("daemon_started", scenario=scenario, pid=proc.pid)
                 return proc
@@ -183,41 +223,33 @@ class DynamicExperimentRunner:
             logger.info("daemon_stopped", pid=proc.pid)
 
     def set_scenario(self, scenario: str) -> bool:
-        """Set scenario via daemon API (if daemon already running)."""
-        try:
-            resp = requests.post(
-                f"{self.daemon_api}/set_scenario",
-                json={"scenario": scenario},
-                timeout=5,
-            )
-            return resp.status_code == 200
-        except Exception:
-            return False
+        """Set scenario via daemon API (delegates to module-level set_scenario)."""
+        return set_scenario(scenario)
 
     def get_daemon_status(self) -> Optional[Dict]:
         """Get daemon status including decision counts."""
         try:
-            resp = requests.get(f"{self.daemon_api}/status", timeout=5)
+            resp = requests.get(f"{DAEMON_API}/status", timeout=5)
             if resp.status_code == 200:
                 return resp.json()
         except Exception:
             pass
         return None
 
-    # ── k6 load test ──────────────────────────────────────
+    # -- k6 load test -----------------------------------------------------
 
     def run_k6_load_test(self, scenario: str, run_id: int, run_results_dir: Path) -> Optional[Dict]:
         """Run k6 dynamic_burst.js and parse summary output."""
         run_results_dir.mkdir(parents=True, exist_ok=True)
 
         cmd = [
-            "k6",
+            K6_PATH,
             "run",
             str(K6_SCRIPT),
             "-e",
-            f"TARGET_URL={self.haproxy_url}",
+            f"TARGET_URL={HAPROXY_URL}",
             "-e",
-            f"BASE_URL={self.haproxy_url}",
+            f"BASE_URL={HAPROXY_URL}",
             "-e",
             f"SCENARIO={scenario}",
             "-e",
@@ -264,12 +296,12 @@ class DynamicExperimentRunner:
             logger.error("k6_error", error=str(e))
             return None
 
-    # ── Single experiment ─────────────────────────────────
+    # -- Single experiment ------------------------------------------------
 
     def run_single_experiment(
         self, scenario: str, run_id: int, manage_daemon: bool = True
     ) -> Optional[DynamicExperimentResult]:
-        """Run a single experiment: start daemon → k6 → collect metrics → stop daemon."""
+        """Run a single experiment: start daemon -> k6 -> collect metrics -> stop daemon."""
 
         logger.info(
             "experiment_start",
@@ -346,7 +378,7 @@ class DynamicExperimentRunner:
             if manage_daemon and daemon_proc:
                 self.stop_daemon(daemon_proc)
 
-    # ── Metric extraction ─────────────────────────────────
+    # -- Metric extraction ------------------------------------------------
 
     def _extract_k6_metrics(self, summary: Optional[Dict]) -> Dict:
         """Extract relevant metrics from k6 summary JSON."""
@@ -373,34 +405,10 @@ class DynamicExperimentRunner:
         }
 
     def _extract_decision_counts(self, pre: Optional[Dict], post: Optional[Dict]) -> Dict:
-        """Extract decision count deltas between pre and post daemon status."""
-        if not post:
-            return {}
+        """Decision-count deltas (delegates to module-level extract_decision_counts)."""
+        return extract_decision_counts(pre, post)
 
-        def get_count(status: Optional[Dict], key: str) -> int:
-            if not status:
-                return 0
-            # Daemon may nest under "decision_counts" or at top level
-            counts = status.get("decision_counts", status)
-            return counts.get(key, 0)
-
-        pre_counts = {
-            "maintain": get_count(pre, "maintain_count"),
-            "scale_out": get_count(pre, "scale_out_count"),
-            "predictive": get_count(pre, "predictive_count"),
-            "optimize_cost": get_count(pre, "optimize_cost_count"),
-        }
-
-        post_counts = {
-            "maintain": get_count(post, "maintain_count"),
-            "scale_out": get_count(post, "scale_out_count"),
-            "predictive": get_count(post, "predictive_count"),
-            "optimize_cost": get_count(post, "optimize_cost_count"),
-        }
-
-        return {k: post_counts[k] - pre_counts.get(k, 0) for k in post_counts}
-
-    # ── Full experiment suite ─────────────────────────────
+    # -- Full experiment suite --------------------------------------------
 
     def run_all(
         self,
@@ -453,7 +461,7 @@ class DynamicExperimentRunner:
 
         return results
 
-    # ── Output ────────────────────────────────────────────
+    # -- Output -----------------------------------------------------------
 
     def _save_results(self, results: List[DynamicExperimentResult], filename: str) -> None:
         """Save results to JSON."""
@@ -470,7 +478,7 @@ class DynamicExperimentRunner:
         report_lines = [
             "# Phase C: Dynamic Workload Experiment Summary",
             f"\n**Date:** {datetime.now().isoformat()}",
-            "**Workload:** dynamic_burst (2 cycles × 3min = 6min per run)",
+            "**Workload:** dynamic_burst (2 cycles x 3min = 6min per run)",
             f"**Total runs:** {len(results)}",
             "",
         ]
@@ -482,7 +490,7 @@ class DynamicExperimentRunner:
 
             p99s = [r.p99_latency_ms for r in runs]
             report_lines.append(
-                f"- p99 latency: {min(p99s):.1f}–{max(p99s):.1f}ms (mean {sum(p99s) / len(p99s):.1f}ms)"
+                f"- p99 latency: {min(p99s):.1f}-{max(p99s):.1f}ms (mean {sum(p99s) / len(p99s):.1f}ms)"
             )
 
             errs = [r.error_rate for r in runs]
@@ -504,102 +512,16 @@ class DynamicExperimentRunner:
         logger.info("report_saved", path=str(report_path))
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Phase C: Dynamic workload experiment (S3 vs S4)")
-    parser.add_argument(
-        "--runs",
-        type=int,
-        default=3,
-        help="Replicates per scenario (default: 3)",
-    )
-    parser.add_argument(
-        "--scenarios",
-        type=str,
-        default="s3-hybrid-reactive,s4-hybrid-predictive",
-        help="Comma-separated scenarios (default: s3,s4)",
-    )
-    parser.add_argument(
-        "--cooldown",
-        type=int,
-        default=30,
-        help="Cooldown seconds between runs (default: 30)",
-    )
-    parser.add_argument(
-        "--no-manage-daemon",
-        action="store_true",
-        help="Don't start/stop daemon (assume it's already running)",
-    )
-    parser.add_argument(
-        "--results-dir",
-        type=str,
-        default=None,
-        help="Override results directory",
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Show schedule only, don't run experiments",
-    )
+def run_dynamic_experiment(
+    scenarios: List[str],
+    num_runs: int = 3,
+    cooldown_sec: int = 30,
+    manage_daemon: bool = True,
+    results_dir: Optional[Path] = None,
+) -> List[DynamicExperimentResult]:
+    """Run the Phase C dynamic workload experiment suite.
 
-    args = parser.parse_args()
-    scenarios = [s.strip() for s in args.scenarios.split(",")]
-
-    results_dir = Path(args.results_dir) if args.results_dir else None
-    runner = DynamicExperimentRunner(
-        results_dir=results_dir,
-        cooldown_sec=args.cooldown,
-    )
-
-    if args.dry_run:
-        schedule = [(s, r) for s in scenarios for r in range(1, args.runs + 1)]
-        random.shuffle(schedule)
-        print("\n🔬 Phase C: Dynamic Workload Experiment (DRY RUN)")
-        print("=" * 60)
-        print(f"Scenarios: {scenarios}")
-        print(f"Runs per scenario: {args.runs}")
-        print(f"Total runs: {len(schedule)}")
-        print(f"k6 script: {K6_SCRIPT}")
-        print(f"Results dir: {runner.results_dir}")
-        print("\nRandomized schedule:")
-        for i, (s, r) in enumerate(schedule, 1):
-            print(f"  {i}. {s} run {r}")
-        print(f"\nEstimated time: ~{len(schedule) * (6 + args.cooldown / 60):.0f} min")
-        return 0
-
-    # Check k6 available
-    try:
-        subprocess.run(["k6", "version"], capture_output=True, check=True)
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        print("❌ k6 not found. Install: https://k6.io/docs/get-started/installation/")
-        return 1
-
-    print("\n🔬 Phase C: Dynamic Workload Experiment")
-    print("=" * 60)
-    print(f"Scenarios: {scenarios}")
-    print(f"Runs per scenario: {args.runs}")
-    print("Workload: dynamic_burst (2 cycles × 3min)")
-    print(f"Results: {runner.results_dir}")
-    print()
-
-    results = runner.run_all(
-        scenarios=scenarios,
-        num_runs=args.runs,
-        manage_daemon=not args.no_manage_daemon,
-    )
-
-    print(f"\n✅ Complete. {len(results)} runs finished.")
-    print(f"📊 Results: {runner.results_dir}")
-    print(f"📝 Report: {runner.results_dir / 'report.md'}")
-
-    # Quick summary
-    for scenario in scenarios:
-        runs = [r for r in results if r.scenario == scenario]
-        if runs:
-            pred_total = sum(r.predictive_count for r in runs)
-            print(f"   {scenario}: PREDICTIVE={pred_total}")
-
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+    Thin entry over DynamicExperimentRunner for CLI consumption.
+    """
+    runner = DynamicExperimentRunner(results_dir=results_dir, cooldown_sec=cooldown_sec)
+    return runner.run_all(scenarios=scenarios, num_runs=num_runs, manage_daemon=manage_daemon)

@@ -1,40 +1,35 @@
-#!/usr/bin/env python3
-"""
-Compute MAE% and MAPE for GRU model from existing training results.
+"""GRU model percentage metrics (MAE% / MAPE).
 
-From model training (2026-02-10):
-- RMSE: 6.01% (already computed as percentage)
-- MAE: 4.91 (raw value)
-- Need: MAE% and MAPE
-
-Data sources:
-- results/models/gru/2026-02-10_training-synthetic/report.md
-- controller/data/models/gru_model.pt (trained model)
+Ported from ``apps/scripts/scripts/compute_gru_percentage_metrics.py``.
 """
+
+from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
-# Add controller to path
 
+def load_training_metrics() -> dict[str, float]:
+    """Hardcoded metrics from the 2026-02-10 GRU training report.
 
-def load_training_metrics():
-    """Load metrics from training report."""
-    # From report.md:
-    # Test RMSE = 6.01%
-    # Test MAE = 4.91
-    # Average test load ≈ 100 RPS (from synthetic data)
-
+    - Test RMSE = 6.01% (already computed as percentage)
+    - Test MAE = 4.91 (raw value)
+    - Average test load ~ 100 RPS (from synthetic data)
+    """
     return {
-        "rmse": 6.01,  # already as percentage
-        "mae": 4.91,  # raw value
-        "mean_load": 100.0,  # estimated average from synthetic data
+        "rmse": 6.01,
+        "mae": 4.91,
+        "mean_load": 100.0,
     }
 
 
-def compute_percentage_metrics():
-    """Compute MAE% and MAPE."""
+def compute_percentage_metrics(output_dir: Path | None = None) -> dict[str, Any]:
+    """Compute MAE% and MAPE from the training report metrics.
 
+    Prints the full breakdown (mirrors the standalone script) and writes
+    ``percentage_metrics.json``. Returns the exported dict.
+    """
     print("=" * 80)
     print("GRU MODEL PERCENTAGE METRICS")
     print("=" * 80)
@@ -105,8 +100,7 @@ MAPE   | ~{mae_percent:.2f}% | - | ✅ (estimated)
 6. Live performance validated in Phase A1 (40ms latency, 0.72-0.88 confidence)
 """)
 
-    # Export for reference
-    output = {
+    output: dict[str, Any] = {
         "rmse_percent": metrics["rmse"],
         "mae_raw": metrics["mae"],
         "mae_percent": mae_percent,
@@ -115,14 +109,13 @@ MAPE   | ~{mae_percent:.2f}% | - | ✅ (estimated)
         "h3_validated": h3_pass,
     }
 
-    output_path = (
-        Path(__file__).parent.parent / "results/models/gru/2026-02-10_training-synthetic/percentage_metrics.json"
-    )
+    # Export for reference
+    if output_dir is None:
+        output_dir = Path("results/models/gru/2026-02-10_training-synthetic")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / "percentage_metrics.json"
     with open(output_path, "w") as f:
         json.dump(output, f, indent=2)
 
     print(f"\n💾 Exported to: {output_path}")
-
-
-if __name__ == "__main__":
-    compute_percentage_metrics()
+    return output
