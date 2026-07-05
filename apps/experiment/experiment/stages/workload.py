@@ -29,7 +29,15 @@ K6_PATH = os.environ.get(
 # Project paths — apps/experiment/experiment/stages/workload.py → 5 levels up to root
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
 K6_SCRIPT = PROJECT_ROOT / "apps" / "experiment" / "experiment" / "load_tests" / "canonical" / "clarknet_replay.js"
-K6_STAGES = PROJECT_ROOT / "data" / "trace-replay" / "clarknet_k6_stages.json"
+_WORKLOAD = os.environ.get("WORKLOAD", "clarknet")
+_WORKLOAD_MAP = {
+    "clarknet": "clarknet_k6_stages.json",
+    "spike": "archetype_spike_k6_stages.json",
+    "periodic": "archetype_periodic_k6_stages.json",
+    "ramp": "archetype_ramp_k6_stages.json",
+    "stationary": "archetype_stationary_k6_stages.json",
+}
+K6_STAGES = PROJECT_ROOT / "data" / "trace-replay" / _WORKLOAD_MAP.get(_WORKLOAD, "clarknet_k6_stages.json")
 
 # Service endpoints
 TARGET_URL = f"http://localhost:{settings.HAPROXY_HTTP_PORT}"

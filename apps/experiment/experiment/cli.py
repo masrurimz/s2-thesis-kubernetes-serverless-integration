@@ -47,6 +47,7 @@ def run(
     output: Optional[str] = typer.Option(None, help="Output directory"),
     dry_run: bool = typer.Option(False, help="Simulate pipeline without side effects"),
     controller: str = typer.Option("v2", help="Controller version for S4"),
+    workload: str = typer.Option("clarknet", help="Workload trace: clarknet|spike|periodic|ramp|stationary|all"),
 ) -> None:
     """Run experiment phase through the full pipeline."""
     from rich.console import Console
@@ -68,6 +69,7 @@ def run(
         )
     )
     os.environ["CONTROLLER_VERSION"] = controller
+    os.environ["WORKLOAD"] = workload
 
     config = ExperimentConfig(
         phase=phase,
