@@ -75,7 +75,7 @@ Results from the stress harness validate elasticity **mechanisms** (triggering, 
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-> **⚠️ Stress-Harness Node Constraint:** Workload nodes (agent-1 through agent-3) use `--system-reserved=15600m`, reducing allocatable CPU from 16 vCPU to ~400m per node. This limits each node to ~2 pods at 200m request — far fewer than the ~9 pods/node possible on a production t3.medium (1.8 vCPU allocatable). The purpose is to force Pending pods and NodeProvisioner/CA exercise at modest load levels. This is NOT a claim about typical Kubernetes packing density; see "Interpretation Rules" below.
+> **⚠️ Stress-Harness Node Constraint:** All nodes use Docker `--cpus` to mimic cloud VM sizing (replacing the former `system-reserved=15600m` hack). Workload nodes (agent-1, dynamic nodes) are capped at 1.0 CPU via `docker update --cpus 1.0`, limiting each to ~4 pods at 200m request. The infra node (agent-0) is capped at 2.0 CPU (mimicking a t3.medium), fitting ~9 Knative pods. This is a deliberate fault-injection-style forcing function: it compresses the time-to-Pending from minutes (production) to seconds, allowing Cluster Autoscaler and HPA mechanisms to be observed within 20-minute experiment runs. This is NOT a claim about typical Kubernetes packing density; see "Interpretation Rules" below.
 
 ### Pod Resource Configuration (Revised from v3)
 
@@ -96,14 +96,14 @@ Results from the stress harness validate elasticity **mechanisms** (triggering, 
 
 | Node | CPU | Memory | Purpose | Pods |
 |------|-----|--------|---------|------|
-| server-0 | 1.0 | 1 GiB | Control plane, kube-system | System only |
-| agent-0 (infra) | 3.0 | 4 GiB | Knative Serving + Kourier + user pods | Knative pods scale freely |
-| agent-1 (workload) | 1.0 | 1 GiB | Baseline workload node | ~4-5 pods (200m each) |
-| agent-2 (workload) | 1.0 | 1 GiB | Cordoned → uncordon on demand | ~4-5 pods |
-| agent-3 (workload) | 1.0 | 1 GiB | Cordoned → uncordon on demand | ~4-5 pods |
-| **Total** | **7.0** | **8 GiB** | | |
+| server-0 | 1.0 (`--cpus 1.0`) | 1 GiB | Control plane, kube-system | System only |
+| agent-0 (infra) | 2.0 (`--cpus 2.0`) | 4 GiB | Knative Serving + Kourier + user pods | ~9 Knative pods (200m each) |
+| agent-1 (workload) | 1.0 (`--cpus 1.0`) | 1 GiB | Baseline workload node | ~4 pods (200m each) |
+| dynamic nodes | 1.0 (`--cpus 1.0`) | 1 GiB | Created by K3dAutoscaler on demand | ~4 pods each |
+| **Total (peak)** | **~6.0** | **~8 GiB** | | |
 
-Host has 8 cores / 32 GB — leaves headroom for Docker, HAProxy, Prometheus, GRU, k6.
+Node CPU is enforced via `docker update --cpus` (mimicking cloud VM allocation), not `system-reserved`. Host has 16 threads / 60 GB — leaves headroom for Docker, HAProxy, Prometheus, GRU, k6.
+
 
 ### Why 3 Workload Nodes
 

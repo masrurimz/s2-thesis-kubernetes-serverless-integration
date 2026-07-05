@@ -98,6 +98,28 @@ def health() -> None:
 
 
 @app.command()
+def verify() -> None:
+    """Verify node CPU allocation fairness and configuration."""
+    from infra.diagnostics.verifier import ClusterVerifier
+
+    console.rule("[bold]Node CPU Allocation Verification")
+
+    verifier = ClusterVerifier()
+    results = verifier.verify_all()
+
+    for name, passed in results.items():
+        icon = "[green]✓[/green]" if passed else "[red]✗[/red]"
+        console.print(f"  {icon} {name}")
+
+    passed_count = sum(1 for v in results.values() if v)
+    total = len(results)
+
+    console.print(f"\n[bold]Result: {passed_count}/{total} checks passed[/bold]")
+    if passed_count < total:
+        raise typer.Exit(1)
+
+
+@app.command()
 def status() -> None:
     """Show infrastructure status."""
     from infra.cluster.k3d.manager import K3dManager
