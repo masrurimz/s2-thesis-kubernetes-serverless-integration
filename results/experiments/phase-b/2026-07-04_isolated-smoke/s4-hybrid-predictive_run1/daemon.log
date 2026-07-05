@@ -1,0 +1,39 @@
+2026-07-04 18:52:03 [info     ] SLOMonitor initialized         threshold_ms=200.0 violation_window=30
+2026-07-04 18:52:03 [info     ] Algorithm1ControllerV3 initialized max_knative=50 r_saturation=35.0 target_cpu_util=0.8 total_budget=1000
+2026-07-04 18:52:03 [info     ] Using V3 controller (Capacity-Driven) for S4 scenario=s4-hybrid-predictive version=v3
+2026-07-04 18:52:03 [info     ] HAProxyWeightAdjuster initialized backend=servers host=localhost port=19999
+2026-07-04 18:52:03 [info     ] GRUClient initialized          base_url=http://localhost:8090
+2026-07-04 18:52:03 [info     ] K8sScaler initialized          deployment=test-app-warm namespace=default
+2026-07-04 18:52:03 [info     ] RoutingDaemon initialized      decision_interval=15 description='Algorithm 1 with GRU predictions (Algorithm 2)' scenario=s4-hybrid-predictive use_algorithm=True use_predictions=True
+2026-07-04 18:52:03 [info     ] Starting routing daemon        interval=15 scenario=s4-hybrid-predictive
+2026-07-04 18:52:03 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 18:52:03 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 18:52:04 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 18:52:04 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 18:52:05 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 18:52:05 [error    ] Failed to set weights after retries k3s=80 knative=20 max_retries=3
+2026-07-04 18:52:05 [warning  ] Failed to apply initial weights
+2026-07-04 18:52:05 [debug    ] HAProxy fallback primed        total_requests=0
+2026-07-04 18:52:05 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.03 beta=0.0 buffer=1.2 current_replicas=2 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-04 18:52:05 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=3
+2026-07-04 18:52:05 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=159.76 p99=0.0
+2026-07-04 18:52:20 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-04 18:52:20 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=107.97 p99=0.0
+2026-07-04 18:52:35 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-04 18:52:35 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=113.09 p99=0.0
+2026-07-04 18:52:51 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-04 18:52:51 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=115.14 p99=0.0
+2026-07-04 18:53:06 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-04 18:53:06 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=107.66 p99=0.0
+2026-07-04 18:53:21 [debug    ] GRU prediction received        confidence=0.9 latency_ms=38.98 predicted=62
+2026-07-04 18:53:21 [debug    ] Using GRU prediction           confidence=0.9 predicted=62
+2026-07-04 18:53:21 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=62.0 required_resources=1.86 target_replicas=3
+2026-07-04 18:53:21 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=151.74 p99=0.0
+2026-07-04 18:53:36 [info     ] Received shutdown signal
+2026-07-04 18:53:36 [info     ] Stopping routing daemon...
+2026-07-04 18:53:36 [error    ] kubectl command failed         cmd=['/home/zahid/.local/share/mise/installs/kubectl/1.35.0/kubectl', '-n', 'default', 'get', 'deployment/test-app-warm', '-o', 'json'] returncode=-15 stderr=
+2026-07-04 18:53:36 [debug    ] GRU prediction received        confidence=0.9 latency_ms=39.43 predicted=62
+2026-07-04 18:53:36 [debug    ] Using GRU prediction           confidence=0.9 predicted=62
+2026-07-04 18:53:36 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=62.0 required_resources=1.86 target_replicas=3
+2026-07-04 18:53:36 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=117.36 p99=0.0
+2026-07-04 18:53:36 [info     ] Routing daemon stopped
