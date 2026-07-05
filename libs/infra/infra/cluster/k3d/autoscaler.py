@@ -169,6 +169,8 @@ class K3dAutoscaler:
             self.k3s_image,
             "--k3s-node-label",
             "node-type=workload",
+            "--k3s-arg",
+            "--kubelet-arg=system-reserved=cpu=15000m",
             "--wait",
         ]
 

@@ -4,6 +4,7 @@ Replaces deploy/k3d/create-cluster.sh and deploy/k3d/delete-cluster.sh.
 """
 
 import importlib.resources
+import time
 
 import structlog
 
@@ -69,6 +70,68 @@ class K3dManager:
         self._label_nodes()
 
         return True
+
+    # ------------------------------------------------------------------
+    # Node resource bounds (Docker --cpus/--memory to mimic cloud VM sizing)
+    # ------------------------------------------------------------------
+
+    def _apply_node_resources(self) -> None:
+        """Apply Docker CPU/memory limits to each k3d node container.
+
+        Bounds node capacity to mimic real cloud VM allocation (see PHASE_B_V4_DESIGN.md):
+        agent-0 (infra/Knative) at 2.0 CPU mimics a t3.medium; workload nodes at 1.0 CPU
+        fit ~4 pods at 200m each. Tolerates per-node failure (logs warning, continues).
+        """
+        # (container_name, cpus, memory)
+        nodes = [
+            ("k3d-thesis-hybrid-server-0", "1.0", "1g"),
+            ("k3d-thesis-hybrid-agent-0", "2.0", "4g"),
+            ("k3d-thesis-hybrid-agent-1", "1.0", "1g"),
+        ]
+        for container, cpus, memory in nodes:
+            result = run(
+                ["docker", "update", "--cpus", cpus, "--memory", memory, "--memory-swap", memory, container],
+                check=False,
+            )
+            if result.returncode != 0:
+                logger.warning(
+                    "docker_update_node_failed",
+                    container=container,
+                    cpus=cpus,
+                    memory=memory,
+                    stderr=result.stderr,
+                )
+
+    def _label_nodes(self) -> None:
+        """Label nodes with node-type=system/infra/workload for scheduling isolation.
+
+        Waits for node registration, then applies labels. Tolerates per-node failure.
+        """
+        # Allow nodes to register with the API server before labeling.
+        time.sleep(5)
+
+        # (node_name, node-type value)
+        labels = [
+            ("k3d-thesis-hybrid-server-0", "system"),
+            ("k3d-thesis-hybrid-agent-0", "infra"),
+            ("k3d-thesis-hybrid-agent-1", "workload"),
+        ]
+        for node, node_type in labels:
+            result = run(
+                ["kubectl", "label", "node", node, f"node-type={node_type}", "--overwrite"],
+                check=False,
+            )
+            if result.returncode != 0:
+                logger.warning(
+                    "kubectl_label_node_failed",
+                    node=node,
+                    node_type=node_type,
+                    stderr=result.stderr,
+                )
+
+    # ------------------------------------------------------------------
+    # Lifecycle (continued)
+    # ------------------------------------------------------------------
 
     def delete(self) -> bool:
         """Delete the k3d cluster and clean up Docker resources."""

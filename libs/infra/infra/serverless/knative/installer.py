@@ -47,6 +47,8 @@ class KnativeInstaller:
                 logger.error("knative_install_step_failed", step=label)
                 return False
 
+        self._configure_node_isolation()
+
         console.print("[green]✓ Knative + Kourier installed.[/green]")
         logger.info("knative_install_ok")
         return True
@@ -144,3 +146,33 @@ class KnativeInstaller:
         # Fallback: just log that autoscaling defaults should be configured manually
         console.print("[dim]Configure autoscaling defaults via kubectl if needed.[/dim]")
         return True
+
+    def _configure_node_isolation(self) -> None:
+        """Enable podspec-nodeselector and pin Kourier gateway to the infra node."""
+        run(
+            [
+                "kubectl",
+                "patch",
+                "configmap/config-features",
+                "-n",
+                "knative-serving",
+                "--type=merge",
+                "-p",
+                '{"data":{"kubernetes.podspec-nodeselector":"enabled"}}',
+            ],
+            check=True,
+        )
+        run(
+            [
+                "kubectl",
+                "-n",
+                "kourier-system",
+                "patch",
+                "deployment",
+                "kourier-gateway",
+                "--type=json",
+                "-p",
+                '[{"op":"add","path":"/spec/template/spec/nodeSelector","value":{"node-type":"infra"}}]',
+            ],
+            check=False,
+        )

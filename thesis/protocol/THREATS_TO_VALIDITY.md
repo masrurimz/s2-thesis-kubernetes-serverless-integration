@@ -49,7 +49,7 @@ S4 (Hybrid-Predictive) routing path:
 
 ### The Problem
 
-Workload nodes use `--system-reserved=15600m`, reducing allocatable CPU from 16 vCPU to ~400m per node. At 200m CPU request per pod, each workload node fits only **2 pods** — compared to **~9 pods/node** on a production t3.medium (1.8 vCPU allocatable).
+All nodes use Docker `--cpus` to mimic cloud VM sizing: workload nodes at 1.0 CPU (~4 pods at 200m each), infra node at 2.0 CPU (~9 Knative pods). This replaces the former `system-reserved=15600m` hack (which left the infra node unconstrained at ~16 cores, creating a ~40× K8s-vs-serverless capacity asymmetry). The infra node is now bounded at 2.0 CPU (mimicking a t3.medium), eliminating that asymmetry. The remaining ~2× ratio (infra=2 CPU vs workload=1 CPU) reflects the Knative control plane (Serving, Kourier, KPA) running alongside user pods on the infra node.
 
 This was **intentional**: a stress-harness technique to force Cluster Autoscaler triggers within 20-minute experiment runs. Without this constraint, the tested load (~53–73 RPS) would fit entirely on 1–2 nodes and CA would never fire.
 
