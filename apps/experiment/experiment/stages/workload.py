@@ -76,6 +76,12 @@ class WorkloadStage(BaseStage):
             p99_latency_ms=metrics.get("p99_latency_ms", 0.0),
             error_rate=metrics.get("error_rate", 0.0),
             throughput_rps=metrics.get("actual_rps", 0.0),
+            app_duration_avg_ms=metrics.get("app_duration_avg_ms", 0.0),
+            app_duration_p50_ms=metrics.get("app_duration_p50_ms", 0.0),
+            app_duration_p95_ms=metrics.get("app_duration_p95_ms", 0.0),
+            app_duration_serverless_avg_ms=metrics.get("app_duration_serverless_avg_ms", 0.0),
+            app_duration_serverless_p95_ms=metrics.get("app_duration_serverless_p95_ms", 0.0),
+            app_duration_k8s_avg_ms=metrics.get("app_duration_k8s_avg_ms", 0.0),
         )
 
     def _run_k6(self, scenario: str, run_id: int, results_dir: Path) -> Optional[Dict]:
