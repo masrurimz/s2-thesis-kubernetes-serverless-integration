@@ -74,6 +74,7 @@ export default function () {
         headers: {
             'Host': 'test-app.default.127.0.0.1.sslip.io',
         },
+        responseType: 'text',
     });
 
     const duration = res.timings.duration;
