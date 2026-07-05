@@ -16,6 +16,7 @@ import structlog
 
 from shared.config import settings
 from shared.models.pipeline import PipelineContext
+from shared.protocols import ProvisionerClient
 
 from experiment.stages.base import BaseStage
 
@@ -77,7 +78,7 @@ class ResetStage(BaseStage):
 
     name = "reset"
 
-    def __init__(self, provisioner: Any = None):
+    def __init__(self, provisioner: Optional[ProvisionerClient] = None):
         self._provisioner = provisioner
 
     def _run(self, ctx: PipelineContext) -> None:
@@ -88,15 +89,10 @@ class ResetStage(BaseStage):
     def _reset(self, scenario: str) -> bool:
         logger.info("scenario_reset_start", scenario=scenario)
 
-        controller_ver = os.environ.get("CONTROLLER_VERSION", "v3")
         if self._provisioner and scenario in ("s1-k8s-only", "s3-hybrid-reactive", "s4-hybrid-predictive"):
-            if scenario == "s4-hybrid-predictive" and controller_ver == "v3":
-                self._provisioner.stop()
-                logger.info("V3 soft reset: keeping dynamic nodes alive", scenario=scenario)
-            else:
-                if not self._provisioner.reset():
-                    logger.error("node_provisioner_reset_failed", scenario=scenario)
-                    return False
+            if not self._provisioner.reset():
+                logger.error("node_provisioner_reset_failed", scenario=scenario)
+                return False
 
         if scenario == "s1-k8s-only":
             ok = self._reset_s1()
