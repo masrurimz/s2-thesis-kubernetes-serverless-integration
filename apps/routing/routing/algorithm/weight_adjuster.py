@@ -113,16 +113,18 @@ class HAProxyWeightAdjuster:
             knative_cmd = f"set server {self.backend_name}/knative weight {knative_weight}"
             knative_response = self._send_command(knative_cmd)
 
-            if k3s_response and knative_response:
-                logger.info(
-                    "Weights updated",
-                    k3s=k3s_weight,
-                    knative=knative_weight,
-                )
-                return True
-            else:
+            # HAProxy socket returns empty string on success, error message on failure,
+            # None on connection error. Only non-empty strings indicate failure.
+            if k3s_response or knative_response:
                 logger.error("Failed to set weights", k3s_response=k3s_response, knative_response=knative_response)
                 return False
+
+            logger.info(
+                "Weights updated",
+                k3s=k3s_weight,
+                knative=knative_weight,
+            )
+            return True
 
         except Exception as e:
             logger.error("Failed to set weights", error=str(e))
