@@ -546,6 +546,7 @@ def _run_single(
             error_rate=k6m.get("error_rate", 0),
             throughput_rps=k6m.get("throughput_rps", 0),
             total_requests=k6m.get("total_requests", 0),
+            slo_violations_k6=k6m.get("slo_violations", 0),
             t_start=t_start,
             t_end=t_end,
             duration_sec=max(1, int(t_end - t_start)),
