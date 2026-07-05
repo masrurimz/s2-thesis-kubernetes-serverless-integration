@@ -63,8 +63,8 @@ class MetricExporter:
         "daemon_predictions_used": "routing_daemon_prediction_used_total",
         "daemon_predictions_failed": "routing_daemon_prediction_failed_total",
         # Algorithm 2 replica scaling
-        "k8s_desired_replicas": f"k8s_deployment_desired_replicas{{{K8S_DEPLOYMENT_FILTER}}}",
-        "k8s_available_replicas": f"k8s_deployment_available_replicas{{{K8S_DEPLOYMENT_FILTER}}}",
+        "k8s_desired_replicas": "k8s_deployment_desired_replicas",
+        "k8s_available_replicas": "k8s_deployment_available_replicas",
         "k8s_scale_up_success": 'k8s_scaling_events_total{direction="up",result="success"}',
         "k8s_scale_up_fail": 'k8s_scaling_events_total{direction="up",result="fail"}',
         "k8s_scale_down_success": 'k8s_scaling_events_total{direction="down",result="success"}',
@@ -106,7 +106,7 @@ class MetricExporter:
 
     def _summarize(self, series: Dict, t_start: float, t_end: float) -> Dict[str, Any]:
         """Derive scalar summary from time-series."""
-        max(1, t_end - t_start)
+        duration_sec = max(1, int(t_end - t_start))
 
         def _last_val(key: str) -> float:
             ts = series.get(key, [])
@@ -166,6 +166,7 @@ class MetricExporter:
                     scale_up_latency = ready_t - first_scale_up_t
 
         return {
+            "duration_sec": duration_sec,
             "prom_p99_ms": _mean_val("prom_p99_ms"),
             "scale_up_success": int(_counter_delta("k8s_scale_up_success")),
             "scale_down_success": int(_counter_delta("k8s_scale_down_success")),

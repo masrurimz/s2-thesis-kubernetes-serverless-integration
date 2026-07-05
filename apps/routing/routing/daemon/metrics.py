@@ -72,3 +72,8 @@ k8s_available_replicas = _get_or_create_metric(
     "k8s_deployment_available_replicas",
     "Available replica count for K8s deployment",
 )
+# Pre-create labeled children so Prometheus sees them from the first scrape.
+# Without this, the labeled gauge series don't exist until the daemon calls
+# .labels(backend="...").set(...) during init, and early scrapes see nothing.
+daemon_current_weight.labels(backend="k3s").set(0)
+daemon_current_weight.labels(backend="knative").set(0)
