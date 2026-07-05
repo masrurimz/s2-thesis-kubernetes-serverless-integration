@@ -37,6 +37,7 @@ _WORKLOAD_MAP = {
     "ramp": "archetype_ramp_k6_stages.json",
     "stationary": "archetype_stationary_k6_stages.json",
     "high_load": "archetype_high_load_k6_stages.json",
+    "high_load_quick": "archetype_high_load_quick_k6_stages.json",
 }
 K6_STAGES = PROJECT_ROOT / "data" / "trace-replay" / _WORKLOAD_MAP.get(_WORKLOAD, "clarknet_k6_stages.json")
 
