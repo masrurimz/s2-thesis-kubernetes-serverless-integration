@@ -1,83 +1,35 @@
-#!/usr/bin/env python3
-"""
-Generate time-series plots for Phase B experiments.
+"""Phase B time-series visualization.
 
-Visualization goals:
-1. p99 latency over time per run
-2. Overlay routing decisions (SCALE_OUT, OPTIMIZE_COST, PREDICTIVE, MAINTAIN)
-3. Show SLO threshold (200ms) as reference line
-4. Faceted by scenario for comparison
-
-Output:
-- Individual run plots (detailed)
-- Scenario comparison plots (summary)
-- Decision timing analysis
+Ported from ``apps/scripts/scripts/plot_phase_b_timeseries.py``. Data loading
+delegates to ``analysis.data_loaders``; outlier check to the same package.
 """
 
-import json
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
+from __future__ import annotations
+
 from pathlib import Path
-from typing import List, Dict
+
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 import numpy as np
 
-# Set publication-quality style
-plt.style.use("seaborn-v0_8-darkgrid")
-plt.rcParams["figure.figsize"] = (12, 6)
-plt.rcParams["font.size"] = 10
-plt.rcParams["axes.labelsize"] = 11
-plt.rcParams["axes.titlesize"] = 12
-plt.rcParams["legend.fontsize"] = 9
+from analysis.data_loaders import is_outlier, load_outliers, load_phase_b_data
+from shared.scenarios import SCENARIO_ORDER
 
 
-def load_phase_b_data() -> List[Dict]:
-    """Load Phase B experiments data."""
-    phase_b_path = (
-        Path(__file__).parent.parent
-        / "results/experiments/phase-b/2026-02-12_replicated-20runs/raw/experiments_final.json"
-    )
-    with open(phase_b_path) as f:
-        return json.load(f)
-
-
-def load_outliers() -> List[Dict]:
-    """Load outlier list."""
-    outliers_path = (
-        Path(__file__).parent.parent / "results/experiments/phase-b/2026-02-12_replicated-20runs/raw/outliers.json"
-    )
-    try:
-        with open(outliers_path) as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return []
-
-
-def is_outlier(scenario: str, run_id: int, outliers: List[Dict]) -> bool:
-    """Check if a run is an outlier."""
-    for outlier in outliers:
-        if outlier["scenario"] == scenario and outlier["run_id"] == run_id:
-            return True
-    return False
-
-
-def plot_scenario_summary():
+def plot_scenario_summary(experiments: list[dict], outliers: list[dict], output_dir: Path) -> None:
     """Create summary plot: one subplot per scenario showing all runs."""
-    experiments = load_phase_b_data()
-    outliers = load_outliers()
-
     # Group by scenario
-    scenarios = {}
+    scenarios: dict[str, list[dict]] = {}
     for exp in experiments:
-        scenario = exp["scenario"]
-        if scenario not in scenarios:
-            scenarios[scenario] = []
-        scenarios[scenario].append(exp)
+        scenarios.setdefault(exp["scenario"], []).append(exp)
 
     # Create figure with 4 subplots
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
     fig.suptitle("Phase B: p99 Latency by Scenario (All Runs)", fontsize=14, fontweight="bold")
 
-    scenario_order = ["s1-k8s-only", "s2-serverless-only", "s3-hybrid-reactive", "s4-hybrid-predictive"]
     scenario_labels = {
         "s1-k8s-only": "S1: K8s-only",
         "s2-serverless-only": "S2: Serverless-only",
@@ -85,7 +37,7 @@ def plot_scenario_summary():
         "s4-hybrid-predictive": "S4: Hybrid Predictive",
     }
 
-    for idx, scenario_name in enumerate(scenario_order):
+    for idx, scenario_name in enumerate(SCENARIO_ORDER):
         ax = axes[idx // 2, idx % 2]
         runs = scenarios.get(scenario_name, [])
 
@@ -116,7 +68,7 @@ def plot_scenario_summary():
         ax.grid(axis="y", alpha=0.3)
 
         # Add violation counts as text
-        for i, (run_id, p99, viol) in enumerate(zip(run_ids, p99_values, violations)):
+        for run_id, p99, viol in zip(run_ids, p99_values, violations):
             if viol > 0:
                 ax.text(run_id, p99 + 20, f"V:{viol}", ha="center", fontsize=8, color="red")
 
@@ -130,28 +82,21 @@ def plot_scenario_summary():
     plt.tight_layout()
 
     # Save
-    output_dir = Path(__file__).parent.parent / "results/experiments/phase-b/2026-02-12_replicated-20runs/figures"
-    output_dir.mkdir(exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / "scenario_summary.png"
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     print(f"✅ Saved: {output_path}")
     plt.close()
 
 
-def plot_decision_comparison():
+def plot_decision_comparison(experiments: list[dict], outliers: list[dict], output_dir: Path) -> None:
     """Plot decision counts by scenario."""
-    experiments = load_phase_b_data()
-    outliers = load_outliers()
-
     # Group by scenario (exclude outliers)
-    scenarios = {}
+    scenarios: dict[str, list[dict]] = {}
     for exp in experiments:
-        scenario = exp["scenario"]
-        if is_outlier(scenario, exp["run_id"], outliers):
+        if is_outlier(exp["scenario"], exp["run_id"], outliers):
             continue
-        if scenario not in scenarios:
-            scenarios[scenario] = []
-        scenarios[scenario].append(exp)
+        scenarios.setdefault(exp["scenario"], []).append(exp)
 
     # Aggregate decision counts
     scenario_labels = {
@@ -161,15 +106,12 @@ def plot_decision_comparison():
         "s4-hybrid-predictive": "S4\nPredictive",
     }
 
-    scenario_order = ["s1-k8s-only", "s2-serverless-only", "s3-hybrid-reactive", "s4-hybrid-predictive"]
-
-    # Count decisions
     maintain_counts = []
     scale_out_counts = []
     optimize_counts = []
     predictive_counts = []
 
-    for scenario_name in scenario_order:
+    for scenario_name in SCENARIO_ORDER:
         runs = scenarios.get(scenario_name, [])
         if not runs:
             maintain_counts.append(0)
@@ -186,10 +128,10 @@ def plot_decision_comparison():
     # Create stacked bar chart
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    x = np.arange(len(scenario_order))
+    x = np.arange(len(SCENARIO_ORDER))
     width = 0.6
 
-    labels = [scenario_labels[s] for s in scenario_order]
+    labels = [scenario_labels[s] for s in SCENARIO_ORDER]
 
     # Stacked bars
     p1 = ax.bar(x, maintain_counts, width, label="MAINTAIN", color="#95afc0")
@@ -221,25 +163,21 @@ def plot_decision_comparison():
     plt.tight_layout()
 
     # Save
-    output_dir = Path(__file__).parent.parent / "results/experiments/phase-b/2026-02-12_replicated-20runs/figures"
+    output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / "decision_comparison.png"
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     print(f"✅ Saved: {output_path}")
     plt.close()
 
 
-def plot_clean_vs_outlier_comparison():
+def plot_clean_vs_outlier_comparison(experiments: list[dict], outliers: list[dict], output_dir: Path) -> None:
     """Compare statistics with and without outliers."""
-    experiments = load_phase_b_data()
-    outliers = load_outliers()
-
-    scenarios = ["s1-k8s-only", "s2-serverless-only", "s3-hybrid-reactive", "s4-hybrid-predictive"]
     labels = ["S1\nK8s", "S2\nServerless", "S3\nReactive", "S4\nPredictive"]
 
     with_outliers = []
     without_outliers = []
 
-    for scenario in scenarios:
+    for scenario in SCENARIO_ORDER:
         runs = [r for r in experiments if r["scenario"] == scenario]
         clean_runs = [r for r in runs if not is_outlier(scenario, r["run_id"], outliers)]
 
@@ -249,7 +187,7 @@ def plot_clean_vs_outlier_comparison():
         with_outliers.append(np.mean(p99_all))
         without_outliers.append(np.mean(p99_clean))
 
-    x = np.arange(len(scenarios))
+    x = np.arange(len(SCENARIO_ORDER))
     width = 0.35
 
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -276,32 +214,35 @@ def plot_clean_vs_outlier_comparison():
     plt.tight_layout()
 
     # Save
-    output_dir = Path(__file__).parent.parent / "results/experiments/phase-b/2026-02-12_replicated-20runs/figures"
+    output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / "outlier_impact.png"
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     print(f"✅ Saved: {output_path}")
     plt.close()
 
 
-def main():
-    """Generate all visualizations."""
+def generate_all_timeseries(phase_b_data: Path, outliers_data: Path, output_dir: Path) -> None:
+    """Generate all Phase B time-series visualizations.
+
+    Loads ``experiments_final.json`` + ``outliers.json`` via the shared loaders
+    and writes 3 PNGs into ``output_dir``.
+    """
     print("=" * 80)
     print("PHASE B TIME-SERIES VISUALIZATION")
     print("=" * 80)
 
     print("\n📊 Generating plots...\n")
 
-    plot_scenario_summary()
-    plot_decision_comparison()
-    plot_clean_vs_outlier_comparison()
+    experiments = load_phase_b_data(phase_b_data)
+    outliers = load_outliers(outliers_data)
+
+    plot_scenario_summary(experiments, outliers, output_dir)
+    plot_decision_comparison(experiments, outliers, output_dir)
+    plot_clean_vs_outlier_comparison(experiments, outliers, output_dir)
 
     print("\n✅ All plots generated successfully!")
-    print("\nOutput directory: results/experiments/phase-b/2026-02-12_replicated-20runs/figures/")
+    print(f"\nOutput directory: {output_dir}")
     print("\nGenerated files:")
     print("  1. scenario_summary.png - p99 latency by scenario (bar chart)")
     print("  2. decision_comparison.png - Routing decisions by scenario (stacked bar)")
     print("  3. outlier_impact.png - Impact of outlier exclusion (comparison)")
-
-
-if __name__ == "__main__":
-    main()

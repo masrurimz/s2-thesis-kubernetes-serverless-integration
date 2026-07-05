@@ -112,12 +112,23 @@ def _register_analysis() -> None:
         pass
 
 
+def _register_analysis() -> None:
+    """Register the analysis sub-app."""
+    try:
+        from analysis_cli.cli import app as analysis_app
+
+        app.add_typer(analysis_app, name="analysis", help="Experiment analysis CLI")
+    except ImportError:
+        pass
+
+
 # Register all available sub-apps
 _register_experiment()
 _register_routing()
 _register_prediction()
 _register_infra()
 _register_dashboard()
+_register_analysis()
 
 
 if __name__ == "__main__":

@@ -1,22 +1,19 @@
-#!/usr/bin/env python3
-"""
-Workload Calibration Script
-Finds Goldilocks load for thesis experiments.
+"""Workload calibration: find the Goldilocks RPS for thesis experiments.
 
-Usage:
-    cd controller && HSA_OVERRIDE_GFX_VERSION=11.0.0 \
-        uv run python ../scripts/run_calibration.py \
-        --scenarios s1,s3 \
-        --rps-levels 50,100,150,200 \
-        --duration 180
+Sweeps scenarios x RPS levels with a curl-based load test, reads p99/error
+metrics from Prometheus, and recommends the lowest RPS that produces a
+"stressed but functional" load (200ms < p99 <= 500ms, error_rate <= 10%).
+
+Ported from scripts/run_calibration.py. Entry point: run_full_calibration().
 """
 
-import argparse
-import json
+from __future__ import annotations
+
+import os
 import subprocess
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -24,7 +21,13 @@ from typing import Dict, List, Tuple
 import requests
 import structlog
 
+from shared.config import settings
+
 logger = structlog.get_logger(__name__)
+
+# apps/experiment/experiment/calibration.py -> 4 levels up to repo root
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+DAEMON_API = f"http://localhost:{settings.DAEMON_API_PORT}"
 
 
 @dataclass
@@ -47,8 +50,8 @@ def load_test_curl(
     rps: int, duration_sec: int, endpoint: str = "http://localhost:18082/work?duration_ms=10"
 ) -> Tuple[int, int, int]:
     """
-    Run load test using curl and measure results via Prometheus.
-    Returns: (total_requests, errors, approximate_latency_ms)
+    Run load test using parallel curl requests and measure results via Prometheus.
+    Returns: (total_requests, errors, actual_rps)
     """
     logger.info("starting_load_test", rps=rps, duration_sec=duration_sec)
 
@@ -56,8 +59,8 @@ def load_test_curl(
     errors = 0
     start_time = time.time()
 
-    # Generate load using parallel curl requests
-    batch_size = min(rps, 100)  # Max 100 parallel per second
+    # Max 100 parallel curl per second
+    batch_size = min(rps, 100)
 
     while time.time() - start_time < duration_sec:
         batch_start = time.time()
@@ -115,7 +118,7 @@ def load_test_curl(
     return total_requests, errors, actual_rps
 
 
-def get_prometheus_metrics(url: str = "http://localhost:9090") -> Dict[str, float]:
+def get_prometheus_metrics(url: str = settings.PROMETHEUS_URL) -> Dict[str, float]:
     """Get latency and error metrics from Prometheus."""
     metrics = {
         "p50": 0.0,
@@ -184,7 +187,10 @@ def determine_stress_level(p99: float, error_rate: float) -> Tuple[str, bool]:
 
 
 def run_calibration(
-    scenario: str, rps: int, duration_sec: int, haproxy_stats: str = "http://localhost:18404/stats;csv"
+    scenario: str,
+    rps: int,
+    duration_sec: int,
+    haproxy_stats: str = settings.HAPROXY_STATS_URL,
 ) -> CalibrationResult:
     """Run a single calibration test."""
 
@@ -194,29 +200,31 @@ def run_calibration(
     daemon_proc = None
     if scenario != "baseline":
         daemon_cmd = [
-            "python",
+            sys.executable,
             "-m",
-            "daemon.routing_daemon",
+            "routing.daemon.cli",
             "--scenario",
             scenario,
             "--haproxy-host",
-            "localhost",
+            settings.HAPROXY_HOST,
             "--haproxy-port",
-            "19999",
+            str(settings.HAPROXY_SOCKET_PORT),
             "--haproxy-stats",
             haproxy_stats,
             "--gru-url",
-            "http://localhost:8090",
+            settings.GRU_SERVICE_URL,
             "--interval",
             "15",
+            "--api-port",
+            str(settings.DAEMON_API_PORT),
         ]
 
-        env = {"HSA_OVERRIDE_GFX_VERSION": "11.0.0", "PREDICTION_CONFIDENCE_THRESHOLD": "0.6", "PATH": "/usr/bin:/bin"}
+        env = {**os.environ, "HSA_OVERRIDE_GFX_VERSION": "11.0.0", "PREDICTION_CONFIDENCE_THRESHOLD": "0.6"}
 
         daemon_proc = subprocess.Popen(
             daemon_cmd,
-            cwd="controller",
-            env={**dict(subprocess.os.environ), **env},
+            cwd=str(PROJECT_ROOT),
+            env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
@@ -226,7 +234,7 @@ def run_calibration(
 
         # Verify daemon is running
         try:
-            resp = requests.get("http://localhost:9104/health", timeout=5)
+            resp = requests.get(f"{DAEMON_API}/health", timeout=5)
             if resp.status_code != 200:
                 logger.error("daemon_not_healthy")
                 daemon_proc.terminate()
@@ -306,14 +314,12 @@ def analyze_results(results: List[CalibrationResult]) -> Dict:
     recommended = [r for r in results if r.recommended]
 
     # Group by scenario
-    by_scenario = {}
+    by_scenario: Dict[str, List[CalibrationResult]] = {}
     for r in results:
-        if r.scenario not in by_scenario:
-            by_scenario[r.scenario] = []
-        by_scenario[r.scenario].append(r)
+        by_scenario.setdefault(r.scenario, []).append(r)
 
     # Find best RPS for each scenario
-    best_rps = {}
+    best_rps: Dict[str, int] = {}
     for scenario, scenario_results in by_scenario.items():
         stressed = [r for r in scenario_results if r.stress_level == "stressed"]
         if stressed:
@@ -334,68 +340,7 @@ def analyze_results(results: List[CalibrationResult]) -> Dict:
     return {
         "goldilocks_rps": goldilocks_rps,
         "best_rps_by_scenario": best_rps,
-        "recommended_results": [vars(r) for r in recommended],
-        "all_results": [vars(r) for r in results],
+        "recommended_results": [asdict(r) for r in recommended],
+        "all_results": [asdict(r) for r in results],
         "analysis_timestamp": datetime.now().isoformat(),
     }
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Workload calibration for thesis experiments")
-    parser.add_argument(
-        "--scenarios", type=str, default="s1-k8s-only,s3-hybrid-reactive", help="Comma-separated scenarios to test"
-    )
-    parser.add_argument("--rps-levels", type=str, default="50,100,150,200", help="Comma-separated RPS levels to test")
-    parser.add_argument("--duration", type=int, default=180, help="Duration per test in seconds (default: 180 = 3 min)")
-    parser.add_argument(
-        "--output", type=str, default="results/calibration/analysis.json", help="Output file for calibration results"
-    )
-
-    args = parser.parse_args()
-
-    scenarios = [s.strip() for s in args.scenarios.split(",")]
-    rps_levels = [int(r.strip()) for r in args.rps_levels.split(",")]
-
-    print("=" * 80)
-    print("WORKLOAD CALIBRATION")
-    print("=" * 80)
-    print(f"Scenarios: {scenarios}")
-    print(f"RPS levels: {rps_levels}")
-    print(f"Duration per test: {args.duration}s")
-    print("=" * 80)
-
-    # Run calibration
-    results = run_full_calibration(scenarios, rps_levels, args.duration)
-
-    # Analyze results
-    analysis = analyze_results(results)
-
-    # Save results
-    output_path = Path(args.output)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with open(output_path, "w") as f:
-        json.dump(analysis, f, indent=2)
-
-    # Print summary
-    print("\n" + "=" * 80)
-    print("CALIBRATION RESULTS")
-    print("=" * 80)
-
-    for result in results:
-        print(f"\n{result.scenario} @ {result.rps} RPS:")
-        print(f"  p99 Latency: {result.p99_ms:.1f}ms")
-        print(f"  Error Rate: {result.error_rate:.2%}")
-        print(f"  Stress Level: {result.stress_level}")
-        print(f"  Recommended: {'✅' if result.recommended else '❌'}")
-
-    print("\n" + "=" * 80)
-    print(f"GOLDILOCKS LOAD: {analysis['goldilocks_rps']} RPS")
-    print("=" * 80)
-    print(f"\nResults saved to: {output_path}")
-
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())

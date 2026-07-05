@@ -1,18 +1,12 @@
-#!/usr/bin/env python3
-"""
-Generate thesis-quality time-series and comparison plots.
+"""Thesis-quality matplotlib figures.
 
-Produces:
-  1. Phase A1 Decision Timeline (p99 + decision markers + weight progression)
-  2. Phase B Aggregate Comparison (box plots with individual runs)
-  3. Scenario Comparison Dashboard (2x2 grid: throughput, p99, violations, decisions)
-
-Usage:
-    uv run python scripts/generate_plots.py
+Ported from ``apps/scripts/scripts/generate_plots.py``. Scenario constants
+come from ``shared.scenarios`` (single source of truth); bootstrap CI from
+``shared.stats``.
 """
 
-import json
-import sys
+from __future__ import annotations
+
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -20,36 +14,18 @@ from typing import Any
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 import numpy as np
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-PHASE_A1_REPORT = REPO_ROOT / "results/experiments/phase-a1/2026-02-12_predictive-trigger/report.md"
-PHASE_B_DATA = REPO_ROOT / "results/experiments/phase-b/2026-02-12_replicated-20runs/raw/experiments_final.json"
-OUTLIERS_DATA = REPO_ROOT / "results/experiments/phase-b/2026-02-12_replicated-20runs/raw/outliers.json"
-FIGURES_DIR = REPO_ROOT / "results/experiments/figures"
-
-SCENARIO_LABELS = {
-    "s1-k8s-only": "S1: K8s Only",
-    "s2-serverless-only": "S2: Serverless Only",
-    "s3-hybrid-reactive": "S3: Hybrid Reactive",
-    "s4-hybrid-predictive": "S4: Hybrid Predictive",
-}
-SCENARIO_COLORS = {
-    "s1-k8s-only": "#4C72B0",
-    "s2-serverless-only": "#DD8452",
-    "s3-hybrid-reactive": "#55A868",
-    "s4-hybrid-predictive": "#C44E52",
-}
-SCENARIO_ORDER = ["s1-k8s-only", "s2-serverless-only", "s3-hybrid-reactive", "s4-hybrid-predictive"]
-
-SLO_THRESHOLD_MS = 200.0
+from analysis.data_loaders import load_outliers, load_phase_b_data
+from shared.scenarios import SCENARIO_COLORS, SCENARIO_LABELS, SCENARIO_ORDER, SLO_THRESHOLD_MS
+from shared.stats import bootstrap_ci
 
 
-def parse_decision_log() -> list[dict[str, Any]]:
+def parse_decision_log(report_path: Path) -> list[dict[str, Any]]:
     """Parse the Phase A1 decision log table from report.md."""
-    text = PHASE_A1_REPORT.read_text()
+    text = report_path.read_text()
     decisions: list[dict[str, Any]] = []
 
     in_table = False
@@ -105,19 +81,7 @@ def parse_decision_log() -> list[dict[str, Any]]:
         elif in_table and not line.strip().startswith("|"):
             in_table = False
 
-    # Also parse the trailing decisions (18: OPTIMIZE_COST) from the table
     return decisions
-
-
-def load_phase_b_data() -> tuple[list[dict], list[dict]]:
-    """Load Phase B experiment results and outlier info."""
-    with open(PHASE_B_DATA) as f:
-        experiments = json.load(f)
-    outliers = []
-    if OUTLIERS_DATA.exists():
-        with open(OUTLIERS_DATA) as f:
-            outliers = json.load(f)
-    return experiments, outliers
 
 
 def plot_phase_a1_decision_timeline(decisions: list[dict], ax_main: plt.Axes) -> None:
@@ -299,16 +263,6 @@ def plot_phase_b_boxplots(experiments: list[dict], outliers: list[dict], ax: plt
     ax.legend(handles=legend_elements, loc="upper left", fontsize=8, framealpha=0.9)
 
 
-def bootstrap_ci(data: list[float], n_boot: int = 10000, ci: float = 0.95) -> tuple[float, float]:
-    """Compute bootstrap confidence interval for the mean."""
-    arr = np.array(data)
-    if len(arr) < 2:
-        return (arr[0] if len(arr) == 1 else 0.0, arr[0] if len(arr) == 1 else 0.0)
-    means = [np.mean(np.random.choice(arr, size=len(arr), replace=True)) for _ in range(n_boot)]
-    alpha = (1 - ci) / 2
-    return float(np.percentile(means, alpha * 100)), float(np.percentile(means, (1 - alpha) * 100))
-
-
 def plot_scenario_dashboard(experiments: list[dict], axes: np.ndarray) -> None:
     """Plot 3: 2x2 dashboard — throughput, p99, violations, decision counts."""
     metrics = [
@@ -381,21 +335,31 @@ def plot_scenario_dashboard(experiments: list[dict], axes: np.ndarray) -> None:
     ax.grid(axis="y", alpha=0.3)
 
 
-def main() -> int:
-    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+def generate_all_plots(repo_root: Path, figures_dir: Path | None = None) -> int:
+    """Generate all 3 thesis figures (PNG + PDF) into ``figures_dir``.
+
+    ``repo_root`` anchors the Phase A1 report + Phase B data paths.
+    """
+    if figures_dir is None:
+        figures_dir = repo_root / "results/experiments/figures"
+    figures_dir.mkdir(parents=True, exist_ok=True)
+
+    phase_a1_report = repo_root / "results/experiments/phase-a1/2026-02-12_predictive-trigger/report.md"
+    phase_b_data = repo_root / "results/experiments/phase-b/2026-02-12_replicated-20runs/raw/experiments_final.json"
+    outliers_data = repo_root / "results/experiments/phase-b/2026-02-12_replicated-20runs/raw/outliers.json"
 
     # --- Plot 1: Phase A1 Decision Timeline ---
-    decisions = parse_decision_log()
+    decisions = parse_decision_log(phase_a1_report) if phase_a1_report.exists() else []
     fig1, ax1 = plt.subplots(figsize=(14, 6))
     plot_phase_a1_decision_timeline(decisions, ax1)
     fig1.tight_layout()
-    path1 = FIGURES_DIR / "phase_a1_decision_timeline.png"
+    path1 = figures_dir / "phase_a1_decision_timeline.png"
     fig1.savefig(path1, dpi=200, bbox_inches="tight")
     plt.close(fig1)
     print(f"✅ Plot 1 saved: {path1}")
 
     # Also save PDF for thesis
-    path1_pdf = FIGURES_DIR / "phase_a1_decision_timeline.pdf"
+    path1_pdf = figures_dir / "phase_a1_decision_timeline.pdf"
     fig1_pdf, ax1_pdf = plt.subplots(figsize=(14, 6))
     plot_phase_a1_decision_timeline(decisions, ax1_pdf)
     fig1_pdf.tight_layout()
@@ -404,16 +368,17 @@ def main() -> int:
     print(f"   PDF: {path1_pdf}")
 
     # --- Plot 2: Phase B Box Plots ---
-    experiments, outliers = load_phase_b_data()
+    experiments = load_phase_b_data(phase_b_data)
+    outliers = load_outliers(outliers_data)
     fig2, ax2 = plt.subplots(figsize=(10, 6))
     plot_phase_b_boxplots(experiments, outliers, ax2)
     fig2.tight_layout()
-    path2 = FIGURES_DIR / "phase_b_p99_boxplots.png"
+    path2 = figures_dir / "phase_b_p99_boxplots.png"
     fig2.savefig(path2, dpi=200, bbox_inches="tight")
     plt.close(fig2)
     print(f"✅ Plot 2 saved: {path2}")
 
-    path2_pdf = FIGURES_DIR / "phase_b_p99_boxplots.pdf"
+    path2_pdf = figures_dir / "phase_b_p99_boxplots.pdf"
     fig2_pdf, ax2_pdf = plt.subplots(figsize=(10, 6))
     plot_phase_b_boxplots(experiments, outliers, ax2_pdf)
     fig2_pdf.tight_layout()
@@ -428,12 +393,12 @@ def main() -> int:
         "Phase B: Scenario Comparison Dashboard (5 runs × 4 scenarios)", fontsize=14, fontweight="bold", y=1.01
     )
     fig3.tight_layout()
-    path3 = FIGURES_DIR / "phase_b_scenario_dashboard.png"
+    path3 = figures_dir / "phase_b_scenario_dashboard.png"
     fig3.savefig(path3, dpi=200, bbox_inches="tight")
     plt.close(fig3)
     print(f"✅ Plot 3 saved: {path3}")
 
-    path3_pdf = FIGURES_DIR / "phase_b_scenario_dashboard.pdf"
+    path3_pdf = figures_dir / "phase_b_scenario_dashboard.pdf"
     fig3_pdf, axes3_pdf = plt.subplots(2, 2, figsize=(14, 10))
     plot_scenario_dashboard(experiments, axes3_pdf)
     fig3_pdf.suptitle(
@@ -445,12 +410,8 @@ def main() -> int:
     print(f"   PDF: {path3_pdf}")
 
     # Summary
-    print(f"\n📊 Generated {3} plots ({6} files) in {FIGURES_DIR}/")
+    print(f"\n📊 Generated {3} plots ({6} files) in {figures_dir}/")
     print(f"   Decisions parsed from Phase A1: {len(decisions)}")
     print(f"   Phase B runs: {len(experiments)} ({len(outliers)} outliers marked)")
 
     return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
