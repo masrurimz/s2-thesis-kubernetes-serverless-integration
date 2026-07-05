@@ -46,8 +46,8 @@ def run(
     scenarios: Optional[str] = typer.Option(None, help="Comma-separated scenario list (default: all 4)"),
     output: Optional[str] = typer.Option(None, help="Output directory"),
     dry_run: bool = typer.Option(False, help="Simulate pipeline without side effects"),
-    controller: str = typer.Option("v2", help="Controller version for S4"),
-    workload: str = typer.Option("clarknet", help="Workload trace: clarknet|spike|periodic|ramp|stationary|all"),
+    controller: str = typer.Option("v3", help="Controller version for S3/S4"),
+    workload: str = typer.Option("clarknet", help="Workload trace: clarknet|spike|periodic|ramp|stationary"),
 ) -> None:
     """Run experiment phase through the full pipeline."""
     from rich.console import Console
@@ -311,13 +311,29 @@ def _run_single(
     from experiment.stages.daemon import DaemonStage
     from experiment.stages.workload import WorkloadStage
     from experiment.stages.collect import CollectStage
+    from infra.cluster.k3d.autoscaler import K3dAutoscalerAdapter
 
     run_dir = Path(output_dir) / f"{scenario}_run{run_id}"
     run_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info("run_start", scenario=scenario, run_id=run_id, order=run_order_idx)
+    import shutil
 
-    resetter = ResetStage()
+    _k3d_path = shutil.which("k3d") or os.environ.get("K3D_PATH", "")
+    _k3s_image = os.environ.get("K3S_IMAGE", "rancher/k3s:v1.28.5-k3s1")
+    _cluster_name = os.environ.get("K3D_CLUSTER_NAME", "thesis-hybrid")
+    provisioner = K3dAutoscalerAdapter(
+        cluster_name=_cluster_name,
+        k3d_path=_k3d_path,
+        kubectl_path=os.environ.get("KUBECTL_PATH", "kubectl"),
+        k3s_image=_k3s_image,
+        min_nodes=0,
+        max_nodes=2,
+        provision_delay_min_sec=45,
+        provision_delay_max_sec=120,
+        node_memory="1g",
+    )
+    resetter = ResetStage(provisioner=provisioner)
     daemon_stage = DaemonStage()
     workload_stage = WorkloadStage()
     collect_stage = CollectStage()
@@ -361,6 +377,9 @@ def _run_single(
         # Record t_start and begin resource polling
         t_start = time.time()
         collect_stage.start_resource_polling()
+        if scenario != "s2-serverless-only":
+            provisioner.clear_log()
+            provisioner.start_background()
 
         # (C.2) Execute k6 trace replay
         workload_ctx = _make_ctx(config, scenario, run_id, output_dir)
@@ -372,6 +391,8 @@ def _run_single(
 
         # Stop resource polling
         collect_stage.stop_resource_polling()
+        if scenario != "s2-serverless-only":
+            provisioner.stop()
         t_end = time.time()
 
         # Get daemon status before stopping
@@ -406,6 +427,19 @@ def _run_single(
         # Set daemon metrics
         result.maintain_count = daemon_status.get("maintain_count", 0)
         result.scale_out_count = daemon_status.get("scale_out_count", 0)
+        # Set node provisioning data
+        if scenario != "s2-serverless-only":
+            prov_log = provisioner.get_log()
+            prov_success_events = {"node_created", "node_provisioned"}
+            result.nodes_provisioned = sum(1 for _, et, _ in prov_log if et in prov_success_events)
+            result.total_provision_events = len(prov_log)
+            first_pending = next((ts for ts, et, _ in prov_log if et == "pending_detected"), None)
+            first_created = next((ts for ts, et, _ in prov_log if et in prov_success_events), None)
+            if first_pending and first_created:
+                result.first_provision_delay_sec = first_created - first_pending
+            with open(run_dir / "provision_events.json", "w") as f:
+                json.dump([{"ts": ts, "event": et, "data": d} for ts, et, d in prov_log], f, indent=2)
+            result.provision_log_path = str(run_dir / "provision_events.json")
         result.predictive_count = daemon_status.get("predictive_count", 0)
         result.optimize_cost_count = daemon_status.get("optimize_cost_count", 0)
 
@@ -418,6 +452,7 @@ def _run_single(
 
     finally:
         collect_stage.stop_resource_polling()
+        provisioner.stop()
         daemon_stage.stop_daemon()
 
 

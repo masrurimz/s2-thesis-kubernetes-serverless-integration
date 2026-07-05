@@ -17,15 +17,16 @@ This is a **completed** Master's thesis research project implementing a hybrid k
 | Directory | Purpose | Rule |
 |-----------|---------|------|
 | `libs/shared/` | **Foundation package** — Pydantic models, config, scenarios, protocols, storage | Never import from `apps/`. Every other package depends on this. |
-| `libs/clients/` | **Infrastructure clients** — Prometheus, HAProxy, k8s, k6 Python clients | Shared by routing and experiment packages |
+| `libs/infra/` | **Infrastructure clients** — K8sScaler, K3dAutoscaler, Prometheus client, HAProxy adapter | Shared by routing and experiment packages |
 | `apps/prediction/` | **GRU prediction service** — FastAPI server, model loader, training | Deployable service (port 8090) |
-| `apps/routing/` | **Routing daemon** — Algorithm 1 V1/V2, SLO monitor, scaling | Deployable service (port 9104) |
-| `apps/experiment/` | **Experiment orchestration** — composable pipeline stages | CLI tool for running experiments |
-| `apps/cli/` | **Unified CLI** — `thesis` command aggregating all subcommands | Entry point: `uv run thesis` |
+| `apps/routing/` | **Routing daemon** — V1/V2/V3 controllers (Algorithm 1), Algorithm 2 (ClusterController), daemon, SLO monitor, weight adjuster | Deployable service (port 9104) |
+| `apps/experiment/` | **Experiment orchestration** — pipeline stages, CLI, NodeProvisioner, cost analyzer | CLI tool for running experiments |
+| `apps/scripts/` | **Analysis tools** — cost analyzer, statistical analysis | CLI tools for post-experiment analysis |
 | `results/` | **Single source of truth for ALL experiment evidence** | If it's experiment output, it lives here |
 | `thesis/` | **Narrative only** — thesis text, protocol, appendices | Links INTO `results/` for evidence |
 | `data/` | Datasets (ClarkNet, Calgary traces, synthetic) | Large files tracked via `.gitattributes` |
-| `deploy/` | k3d configs, HAProxy, load testing, cluster setup scripts | Deployment configs and ops tooling |
+| `data/trace-replay/` | k6 stage JSONs (ClarkNet + 4 synthetic archetypes) | Workload traces for experiment replay |
+| `infrastructure/` | k3d configs, HAProxy, load testing, cluster setup scripts | Deployment configs and ops tooling |
 | `docs/` | Setup guides, specs, architecture docs | Points to `results/` for evidence |
 | `archived/` | Legacy sprint artifacts, deprecated code | **Read-only. Never add new work here.** |
 
@@ -36,19 +37,35 @@ This is a **completed** Master's thesis research project implementing a hybrid k
 ## Module Dependency Graph
 
 ```
-libs/shared              (no internal deps; pydantic, structlog)
+libs/shared              (models, protocols, config, scenarios, storage)
   ↑
-  ├── libs/clients       (depends on shared; requests)
+  ├── libs/infra         (K8sScaler, K3dAutoscaler, Prometheus client, k6 client)
   │     ↑
-  │     ├── apps/prediction   (depends on shared; fastapi, torch, numpy)
-  │     ├── apps/routing      (depends on shared, clients; fastapi, prometheus-client)
-  │     └── apps/experiment   (depends on shared, clients; scipy, rich, typer)
+  │     ├── apps/prediction   (GRU server, FastAPI port 8090)
+  │     ├── apps/routing      (V1/V2/V3 controllers, Algorithm 2, daemon port 9104)
+  │     └── apps/experiment   (pipeline stages, CLI, NodeProvisioner, cost analyzer)
   │
-  └── apps/cli           (depends on shared; typer, rich; lazily imports other apps)
+  └── apps/scripts        (cost analyzer, analysis — depends on shared, experiment)
 ```
 
 No circular dependencies. `libs/` never imports from `apps/`.
 
+
+## Experiment Architecture
+
+| Scenario | Pod Autoscaler | Node Autoscaler | Traffic Routing | HPA |
+|----------|---------------|-----------------|-----------------|-----|
+| S1 (K8s-only) | HPA (CPU 50%, 1-10) | K3dAutoscaler (min=0, max=2) | 100% K8s | Enabled |
+| S2 (Serverless) | KPA (Knative) | N/A | 100% Serverless | Disabled |
+| S3 (Hybrid-reactive) | Algorithm 2 (observed-only) | K3dAutoscaler | V3 capacity-driven | Disabled |
+| S4 (Hybrid-predictive) | Algorithm 2 (GRU) | K3dAutoscaler | V3 capacity-driven | Disabled |
+
+Key patterns:
+- **HAProxy weight-time product**: Traffic split = `serverless_weight_time / (k8s_weight_time + serverless_weight_time)`. NOT `time_in_serverless_pct`.
+- **Prometheus Gauge pre-init**: Labeled Gauge children need `.labels(value).set(0)` at import or Prometheus sees nothing on first scrape.
+- **Node utilization**: `kubectl top nodes` polled alongside pods. Stored in `node_utilization.json`.
+- **Provisioning delay**: 45-120s simulated VM boot before k3d node creation.
+- **Inter-module contracts**: Protocols in `libs/shared/shared/protocols/` (PredictionClient, RoutingDaemonClient, MetricsClient, ProvisionerClient). Pydantic models in `libs/shared/shared/models/`.
 ---
 
 ## Development Commands
@@ -75,8 +92,13 @@ uv run thesis-experiment             # Experiment runner
 ### Reproduction
 
 ```bash
-HSA_OVERRIDE_GFX_VERSION=11.0.0 \
-  uv run thesis experiment run --phase full --runs 5 --duration 300
+# Full 4-scenario experiment
+uv run thesis-experiment run --controller v3 --runs 5 \
+  --scenarios s1-k8s-only,s2-serverless-only,s3-hybrid-reactive,s4-hybrid-predictive
+
+# Cost analysis
+uv run python apps/scripts/scripts/cost_analyzer.py \
+  --experiment-dir results/experiments/phase-b/<experiment-folder>
 ```
 
 ---

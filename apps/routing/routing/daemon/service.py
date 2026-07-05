@@ -94,12 +94,12 @@ class RoutingDaemon:
 
         controller_version = os.environ.get("CONTROLLER_VERSION", "v3")
 
-        if self.scenario == Scenario.S4_HYBRID_PREDICTIVE and controller_version == "v3":
+        if self.scenario in (Scenario.S3_HYBRID_REACTIVE, Scenario.S4_HYBRID_PREDICTIVE) and controller_version == "v3":
             self.algorithm_controller = Algorithm1ControllerV3(
                 slo_monitor=self.slo_monitor,
                 config=Algorithm1ConfigV3(cooldown_sec=decision_interval),
             )
-            logger.info("Using V3 controller (Capacity-Driven) for S4", scenario=scenario, version=controller_version)
+            logger.info("Using V3 controller (Capacity-Driven)", scenario=scenario, version=controller_version)
         elif self.scenario == Scenario.S4_HYBRID_PREDICTIVE and controller_version == "v2":
             self.algorithm_controller = Algorithm1ControllerV2(
                 slo_monitor=self.slo_monitor,
@@ -150,7 +150,7 @@ class RoutingDaemon:
         self.k8s_scaler = K8sScaler()
         if self.scenario_config.use_algorithm:
             controller_ver = os.environ.get("CONTROLLER_VERSION", "v3")
-            if controller_ver == "v3" and self.scenario == Scenario.S4_HYBRID_PREDICTIVE:
+            if controller_ver == "v3" and self.scenario in (Scenario.S3_HYBRID_REACTIVE, Scenario.S4_HYBRID_PREDICTIVE):
                 self.cluster_controller = ClusterController(
                     config=ScalingConfig(
                         alpha=0.03,  # 300m CPU: ~35 RPS/pod → 1/35 ≈ 0.029
