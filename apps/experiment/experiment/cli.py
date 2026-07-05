@@ -389,6 +389,7 @@ def _run_single(
             total_requests=k6m.get("total_requests", 0),
             t_start=t_start,
             t_end=t_end,
+            duration_sec=max(1, int(t_end - t_start)),
         )
 
         # Set result on context for collect stage
