@@ -32,6 +32,31 @@ All papers downloaded as PDF for offline access. Located in `docs/references/`.
 | HyMetricScaler | — | — | — |
 | Dehigama | — | — | ✅ Baseline+burst architecture |
 
+## Methodology & Cost Model References
+
+| Paper / Source | arxiv/DOI | Used For |
+|----------------|-----------|----------|
+| **Leopard** — Serverless Pay-For-Use | NSDI 2025 (usenix.org/system/files/nsdi25-cao.pdf) | SLIM billing model validation: Lambda mem ∝ CPU request (our 354MB = 200m/1000 × 1769MB) |
+| **FaaSRail** — Representative Serverless Load | HPDC 2024 (zenodo.org/records/12735009) | Methodology for generating scaled-down FaaS workloads preserving statistical properties |
+| **In-Vitro** — Serverless Trace Synthesis | SOSP 2023 (doi:10.1145/3605181.3626191) | Iterative trace sampling to synthesize representative workload summaries at multiple scales |
+| **HAProxy WRR** — Weighted Round Robin | haproxy/src/lb_map.c + serverfault.com/q/909891 | Traffic distribution ∝ weights; validates weight-time product as traffic split metric |
+| **DREEM** — Predictive Node Autoscaling | PoliTo 2024 (webthesis.biblio.polito.it/37712) | Node-level utilization via kubectl top nodes; cluster CPU/mem metrics methodology |
+| **Naik** — K8s Adaptive Scheduling + Prediction | NCIRL 2024 (norma.ncirl.ie/9248/1/supriyasunilnaik.pdf) | Cluster utilization reporting: CPU 61% vs 42% baseline, Memory 65% vs 47% |
+| **Multi-Cloud Container Orchestration** | 2025 (doi:10.62311/nesx/rphcrcscrcec2) | Reproducible multi-cloud K8s eval: Locust + Prometheus + Grafana, regression analysis |
+| **QoS vs Auto-Scaling Policy** | MDPI Sensors 2024 (doi:10.3390/s24123774) | HPA vs KPA scaling-efficiency metric, latency percentile evaluation, 10-trial repeats |
+
+## Dataset References
+
+| Dataset | Source | Size | Used For |
+|---------|--------|------|----------|
+| **ClarkNet-HTTP** | ita.ee.lbl.gov/html/contrib/ClarkNet-HTTP | 3.3M requests, 2 weeks (Aug 1995) | Primary trace-driven replay workload |
+| **Calgary-HTTP** | ita.ee.lbl.gov/html/contrib/Calgary-HTTP | 700K requests (Oct 1994) | Secondary trace for baseline comparison |
+| **KSWD** — Kubernetes Serverless Workload Dataset | github.com/GuilinDev/aapa-simulator/dataset | 10K+ traces, 14 days each, 144M+ points | Archetype-labeled (SPIKE/PERIODIC/RAMP/STATIONARY), ML-ready, MIT license |
+| **Azure Functions** trace 2019 | github.com/Azure/AzurePublicDataset | ~185M invocations | Modern serverless workload patterns (basis for KSWD) |
+| **IBM Cloud Code Engine** traces | github.com/ubc-cirrus-lab/ibm-cloud-code-engine-traces | ~52GB expanded | Real Knative/Kubernetes production data, per-request traces with pod mappings |
+| **Huawei FaaS** trace | github.com/sir-lab/data-release | 85B requests, 31 days | Large-scale production serverless patterns, cold-start analysis |
+| Synthetic archetypes (this thesis) | `data/trace-replay/synthetic_archetypes.py` | 4 × 40 stages | Controlled ablation: spike, periodic, ramp, stationary patterns |
+
 ## AWS Pricing References (us-east-1, 2026)
 
 - EKS: $0.10/hr standard support
