@@ -1,0 +1,1029 @@
+2026-07-04 20:24:39 [info     ] SLOMonitor initialized         threshold_ms=200.0 violation_window=30
+2026-07-04 20:24:39 [info     ] Algorithm1ControllerV3 initialized max_knative=50 r_saturation=35.0 target_cpu_util=0.8 total_budget=1000
+2026-07-04 20:24:39 [info     ] Using V3 controller (Capacity-Driven) for S4 scenario=s4-hybrid-predictive version=v3
+2026-07-04 20:24:39 [info     ] HAProxyWeightAdjuster initialized backend=servers host=localhost port=19999
+2026-07-04 20:24:39 [info     ] GRUClient initialized          base_url=http://localhost:8090
+2026-07-04 20:24:39 [info     ] K8sScaler initialized          deployment=test-app-warm namespace=default
+2026-07-04 20:24:39 [info     ] RoutingDaemon initialized      decision_interval=15 description='Algorithm 1 with GRU predictions (Algorithm 2)' scenario=s4-hybrid-predictive use_algorithm=True use_predictions=True
+2026-07-04 20:24:39 [info     ] Starting routing daemon        interval=15 scenario=s4-hybrid-predictive
+2026-07-04 20:24:39 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:24:39 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:24:40 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:24:40 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:24:41 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:24:41 [error    ] Failed to set weights after retries k3s=80 knative=20 max_retries=3
+2026-07-04 20:24:41 [warning  ] Failed to apply initial weights
+2026-07-04 20:24:41 [debug    ] HAProxy fallback primed        total_requests=0
+2026-07-04 20:24:41 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.03 beta=0.0 buffer=1.2 current_replicas=2 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-04 20:24:41 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=3
+2026-07-04 20:24:41 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=148.98 p99=0.0
+2026-07-04 20:24:56 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-04 20:24:56 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=121.52 p99=0.0
+2026-07-04 20:25:11 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-04 20:25:11 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=108.68 p99=0.0
+2026-07-04 20:25:27 [debug    ] HAProxy fallback latency       delta_requests=645 interval_avg_ms=272.0 max_rtime_ms=1250.0 p99_est=544.0
+2026-07-04 20:25:27 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-5 allowed_burn=0.83 budget_remaining=999 burn_error=-0.974 burn_ratio=0.026
+2026-07-04 20:25:27 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=999 burn_adjustment=-5 burst_ratio=0 capacity_deficit=False confidence=0 current_load=42.56359739136704 decision_id=161d29c4 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=544.0 predicted_load=0 r_effective=28.0 serverless_enabled=False total_load=42.6 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:25:27 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:25:27 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:25:28 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:25:28 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:25:29 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:25:29 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:25:29 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:25:29 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=21.28179869568352 required_resources=0.638 target_replicas=3
+2026-07-04 20:25:29 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2145.26 p99=544.0
+2026-07-04 20:25:44 [debug    ] HAProxy fallback latency       delta_requests=755 interval_avg_ms=1592.26 max_rtime_ms=4019.0 p99_est=3184.53
+2026-07-04 20:25:44 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-5 allowed_burn=0.83 budget_remaining=998 burn_error=-0.962 burn_ratio=0.038
+2026-07-04 20:25:44 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=998 burn_adjustment=-5 burst_ratio=0 capacity_deficit=False confidence=0 current_load=44.0334275323723 decision_id=77533c92 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=3184.5 predicted_load=0 r_effective=28.0 serverless_enabled=False total_load=44.0 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:25:44 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:25:44 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:25:45 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:25:45 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:25:46 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:25:46 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:25:46 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:25:46 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=43.29851246186967 required_resources=1.299 target_replicas=3
+2026-07-04 20:25:46 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2148.05 p99=3184.5298013245033
+2026-07-04 20:26:01 [debug    ] HAProxy fallback latency       delta_requests=808 interval_avg_ms=5965.66 max_rtime_ms=8093.0 p99_est=8093.0
+2026-07-04 20:26:01 [debug    ] GRU prediction received        confidence=0.72 latency_ms=40.27 predicted=66
+2026-07-04 20:26:01 [debug    ] Using GRU prediction           confidence=0.72 predicted=66
+2026-07-04 20:26:01 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-6 allowed_burn=0.83 budget_remaining=997 burn_error=-0.955 burn_ratio=0.045
+2026-07-04 20:26:01 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=997 burn_adjustment=-6 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=47.11924015201631 decision_id=5c954b77 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=8093.0 predicted_load=66 r_effective=28.0 serverless_enabled=False total_load=66 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:26:01 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:26:01 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:26:02 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:26:02 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:26:03 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:26:03 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:26:03 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:26:03 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=66.0 required_resources=1.98 target_replicas=3
+2026-07-04 20:26:03 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2192.4 p99=8093.0
+2026-07-04 20:26:18 [debug    ] HAProxy fallback latency       delta_requests=799 interval_avg_ms=13216.71 max_rtime_ms=14007.0 p99_est=14007.0
+2026-07-04 20:26:18 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.39 predicted=66
+2026-07-04 20:26:18 [debug    ] Using GRU prediction           confidence=0.72 predicted=66
+2026-07-04 20:26:18 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-6 allowed_burn=0.83 budget_remaining=996 burn_error=-0.95 burn_ratio=0.05
+2026-07-04 20:26:18 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=996 burn_adjustment=-6 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=46.47437342227164 decision_id=51724e93 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=14007.0 predicted_load=66 r_effective=28.0 serverless_enabled=False total_load=66 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:26:18 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:26:18 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:26:19 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:26:19 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:26:20 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:26:20 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:26:20 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:26:20 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=66.0 required_resources=1.98 target_replicas=3
+2026-07-04 20:26:20 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2188.35 p99=14007.0
+2026-07-04 20:26:35 [debug    ] HAProxy fallback latency       delta_requests=707 interval_avg_ms=19956.21 max_rtime_ms=21478.0 p99_est=21478.0
+2026-07-04 20:26:35 [debug    ] GRU prediction received        confidence=0.85 latency_ms=39.39 predicted=66
+2026-07-04 20:26:35 [debug    ] Using GRU prediction           confidence=0.85 predicted=66
+2026-07-04 20:26:35 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=995 burn_error=-0.947 burn_ratio=0.053
+2026-07-04 20:26:35 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=995 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.85 current_load=41.189930410081935 decision_id=27e95f7a k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=21478.0 predicted_load=66 r_effective=28.0 serverless_enabled=False total_load=66 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:26:35 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:26:35 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:26:36 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:26:36 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:26:37 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:26:37 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:26:37 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:26:37 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=66.0 required_resources=1.98 target_replicas=3
+2026-07-04 20:26:37 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2192.76 p99=21478.0
+2026-07-04 20:26:52 [debug    ] GRU prediction received        confidence=0.76 latency_ms=39.83 predicted=66
+2026-07-04 20:26:52 [debug    ] Using GRU prediction           confidence=0.76 predicted=66
+2026-07-04 20:26:52 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=994 burn_error=-0.945 burn_ratio=0.055
+2026-07-04 20:26:52 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=994 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.76 current_load=29.547429680221004 decision_id=4cdb90f5 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=21478.0 predicted_load=66 r_effective=28.0 serverless_enabled=False total_load=66 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:26:52 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:26:52 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:26:53 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:26:53 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:26:54 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:26:54 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:26:54 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:26:55 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=66.0 required_resources=1.98 target_replicas=3
+2026-07-04 20:26:55 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2192.38 p99=21478.0
+2026-07-04 20:27:10 [debug    ] GRU prediction received        confidence=0.72 latency_ms=38.86 predicted=65
+2026-07-04 20:27:10 [debug    ] Using GRU prediction           confidence=0.72 predicted=65
+2026-07-04 20:27:10 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=993 burn_error=-0.943 burn_ratio=0.057
+2026-07-04 20:27:10 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=993 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=24.545524284137645 decision_id=710e6ed9 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=21478.0 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=65 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:27:10 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:27:10 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:27:11 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:27:11 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:27:12 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:27:12 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:27:12 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:27:12 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:27:12 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2190.02 p99=21478.0
+2026-07-04 20:27:27 [debug    ] GRU prediction received        confidence=0.72 latency_ms=40.01 predicted=65
+2026-07-04 20:27:27 [debug    ] Using GRU prediction           confidence=0.72 predicted=65
+2026-07-04 20:27:27 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.942 burn_ratio=0.058
+2026-07-04 20:27:27 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=992 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=30.132452482380593 decision_id=d4516e70 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=21478.0 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=65 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:27:27 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:27:27 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:27:28 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:27:28 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:27:29 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:27:29 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:27:29 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:27:29 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:27:29 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2200.1 p99=21478.0
+2026-07-04 20:27:44 [debug    ] HAProxy fallback latency       delta_requests=886 interval_avg_ms=4761.3 max_rtime_ms=21478.0 p99_est=9522.61
+2026-07-04 20:27:44 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.34 predicted=65
+2026-07-04 20:27:44 [debug    ] Using GRU prediction           confidence=0.72 predicted=65
+2026-07-04 20:27:44 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=991 burn_error=-0.941 burn_ratio=0.059
+2026-07-04 20:27:44 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=991 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=51.45454881666955 decision_id=abfb544f k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=9522.6 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=65 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:27:44 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:27:44 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:27:45 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:27:45 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:27:46 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:27:46 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:27:46 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:27:46 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:27:46 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2189.12 p99=9522.607223476298
+2026-07-04 20:28:01 [debug    ] HAProxy fallback latency       delta_requests=807 interval_avg_ms=41231.3 max_rtime_ms=21478.0 p99_est=21478.0
+2026-07-04 20:28:01 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.82 predicted=65
+2026-07-04 20:28:01 [debug    ] Using GRU prediction           confidence=0.72 predicted=65
+2026-07-04 20:28:01 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=990 burn_error=-0.94 burn_ratio=0.06
+2026-07-04 20:28:01 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=990 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=47.00595221434529 decision_id=a23468b0 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=21478.0 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=65 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:28:01 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:28:01 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:28:02 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:28:02 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:28:03 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:28:03 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:28:03 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:28:03 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:28:03 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2191.72 p99=21478.0
+2026-07-04 20:28:18 [debug    ] HAProxy fallback latency       delta_requests=681 interval_avg_ms=30993.56 max_rtime_ms=21478.0 p99_est=21478.0
+2026-07-04 20:28:18 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.59 predicted=65
+2026-07-04 20:28:18 [debug    ] Using GRU prediction           confidence=0.72 predicted=65
+2026-07-04 20:28:18 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=989 burn_error=-0.939 burn_ratio=0.061
+2026-07-04 20:28:18 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=989 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=39.6690676967561 decision_id=e1a4b67c k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=21478.0 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=65 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:28:18 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:28:18 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:28:19 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:28:19 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:28:20 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:28:20 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:28:20 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:28:20 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:28:20 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2188.51 p99=21478.0
+2026-07-04 20:28:36 [debug    ] HAProxy fallback latency       delta_requests=756 interval_avg_ms=9353.78 max_rtime_ms=21478.0 p99_est=18707.56
+2026-07-04 20:28:36 [debug    ] GRU prediction received        confidence=0.75 latency_ms=40.1 predicted=65
+2026-07-04 20:28:36 [debug    ] Using GRU prediction           confidence=0.75 predicted=65
+2026-07-04 20:28:36 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=988 burn_error=-0.939 burn_ratio=0.061
+2026-07-04 20:28:36 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=988 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.75 current_load=43.92574272100313 decision_id=d3e71c40 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=18707.6 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=65 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:28:36 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:28:36 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:28:37 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:28:37 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:28:38 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:28:38 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:28:38 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:28:38 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:28:38 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2198.22 p99=18707.5582010582
+2026-07-04 20:28:53 [debug    ] HAProxy fallback latency       delta_requests=709 interval_avg_ms=17132.83 max_rtime_ms=27511.0 p99_est=27511.0
+2026-07-04 20:28:53 [debug    ] GRU prediction received        confidence=0.82 latency_ms=39.56 predicted=65
+2026-07-04 20:28:53 [debug    ] Using GRU prediction           confidence=0.82 predicted=65
+2026-07-04 20:28:53 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=987 burn_error=-0.938 burn_ratio=0.062
+2026-07-04 20:28:53 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=987 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.82 current_load=41.28211679868268 decision_id=cac5d293 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=27511.0 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=65 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:28:53 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:28:53 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:28:54 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:28:54 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:28:55 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:28:55 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:28:55 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:28:55 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:28:55 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2196.91 p99=27511.0
+2026-07-04 20:29:10 [debug    ] HAProxy fallback latency       delta_requests=732 interval_avg_ms=10865.14 max_rtime_ms=27511.0 p99_est=21730.28
+2026-07-04 20:29:10 [debug    ] GRU prediction received        confidence=0.85 latency_ms=39.36 predicted=65
+2026-07-04 20:29:10 [debug    ] Using GRU prediction           confidence=0.85 predicted=65
+2026-07-04 20:29:10 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=986 burn_error=-0.938 burn_ratio=0.062
+2026-07-04 20:29:10 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=986 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.85 current_load=42.566310219302494 decision_id=9d8b2717 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=21730.3 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=65 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:29:10 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:29:10 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:29:11 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:29:11 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:29:12 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:29:12 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:29:12 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:29:12 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:29:12 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2191.95 p99=21730.284153005465
+2026-07-04 20:29:27 [debug    ] HAProxy fallback latency       delta_requests=740 interval_avg_ms=9541.39 max_rtime_ms=27511.0 p99_est=19082.77
+2026-07-04 20:29:27 [debug    ] GRU prediction received        confidence=0.87 latency_ms=40.12 predicted=65
+2026-07-04 20:29:27 [debug    ] Using GRU prediction           confidence=0.87 predicted=65
+2026-07-04 20:29:27 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=985 burn_error=-0.937 burn_ratio=0.063
+2026-07-04 20:29:27 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=985 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.87 current_load=42.984373976386095 decision_id=777df74d k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=19082.8 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=65 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:29:27 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:29:27 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:29:28 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:29:28 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:29:29 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:29:29 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:29:29 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:29:29 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:29:29 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2191.16 p99=19082.772972972973
+2026-07-04 20:29:44 [debug    ] HAProxy fallback latency       delta_requests=705 interval_avg_ms=9962.13 max_rtime_ms=27511.0 p99_est=19924.26
+2026-07-04 20:29:44 [debug    ] GRU prediction received        confidence=0.88 latency_ms=38.41 predicted=65
+2026-07-04 20:29:44 [debug    ] Using GRU prediction           confidence=0.88 predicted=65
+2026-07-04 20:29:44 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=984 burn_error=-0.937 burn_ratio=0.063
+2026-07-04 20:29:44 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=984 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.88 current_load=41.01000195842174 decision_id=7c010907 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=19924.3 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=65 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:29:44 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:29:44 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:29:45 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:29:45 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:29:46 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:29:46 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:29:46 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:29:46 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:29:46 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2193.74 p99=19924.25815602837
+2026-07-04 20:30:02 [debug    ] GRU prediction received        confidence=0.72 latency_ms=40.09 predicted=66
+2026-07-04 20:30:02 [debug    ] Using GRU prediction           confidence=0.72 predicted=66
+2026-07-04 20:30:02 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=983 burn_error=-0.936 burn_ratio=0.064
+2026-07-04 20:30:02 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=983 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=77.81793728549374 decision_id=af94b9c3 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=19924.3 predicted_load=66 r_effective=28.0 serverless_enabled=False total_load=77.8 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:30:02 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:30:02 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:30:03 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:30:03 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:30:04 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:30:04 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:30:04 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:30:04 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=66.0 required_resources=1.98 target_replicas=3
+2026-07-04 20:30:04 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2194.19 p99=19924.25815602837
+2026-07-04 20:30:19 [debug    ] HAProxy fallback latency       delta_requests=809 interval_avg_ms=11985.99 max_rtime_ms=27511.0 p99_est=23971.98
+2026-07-04 20:30:19 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.45 predicted=66
+2026-07-04 20:30:19 [debug    ] Using GRU prediction           confidence=0.72 predicted=66
+2026-07-04 20:30:19 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=982 burn_error=-0.936 burn_ratio=0.064
+2026-07-04 20:30:19 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=982 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=47.10827836016437 decision_id=dfa72527 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=23972.0 predicted_load=66 r_effective=28.0 serverless_enabled=False total_load=66 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:30:19 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:30:19 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:30:20 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:30:20 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:30:21 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:30:21 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:30:21 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:30:21 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=66.0 required_resources=1.98 target_replicas=3
+2026-07-04 20:30:21 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2192.68 p99=23971.977750309023
+2026-07-04 20:30:36 [debug    ] HAProxy fallback latency       delta_requests=727 interval_avg_ms=27855.13 max_rtime_ms=27511.0 p99_est=27511.0
+2026-07-04 20:30:36 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.48 predicted=66
+2026-07-04 20:30:36 [debug    ] Using GRU prediction           confidence=0.72 predicted=66
+2026-07-04 20:30:36 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=981 burn_error=-0.936 burn_ratio=0.064
+2026-07-04 20:30:36 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=981 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=42.225032844345485 decision_id=0e2b5e2d k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=27511.0 predicted_load=66 r_effective=28.0 serverless_enabled=False total_load=66 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:30:36 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:30:36 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:30:37 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:30:37 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:30:38 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:30:38 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:30:38 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:30:38 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=66.0 required_resources=1.98 target_replicas=3
+2026-07-04 20:30:38 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2191.67 p99=27511.0
+2026-07-04 20:30:53 [debug    ] HAProxy fallback latency       delta_requests=723 interval_avg_ms=15384.41 max_rtime_ms=27511.0 p99_est=27511.0
+2026-07-04 20:30:53 [debug    ] GRU prediction received        confidence=0.72 latency_ms=38.46 predicted=65
+2026-07-04 20:30:53 [debug    ] Using GRU prediction           confidence=0.72 predicted=65
+2026-07-04 20:30:53 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=980 burn_error=-0.935 burn_ratio=0.065
+2026-07-04 20:30:53 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=980 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=42.114899620419266 decision_id=bc86cf80 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=27511.0 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=65 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:30:53 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:30:53 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:30:54 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:30:54 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:30:55 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:30:55 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:30:55 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:30:55 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:30:55 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2188.58 p99=27511.0
+2026-07-04 20:31:10 [debug    ] HAProxy fallback latency       delta_requests=711 interval_avg_ms=12149.79 max_rtime_ms=27511.0 p99_est=24299.58
+2026-07-04 20:31:10 [debug    ] GRU prediction received        confidence=0.72 latency_ms=38.46 predicted=65
+2026-07-04 20:31:10 [debug    ] Using GRU prediction           confidence=0.72 predicted=65
+2026-07-04 20:31:10 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=979 burn_error=-0.935 burn_ratio=0.065
+2026-07-04 20:31:10 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=979 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=41.420885524656924 decision_id=528d06b2 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=24299.6 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=65 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:31:10 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:31:10 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:31:11 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:31:11 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:31:12 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:31:12 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:31:12 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:31:12 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:31:12 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2187.75 p99=24299.583684950772
+2026-07-04 20:31:27 [debug    ] HAProxy fallback latency       delta_requests=697 interval_avg_ms=6825.27 max_rtime_ms=27511.0 p99_est=13650.53
+2026-07-04 20:31:28 [debug    ] GRU prediction received        confidence=0.85 latency_ms=39.25 predicted=65
+2026-07-04 20:31:28 [debug    ] Using GRU prediction           confidence=0.85 predicted=65
+2026-07-04 20:31:28 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=978 burn_error=-0.935 burn_ratio=0.065
+2026-07-04 20:31:28 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=978 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.85 current_load=40.43649264794518 decision_id=ea6ca3a4 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=13650.5 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=65 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:31:28 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:31:28 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:31:29 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:31:29 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:31:30 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:31:30 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:31:30 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:31:30 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:31:30 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2188.28 p99=13650.530846484935
+2026-07-04 20:31:45 [debug    ] HAProxy fallback latency       delta_requests=720 interval_avg_ms=10664.48 max_rtime_ms=27511.0 p99_est=21328.96
+2026-07-04 20:31:45 [debug    ] GRU prediction received        confidence=0.89 latency_ms=39.5 predicted=65
+2026-07-04 20:31:45 [debug    ] Using GRU prediction           confidence=0.89 predicted=65
+2026-07-04 20:31:45 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=977 burn_error=-0.935 burn_ratio=0.065
+2026-07-04 20:31:45 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=977 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=41.88918447183072 decision_id=1a750084 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=21329.0 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=65 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:31:45 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:31:45 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:31:46 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:31:46 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:31:47 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:31:47 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:31:47 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:31:47 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:31:47 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2190.06 p99=21328.958333333332
+2026-07-04 20:32:02 [debug    ] HAProxy fallback latency       delta_requests=749 interval_avg_ms=4495.43 max_rtime_ms=27511.0 p99_est=8990.86
+2026-07-04 20:32:02 [debug    ] GRU prediction received        confidence=0.88 latency_ms=38.52 predicted=65
+2026-07-04 20:32:02 [debug    ] Using GRU prediction           confidence=0.88 predicted=65
+2026-07-04 20:32:02 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=976 burn_error=-0.935 burn_ratio=0.065
+2026-07-04 20:32:02 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=976 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.88 current_load=43.74532833046191 decision_id=8821923d k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=8990.9 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=65 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:32:02 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:32:02 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:32:03 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:32:03 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:32:04 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:32:04 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:32:04 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:32:04 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:32:04 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2186.93 p99=8990.859813084113
+2026-07-04 20:32:19 [debug    ] HAProxy fallback latency       delta_requests=709 interval_avg_ms=12792.68 max_rtime_ms=27511.0 p99_est=25585.36
+2026-07-04 20:32:19 [debug    ] GRU prediction received        confidence=0.88 latency_ms=39.75 predicted=65
+2026-07-04 20:32:19 [debug    ] Using GRU prediction           confidence=0.88 predicted=65
+2026-07-04 20:32:19 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=975 burn_error=-0.934 burn_ratio=0.066
+2026-07-04 20:32:19 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=975 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.88 current_load=41.194075844768086 decision_id=3a29850c k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=25585.4 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=65 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:32:19 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:32:19 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:32:20 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:32:20 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:32:21 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:32:21 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:32:21 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:32:21 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:32:21 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2197.36 p99=25585.362482369535
+2026-07-04 20:32:36 [debug    ] HAProxy fallback latency       delta_requests=697 interval_avg_ms=12078.85 max_rtime_ms=27511.0 p99_est=24157.7
+2026-07-04 20:32:36 [debug    ] GRU prediction received        confidence=0.87 latency_ms=38.84 predicted=65
+2026-07-04 20:32:36 [debug    ] Using GRU prediction           confidence=0.87 predicted=65
+2026-07-04 20:32:36 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=974 burn_error=-0.934 burn_ratio=0.066
+2026-07-04 20:32:36 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=974 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.87 current_load=40.586785464427884 decision_id=cb580c65 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=24157.7 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=65 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:32:36 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:32:36 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:32:37 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:32:37 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:32:38 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:32:38 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:32:38 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:32:38 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:32:38 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2194.23 p99=24157.695839311335
+2026-07-04 20:32:53 [debug    ] HAProxy fallback latency       delta_requests=727 interval_avg_ms=11454.0 max_rtime_ms=27511.0 p99_est=22907.99
+2026-07-04 20:32:53 [debug    ] GRU prediction received        confidence=0.88 latency_ms=39.59 predicted=64
+2026-07-04 20:32:53 [debug    ] Using GRU prediction           confidence=0.88 predicted=64
+2026-07-04 20:32:54 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=973 burn_error=-0.934 burn_ratio=0.066
+2026-07-04 20:32:54 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=973 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.88 current_load=42.164317758017276 decision_id=f1ff8e59 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=22908.0 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:32:54 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:32:54 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:32:55 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:32:55 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:32:56 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:32:56 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:32:56 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:32:56 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:32:56 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2202.56 p99=22907.99174690509
+2026-07-04 20:33:11 [debug    ] HAProxy fallback latency       delta_requests=719 interval_avg_ms=10614.69 max_rtime_ms=27511.0 p99_est=21229.37
+2026-07-04 20:33:11 [debug    ] GRU prediction received        confidence=0.88 latency_ms=40.1 predicted=64
+2026-07-04 20:33:11 [debug    ] Using GRU prediction           confidence=0.88 predicted=64
+2026-07-04 20:33:11 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=972 burn_error=-0.934 burn_ratio=0.066
+2026-07-04 20:33:11 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=972 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.88 current_load=41.855833951293505 decision_id=39f010a4 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=21229.4 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:33:11 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:33:11 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:33:12 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:33:12 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:33:13 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:33:13 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:33:13 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:33:13 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:33:13 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2192.55 p99=21229.371349095967
+2026-07-04 20:33:28 [debug    ] HAProxy fallback latency       delta_requests=729 interval_avg_ms=4756.21 max_rtime_ms=27511.0 p99_est=9512.42
+2026-07-04 20:33:28 [debug    ] GRU prediction received        confidence=0.89 latency_ms=39.44 predicted=64
+2026-07-04 20:33:28 [debug    ] Using GRU prediction           confidence=0.89 predicted=64
+2026-07-04 20:33:28 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=971 burn_error=-0.934 burn_ratio=0.066
+2026-07-04 20:33:28 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=971 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=42.34183376958962 decision_id=07332cee k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=9512.4 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:33:28 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:33:28 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:33:29 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:33:29 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:33:30 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:33:30 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:33:30 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:33:30 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:33:30 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2193.68 p99=9512.417009602195
+2026-07-04 20:33:45 [debug    ] HAProxy fallback latency       delta_requests=718 interval_avg_ms=10182.65 max_rtime_ms=27511.0 p99_est=20365.31
+2026-07-04 20:33:45 [debug    ] GRU prediction received        confidence=0.89 latency_ms=38.49 predicted=64
+2026-07-04 20:33:45 [debug    ] Using GRU prediction           confidence=0.89 predicted=64
+2026-07-04 20:33:45 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=970 burn_error=-0.934 burn_ratio=0.066
+2026-07-04 20:33:45 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=970 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=41.70215566953625 decision_id=d78cb28a k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=20365.3 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:33:45 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:33:45 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:33:46 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:33:46 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:33:47 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:33:47 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:33:47 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:33:47 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:33:47 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2187.83 p99=20365.30919220056
+2026-07-04 20:34:02 [debug    ] HAProxy fallback latency       delta_requests=705 interval_avg_ms=10046.22 max_rtime_ms=27511.0 p99_est=20092.45
+2026-07-04 20:34:02 [debug    ] GRU prediction received        confidence=0.89 latency_ms=39.29 predicted=64
+2026-07-04 20:34:02 [debug    ] Using GRU prediction           confidence=0.89 predicted=64
+2026-07-04 20:34:02 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=969 burn_error=-0.934 burn_ratio=0.066
+2026-07-04 20:34:02 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=969 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=41.016532954649456 decision_id=466e760e k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=20092.4 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:34:02 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:34:02 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:34:03 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:34:03 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:34:04 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:34:04 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:34:04 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:34:04 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:34:04 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2188.88 p99=20092.448226950353
+2026-07-04 20:34:19 [debug    ] HAProxy fallback latency       delta_requests=725 interval_avg_ms=11999.18 max_rtime_ms=27511.0 p99_est=23998.37
+2026-07-04 20:34:19 [debug    ] GRU prediction received        confidence=0.89 latency_ms=39.52 predicted=64
+2026-07-04 20:34:19 [debug    ] Using GRU prediction           confidence=0.89 predicted=64
+2026-07-04 20:34:19 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=968 burn_error=-0.934 burn_ratio=0.066
+2026-07-04 20:34:19 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=968 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=42.177622043882906 decision_id=ef9df9dd k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=23998.4 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:34:19 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:34:19 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:34:20 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:34:20 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:34:21 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:34:21 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:34:21 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:34:22 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:34:22 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2189.16 p99=23998.366896551724
+2026-07-04 20:34:37 [debug    ] HAProxy fallback latency       delta_requests=707 interval_avg_ms=7409.22 max_rtime_ms=27511.0 p99_est=14818.44
+2026-07-04 20:34:37 [debug    ] GRU prediction received        confidence=0.89 latency_ms=40.46 predicted=64
+2026-07-04 20:34:37 [debug    ] Using GRU prediction           confidence=0.89 predicted=64
+2026-07-04 20:34:37 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=967 burn_error=-0.933 burn_ratio=0.067
+2026-07-04 20:34:37 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=967 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=41.30507955569223 decision_id=6e63290c k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=14818.4 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:34:37 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:34:37 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:34:38 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:34:38 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:34:39 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:34:39 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:34:39 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:34:39 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:34:39 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2195.5 p99=14818.438472418671
+2026-07-04 20:34:54 [debug    ] HAProxy fallback latency       delta_requests=727 interval_avg_ms=8295.96 max_rtime_ms=27511.0 p99_est=16591.92
+2026-07-04 20:34:54 [debug    ] GRU prediction received        confidence=0.89 latency_ms=40.24 predicted=64
+2026-07-04 20:34:54 [debug    ] Using GRU prediction           confidence=0.89 predicted=64
+2026-07-04 20:34:54 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=966 burn_error=-0.933 burn_ratio=0.067
+2026-07-04 20:34:54 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=966 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=42.163291731000434 decision_id=5f6eba7b k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=16591.9 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:34:54 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:34:54 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:34:55 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:34:55 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:34:56 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:34:56 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:34:56 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:34:56 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:34:56 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2188.66 p99=16591.922971114167
+2026-07-04 20:35:11 [debug    ] HAProxy fallback latency       delta_requests=718 interval_avg_ms=10695.61 max_rtime_ms=27511.0 p99_est=21391.23
+2026-07-04 20:35:11 [debug    ] GRU prediction received        confidence=0.89 latency_ms=40.3 predicted=64
+2026-07-04 20:35:11 [debug    ] Using GRU prediction           confidence=0.89 predicted=64
+2026-07-04 20:35:11 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=965 burn_error=-0.933 burn_ratio=0.067
+2026-07-04 20:35:11 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=965 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=41.82661773286678 decision_id=7f363576 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=21391.2 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:35:11 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:35:11 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:35:12 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:35:12 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:35:13 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:35:13 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:35:13 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:35:13 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:35:13 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2191.73 p99=21391.228412256267
+2026-07-04 20:35:28 [debug    ] HAProxy fallback latency       delta_requests=716 interval_avg_ms=10654.9 max_rtime_ms=27511.0 p99_est=21309.8
+2026-07-04 20:35:28 [debug    ] GRU prediction received        confidence=0.89 latency_ms=39.11 predicted=64
+2026-07-04 20:35:28 [debug    ] Using GRU prediction           confidence=0.89 predicted=64
+2026-07-04 20:35:28 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=964 burn_error=-0.933 burn_ratio=0.067
+2026-07-04 20:35:28 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=964 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=41.650206472914924 decision_id=c760f26e k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=21309.8 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:35:28 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:35:28 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:35:29 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:35:29 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:35:30 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:35:30 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:35:30 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:35:30 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:35:30 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2193.25 p99=21309.804469273742
+2026-07-04 20:35:45 [debug    ] HAProxy fallback latency       delta_requests=716 interval_avg_ms=12937.04 max_rtime_ms=27511.0 p99_est=25874.09
+2026-07-04 20:35:45 [debug    ] GRU prediction received        confidence=0.89 latency_ms=39.15 predicted=64
+2026-07-04 20:35:45 [debug    ] Using GRU prediction           confidence=0.89 predicted=64
+2026-07-04 20:35:45 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=963 burn_error=-0.933 burn_ratio=0.067
+2026-07-04 20:35:45 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=963 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=41.52693602971403 decision_id=9624aaf9 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=25874.1 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:35:45 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:35:45 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:35:46 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:35:46 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:35:47 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:35:47 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:35:47 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:35:47 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:35:47 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2195.2 p99=25874.08659217877
+2026-07-04 20:36:03 [debug    ] HAProxy fallback latency       delta_requests=1431 interval_avg_ms=6141.61 max_rtime_ms=27511.0 p99_est=12283.23
+2026-07-04 20:36:03 [debug    ] GRU prediction received        confidence=0.72 latency_ms=41.02 predicted=65
+2026-07-04 20:36:03 [debug    ] Using GRU prediction           confidence=0.72 predicted=65
+2026-07-04 20:36:03 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=962 burn_error=-0.933 burn_ratio=0.067
+2026-07-04 20:36:03 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=962 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=83.1011250330867 decision_id=f7ca400f k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=12283.2 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=83.1 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:36:03 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:36:03 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:36:04 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:36:04 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:36:05 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:36:05 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:36:05 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:36:05 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:36:05 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2193.06 p99=12283.228511530398
+2026-07-04 20:36:20 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.96 predicted=65
+2026-07-04 20:36:20 [debug    ] Using GRU prediction           confidence=0.72 predicted=65
+2026-07-04 20:36:20 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=961 burn_error=-0.933 burn_ratio=0.067
+2026-07-04 20:36:20 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=961 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=66.88752422522678 decision_id=7e362214 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=12283.2 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=66.9 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:36:20 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:36:20 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:36:21 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:36:21 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:36:22 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:36:22 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:36:22 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:36:22 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=74.99432462915675 required_resources=2.25 target_replicas=3
+2026-07-04 20:36:22 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2185.03 p99=12283.228511530398
+2026-07-04 20:36:37 [debug    ] HAProxy fallback latency       delta_requests=737 interval_avg_ms=53950.74 max_rtime_ms=27511.0 p99_est=27511.0
+2026-07-04 20:36:37 [debug    ] GRU prediction received        confidence=0.72 latency_ms=38.98 predicted=65
+2026-07-04 20:36:37 [debug    ] Using GRU prediction           confidence=0.72 predicted=65
+2026-07-04 20:36:37 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=960 burn_error=-0.933 burn_ratio=0.067
+2026-07-04 20:36:37 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=960 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=42.885757395797405 decision_id=14691e73 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=27511.0 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=65 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:36:37 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:36:37 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:36:38 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:36:38 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:36:39 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:36:39 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:36:39 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:36:39 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:36:39 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2187.68 p99=27511.0
+2026-07-04 20:36:54 [debug    ] HAProxy fallback latency       delta_requests=719 interval_avg_ms=32077.9 max_rtime_ms=27511.0 p99_est=27511.0
+2026-07-04 20:36:54 [debug    ] GRU prediction received        confidence=0.72 latency_ms=40.04 predicted=64
+2026-07-04 20:36:54 [debug    ] Using GRU prediction           confidence=0.72 predicted=64
+2026-07-04 20:36:54 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=959 burn_error=-0.933 burn_ratio=0.067
+2026-07-04 20:36:54 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=959 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=41.77514986185672 decision_id=39fb469b k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=27511.0 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:36:54 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:36:54 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:36:55 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:36:55 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:36:56 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:36:56 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:36:56 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:36:56 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:36:56 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2192.65 p99=27511.0
+2026-07-04 20:37:11 [debug    ] HAProxy fallback latency       delta_requests=722 interval_avg_ms=6513.56 max_rtime_ms=27511.0 p99_est=13027.11
+2026-07-04 20:37:11 [debug    ] GRU prediction received        confidence=0.72 latency_ms=38.99 predicted=64
+2026-07-04 20:37:11 [debug    ] Using GRU prediction           confidence=0.72 predicted=64
+2026-07-04 20:37:11 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=958 burn_error=-0.933 burn_ratio=0.067
+2026-07-04 20:37:11 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=958 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=41.934806004873636 decision_id=56ea3481 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=13027.1 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:37:11 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:37:11 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:37:12 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:37:12 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:37:13 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:37:13 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:37:13 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:37:13 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:37:13 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2193.27 p99=13027.113573407201
+2026-07-04 20:37:28 [debug    ] HAProxy fallback latency       delta_requests=701 interval_avg_ms=12525.32 max_rtime_ms=27511.0 p99_est=25050.64
+2026-07-04 20:37:29 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.6 predicted=64
+2026-07-04 20:37:29 [debug    ] Using GRU prediction           confidence=0.72 predicted=64
+2026-07-04 20:37:29 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=957 burn_error=-0.933 burn_ratio=0.067
+2026-07-04 20:37:29 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=957 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=40.713704241050145 decision_id=576a4129 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=25050.6 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:37:29 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:37:29 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:37:30 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:37:30 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:37:31 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:37:31 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:37:31 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:37:31 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:37:31 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2192.72 p99=25050.639087018546
+2026-07-04 20:37:46 [debug    ] HAProxy fallback latency       delta_requests=724 interval_avg_ms=6150.37 max_rtime_ms=27511.0 p99_est=12300.73
+2026-07-04 20:37:46 [debug    ] GRU prediction received        confidence=0.88 latency_ms=38.47 predicted=64
+2026-07-04 20:37:46 [debug    ] Using GRU prediction           confidence=0.88 predicted=64
+2026-07-04 20:37:46 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=956 burn_error=-0.933 burn_ratio=0.067
+2026-07-04 20:37:46 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=956 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.88 current_load=42.22731591937092 decision_id=77af5dff k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=12300.7 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:37:46 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:37:46 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:37:47 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:37:47 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:37:48 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:37:48 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:37:48 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:37:48 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:37:48 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2187.94 p99=12300.734806629835
+2026-07-04 20:38:03 [debug    ] HAProxy fallback latency       delta_requests=713 interval_avg_ms=11598.48 max_rtime_ms=31198.0 p99_est=23196.95
+2026-07-04 20:38:03 [debug    ] GRU prediction received        confidence=0.89 latency_ms=40.24 predicted=64
+2026-07-04 20:38:03 [debug    ] Using GRU prediction           confidence=0.89 predicted=64
+2026-07-04 20:38:03 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=955 burn_error=-0.933 burn_ratio=0.067
+2026-07-04 20:38:03 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=955 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=41.481372109163466 decision_id=c5bcfa0c k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=23197.0 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:38:03 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:38:03 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:38:04 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:38:04 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:38:05 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:38:05 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:38:05 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:38:05 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:38:05 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2190.07 p99=23196.950911640954
+2026-07-04 20:38:20 [debug    ] HAProxy fallback latency       delta_requests=723 interval_avg_ms=5965.66 max_rtime_ms=31198.0 p99_est=11931.31
+2026-07-04 20:38:20 [debug    ] GRU prediction received        confidence=0.89 latency_ms=38.66 predicted=63
+2026-07-04 20:38:20 [debug    ] Using GRU prediction           confidence=0.89 predicted=63
+2026-07-04 20:38:20 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=954 burn_error=-0.933 burn_ratio=0.067
+2026-07-04 20:38:20 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=954 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=42.00023594457816 decision_id=e148c023 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=11931.3 predicted_load=63 r_effective=28.0 serverless_enabled=False total_load=63 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:38:20 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:38:20 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:38:21 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:38:21 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:38:22 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:38:22 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:38:22 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:38:22 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=63.0 required_resources=1.89 target_replicas=3
+2026-07-04 20:38:22 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2195.27 p99=11931.311203319503
+2026-07-04 20:38:37 [debug    ] HAProxy fallback latency       delta_requests=708 interval_avg_ms=14512.31 max_rtime_ms=31198.0 p99_est=29024.62
+2026-07-04 20:38:37 [debug    ] GRU prediction received        confidence=0.89 latency_ms=39.84 predicted=63
+2026-07-04 20:38:37 [debug    ] Using GRU prediction           confidence=0.89 predicted=63
+2026-07-04 20:38:37 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=953 burn_error=-0.933 burn_ratio=0.067
+2026-07-04 20:38:37 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=953 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=41.17273020237904 decision_id=24b68c7d k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=29024.6 predicted_load=63 r_effective=28.0 serverless_enabled=False total_load=63 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:38:37 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:38:37 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:38:38 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:38:38 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:38:39 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:38:39 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:38:39 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:38:39 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=63.0 required_resources=1.89 target_replicas=3
+2026-07-04 20:38:39 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2195.66 p99=29024.61581920904
+2026-07-04 20:38:54 [debug    ] HAProxy fallback latency       delta_requests=724 interval_avg_ms=1968.31 max_rtime_ms=31198.0 p99_est=3936.61
+2026-07-04 20:38:54 [debug    ] GRU prediction received        confidence=0.89 latency_ms=38.37 predicted=63
+2026-07-04 20:38:54 [debug    ] Using GRU prediction           confidence=0.89 predicted=63
+2026-07-04 20:38:55 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=952 burn_error=-0.933 burn_ratio=0.067
+2026-07-04 20:38:55 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=952 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=42.16527016624391 decision_id=50ebc234 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=3936.6 predicted_load=63 r_effective=28.0 serverless_enabled=False total_load=63 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:38:55 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:38:55 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:38:56 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:38:56 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:38:57 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:38:57 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:38:57 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:38:57 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=63.0 required_resources=1.89 target_replicas=3
+2026-07-04 20:38:57 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2185.16 p99=3936.6132596685084
+2026-07-04 20:39:12 [debug    ] HAProxy fallback latency       delta_requests=702 interval_avg_ms=8275.36 max_rtime_ms=31198.0 p99_est=16550.71
+2026-07-04 20:39:12 [debug    ] GRU prediction received        confidence=0.89 latency_ms=40.04 predicted=63
+2026-07-04 20:39:12 [debug    ] Using GRU prediction           confidence=0.89 predicted=63
+2026-07-04 20:39:12 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=951 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:39:12 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=951 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=40.78624266518378 decision_id=352553d9 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=16550.7 predicted_load=63 r_effective=28.0 serverless_enabled=False total_load=63 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:39:12 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:39:12 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:39:13 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:39:13 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:39:14 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:39:14 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:39:14 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:39:14 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=63.0 required_resources=1.89 target_replicas=3
+2026-07-04 20:39:14 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2196.3 p99=16550.71225071225
+2026-07-04 20:39:29 [debug    ] HAProxy fallback latency       delta_requests=716 interval_avg_ms=11756.57 max_rtime_ms=31198.0 p99_est=23513.14
+2026-07-04 20:39:29 [debug    ] GRU prediction received        confidence=0.89 latency_ms=38.78 predicted=63
+2026-07-04 20:39:29 [debug    ] Using GRU prediction           confidence=0.89 predicted=63
+2026-07-04 20:39:29 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=950 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:39:29 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=950 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=41.580972086290465 decision_id=0469b97a k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=23513.1 predicted_load=63 r_effective=28.0 serverless_enabled=False total_load=63 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:39:29 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:39:29 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:39:30 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:39:30 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:39:31 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:39:31 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:39:31 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:39:31 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=63.0 required_resources=1.89 target_replicas=3
+2026-07-04 20:39:31 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2188.31 p99=23513.13966480447
+2026-07-04 20:39:46 [debug    ] HAProxy fallback latency       delta_requests=720 interval_avg_ms=18987.0 max_rtime_ms=31198.0 p99_est=31198.0
+2026-07-04 20:39:46 [debug    ] GRU prediction received        confidence=0.89 latency_ms=38.54 predicted=63
+2026-07-04 20:39:46 [debug    ] Using GRU prediction           confidence=0.89 predicted=63
+2026-07-04 20:39:46 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=949 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:39:46 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=949 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=42.06381959641184 decision_id=1c2e9213 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=31198.0 predicted_load=63 r_effective=28.0 serverless_enabled=False total_load=63 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:39:46 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:39:46 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:39:47 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:39:47 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:39:48 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:39:48 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:39:48 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:39:48 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=63.0 required_resources=1.89 target_replicas=3
+2026-07-04 20:39:48 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2185.33 p99=31198.0
+2026-07-04 20:40:03 [debug    ] HAProxy fallback latency       delta_requests=709 interval_avg_ms=13246.53 max_rtime_ms=31198.0 p99_est=26493.05
+2026-07-04 20:40:03 [debug    ] GRU prediction received        confidence=0.89 latency_ms=39.36 predicted=63
+2026-07-04 20:40:03 [debug    ] Using GRU prediction           confidence=0.89 predicted=63
+2026-07-04 20:40:03 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=948 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:40:03 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=948 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=41.139663259334355 decision_id=85fe7ef3 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=26493.1 predicted_load=63 r_effective=28.0 serverless_enabled=False total_load=63 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:40:03 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:40:03 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:40:04 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:40:04 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:40:05 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:40:05 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:40:05 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:40:05 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=63.0 required_resources=1.89 target_replicas=3
+2026-07-04 20:40:05 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2193.51 p99=26493.052186177716
+2026-07-04 20:40:20 [debug    ] HAProxy fallback latency       delta_requests=703 interval_avg_ms=5586.65 max_rtime_ms=31198.0 p99_est=11173.29
+2026-07-04 20:40:20 [debug    ] GRU prediction received        confidence=0.89 latency_ms=40.44 predicted=63
+2026-07-04 20:40:20 [debug    ] Using GRU prediction           confidence=0.89 predicted=63
+2026-07-04 20:40:20 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=947 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:40:20 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=947 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=40.88642485938182 decision_id=58d55c16 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=11173.3 predicted_load=63 r_effective=28.0 serverless_enabled=False total_load=63 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:40:21 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:40:21 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:40:22 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:40:22 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:40:23 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:40:23 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:40:23 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:40:23 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=63.0 required_resources=1.89 target_replicas=3
+2026-07-04 20:40:23 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2196.81 p99=11173.294452347083
+2026-07-04 20:40:38 [debug    ] GRU prediction received        confidence=0.84 latency_ms=41.07 predicted=63
+2026-07-04 20:40:38 [debug    ] Using GRU prediction           confidence=0.84 predicted=63
+2026-07-04 20:40:38 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=946 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:40:38 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=946 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.84 current_load=48.844826822746874 decision_id=b4742ce5 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=11173.3 predicted_load=63 r_effective=28.0 serverless_enabled=False total_load=63 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:40:38 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:40:38 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:40:39 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:40:39 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:40:40 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:40:40 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:40:40 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:40:40 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=63.0 required_resources=1.89 target_replicas=3
+2026-07-04 20:40:40 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2202.65 p99=11173.294452347083
+2026-07-04 20:40:55 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.02 predicted=64
+2026-07-04 20:40:55 [debug    ] Using GRU prediction           confidence=0.72 predicted=64
+2026-07-04 20:40:55 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=945 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:40:55 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=945 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=69.87570763044069 decision_id=741ad3e3 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=11173.3 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=69.9 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:40:55 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:40:55 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:40:56 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:40:56 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:40:57 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:40:57 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:40:57 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:40:57 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:40:57 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2195.72 p99=11173.294452347083
+2026-07-04 20:41:12 [debug    ] HAProxy fallback latency       delta_requests=737 interval_avg_ms=99354.63 max_rtime_ms=31198.0 p99_est=31198.0
+2026-07-04 20:41:12 [debug    ] GRU prediction received        confidence=0.72 latency_ms=38.55 predicted=63
+2026-07-04 20:41:12 [debug    ] Using GRU prediction           confidence=0.72 predicted=63
+2026-07-04 20:41:12 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=944 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:41:12 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=944 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=42.79922453046304 decision_id=bac3a758 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=31198.0 predicted_load=63 r_effective=28.0 serverless_enabled=False total_load=63 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:41:12 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:41:12 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:41:13 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:41:13 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:41:14 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:41:14 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:41:14 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:41:14 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=63.0 required_resources=1.89 target_replicas=3
+2026-07-04 20:41:14 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2189.24 p99=31198.0
+2026-07-04 20:41:29 [debug    ] HAProxy fallback latency       delta_requests=1006 interval_avg_ms=38369.78 max_rtime_ms=31198.0 p99_est=31198.0
+2026-07-04 20:41:29 [debug    ] GRU prediction received        confidence=0.72 latency_ms=40.59 predicted=64
+2026-07-04 20:41:29 [debug    ] Using GRU prediction           confidence=0.72 predicted=64
+2026-07-04 20:41:29 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=943 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:41:29 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=943 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=58.467763689716946 decision_id=d371bf9f k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=31198.0 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:41:29 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:41:29 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:41:30 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:41:30 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:41:31 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:41:31 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:41:31 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:41:31 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:41:31 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2182.43 p99=31198.0
+2026-07-04 20:41:46 [debug    ] GRU prediction received        confidence=0.74 latency_ms=39.71 predicted=65
+2026-07-04 20:41:46 [debug    ] Using GRU prediction           confidence=0.74 predicted=65
+2026-07-04 20:41:46 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=942 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:41:46 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=942 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.74 current_load=67.50858278424192 decision_id=8ed70b16 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=31198.0 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=67.5 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:41:46 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:41:46 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:41:47 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:41:47 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:41:48 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:41:48 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:41:48 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:41:49 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:41:49 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2198.3 p99=31198.0
+2026-07-04 20:42:04 [debug    ] HAProxy fallback latency       delta_requests=742 interval_avg_ms=118087.1 max_rtime_ms=31198.0 p99_est=31198.0
+2026-07-04 20:42:04 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.26 predicted=65
+2026-07-04 20:42:04 [debug    ] Using GRU prediction           confidence=0.72 predicted=65
+2026-07-04 20:42:04 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=941 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:42:04 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=941 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=43.14385859729089 decision_id=25f92560 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=31198.0 predicted_load=65 r_effective=28.0 serverless_enabled=False total_load=65 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:42:04 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:42:04 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:42:05 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:42:05 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:42:06 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:42:06 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:42:06 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:42:06 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.0 required_resources=1.95 target_replicas=3
+2026-07-04 20:42:06 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2189.75 p99=31198.0
+2026-07-04 20:42:21 [debug    ] HAProxy fallback latency       delta_requests=712 interval_avg_ms=36358.14 max_rtime_ms=31198.0 p99_est=31198.0
+2026-07-04 20:42:21 [debug    ] GRU prediction received        confidence=0.72 latency_ms=38.49 predicted=64
+2026-07-04 20:42:21 [debug    ] Using GRU prediction           confidence=0.72 predicted=64
+2026-07-04 20:42:21 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=940 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:42:21 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=940 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=41.419494104117156 decision_id=485cfb66 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=31198.0 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:42:21 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:42:21 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:42:22 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:42:22 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:42:23 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:42:23 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:42:23 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:42:23 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:42:23 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2192.64 p99=31198.0
+2026-07-04 20:42:38 [debug    ] HAProxy fallback latency       delta_requests=712 interval_avg_ms=15643.54 max_rtime_ms=31198.0 p99_est=31198.0
+2026-07-04 20:42:38 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.16 predicted=64
+2026-07-04 20:42:38 [debug    ] Using GRU prediction           confidence=0.72 predicted=64
+2026-07-04 20:42:38 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=939 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:42:38 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=939 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=41.413046073286814 decision_id=fd5d8379 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=31198.0 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:42:38 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:42:38 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:42:39 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:42:39 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:42:40 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:42:40 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:42:40 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:42:40 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:42:40 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2187.75 p99=31198.0
+2026-07-04 20:42:55 [debug    ] HAProxy fallback latency       delta_requests=725 interval_avg_ms=11604.8 max_rtime_ms=31198.0 p99_est=23209.61
+2026-07-04 20:42:55 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.46 predicted=64
+2026-07-04 20:42:55 [debug    ] Using GRU prediction           confidence=0.72 predicted=64
+2026-07-04 20:42:55 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=938 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:42:55 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=938 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=42.18125704920668 decision_id=89dada78 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=23209.6 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:42:55 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:42:55 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:42:56 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:42:56 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:42:57 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:42:57 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:42:57 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:42:57 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:42:57 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2194.18 p99=23209.60551724138
+2026-07-04 20:43:12 [debug    ] HAProxy fallback latency       delta_requests=720 interval_avg_ms=14428.29 max_rtime_ms=31198.0 p99_est=28856.58
+2026-07-04 20:43:12 [debug    ] GRU prediction received        confidence=0.89 latency_ms=39.8 predicted=64
+2026-07-04 20:43:12 [debug    ] Using GRU prediction           confidence=0.89 predicted=64
+2026-07-04 20:43:12 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=937 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:43:12 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=937 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=41.930649231449024 decision_id=ed9b5eb4 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=28856.6 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:43:12 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:43:12 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:43:13 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:43:13 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:43:14 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:43:14 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:43:14 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:43:14 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:43:14 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2193.27 p99=28856.583333333332
+2026-07-04 20:43:30 [debug    ] HAProxy fallback latency       delta_requests=719 interval_avg_ms=15739.96 max_rtime_ms=31198.0 p99_est=31198.0
+2026-07-04 20:43:30 [debug    ] GRU prediction received        confidence=0.89 latency_ms=41.05 predicted=64
+2026-07-04 20:43:30 [debug    ] Using GRU prediction           confidence=0.89 predicted=64
+2026-07-04 20:43:30 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=936 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:43:30 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=936 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.89 current_load=41.76085275439792 decision_id=7fe7054a k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=31198.0 predicted_load=64 r_effective=28.0 serverless_enabled=False total_load=64 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:43:30 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:43:30 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:43:31 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:43:31 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:43:32 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:43:32 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:43:32 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:43:32 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.0 required_resources=1.92 target_replicas=3
+2026-07-04 20:43:32 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2192.94 p99=31198.0
+2026-07-04 20:43:47 [debug    ] GRU prediction received        confidence=0.88 latency_ms=39.91 predicted=63
+2026-07-04 20:43:47 [debug    ] Using GRU prediction           confidence=0.88 predicted=63
+2026-07-04 20:43:47 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=935 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:43:47 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=935 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.88 current_load=39.14422608967476 decision_id=bebbc8ed k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=31198.0 predicted_load=63 r_effective=28.0 serverless_enabled=False total_load=63 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:43:47 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:43:47 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:43:48 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:43:48 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:43:49 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:43:49 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:43:49 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:43:49 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=63.0 required_resources=1.89 target_replicas=3
+2026-07-04 20:43:49 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2185.22 p99=31198.0
+2026-07-04 20:44:04 [debug    ] GRU prediction received        confidence=0.86 latency_ms=40.25 predicted=63
+2026-07-04 20:44:04 [debug    ] Using GRU prediction           confidence=0.86 predicted=63
+2026-07-04 20:44:04 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=934 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:44:04 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=934 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.86 current_load=38.34590119986253 decision_id=1ad632b4 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=31198.0 predicted_load=63 r_effective=28.0 serverless_enabled=False total_load=63 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:44:04 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:44:04 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:44:05 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:44:05 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:44:06 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:44:06 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:44:06 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:44:06 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=63.0 required_resources=1.89 target_replicas=3
+2026-07-04 20:44:06 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2194.18 p99=31198.0
+2026-07-04 20:44:21 [debug    ] GRU prediction received        confidence=0.87 latency_ms=39.2 predicted=63
+2026-07-04 20:44:21 [debug    ] Using GRU prediction           confidence=0.87 predicted=63
+2026-07-04 20:44:21 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=933 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:44:21 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=933 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.87 current_load=40.07130192639508 decision_id=c8ec5ad6 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=31198.0 predicted_load=63 r_effective=28.0 serverless_enabled=False total_load=63 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:44:21 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:44:21 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:44:22 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:44:22 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:44:23 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:44:23 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:44:23 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:44:23 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=63.0 required_resources=1.89 target_replicas=3
+2026-07-04 20:44:23 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2189.8 p99=31198.0
+2026-07-04 20:44:38 [debug    ] GRU prediction received        confidence=0.87 latency_ms=39.2 predicted=63
+2026-07-04 20:44:38 [debug    ] Using GRU prediction           confidence=0.87 predicted=63
+2026-07-04 20:44:38 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=932 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:44:38 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=932 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.87 current_load=41.76891076303419 decision_id=8f000041 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=31198.0 predicted_load=63 r_effective=28.0 serverless_enabled=False total_load=63 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:44:38 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:44:38 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:44:39 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:44:39 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:44:40 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:44:40 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:44:40 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:44:40 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=63.0 required_resources=1.89 target_replicas=3
+2026-07-04 20:44:40 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2194.44 p99=31198.0
+2026-07-04 20:44:55 [debug    ] HAProxy fallback latency       delta_requests=772 interval_avg_ms=15367.13 max_rtime_ms=31198.0 p99_est=30734.27
+2026-07-04 20:44:56 [debug    ] GRU prediction received        confidence=0.85 latency_ms=40.06 predicted=63
+2026-07-04 20:44:56 [debug    ] Using GRU prediction           confidence=0.85 predicted=63
+2026-07-04 20:44:56 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=931 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:44:56 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=931 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.85 current_load=44.89797585450428 decision_id=66781e91 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=30734.3 predicted_load=63 r_effective=28.0 serverless_enabled=False total_load=63 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:44:56 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:44:56 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:44:57 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:44:57 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:44:58 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:44:58 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:44:58 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:44:58 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=63.0 required_resources=1.89 target_replicas=3
+2026-07-04 20:44:58 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2186.71 p99=30734.269430051812
+2026-07-04 20:45:13 [debug    ] HAProxy fallback latency       delta_requests=789 interval_avg_ms=141123.93 max_rtime_ms=31198.0 p99_est=31198.0
+2026-07-04 20:45:13 [debug    ] GRU prediction received        confidence=0.84 latency_ms=39.9 predicted=63
+2026-07-04 20:45:13 [debug    ] Using GRU prediction           confidence=0.84 predicted=63
+2026-07-04 20:45:13 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=930 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:45:13 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=930 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.84 current_load=46.02347232911273 decision_id=c3093d02 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=31198.0 predicted_load=63 r_effective=28.0 serverless_enabled=False total_load=63 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:45:13 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:45:13 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:45:14 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:45:14 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:45:15 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:45:15 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:45:15 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:45:15 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=63.0 required_resources=1.89 target_replicas=3
+2026-07-04 20:45:15 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2186.08 p99=31198.0
+2026-07-04 20:45:30 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.9 predicted=60
+2026-07-04 20:45:30 [debug    ] Using GRU prediction           confidence=0.72 predicted=60
+2026-07-04 20:45:30 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=929 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:45:30 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=929 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=0 decision_id=6a879bc5 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=31198.0 predicted_load=60 r_effective=28.0 serverless_enabled=False total_load=60 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:45:30 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:45:30 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:45:31 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:45:31 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:45:32 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:45:32 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:45:32 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:45:32 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=60.0 required_resources=1.8 target_replicas=3
+2026-07-04 20:45:32 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2193.37 p99=31198.0
+2026-07-04 20:45:47 [debug    ] GRU prediction received        confidence=0.72 latency_ms=39.51 predicted=59
+2026-07-04 20:45:47 [debug    ] Using GRU prediction           confidence=0.72 predicted=59
+2026-07-04 20:45:47 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=928 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:45:47 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=928 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=0 decision_id=1fdc1c08 k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=31198.0 predicted_load=59 r_effective=28.0 serverless_enabled=False total_load=59 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:45:47 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:45:47 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:45:48 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:45:48 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:45:49 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:45:49 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:45:49 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:45:49 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=59.0 required_resources=1.77 target_replicas=3
+2026-07-04 20:45:49 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2195.48 p99=31198.0
+2026-07-04 20:46:04 [debug    ] GRU prediction received        confidence=0.72 latency_ms=40.32 predicted=58
+2026-07-04 20:46:04 [debug    ] Using GRU prediction           confidence=0.72 predicted=58
+2026-07-04 20:46:04 [debug    ] burn_rate_adjustment           actual_burn=0.06 adjustment=-7 allowed_burn=0.83 budget_remaining=927 burn_error=-0.932 burn_ratio=0.068
+2026-07-04 20:46:04 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=927 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.72 current_load=0 decision_id=52bd500d k8s_capacity=84.0 k8s_weight=100 knative_weight=0 p99=31198.0 predicted_load=58 r_effective=28.0 serverless_enabled=False total_load=58 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-04 20:46:04 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:46:04 [warning  ] Retrying weight adjustment     attempt=1 max_retries=3
+2026-07-04 20:46:05 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:46:05 [warning  ] Retrying weight adjustment     attempt=2 max_retries=3
+2026-07-04 20:46:06 [error    ] Failed to set weights          k3s_response= knative_response=
+2026-07-04 20:46:06 [error    ] Failed to set weights after retries k3s=100 knative=0 max_retries=3
+2026-07-04 20:46:06 [error    ] Failed to apply weight update  weights={'k3s': 100, 'knative': 0}
+2026-07-04 20:46:06 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.03 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=58.0 required_resources=1.74 target_replicas=3
+2026-07-04 20:46:06 [debug    ] Decision loop completed        action=RECOVERY latency_ms=2191.45 p99=31198.0
+2026-07-04 20:46:20 [info     ] Received shutdown signal
+2026-07-04 20:46:20 [info     ] Stopping routing daemon...
+2026-07-04 20:46:20 [info     ] Routing daemon stopped
