@@ -18,10 +18,11 @@ This is a **completed** Master's thesis research project implementing a hybrid k
 |-----------|---------|------|
 | `libs/shared/` | **Foundation package** — Pydantic models, config, scenarios, protocols, storage | Never import from `apps/`. Every other package depends on this. |
 | `libs/infra/` | **Infrastructure clients** — K8sScaler, K3dAutoscaler, Prometheus client, HAProxy adapter | Shared by routing and experiment packages |
+| `libs/analysis/` | **Domain analysis library** — data loaders, pairwise comparison, cold-start decomposition, cost model, report gen | Depends on `shared` only. Consumed by `apps/analysis`, `apps/experiment`, `apps/dashboard`. |
 | `apps/prediction/` | **GRU prediction service** — FastAPI server, model loader, training | Deployable service (port 8090) |
 | `apps/routing/` | **Routing daemon** — V1/V2/V3 controllers (Algorithm 1), Algorithm 2 (ClusterController), daemon, SLO monitor, weight adjuster | Deployable service (port 9104) |
-| `apps/experiment/` | **Experiment orchestration** — pipeline stages, CLI, NodeProvisioner, cost analyzer | CLI tool for running experiments |
-| `apps/scripts/` | **Analysis tools** — cost analyzer, statistical analysis | CLI tools for post-experiment analysis |
+| `apps/experiment/` | **Experiment orchestration** — pipeline stages, CLI, calibration, dynamic, trace-replay, realtime validation | CLI tool for running experiments |
+| `apps/analysis/` | **Analysis CLI** — post-hoc statistics, cost model, cold-start, plots, hypothesis validation | Typer sub-app (`thesis analysis <cmd>`); thin orchestration over `libs/analysis` |
 | `results/` | **Single source of truth for ALL experiment evidence** | If it's experiment output, it lives here |
 | `thesis/` | **Narrative only** — thesis text, protocol, appendices | Links INTO `results/` for evidence |
 | `data/` | Datasets (ClarkNet, Calgary traces, synthetic) | Large files tracked via `.gitattributes` |
@@ -43,9 +44,13 @@ libs/shared              (models, protocols, config, scenarios, storage)
   │     ↑
   │     ├── apps/prediction   (GRU server, FastAPI port 8090)
   │     ├── apps/routing      (V1/V2/V3 controllers, Algorithm 2, daemon port 9104)
-  │     └── apps/experiment   (pipeline stages, CLI, NodeProvisioner, cost analyzer)
+  │     └── apps/experiment   (pipeline stages, CLI, calibration, dynamic, trace-replay)
   │
-  └── apps/scripts        (cost analyzer, analysis — depends on shared, experiment)
+  └── libs/analysis          (data loaders, comparison, cold-start, cost, report — depends on shared)
+        ↑
+        ├── apps/analysis    (Typer CLI: thesis analysis <cmd> — post-hoc statistics + plots)
+        ├── apps/experiment  (analyze stage delegates to shared.stats + libs/analysis)
+        └── apps/dashboard   (panels import constants from shared.scenarios)
 ```
 
 No circular dependencies. `libs/` never imports from `apps/`.
@@ -96,9 +101,9 @@ uv run thesis-experiment             # Experiment runner
 uv run thesis-experiment run --controller v3 --runs 5 \
   --scenarios s1-k8s-only,s2-serverless-only,s3-hybrid-reactive,s4-hybrid-predictive
 
-# Cost analysis
-uv run python apps/scripts/scripts/cost_analyzer.py \
-  --experiment-dir results/experiments/phase-b/<experiment-folder>
+# Cost analysis (post-hoc, on experiment results)
+uv run thesis analysis cost --experiment-dir results/experiments/phase-b/<experiment-folder>
+uv run thesis analysis reanalyze --results-dir results/experiments/phase-b/<experiment-folder>
 ```
 
 ---
