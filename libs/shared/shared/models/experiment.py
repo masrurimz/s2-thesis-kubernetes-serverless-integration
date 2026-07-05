@@ -140,15 +140,24 @@ class BatchManifest(BaseModel):
 
 
 class StatisticalComparison(BaseModel):
-    """Statistical comparison between two scenarios."""
+    """Statistical comparison between two scenarios.
+
+    The ``label`` and ``welch_p_corrected`` / ``mannwhitney_p_corrected`` fields
+    are populated after Holm-Bonferroni correction across a comparison family.
+    Their defaults (``1.0``) read as "not significant" so an uncorrected
+    comparison is safe to test with ``< 0.05``.
+    """
 
     baseline_scenario: str
     comparison_scenario: str
     metric: str
+    label: str = ""
     baseline_mean: float
     comparison_mean: float
     difference: float
     percent_change: float
+    baseline_std: float = 0.0
+    comparison_std: float = 0.0
     welch_t_stat: float
     welch_p_value: float
     mannwhitney_u_stat: float
@@ -159,6 +168,9 @@ class StatisticalComparison(BaseModel):
     effect_size_interpretation: str
     n_baseline: int
     n_comparison: int
+    # Holm-Bonferroni corrected p-values (populated after family-wise correction)
+    welch_p_corrected: float = 1.0
+    mannwhitney_p_corrected: float = 1.0
 
 
 class ExperimentConfig(BaseModel):
