@@ -13,7 +13,10 @@ from datetime import datetime, timedelta
 
 from prediction.training.baselines.naive import NaivePredictor, SeasonalNaivePredictor
 from prediction.training.baselines.moving_avg import MovingAveragePredictor, ExponentialMovingAveragePredictor
-TrafficPredictor: type | None = None  # archived module prediction_engine.linear_model — comparison will skip LR if unavailable
+
+TrafficPredictor: type | None = (
+    None  # archived module prediction_engine.linear_model — comparison will skip LR if unavailable
+)
 
 
 def generate_synthetic_data(duration_hours: int = 24, base_rps: float = 100, noise_std: float = 10) -> pd.DataFrame:

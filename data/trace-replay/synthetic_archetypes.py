@@ -26,14 +26,14 @@ def spike() -> list[dict]:
 
     Tests reactive vs predictive burst handling.
     """
-    targets = [40] * 5          # 0-2.5min: baseline
-    targets += [80] * 2         # 2.5-3.5min: ramp up
-    targets += [200] * 4        # 3.5-5.5min: SPIKE (2x K8s capacity)
-    targets += [80] * 2         # 5.5-6.5min: ramp down
-    targets += [40] * 5         # 6.5-9min: recovery baseline
-    targets += [50] * 5         # 9-11.5min: moderate load
-    targets += [60] * 4         # 11.5-13.5min: gentle increase
-    targets += [40] * 13        # 13.5-20min: return to baseline
+    targets = [40] * 5  # 0-2.5min: baseline
+    targets += [80] * 2  # 2.5-3.5min: ramp up
+    targets += [200] * 4  # 3.5-5.5min: SPIKE (2x K8s capacity)
+    targets += [80] * 2  # 5.5-6.5min: ramp down
+    targets += [40] * 5  # 6.5-9min: recovery baseline
+    targets += [50] * 5  # 9-11.5min: moderate load
+    targets += [60] * 4  # 11.5-13.5min: gentle increase
+    targets += [40] * 13  # 13.5-20min: return to baseline
     return make_stages(targets[:NUM_STAGES])
 
 
@@ -86,9 +86,11 @@ def main() -> int:
             json.dump(stages, f, indent=2)
 
         rps_values = [s["target"] for s in stages]
-        print(f"  {name:12s}: {len(stages)} stages, "
-              f"RPS {min(rps_values)}-{max(rps_values)}, "
-              f"mean {sum(rps_values)/len(rps_values):.0f}")
+        print(
+            f"  {name:12s}: {len(stages)} stages, "
+            f"RPS {min(rps_values)}-{max(rps_values)}, "
+            f"mean {sum(rps_values) / len(rps_values):.0f}"
+        )
     print(f"\nGenerated {len(ARCHETYPES)} archetype files in {OUTPUT_DIR}")
     return 0
 

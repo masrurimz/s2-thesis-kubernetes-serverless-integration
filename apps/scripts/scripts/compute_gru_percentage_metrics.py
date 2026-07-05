@@ -18,7 +18,6 @@ from pathlib import Path
 # Add controller to path
 
 
-
 def load_training_metrics():
     """Load metrics from training report."""
     # From report.md:

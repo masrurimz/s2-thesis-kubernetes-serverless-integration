@@ -28,7 +28,6 @@ from typing import Dict, List, Optional
 import statistics
 
 
-
 import requests
 import structlog
 

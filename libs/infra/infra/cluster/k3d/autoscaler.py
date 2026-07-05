@@ -219,18 +219,14 @@ class K3dAutoscaler:
             timeout=180,
         )
         if drain.returncode != 0:
-            if "not found" not in (drain.stderr or "").lower() and "not found" not in (
-                drain.stdout or ""
-            ).lower():
+            if "not found" not in (drain.stderr or "").lower() and "not found" not in (drain.stdout or "").lower():
                 ok = False
                 logger.warning("node_drain_failed", node=k8s_node_name, stderr=drain.stderr.strip())
                 self._record_event("node_drain_failed", {"node": k8s_node_name, "stderr": drain.stderr.strip()})
 
         delete = self._k3d(["node", "delete", k8s_node_name], timeout=300)
         if delete.returncode != 0:
-            if "not found" not in (delete.stderr or "").lower() and "not found" not in (
-                delete.stdout or ""
-            ).lower():
+            if "not found" not in (delete.stderr or "").lower() and "not found" not in (delete.stdout or "").lower():
                 ok = False
                 logger.error("k3d_node_delete_failed", node=k8s_node_name, stderr=delete.stderr.strip())
                 self._record_event("node_delete_failed", {"node": k8s_node_name, "stderr": delete.stderr.strip()})

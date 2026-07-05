@@ -81,6 +81,24 @@ HSA_OVERRIDE_GFX_VERSION=11.0.0 \
 
 ---
 
+## Code Quality — Mandatory
+
+Every change MUST pass `ruff` and `ty` before it is considered done. Config lives in `pyproject.toml` (`[tool.ruff]` — target py312, line-length 120, excludes `archived/.venv/results`). Run from repo root:
+
+```bash
+uv run ruff check            # lint — MUST be 0 errors
+uv run ruff format           # format in place
+uv run ruff format --check   # CI / hook verification
+uv run ty check              # type-check — do not add NEW errors
+```
+
+* Baseline: `ruff check` is clean; `ty check` reports ~80 pre-existing diagnostics, almost all in `archived/` legacy code. Do not regress `ty`'s count; fix any `ty` error in code you touch.
+* Enforcement: a `prek` git hook (`.pre-commit-config.yaml`) runs `ruff check` and `ruff format --check` automatically on commit. Install once after cloning: `uv run prek install`.
+* `ty check` is wired as a **manual-stage** hook — it does NOT block commits (the `archived/` diagnostics otherwise would). Run it manually for type-sensitive changes: `uv run prek run --hook-stage manual ty-check`.
+* `prek` is a Rust drop-in for `pre-commit`, added as a dev dependency; `uv sync` installs it. Docs: https://prek.j178.dev
+
+---
+
 ## Storage Format Strategy
 
 | Data type | Format | Why |
@@ -135,21 +153,21 @@ results/experiments/<phase>/<YYYY-MM-DD_slug>/
 
 ---
 
+## References & Cited Papers — Archive Rule
+
+Every paper, dataset, or external work cited or relied upon MUST be archived locally so it is reusable and traceable — link rot is not an excuse for a missing source.
+
+* **Location**: `docs/references/` (PDF is the canonical archive format).
+* **Naming**: `<slug>-<short-title>-<year>.pdf` — lowercase, hyphenated, year-suffixed. Example: `aapa-archetype-aware-predictive-autoscaler-2025.pdf`.
+* **Manifest**: every archived paper gets a row in `docs/references/REFERENCES.md` with columns `Paper | File | arxiv/DOI | Key Insight`. No PDF lands in the folder without a manifest row; no manifest row without its PDF.
+* **Binary storage**: ALL PDFs under `docs/references/` are tracked via **Git LFS** (rule lives in `.gitattributes`). Run `git lfs install` once per clone. Do not commit a PDF > 100 MB without LFS.
+* If a paper is only available behind a paywall, archive the arXiv preprint and record the published DOI in the manifest.
+
+---
+
 ## Hardware Constraints
 
 - **Full Development**: 8+ cores, 32GB RAM
 - **AMD GPU**: Set `HSA_OVERRIDE_GFX_VERSION=11.0.0` for ROCm
 - **Python**: 3.12 (pinned across all workspace members)
 
----
-
-## Issue Tracking
-
-This project uses **bd (beads)** for issue tracking.
-
-```bash
-bd prime          # Workflow context
-bd ready          # Find unblocked work
-bd create "Title" --type task --priority 2
-bd close <id>
-```

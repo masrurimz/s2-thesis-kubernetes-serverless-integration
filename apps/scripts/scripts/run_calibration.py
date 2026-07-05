@@ -27,8 +27,6 @@ import structlog
 logger = structlog.get_logger(__name__)
 
 
-
-
 @dataclass
 class CalibrationResult:
     """Result from a calibration run."""
