@@ -70,11 +70,21 @@ def stationary() -> list[dict]:
     return make_stages([120] * NUM_STAGES)
 
 
+def high_load() -> list[dict]:
+    """Constant 200 RPS — well into serverless-expensive zone.
+
+    At 200 RPS, Lambda needs ~26 PC instances (200×0.126s=25.2).
+    PC capacity alone costs ~$112/mo. Total serverless ~$280/mo vs EC2 ~$195/mo.
+    """
+    return make_stages([200] * NUM_STAGES)
+
+
 ARCHETYPES = {
     "spike": spike,
     "periodic": periodic,
     "ramp": ramp,
     "stationary": stationary,
+    "high_load": high_load,
 }
 
 

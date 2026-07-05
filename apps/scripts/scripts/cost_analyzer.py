@@ -88,6 +88,21 @@ LAMBDA_REQUEST_RATE = 0.20  # $/1M requests
 # EC2 reference node
 EC2_T3_MEDIUM_RATE = 0.0416  # $/hour (2 vCPU, 4 GiB)
 
+# === GCP Cloud Run (us-central1, 2025) ===
+GCP_REQUEST_RATE = 0.40  # $/1M requests
+GCP_VCPU_SEC_RATE = 0.000024  # $/vCPU-second
+GCP_MEM_GB_SEC_RATE = 0.0000025  # $/GB-second (memory)
+GCP_FREE_REQUESTS = 2_000_000  # per month free tier
+GCP_FREE_VCPU_SEC = 360_000  # per month
+GCP_FREE_GB_SEC = 180_000  # per month
+
+# === Cloudflare Workers (Paid plan, 2025) ===
+CF_BASE_FEE = 5.00  # $/month base subscription
+CF_REQUEST_RATE = 0.30  # $/1M requests (after 10M free)
+CF_FREE_REQUESTS = 10_000_000  # per month
+CF_CPU_MS_RATE = 0.02  # $/1M CPU-ms (after 30M free)
+CF_FREE_CPU_MS = 30_000_000  # per month
+
 
 # ---------------------------------------------------------------------------
 # Data classes
@@ -380,22 +395,40 @@ def analyze_from_experiment(metrics: ScenarioMetrics) -> Dict[str, Any]:
     ec2_compute = production_nodes * duration_hours * cloud_node["rate"] if production_nodes > 0 else 0.0
 
     # === LAMBDA PROVISIONED CONCURRENCY (serverless demand only) ===
+    lambda_capacity = 0.0
+    lambda_execution = 0.0
+    lambda_requests = 0.0
+    lambda_overflow = 0.0
+    data_transfer_cost = 0.0
+
     if has_serverless and metrics.lambda_pc_instances > 0:
-        # Capacity: keep PC instances warm for the full duration
-        pc_gb_seconds = metrics.lambda_pc_instances * LAMBDA_MEM_GB * metrics.duration_sec
+        # PC capacity: AWS bills in 5-minute blocks
+        pc_billable_sec = math.ceil(metrics.duration_sec / 300) * 300
+        pc_gb_seconds = metrics.lambda_pc_instances * LAMBDA_MEM_GB * pc_billable_sec
         lambda_capacity = pc_gb_seconds * LAMBDA_PC_RATE
 
-        # Execution: each serverless request billed at exec_time × memory
+        # PC execution: each serverless request billed at exec_time × memory
         exec_gb_seconds = serverless_requests * LAMBDA_MEM_GB * metrics.lambda_exec_time_sec
         lambda_execution = exec_gb_seconds * LAMBDA_PC_EXEC_RATE
 
         lambda_requests = serverless_requests / 1_000_000 * LAMBDA_REQUEST_RATE
-    else:
-        lambda_capacity = 0.0
-        lambda_execution = 0.0
-        lambda_requests = 0.0
 
-    lambda_total = lambda_capacity + lambda_execution + lambda_requests
+        # On-demand overflow: traffic above PC capacity bills at 1.7× rate
+        pc_capacity_rps = (
+            metrics.lambda_pc_instances / metrics.lambda_exec_time_sec if metrics.lambda_exec_time_sec > 0 else 0
+        )
+        overflow_rps = max(0, serverless_rps - pc_capacity_rps)
+        overflow_requests = int(overflow_rps * metrics.duration_sec)
+        if overflow_requests > 0:
+            overflow_gb_seconds = overflow_requests * LAMBDA_MEM_GB * metrics.lambda_exec_time_sec
+            lambda_overflow = overflow_gb_seconds * LAMBDA_ONDEMAND_RATE
+
+        # Data transfer: Lambda egress to internet at $0.09/GB
+        avg_response_bytes = 1024  # ~1KB JSON for fib(34)
+        data_transfer_gb = (serverless_requests * avg_response_bytes) / (1024**3)
+        data_transfer_cost = data_transfer_gb * 0.09
+
+    lambda_total = lambda_capacity + lambda_execution + lambda_requests + lambda_overflow + data_transfer_cost
     aws_total = eks_control_plane + ec2_compute + lambda_total
 
     # === STRESS-HARNESS EC2 (appendix reference only) ===
@@ -454,6 +487,8 @@ def analyze_from_experiment(metrics: ScenarioMetrics) -> Dict[str, Any]:
             "lambda_capacity": round(lambda_capacity, 6),
             "lambda_execution": round(lambda_execution, 6),
             "lambda_requests": round(lambda_requests, 6),
+            "lambda_overflow": round(lambda_overflow, 6),
+            "data_transfer": round(data_transfer_cost, 6),
             "total": round(aws_total, 6),
         },
         "stress_harness_ec2": {
@@ -581,6 +616,50 @@ def run_experiment_analysis(experiment_dir: Path) -> int:
         print(f"  {'AWS Total':<28}", end="")
         for r in results:
             print(f" ${r['aws_cost']['total'] * scale:>13.0f}", end="")
+        print()
+
+        # Multi-cloud serverless projection (for serverless traffic only)
+        print("\n--- Multi-Cloud Serverless Monthly Projection ---")
+        print(f"  {'AWS Lambda':<28}", end="")
+        for r in results:
+            lambda_monthly = r["aws_cost"]["lambda_capacity"] + r["aws_cost"]["lambda_execution"]
+            lambda_monthly += r["aws_cost"].get("lambda_requests", 0)
+            lambda_monthly += r["aws_cost"].get("lambda_overflow", 0)
+            lambda_monthly += r["aws_cost"].get("data_transfer", 0)
+            print(f" ${lambda_monthly * scale:>13.0f}", end="")
+        print()
+
+        print(f"  {'GCP Cloud Run':<28}", end="")
+        for r in results:
+            rps = r["rps"]
+            exec_sec = r["lambda_exec_time_ms"] / 1000
+            cpu_per_req = r["cpu_per_request_ms"] / 1000
+            mem_gb = LAMBDA_MEM_GB
+            monthly_req = rps * 730 * 3600
+            billable_req = max(0, monthly_req - GCP_FREE_REQUESTS)
+            vcpu_sec = monthly_req * cpu_per_req
+            gb_sec = monthly_req * mem_gb * exec_sec
+            gcp_cost = (
+                billable_req / 1e6 * GCP_REQUEST_RATE
+                + max(0, vcpu_sec - GCP_FREE_VCPU_SEC) * GCP_VCPU_SEC_RATE
+                + max(0, gb_sec - GCP_FREE_GB_SEC) * GCP_MEM_GB_SEC_RATE
+            )
+            print(f" ${gcp_cost:>13.0f}", end="")
+        print()
+
+        print(f"  {'Cloudflare Workers':<28}", end="")
+        for r in results:
+            rps = r["rps"]
+            cpu_ms_per_req = r["cpu_per_request_ms"]
+            monthly_req = rps * 730 * 3600
+            billable_req = max(0, monthly_req - CF_FREE_REQUESTS)
+            total_cpu_ms = monthly_req * cpu_ms_per_req
+            cf_cost = (
+                CF_BASE_FEE
+                + billable_req / 1e6 * CF_REQUEST_RATE
+                + max(0, total_cpu_ms - CF_FREE_CPU_MS) / 1e6 * CF_CPU_MS_RATE
+            )
+            print(f" ${cf_cost:>13.0f}", end="")
         print()
 
     # Stress-harness reference
