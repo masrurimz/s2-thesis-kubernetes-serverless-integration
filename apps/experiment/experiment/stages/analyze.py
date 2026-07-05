@@ -7,7 +7,6 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 import structlog
-from scipy import stats as scipy_stats
 
 from shared.models.experiment import ExperimentResult, StatisticalComparison
 from shared.models.pipeline import PipelineContext
@@ -90,36 +89,21 @@ class AnalyzeStage(BaseStage):
         if not baseline_vals or not comp_vals:
             raise ValueError(f"Insufficient data for {baseline} vs {comparison} on {metric}")
 
-        # Welch's t-test
-        t_stat, t_p = scipy_stats.ttest_ind(comp_vals, baseline_vals, equal_var=False)
+        # Welch's t-test + Mann-Whitney U + bootstrap CI + Cohen's d — delegated
+        # to shared.stats (single source of truth, shared with libs/analysis).
+        from shared.stats import (
+            bootstrap_ci_diff,
+            cohens_d,
+            effect_size_label,
+            mann_whitney_u,
+            welch_ttest,
+        )
 
-        # Mann-Whitney U
-        try:
-            u_stat, u_p = scipy_stats.mannwhitneyu(comp_vals, baseline_vals, alternative="two-sided")
-        except ValueError:
-            u_stat, u_p = 0.0, 1.0
-
-        # Bootstrap 95% CI (10000 resamples)
-        diffs = []
-        rng = np.random.default_rng(seed=42)
-        for _ in range(10000):
-            bs = rng.choice(baseline_vals, size=len(baseline_vals), replace=True)
-            cs = rng.choice(comp_vals, size=len(comp_vals), replace=True)
-            diffs.append(np.mean(cs) - np.mean(bs))
-        ci_lo, ci_hi = np.percentile(diffs, [2.5, 97.5])
-
-        # Cohen's d
-        pooled_std = np.sqrt((np.std(baseline_vals, ddof=1) ** 2 + np.std(comp_vals, ddof=1) ** 2) / 2)
-        d = (np.mean(comp_vals) - np.mean(baseline_vals)) / pooled_std if pooled_std > 0 else 0.0
-
-        if abs(d) < 0.2:
-            interp = "negligible"
-        elif abs(d) < 0.5:
-            interp = "small"
-        elif abs(d) < 0.8:
-            interp = "medium"
-        else:
-            interp = "large"
+        t_stat, t_p = welch_ttest(baseline_vals, comp_vals)
+        u_stat, u_p = mann_whitney_u(baseline_vals, comp_vals)
+        ci_lo, ci_hi = bootstrap_ci_diff(baseline_vals, comp_vals)
+        d = cohens_d(baseline_vals, comp_vals)
+        interp = effect_size_label(d)
 
         base_mean = float(np.mean(baseline_vals))
         comp_mean = float(np.mean(comp_vals))

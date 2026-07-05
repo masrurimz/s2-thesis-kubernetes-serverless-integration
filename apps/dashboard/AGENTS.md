@@ -36,7 +36,7 @@ exposure, firewall port 28555 to the `tailscale0` interface.
 | `loader.py` | Artifact scanner (`scan_experiments`) + per-run JSON loaders (`load_result`/`load_prom`/…). NaN/Inf sanitized. Cached via `functools.lru_cache`. |
 | `parser.py` | `parse_daemon_log` — regex extraction of routing/scaling/GRU/HAProxy/weight-change events. Fail-soft. |
 | `normalize.py` | Time alignment (`run_t_start`, `prom_to_long`, `resource_to_agg`, `daemon_to_df`, `provision_to_df`). All series share `t_rel_sec`. |
-| `panels.py` | 8 `render_panelN` functions + `RunData` dataclass. Constants copied from `apps/scripts/scripts/generate_plots.py` (no cross-package import). |
+| `panels.py` | 8 `render_panelN` functions + `RunData` dataclass. Constants imported from `shared.scenarios` (single source of truth). |
 | `app.py` | Streamlit entrypoint (`main()`). Sidebar selectors + 8 tabs. |
 | `cli.py` | Typer sub-app; `start` shells out to `streamlit run`. |
 

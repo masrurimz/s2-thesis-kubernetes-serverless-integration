@@ -3,11 +3,8 @@
 Each ``render_panelN(st, ctx)`` writes Streamlit elements for one tab. They
 share a :class:`RunData` dataclass (built by ``app.py``) holding all loaded +
 normalized frames for the active run.
-
-Constants (SCENARIO_*, SLO_THRESHOLD_MS) are copied verbatim from
-``apps/scripts/scripts/generate_plots.py`` rather than imported, because
-scripts are intentionally standalone (no cross-package imports, per
-``apps/scripts/AGENTS.md``).
+Constants (SCENARIO_*, SLO_THRESHOLD_MS) are imported from ``shared.scenarios``
+— the single source of truth shared with ``apps/analysis`` and ``apps/experiment``.
 """
 
 from __future__ import annotations
@@ -17,28 +14,13 @@ from dataclasses import dataclass, field
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from shared.scenarios import SCENARIO_LABELS, SLO_THRESHOLD_MS
 
-# --- constants copied from apps/scripts/scripts/generate_plots.py:33-47 ------
-
-SCENARIO_LABELS = {
-    "s1-k8s-only": "S1: K8s Only",
-    "s2-serverless-only": "S2: Serverless Only",
-    "s3-hybrid-reactive": "S3: Hybrid Reactive",
-    "s4-hybrid-predictive": "S4: Hybrid Predictive",
-}
-SCENARIO_COLORS = {
-    "s1-k8s-only": "#4C72B0",
-    "s2-serverless-only": "#DD8452",
-    "s3-hybrid-reactive": "#55A868",
-    "s4-hybrid-predictive": "#C44E52",
-}
-SCENARIO_ORDER = ["s1-k8s-only", "s2-serverless-only", "s3-hybrid-reactive", "s4-hybrid-predictive"]
-SLO_THRESHOLD_MS = 200.0
+# Provision event colors for Panel 4 annotations (dashboard-specific, not shared).
 
 # Provision event colors for Panel 4 annotations.
 PROVISION_COLORS = {
     "autoscaler_started": "#4C72B0",  # blue
-    "pending_detected": "#FFB000",  # amber
     "provision_delay_started": "#E06600",  # orange
     "node_created": "#55A868",  # green
 }

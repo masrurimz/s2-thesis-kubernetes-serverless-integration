@@ -79,3 +79,28 @@ def scenario_from_string(value: str) -> Scenario:
         if s.value == value:
             return s
     raise ValueError(f"Unknown scenario: {value}. Valid: {[s.value for s in Scenario]}")
+
+
+# ---------------------------------------------------------------------------
+# Display constants — single source of truth for labels, colors, ordering.
+# Consumed by apps/dashboard (panels), apps/analysis (CLI plots), apps/experiment.
+# Canonical format is "S1: K8s Only" (colon style); do not use the parenthesized
+# "S1 (K8s-Only)" variant that appeared in older analysis scripts.
+# ---------------------------------------------------------------------------
+SCENARIO_ORDER: list[str] = [s.value for s in Scenario]
+
+SCENARIO_LABELS: dict[str, str] = {
+    "s1-k8s-only": "S1: K8s Only",
+    "s2-serverless-only": "S2: Serverless Only",
+    "s3-hybrid-reactive": "S3: Hybrid Reactive",
+    "s4-hybrid-predictive": "S4: Hybrid Predictive",
+}
+
+SCENARIO_COLORS: dict[str, str] = {
+    "s1-k8s-only": "#4C72B0",
+    "s2-serverless-only": "#DD8452",
+    "s3-hybrid-reactive": "#55A868",
+    "s4-hybrid-predictive": "#C44E52",
+}
+
+SLO_THRESHOLD_MS: float = 200.0
