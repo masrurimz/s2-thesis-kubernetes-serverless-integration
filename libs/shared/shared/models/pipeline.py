@@ -31,6 +31,12 @@ class WorkloadResult(BaseModel):
     p99_latency_ms: float = 0.0
     error_rate: float = 0.0
     throughput_rps: float = 0.0
+    app_duration_avg_ms: float = 0.0
+    app_duration_p50_ms: float = 0.0
+    app_duration_p95_ms: float = 0.0
+    app_duration_serverless_avg_ms: float = 0.0
+    app_duration_serverless_p95_ms: float = 0.0
+    app_duration_k8s_avg_ms: float = 0.0
 
 
 class PipelineContext(BaseModel):
