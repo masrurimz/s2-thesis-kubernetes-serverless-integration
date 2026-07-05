@@ -1,14 +1,14 @@
 # Phase B: Replicated Comparison Results
 
-**Date:** 2026-07-05T15:12:19.421985
-**Git:** a5d8b17
+**Date:** 2026-07-05T16:22:54.094102
+**Git:** 3b01a76
 **Runs:** 1 clean, 0 excluded
 
 ## Per-Scenario Summary
 
 | Scenario | n | p50 (ms) | p95 (ms) | p99 (ms) | Error% | RPS | SLO Violations | Scale-Up | Scale-Down |
 |----------|---|----------|----------|----------|--------|-----|----------------|----------|------------|
-| s1-k8s-only | 1 | 8490.7 | 21612.8 | 21612.8 | 0.000 | 39.0 | 0 | 0 | 0 |
+| s1-k8s-only | 1 | 5499.2 | 28747.9 | 28747.9 | 0.000 | 37.9 | 0 | 0 | 0 |
 
 ## Run Validity Gates
 
@@ -20,7 +20,7 @@
 
 | Scenario | Stress-Valid / Run-Valid | Dynamic Nodes (sum) | Cross-node Runs |
 |----------|--------------------------|---------------------|-----------------|
-| s1-k8s-only | 1/1 | 0 | 0/1 |
+| s1-k8s-only | 1/1 | 2 | 0/1 |
 
 ## Analysis Set Coverage
 
