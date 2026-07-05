@@ -91,11 +91,22 @@ def _register_infra() -> None:
         pass
 
 
+def _register_dashboard() -> None:
+    """Register the dashboard sub-app."""
+    try:
+        from dashboard.cli import app as dashboard_app
+
+        app.add_typer(dashboard_app, name="dashboard", help="Experiment results dashboard")
+    except ImportError:
+        pass
+
+
 # Register all available sub-apps
 _register_experiment()
 _register_routing()
 _register_prediction()
 _register_infra()
+_register_dashboard()
 
 
 if __name__ == "__main__":
