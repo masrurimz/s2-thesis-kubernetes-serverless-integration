@@ -37,13 +37,14 @@ spec:
             - name: WORK_DURATION_MS
               value: "10"
             - name: FIB_N
-              value: "34"
+              value: "32"
           resources:
             requests:
-              cpu: 200m
+            # CPU limits removed — CFS throttling causes 38% perf loss (SoCC 2025).
+            # Requests kept for scheduling; node-level Docker --cpus bounds actual CPU.
+              cpu: 300m
               memory: 64Mi
             limits:
-              cpu: 200m
               memory: 128Mi
           livenessProbe:
             httpGet:
@@ -65,10 +66,11 @@ metadata:
   labels:
     app: test-app-warm
 spec:
-  type: ClusterIP
+  type: NodePort
   ports:
     - port: 80
       targetPort: 8080
+      nodePort: 30080
       protocol: TCP
       name: http
   selector:

@@ -34,8 +34,13 @@ def setup(
         console.print("[red]Cluster creation failed.[/red]")
         raise typer.Exit(1)
 
+    # 1b. Create serverless cluster (Knative)
+    if not k3d.create_serverless():
+        console.print("[red]Serverless cluster creation failed.[/red]")
+        raise typer.Exit(1)
+
     # 2. Install Knative
-    knative = KnativeInstaller()
+    knative = KnativeInstaller(context="k3d-thesis-serverless")
     if not knative.install():
         console.print("[red]Knative installation failed.[/red]")
         raise typer.Exit(1)

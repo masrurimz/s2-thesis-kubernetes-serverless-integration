@@ -114,5 +114,7 @@ class PreflightStage(BaseStage):
 
     @staticmethod
     def _check_knative() -> bool:
-        r = _kubectl(["get", "ksvc", "-o", "json"], timeout=10)
+        # Knative is in thesis-serverless cluster (separate control plane)
+        ctx = os.environ.get("K3D_SERVERLESS_CONTEXT", "k3d-thesis-serverless")
+        r = _run_cmd([KUBECTL_PATH, "--context", ctx, "-n", NAMESPACE, "get", "ksvc", "-o", "json"], timeout=10)
         return r.returncode == 0

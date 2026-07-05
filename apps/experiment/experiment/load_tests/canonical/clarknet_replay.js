@@ -23,7 +23,7 @@ const appDurationK8sTrend = new Trend('app_duration_k8s_ms');
 const requestCounter = new Counter('total_requests');
 const sloViolations = new Counter('slo_violations');
 
-const SLO_THRESHOLD_MS = 200;
+const SLO_THRESHOLD_MS = __ENV.SLO_THRESHOLD_MS ? parseFloat(__ENV.SLO_THRESHOLD_MS) : 200;
 
 // Load stages from generated JSON (configurable via K6_STAGES_PATH env)
 const stagesPath = __ENV.K6_STAGES_PATH || '../../../../../../data/trace-replay/clarknet_k6_stages.json';

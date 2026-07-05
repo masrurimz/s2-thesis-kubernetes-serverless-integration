@@ -1,0 +1,45 @@
+# k3d cluster configuration for thesis serverless experiments
+# Separate cluster for Knative — provides true control-plane isolation
+# from thesis-hybrid (K8s). K3dAutoscaler only operates on thesis-hybrid.
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: thesis-serverless
+servers: 1
+agents: 1
+image: rancher/k3s:v1.28.5-k3s1
+kubeAPI:
+  hostIP: "0.0.0.0"
+  hostPort: "6444"
+ports:
+  # Kourier gateway (Knative ingress) — HAProxy routes here
+  - port: 8083:80
+    nodeFilters:
+      - loadbalancer
+  # Knative service NodePort (alternate access)
+  - port: 8084:31080
+    nodeFilters:
+      - loadbalancer
+options:
+  k3d:
+    wait: true
+    timeout: "180s"
+    disableLoadbalancer: false
+    disableImageVolume: false
+  k3s:
+    extraArgs:
+      - arg: --disable=traefik
+        nodeFilters:
+          - server:*
+      - arg: --kubelet-arg=eviction-hard=memory.available<100Mi
+        nodeFilters:
+          - server:*
+          - agent:*
+      # agent:0 (Knative control plane + workload pods, 1.5 CPU Docker):
+      # 16000m - 14500m reserved = ~1500m allocatable
+      - arg: --kubelet-arg=system-reserved=cpu=14500m
+        nodeFilters:
+          - agent:0
+  kubeconfig:
+    updateDefaultKubeconfig: true
+    switchCurrentContext: false

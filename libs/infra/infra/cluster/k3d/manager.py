@@ -13,15 +13,22 @@ from infra.commands import check_command, console, run
 logger = structlog.get_logger(__name__)
 
 CLUSTER_NAME = "thesis-hybrid"
+CLUSTER_NAME_SERVERLESS = "thesis-serverless"
 
 
 class K3dManager:
-    """Manages a k3d cluster for thesis hybrid experiments."""
+    """Manages k3d clusters for thesis hybrid experiments.
+
+    Two clusters:
+    - thesis-hybrid: K8s with K3dAutoscaler (node scaling), HPA/Algorithm 2
+    - thesis-serverless: Knative with KPA (no node autoscaler, scale-to-zero)
+    """
 
     def __init__(self, cluster_name: str = CLUSTER_NAME) -> None:
         self.cluster_name = cluster_name
-        # Resolve the cluster.yaml path from package data
+        # Resolve cluster config paths from package data
         self._cluster_yaml = importlib.resources.files("infra").joinpath("cluster", "k3d", "cluster.yaml")
+        self._serverless_yaml = importlib.resources.files("infra").joinpath("cluster", "k3d", "cluster-serverless.yaml")
 
     # ------------------------------------------------------------------
     # Prerequisites
@@ -78,14 +85,14 @@ class K3dManager:
     def _apply_node_resources(self) -> None:
         """Apply Docker CPU/memory limits to each k3d node container.
 
-        Bounds node capacity to mimic real cloud VM allocation (see PHASE_B_V4_DESIGN.md):
-        agent-0 (infra/Knative) at 2.0 CPU mimics a t3.medium; workload nodes at 1.0 CPU
-        fit ~4 pods at 200m each. Tolerates per-node failure (logs warning, continues).
+        All agent nodes at 1.0 CPU fit ~3 pods at 300m each.
+        Knative is now in a separate cluster (thesis-serverless).
+        Tolerates per-node failure (logs warning, continues).
         """
         # (container_name, cpus, memory)
         nodes = [
             ("k3d-thesis-hybrid-server-0", "1.0", "1g"),
-            ("k3d-thesis-hybrid-agent-0", "2.0", "4g"),
+            ("k3d-thesis-hybrid-agent-0", "1.0", "1g"),
             ("k3d-thesis-hybrid-agent-1", "1.0", "1g"),
         ]
         for container, cpus, memory in nodes:
@@ -103,17 +110,16 @@ class K3dManager:
                 )
 
     def _label_nodes(self) -> None:
-        """Label nodes with node-type=system/infra/workload for scheduling isolation.
+        """Label nodes with node-type for scheduling isolation.
 
-        Waits for node registration, then applies labels. Tolerates per-node failure.
+        All agent nodes are workload type (Knative moved to separate cluster).
+        Waits for node registration, then applies labels.
         """
-        # Allow nodes to register with the API server before labeling.
         time.sleep(5)
 
-        # (node_name, node-type value)
         labels = [
             ("k3d-thesis-hybrid-server-0", "system"),
-            ("k3d-thesis-hybrid-agent-0", "infra"),
+            ("k3d-thesis-hybrid-agent-0", "workload"),
             ("k3d-thesis-hybrid-agent-1", "workload"),
         ]
         for node, node_type in labels:
@@ -152,3 +158,61 @@ class K3dManager:
         """Check whether the cluster exists."""
         result = run(["k3d", "cluster", "list"])
         return self.cluster_name in (result.stdout or "")
+
+    # ------------------------------------------------------------------
+    # Serverless cluster (thesis-serverless for Knative)
+    # ------------------------------------------------------------------
+
+    def create_serverless(self, clean: bool = True) -> bool:
+        """Create the thesis-serverless k3d cluster for Knative.
+
+        Separate control plane from thesis-hybrid ensures K3dAutoscaler
+        node scaling doesn't affect Knative scheduling.
+        """
+        if clean and self.is_serverless_running():
+            self.delete_serverless()
+
+        console.print(f"[bold]Creating k3d cluster '{CLUSTER_NAME_SERVERLESS}'...[/bold]")
+        result = run(["k3d", "cluster", "create", CLUSTER_NAME_SERVERLESS, "--config", str(self._serverless_yaml)])
+
+        if result.returncode != 0:
+            logger.error("k3d_serverless_create_failed", stderr=result.stderr)
+            return False
+        logger.info("k3d_serverless_create_ok", cluster=CLUSTER_NAME_SERVERLESS)
+        console.print(f"[green]✓ Cluster '{CLUSTER_NAME_SERVERLESS}' created.[/green]")
+
+        self._apply_serverless_node_resources()
+        return True
+
+    def _apply_serverless_node_resources(self) -> None:
+        """Apply Docker CPU/memory limits to serverless cluster nodes."""
+        nodes = [
+            (f"k3d-{CLUSTER_NAME_SERVERLESS}-server-0", "0.5", "1g"),
+            (f"k3d-{CLUSTER_NAME_SERVERLESS}-agent-0", "1.5", "2g"),
+        ]
+        for container, cpus, memory in nodes:
+            result = run(
+                ["docker", "update", "--cpus", cpus, "--memory", memory, "--memory-swap", memory, container],
+                check=False,
+            )
+            if result.returncode != 0:
+                logger.warning(
+                    "docker_update_serverless_node_failed",
+                    container=container,
+                    cpus=cpus,
+                    memory=memory,
+                    stderr=result.stderr,
+                )
+
+    def delete_serverless(self) -> bool:
+        """Delete the thesis-serverless cluster."""
+        console.print(f"[bold]Deleting k3d cluster '{CLUSTER_NAME_SERVERLESS}'...[/bold]")
+        run(["k3d", "cluster", "delete", CLUSTER_NAME_SERVERLESS])
+        logger.info("k3d_serverless_delete_ok", cluster=CLUSTER_NAME_SERVERLESS)
+        console.print(f"[green]✓ Cluster '{CLUSTER_NAME_SERVERLESS}' deleted.[/green]")
+        return True
+
+    def is_serverless_running(self) -> bool:
+        """Check whether the serverless cluster exists."""
+        result = run(["k3d", "cluster", "list"])
+        return CLUSTER_NAME_SERVERLESS in (result.stdout or "")

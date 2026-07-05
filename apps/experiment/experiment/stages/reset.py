@@ -15,6 +15,7 @@ import requests
 import structlog
 
 from shared.config import settings
+from shared.models.calibration import CALIBRATION
 from shared.models.pipeline import PipelineContext
 from shared.protocols import ProvisionerClient
 
@@ -36,6 +37,7 @@ NAMESPACE = "default"
 HAPROXY_HOST = settings.HAPROXY_HOST
 HAPROXY_SOCKET_PORT = settings.HAPROXY_SOCKET_PORT
 HAPROXY_STATS_URL = settings.HAPROXY_STATS_URL
+KUBECTL_SERVERLESS_CONTEXT = os.environ.get("K3D_SERVERLESS_CONTEXT", "k3d-thesis-serverless")
 
 
 def _run_cmd(cmd: List[str], timeout: int = 30, **kwargs: Any) -> subprocess.CompletedProcess:
@@ -46,6 +48,11 @@ def _run_cmd(cmd: List[str], timeout: int = 30, **kwargs: Any) -> subprocess.Com
 def _kubectl(args: List[str], timeout: int = 15) -> subprocess.CompletedProcess:
     """Run kubectl with standard args."""
     return _run_cmd([KUBECTL_PATH, "-n", NAMESPACE] + args, timeout=timeout)
+
+
+def _kubectl_serverless(args: List[str], timeout: int = 15) -> subprocess.CompletedProcess:
+    """Run kubectl against the thesis-serverless cluster."""
+    return _run_cmd([KUBECTL_PATH, "--context", KUBECTL_SERVERLESS_CONTEXT, "-n", NAMESPACE] + args, timeout=timeout)
 
 
 def _parse_haproxy_stats_weights() -> Optional[Dict[str, int]]:
@@ -160,7 +167,7 @@ class ResetStage(BaseStage):
                     break
 
         for attempt in range(12):
-            r = _kubectl(["get", "pods", "-l", "serving.knative.dev/service=test-app", "-o", "json"])
+            r = _kubectl_serverless(["get", "pods", "-l", "serving.knative.dev/service=test-app", "-o", "json"])
             if r.returncode == 0:
                 pods = json.loads(r.stdout).get("items", [])
                 running = [p for p in pods if p.get("status", {}).get("phase") == "Running"]
@@ -177,7 +184,7 @@ class ResetStage(BaseStage):
         _kubectl(["delete", "hpa", DEPLOYMENT, "--ignore-not-found"])
         time.sleep(2)
 
-        baseline_replicas = 2
+        baseline_replicas = CALIBRATION.baseline_replicas_s3_s4
         r = _kubectl(["scale", f"deployment/{DEPLOYMENT}", f"--replicas={baseline_replicas}"])
         if r.returncode != 0:
             logger.error("scale_baseline_failed", stderr=r.stderr.strip())
