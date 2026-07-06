@@ -9,7 +9,8 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Callable, Dict, Optional
+
 
 import structlog
 
@@ -56,12 +57,12 @@ class WorkloadStage(BaseStage):
 
     name = "workload"
 
-    def _run(self, ctx: PipelineContext) -> None:
+    def _run(self, ctx: PipelineContext, on_progress: Callable[[str], None] | None = None) -> None:
         scenario = ctx.scenario
         run_id = ctx.run_id
         run_dir = Path(ctx.output_dir) if ctx.output_dir else Path(".")
 
-        k6_summary = self._run_k6(scenario, run_id, run_dir)
+        k6_summary = self._run_k6(scenario, run_id, run_dir, on_progress=on_progress)
 
         if k6_summary is None:
             ctx.workload = WorkloadResult(success=False)
@@ -86,8 +87,19 @@ class WorkloadStage(BaseStage):
             app_duration_k8s_avg_ms=metrics.get("app_duration_k8s_avg_ms", 0.0),
         )
 
-    def _run_k6(self, scenario: str, run_id: int, results_dir: Path) -> Optional[Dict]:
-        """Execute k6 and return parsed metrics dict."""
+    def _run_k6(
+        self,
+        scenario: str,
+        run_id: int,
+        results_dir: Path,
+        on_progress: "Callable[[str], None] | None" = None,
+    ) -> Optional[Dict]:
+        """Execute k6 and return parsed metrics dict.
+
+        Args:
+            on_progress: Optional callback invoked with each k6 stderr progress line.
+                         Use to update a spinner/progress bar description.
+        """
         k6_results_dir = results_dir / "k6"
         k6_results_dir.mkdir(parents=True, exist_ok=True)
 
@@ -113,19 +125,45 @@ class WorkloadStage(BaseStage):
 
         logger.info("k6_start", scenario=scenario, run_id=run_id)
 
-        result = subprocess.run(
+        proc = subprocess.Popen(
             cmd,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=1800,  # 30 min max
             cwd=str(PROJECT_ROOT),
         )
 
-        # k6 exit code 99 = thresholds crossed (test completed, data valid)
-        if result.returncode not in (0, 99):
-            logger.error("k6_failed", returncode=result.returncode, stderr=result.stderr[:500])
+        # Stream stderr in a thread; call on_progress for each line
+        stderr_lines: list[str] = []
+
+        def _read_stderr() -> None:
+            assert proc.stderr is not None
+            for line in proc.stderr:
+                stderr_lines.append(line)
+                if on_progress:
+                    on_progress(line.strip())
+
+        import threading
+
+        reader = threading.Thread(target=_read_stderr, daemon=True)
+        reader.start()
+
+        try:
+            proc.wait(timeout=1800)  # 30 min max
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+            logger.error("k6_timeout", scenario=scenario, run_id=run_id)
             return None
-        if result.returncode == 99:
+
+        reader.join(timeout=5)
+        stderr_text = "".join(stderr_lines)
+
+        # k6 exit code 99 = thresholds crossed (test completed, data valid)
+        if proc.returncode not in (0, 99):
+            logger.error("k6_failed", returncode=proc.returncode, stderr=stderr_text[:500])
+            return None
+        if proc.returncode == 99:
             logger.warning("k6_threshold_crossed", scenario=scenario, run_id=run_id)
 
         # k6 handleSummary saves the detailed JSON to k6_results_dir

@@ -417,6 +417,17 @@ class DynamicExperimentRunner:
         manage_daemon: bool = True,
     ) -> List[DynamicExperimentResult]:
         """Run replicated experiments with randomized order."""
+        from rich.console import Console
+
+        from shared.progress import (
+            countdown,
+            create_progress,
+            elapsed_str,
+            print_run_failure,
+            print_run_header,
+        )
+
+        console = Console()
 
         # Build and shuffle schedule
         schedule = [(scenario, run_id) for scenario in scenarios for run_id in range(1, num_runs + 1)]
@@ -429,31 +440,55 @@ class DynamicExperimentRunner:
         )
 
         results: List[DynamicExperimentResult] = []
+        run_durations: List[float] = []
+        total = len(schedule)
 
-        for i, (scenario, run_id) in enumerate(schedule, 1):
-            logger.info(
-                "progress",
-                current=i,
-                total=len(schedule),
-                scenario=scenario,
-                run_id=run_id,
-            )
+        with create_progress(console) as progress:
+            batch_task = progress.add_task("[bold]Phase C Batch[/bold]", total=total)
 
-            if not self.check_infrastructure(scenario, skip_daemon=manage_daemon):
-                logger.error("skipping_run", scenario=scenario, run_id=run_id)
-                continue
+            for i, (scenario, run_id) in enumerate(schedule, 1):
+                print_run_header(console, i, total, scenario, run_id)
 
-            result = self.run_single_experiment(scenario, run_id, manage_daemon)
-            if result:
-                results.append(result)
+                logger.info("progress", current=i, total=total, scenario=scenario, run_id=run_id)
 
-                # Save incremental results
-                self._save_results(results, "experiments_intermediate.json")
+                if not self.check_infrastructure(scenario, skip_daemon=manage_daemon):
+                    logger.error("skipping_run", scenario=scenario, run_id=run_id)
+                    print_run_failure(console, scenario, "infrastructure not ready")
+                    progress.advance(batch_task)
+                    continue
 
-            # Cool down between runs
-            if i < len(schedule):
-                logger.info("cooldown", seconds=self.cooldown_sec)
-                time.sleep(self.cooldown_sec)
+                t0 = time.time()
+                result = self.run_single_experiment(scenario, run_id, manage_daemon)
+                run_dur = time.time() - t0
+                run_durations.append(run_dur)
+
+                if result:
+                    results.append(result)
+                    console.print(
+                        f"  [green]✓[/green] [bold]{elapsed_str(run_dur)}[/bold] • "
+                        f"p99=[magenta]{result.p99_latency_ms:.0f}ms[/magenta] • "
+                        f"rps=[blue]{result.rps:.1f}[/blue] • "
+                        f"errors=[red]{result.error_rate:.4%}[/red] • "
+                        f"PREDICTIVE={result.predictive_count}"
+                    )
+                    self._save_results(results, "experiments_intermediate.json")
+                else:
+                    print_run_failure(console, scenario, "run failed")
+
+                progress.advance(batch_task)
+
+                if run_durations:
+                    avg = sum(run_durations) / len(run_durations)
+                    remaining = (total - i) * avg
+                    progress.update(
+                        batch_task,
+                        description=f"[bold]Phase C Batch[/bold] • ~{elapsed_str(remaining)} remaining",
+                    )
+
+                # Cool down between runs
+                if i < total:
+                    with countdown(console, self.cooldown_sec, "Cooldown"):
+                        pass
 
         # Save final results
         self._save_results(results, "experiments_final.json")

@@ -278,32 +278,65 @@ def run_calibration(
 
 def run_full_calibration(scenarios: List[str], rps_levels: List[int], duration_sec: int) -> List[CalibrationResult]:
     """Run full calibration across scenarios and RPS levels."""
+    from rich.console import Console
+    from rich.table import Table
 
-    results = []
+    from shared.progress import countdown, create_progress, run_phase
 
-    for scenario in scenarios:
-        logger.info("calibrating_scenario", scenario=scenario)
+    console = Console()
+    results: List[CalibrationResult] = []
+    total = len(scenarios) * len(rps_levels)
 
-        for rps in rps_levels:
-            logger.info("calibrating_rps", scenario=scenario, rps=rps)
+    with create_progress(console) as progress:
+        task = progress.add_task("[bold]Calibration sweep[/bold]", total=total)
 
-            result = run_calibration(scenario, rps, duration_sec)
-            results.append(result)
+        for scenario in scenarios:
+            logger.info("calibrating_scenario", scenario=scenario)
 
-            # Log result
-            logger.info(
-                "calibration_result",
-                scenario=result.scenario,
-                rps=result.rps,
-                p99=result.p99_ms,
-                error_rate=result.error_rate,
-                stress_level=result.stress_level,
-                recommended=result.recommended,
-            )
+            for rps in rps_levels:
+                logger.info("calibrating_rps", scenario=scenario, rps=rps)
 
-            # Cool down between tests
-            time.sleep(10)
+                with run_phase(console, f"{scenario} @ {rps} RPS"):
+                    result = run_calibration(scenario, rps, duration_sec)
+                    results.append(result)
 
+                logger.info(
+                    "calibration_result",
+                    scenario=result.scenario,
+                    rps=result.rps,
+                    p99=result.p99_ms,
+                    error_rate=result.error_rate,
+                    stress_level=result.stress_level,
+                    recommended=result.recommended,
+                )
+
+                progress.advance(task)
+
+                # Cool down between tests
+                with countdown(console, 10, "Cooldown"):
+                    pass
+
+    # Print results table
+    table = Table(title="Calibration Results", show_lines=False)
+    table.add_column("Scenario", style="cyan")
+    table.add_column("RPS", justify="right")
+    table.add_column("p99 (ms)", justify="right")
+    table.add_column("Error Rate", justify="right")
+    table.add_column("Stress", style="magenta")
+    table.add_column("Recommended", justify="center")
+
+    for r in results:
+        rec = "[green]✓[/green]" if r.recommended else ""
+        table.add_row(
+            r.scenario,
+            str(r.rps),
+            f"{r.p99_ms:.0f}",
+            f"{r.error_rate:.4%}",
+            r.stress_level,
+            rec,
+        )
+
+    console.print(table)
     return results
 
 
