@@ -103,14 +103,23 @@ func fibHandler(w http.ResponseWriter, r *http.Request) {
 
 	start := time.Now()
 	result := fib(n)
-	duration := time.Since(start)
+	computeDuration := time.Since(start)
+
+	// Simulate I/O wait (DB query, API call) — Lambda bills this wall-clock time.
+	// SeBS: arXiv:2012.14132 — real serverless workloads spend 50-200ms on I/O.
+	if defaultWorkDurMs > 0 {
+		time.Sleep(time.Duration(defaultWorkDurMs) * time.Millisecond)
+	}
+	totalDuration := time.Since(start)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"n":           n,
-		"result":      result,
-		"duration_ms": duration.Milliseconds(),
-		"backend":     backendName,
+		"n":               n,
+		"result":          result,
+		"duration_ms":     totalDuration.Milliseconds(),
+		"compute_ms":      computeDuration.Milliseconds(),
+		"io_wait_ms":      defaultWorkDurMs,
+		"backend":         backendName,
 	})
 }
 
