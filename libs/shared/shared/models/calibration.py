@@ -24,22 +24,24 @@ class CalibrationConfig(BaseModel):
     gomaxprocs: int = 1
     slo_threshold_ms: float = 200.0
 
-    # Pod resources (must match deployment YAMLs) — CPU limits REMOVED (SoCC 2025)
+    # Pod resources (K8s AND Knative MUST match these values)
     pod_cpu_millicores: int = 300
-    pod_memory_mib: int = 128
-    # Lambda bills WALL-CLOCK duration, not CPU time (SeBS: arXiv:2012.14132).
+    pod_memory_mib: int = 128  # memory limit
+    pod_memory_request_mib: int = 64  # memory request (lower than limit)
+
+    # Node resources (Docker --cpus for k3d nodes, applied by manager.py/autoscaler.py)
+    node_cpu_limit: float = 1.0
+    node_memory_gb: float = 1.0
+
+    # Lambda billing (SeBS: arXiv:2012.14132 — Lambda bills wall-clock duration)
     # fib(33) = 14ms CPU + 50ms simulated I/O wait (DB query per SeBS/SeBS-Flow).
-    # WORK_DURATION_MS=50 in deployment YAMLs matches this io_wait_ms.
-    # Real workloads: I/O dominates (50-200ms), CPU is small fraction.
+    # WORK_DURATION_MS in deployment YAMLs MUST match io_wait_ms.
     lambda_compute_ms: float = 14.0  # Measured fib(33) CPU compute time
     io_wait_ms: float = 50.0  # Simulated I/O wait (DB query, SeBS methodology)
 
-    # Capacity model — MEASURED from t7-capacity-envelope test (no CPU limits)
-    # fib(33): p99 < 200ms up to 150 RPS (50/pod), cliff at 200 RPS (66.7/pod)
-    # target_cpu_util=0.8 → cap = 3 × 50 × 0.8 = 120 RPS (efficient, handles mean 73)
-    # Peaks >120 RPS overflow to serverless (BACC methodology: tau=0.8)
-    r_saturation_per_replica: float = 50.0  # Measured: last good level before p99 cliff
-    target_cpu_util: float = 0.8  # High efficiency — K8s cap=120 RPS, overflow during peaks
+    # Capacity model — OVERWRITE from capacity test measurement
+    r_saturation_per_replica: float = 50.0
+    target_cpu_util: float = 0.8
 
     # Replica bounds
     min_k8s_replicas: int = 3
@@ -51,6 +53,22 @@ class CalibrationConfig(BaseModel):
     buffer: float = 1.2
     scale_down_threshold: float = 0.5
     alpha_override: Optional[float] = None
+
+    @property
+    def pod_cpu_request(self) -> float:
+        """Pod CPU request in vCPU units (e.g., 0.300 for 300m)."""
+        return self.pod_cpu_millicores / 1000
+
+    @property
+    def lambda_mem_mb(self) -> int:
+        """AWS Lambda memory: 1 vCPU at 1769MB, memory scales with CPU allocation."""
+        import math
+
+        return math.ceil(self.pod_cpu_request * 1769)
+
+    @property
+    def lambda_mem_gb(self) -> float:
+        return self.lambda_mem_mb / 1024
 
     @property
     def alpha(self) -> float:

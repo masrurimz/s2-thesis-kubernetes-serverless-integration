@@ -189,7 +189,7 @@ class K3dAutoscaler:
             self._record_event("node_label_failed", {"node": k8s_node_name})
             return False
         # Apply Docker CPU/memory limits to mimic cloud VM sizing
-        container_name = f"k3d-{self.cluster_name}-{name}-0"
+        container_name = f"k3d-{name}-0"
         r = self._run_cmd(
             ["docker", "update", "--cpus", "1.0", "--memory", "1g", "--memory-swap", "1g", container_name], timeout=30
         )
