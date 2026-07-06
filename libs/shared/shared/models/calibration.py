@@ -27,7 +27,11 @@ class CalibrationConfig(BaseModel):
     # Pod resources (must match deployment YAMLs) — CPU limits REMOVED (SoCC 2025)
     pod_cpu_millicores: int = 300
     pod_memory_mib: int = 128
-    lambda_compute_ms: float = 14.0  # Measured fib(33) compute time from capacity test
+    # Lambda bills for WALL-CLOCK duration, not CPU time (SeBS: arXiv:2012.14132).
+    # fib(33) = 14ms pure CPU. Real workloads add I/O waits (50-200ms per SeBS/SeBS-Flow).
+    # WORK_DURATION_MS in deployment YAMLs simulates I/O wait (currently 10ms).
+    # This is a CPU-only lower bound — real serverless costs would be 3-10× higher.
+    lambda_compute_ms: float = 14.0  # Measured fib(33) CPU compute time (no I/O)
 
     # Capacity model — MEASURED from t7-capacity-envelope test (no CPU limits)
     # fib(33): p99 < 200ms up to 150 RPS (50/pod), cliff at 200 RPS (66.7/pod)

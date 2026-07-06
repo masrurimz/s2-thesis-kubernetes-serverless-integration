@@ -51,6 +51,9 @@ All papers downloaded as PDF for offline access. Located in `docs/references/`.
 | **Skyrise** — Serverless vs VM Cost Break-even | arXiv:2501.07771 | Derives break-even throughput: FaaS cheaper below threshold, VMs cheaper above; Q6 break-even at 558 runs/hr, Q12 at 128 runs/hr |
 | **High Cost of Keeping Warm** | arXiv:2509.03104 | Measures 10-40% serverless overhead from instance churn, 2-10× memory waste; hybrid real+simulation methodology |
 | **BatchBench** — Autoscaling Benchmark | arXiv:2605.12272 | Five-axis evaluation: cost, SLA, responsiveness, thrash, interpretability; paired Wilcoxon + bootstrap CIs |
+| **SeBS** — Serverless Benchmark Suite | arXiv:2012.14132 | Realistic FaaS workloads: CPU-bound (image processing) + I/O-bound (uploader, DB). I/O-bound shows wider latency distributions; Lambda bills wall-clock duration including I/O waits |
+| **SeBS-Flow** — Serverless Workflow Benchmarks | arXiv:2410.03480 | Storage I/O dominates overhead in serverless workflows; NoSQL + object storage access patterns |
+| **Let's Trace It** — Fine-Grained FaaS Benchmarking | arXiv:2205.07696 | Sync + async serverless patterns; I/O-bound workloads dominated by external services, not compute; orchestration overhead significant |
 
 ## Dataset References
 
