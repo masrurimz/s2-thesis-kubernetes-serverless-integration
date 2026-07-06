@@ -1,0 +1,336 @@
+2026-07-06 13:49:59 [info     ] SLOMonitor initialized         threshold_ms=200.0 violation_window=30
+2026-07-06 13:49:59 [info     ] Algorithm1ControllerV3 initialized max_knative=50 r_saturation=50.0 target_cpu_util=0.8 total_budget=1000
+2026-07-06 13:49:59 [info     ] Using V3 controller (Capacity-Driven) scenario=s3-hybrid-reactive version=v3
+2026-07-06 13:49:59 [info     ] HAProxyWeightAdjuster initialized backend=servers host=localhost port=19999
+2026-07-06 13:49:59 [info     ] GRUClient initialized          base_url=http://localhost:8090
+2026-07-06 13:49:59 [info     ] K8sScaler initialized          deployment=test-app-warm namespace=default
+2026-07-06 13:49:59 [info     ] RoutingDaemon initialized      decision_interval=15 description='Algorithm 1 reactive routing without predictions' scenario=s3-hybrid-reactive use_algorithm=True use_predictions=False
+2026-07-06 13:49:59 [info     ] Starting routing daemon        interval=15 scenario=s3-hybrid-reactive
+2026-07-06 13:49:59 [info     ] Weights updated                k3s=80 knative=20
+2026-07-06 13:49:59 [info     ] Initial weights applied        k3s=80 knative=20
+2026-07-06 13:49:59 [debug    ] HAProxy fallback primed        total_requests=133
+2026-07-06 13:49:59 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-06 13:49:59 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=116.06 p99=0.0
+2026-07-06 13:50:14 [debug    ] HAProxy fallback latency       delta_requests=1056 interval_avg_ms=10.87 max_rtime_ms=87.0 p99_est=21.75
+2026-07-06 13:50:14 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-5 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-06 13:50:14 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=1000 burn_adjustment=-5 burst_ratio=0 capacity_deficit=False confidence=0 current_load=69.94073953171922 decision_id=39189b91 k8s_capacity=120.0 k8s_weight=100 knative_weight=0 p99=21.7 predicted_load=0 r_effective=40.0 serverless_enabled=False total_load=69.9 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-06 13:50:14 [info     ] Weights updated                k3s=100 knative=0
+2026-07-06 13:50:14 [info     ] Weights updated                action=RECOVERY reason='load=70RPS | k8s_cap=120RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-06 13:50:14 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=69.94073953171922 required_resources=1.399 target_replicas=3
+2026-07-06 13:50:14 [debug    ] Decision loop completed        action=RECOVERY latency_ms=141.01 p99=21.748106060606062
+2026-07-06 13:50:29 [debug    ] HAProxy fallback latency       delta_requests=1089 interval_avg_ms=17.28 max_rtime_ms=104.0 p99_est=34.55
+2026-07-06 13:50:29 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-6 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-06 13:50:29 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=70.89840200996186 required_resources=1.418 target_replicas=3
+2026-07-06 13:50:29 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=115.56 p99=34.55096418732782
+2026-07-06 13:50:44 [debug    ] HAProxy fallback latency       delta_requests=1888 interval_avg_ms=58.13 max_rtime_ms=371.0 p99_est=116.26
+2026-07-06 13:50:44 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-6 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-06 13:50:44 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=98.3141297342914 required_resources=1.966 target_replicas=3
+2026-07-06 13:50:44 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=113.16 p99=116.26271186440678
+2026-07-06 13:50:59 [debug    ] HAProxy fallback latency       delta_requests=2213 interval_avg_ms=780.57 max_rtime_ms=1313.0 p99_est=1313.0
+2026-07-06 13:50:59 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-6 allowed_burn=0.83 budget_remaining=999 burn_error=-0.98 burn_ratio=0.02
+2026-07-06 13:50:59 [warning  ] Knative pre-warm non-200       status=404
+2026-07-06 13:50:59 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=999 burn_adjustment=-6 burst_ratio=0.1801 capacity_deficit=False confidence=0 current_load=146.36202173745207 decision_id=85b2a474 k8s_capacity=120.0 k8s_weight=87 knative_weight=13 p99=1313.0 predicted_load=0 r_effective=40.0 serverless_enabled=True total_load=146.4 weights_after={'k3s': 87, 'knative': 13} weights_before={'k3s': 100, 'knative': 0}
+2026-07-06 13:50:59 [info     ] Weights updated                k3s=87 knative=13
+2026-07-06 13:50:59 [info     ] Weights updated                action=REACTIVE reason='load=146RPS | k8s_cap=120RPS | (burst-routing)' weights={'k3s': 87, 'knative': 13}
+2026-07-06 13:50:59 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.02 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=135.5671083589152 required_resources=2.711 target_replicas=4
+2026-07-06 13:50:59 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=4
+2026-07-06 13:50:59 [debug    ] Decision loop completed        action=REACTIVE latency_ms=149.45 p99=1313.0
+2026-07-06 13:51:14 [debug    ] HAProxy fallback latency       delta_requests=2303 interval_avg_ms=391.02 max_rtime_ms=1914.0 p99_est=782.03
+2026-07-06 13:51:14 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=998 burn_error=-0.968 burn_ratio=0.032
+2026-07-06 13:51:14 [info     ] controller_decision_v3         action=RECOVERY available_replicas=4 budget_remaining=998 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0 current_load=152.0158988827932 decision_id=0af9931b k8s_capacity=160.0 k8s_weight=100 knative_weight=0 p99=782.0 predicted_load=0 r_effective=40.0 serverless_enabled=False total_load=152.0 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 87, 'knative': 13}
+2026-07-06 13:51:14 [info     ] Weights updated                k3s=100 knative=0
+2026-07-06 13:51:14 [info     ] Weights updated                action=RECOVERY reason='load=152RPS | k8s_cap=160RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-06 13:51:14 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=149.18896031012264 required_resources=2.984 target_replicas=4
+2026-07-06 13:51:14 [debug    ] Decision loop completed        action=RECOVERY latency_ms=145.36 p99=782.0330004342162
+2026-07-06 13:51:29 [debug    ] HAProxy fallback latency       delta_requests=2141 interval_avg_ms=485.82 max_rtime_ms=1914.0 p99_est=971.64
+2026-07-06 13:51:29 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=997 burn_error=-0.96 burn_ratio=0.04
+2026-07-06 13:51:29 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=146.7228491702223 required_resources=2.934 target_replicas=4
+2026-07-06 13:51:29 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=111.6 p99=971.6375525455395
+2026-07-06 13:51:45 [debug    ] HAProxy fallback latency       delta_requests=1817 interval_avg_ms=512.0 max_rtime_ms=1914.0 p99_est=1024.0
+2026-07-06 13:51:45 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=996 burn_error=-0.955 burn_ratio=0.045
+2026-07-06 13:51:45 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=130.83112488269217 required_resources=2.617 target_replicas=4
+2026-07-06 13:51:45 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=122.08 p99=1024.0
+2026-07-06 13:52:00 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=995 burn_error=-0.95 burn_ratio=0.05
+2026-07-06 13:52:00 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=104.39042581277178 required_resources=2.088 target_replicas=3
+2026-07-06 13:52:00 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=108.58 p99=1024.0
+2026-07-06 13:52:15 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=994 burn_error=-0.947 burn_ratio=0.053
+2026-07-06 13:52:15 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=79.75004180941895 required_resources=1.595 target_replicas=3
+2026-07-06 13:52:15 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=114.78 p99=1024.0
+2026-07-06 13:52:30 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=993 burn_error=-0.944 burn_ratio=0.056
+2026-07-06 13:52:30 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=68.95288533925722 required_resources=1.379 target_replicas=3
+2026-07-06 13:52:30 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.5 p99=1024.0
+2026-07-06 13:52:45 [debug    ] HAProxy fallback latency       delta_requests=1201 interval_avg_ms=7.63 max_rtime_ms=1914.0 p99_est=15.26
+2026-07-06 13:52:45 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=993 burn_error=-0.95 burn_ratio=0.05
+2026-07-06 13:52:45 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=73.11557854872676 required_resources=1.462 target_replicas=3
+2026-07-06 13:52:45 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=109.6 p99=15.257285595337219
+2026-07-06 13:53:00 [debug    ] HAProxy fallback latency       delta_requests=1610 interval_avg_ms=360.89 max_rtime_ms=1914.0 p99_est=721.79
+2026-07-06 13:53:00 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.947 burn_ratio=0.053
+2026-07-06 13:53:00 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=92.91882034403258 required_resources=1.858 target_replicas=3
+2026-07-06 13:53:00 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=108.13 p99=721.7888198757764
+2026-07-06 13:53:15 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=991 burn_error=-0.945 burn_ratio=0.055
+2026-07-06 13:53:15 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=106.62760806325187 required_resources=2.133 target_replicas=3
+2026-07-06 13:53:15 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=113.05 p99=721.7888198757764
+2026-07-06 13:53:30 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=990 burn_error=-0.943 burn_ratio=0.057
+2026-07-06 13:53:30 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=95.43081573929302 required_resources=1.909 target_replicas=3
+2026-07-06 13:53:30 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=111.91 p99=721.7888198757764
+2026-07-06 13:53:45 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=989 burn_error=-0.942 burn_ratio=0.058
+2026-07-06 13:53:46 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=82.74562940272266 required_resources=1.655 target_replicas=3
+2026-07-06 13:53:46 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=118.61 p99=721.7888198757764
+2026-07-06 13:54:01 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=988 burn_error=-0.94 burn_ratio=0.06
+2026-07-06 13:54:01 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=87.82155890985703 required_resources=1.756 target_replicas=3
+2026-07-06 13:54:01 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=109.3 p99=721.7888198757764
+2026-07-06 13:54:16 [debug    ] HAProxy fallback latency       delta_requests=1533 interval_avg_ms=30.92 max_rtime_ms=1914.0 p99_est=61.84
+2026-07-06 13:54:16 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=988 burn_error=-0.944 burn_ratio=0.056
+2026-07-06 13:54:16 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=97.89053769224981 required_resources=1.958 target_replicas=3
+2026-07-06 13:54:16 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=112.76 p99=61.84474885844749
+2026-07-06 13:54:31 [debug    ] HAProxy fallback latency       delta_requests=1572 interval_avg_ms=15.0 max_rtime_ms=1914.0 p99_est=30.0
+2026-07-06 13:54:31 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=988 burn_error=-0.947 burn_ratio=0.053
+2026-07-06 13:54:31 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=102.73876750193867 required_resources=2.055 target_replicas=3
+2026-07-06 13:54:31 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=111.57 p99=30.0
+2026-07-06 13:54:46 [debug    ] HAProxy fallback latency       delta_requests=1703 interval_avg_ms=15.0 max_rtime_ms=1914.0 p99_est=30.0
+2026-07-06 13:54:46 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=988 burn_error=-0.95 burn_ratio=0.05
+2026-07-06 13:54:46 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=108.35256141921447 required_resources=2.167 target_replicas=3
+2026-07-06 13:54:46 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=109.06 p99=30.0
+2026-07-06 13:55:01 [debug    ] HAProxy fallback latency       delta_requests=1819 interval_avg_ms=799.86 max_rtime_ms=1914.0 p99_est=1599.72
+2026-07-06 13:55:01 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=987 burn_error=-0.948 burn_ratio=0.052
+2026-07-06 13:55:01 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=116.57372582382482 required_resources=2.331 target_replicas=3
+2026-07-06 13:55:01 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.33 p99=1599.7152281473336
+2026-07-06 13:55:16 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=986 burn_error=-0.947 burn_ratio=0.053
+2026-07-06 13:55:16 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=102.38590885532048 required_resources=2.048 target_replicas=3
+2026-07-06 13:55:16 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=117.15 p99=1599.7152281473336
+2026-07-06 13:55:31 [debug    ] HAProxy fallback latency       delta_requests=1458 interval_avg_ms=44.16 max_rtime_ms=1914.0 p99_est=88.32
+2026-07-06 13:55:31 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=986 burn_error=-0.949 burn_ratio=0.051
+2026-07-06 13:55:31 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=90.38073440889428 required_resources=1.808 target_replicas=3
+2026-07-06 13:55:31 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.81 p99=88.32235939643347
+2026-07-06 13:55:46 [debug    ] HAProxy fallback latency       delta_requests=1668 interval_avg_ms=298.19 max_rtime_ms=1914.0 p99_est=596.38
+2026-07-06 13:55:46 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=985 burn_error=-0.948 burn_ratio=0.052
+2026-07-06 13:55:46 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=103.38322091566249 required_resources=2.068 target_replicas=3
+2026-07-06 13:55:46 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=109.85 p99=596.3752997601919
+2026-07-06 13:56:01 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=984 burn_error=-0.947 burn_ratio=0.053
+2026-07-06 13:56:02 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=117.70026873850423 required_resources=2.354 target_replicas=3
+2026-07-06 13:56:02 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=118.02 p99=596.3752997601919
+2026-07-06 13:56:17 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=983 burn_error=-0.946 burn_ratio=0.054
+2026-07-06 13:56:17 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=119.42528051724781 required_resources=2.389 target_replicas=3
+2026-07-06 13:56:17 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=104.97 p99=596.3752997601919
+2026-07-06 13:56:32 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=982 burn_error=-0.945 burn_ratio=0.055
+2026-07-06 13:56:32 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=100.31262288551261 required_resources=2.006 target_replicas=3
+2026-07-06 13:56:32 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=118.22 p99=596.3752997601919
+2026-07-06 13:56:47 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=981 burn_error=-0.944 burn_ratio=0.056
+2026-07-06 13:56:47 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=80.76688039246801 required_resources=1.615 target_replicas=3
+2026-07-06 13:56:47 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=109.97 p99=596.3752997601919
+2026-07-06 13:57:02 [debug    ] HAProxy fallback latency       delta_requests=1074 interval_avg_ms=15.0 max_rtime_ms=1914.0 p99_est=30.0
+2026-07-06 13:57:02 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=981 burn_error=-0.946 burn_ratio=0.054
+2026-07-06 13:57:02 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=72.87723960056302 required_resources=1.458 target_replicas=3
+2026-07-06 13:57:02 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=108.02 p99=30.0
+2026-07-06 13:57:17 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=981 burn_error=-0.948 burn_ratio=0.052
+2026-07-06 13:57:17 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=66.87916969615414 required_resources=1.338 target_replicas=3
+2026-07-06 13:57:17 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.02 p99=30.0
+2026-07-06 13:57:32 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=981 burn_error=-0.95 burn_ratio=0.05
+2026-07-06 13:57:32 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=57.54944256175475 required_resources=1.151 target_replicas=3
+2026-07-06 13:57:32 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.73 p99=30.0
+2026-07-06 13:57:47 [debug    ] HAProxy fallback latency       delta_requests=1196 interval_avg_ms=89.08 max_rtime_ms=1914.0 p99_est=178.16
+2026-07-06 13:57:47 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=981 burn_error=-0.951 burn_ratio=0.049
+2026-07-06 13:57:47 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=65.74916113724711 required_resources=1.315 target_replicas=3
+2026-07-06 13:57:47 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=105.44 p99=178.1571906354515
+2026-07-06 13:58:02 [debug    ] HAProxy fallback latency       delta_requests=1868 interval_avg_ms=243.19 max_rtime_ms=1914.0 p99_est=486.39
+2026-07-06 13:58:02 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=980 burn_error=-0.95 burn_ratio=0.05
+2026-07-06 13:58:02 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=101.3397784854648 required_resources=2.027 target_replicas=3
+2026-07-06 13:58:02 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=113.45 p99=486.38865096359746
+2026-07-06 13:58:17 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=979 burn_error=-0.949 burn_ratio=0.051
+2026-07-06 13:58:18 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=122.042065212286 required_resources=2.441 target_replicas=3
+2026-07-06 13:58:18 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=109.76 p99=486.38865096359746
+2026-07-06 13:58:33 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=978 burn_error=-0.949 burn_ratio=0.051
+2026-07-06 13:58:33 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=107.36407848730143 required_resources=2.147 target_replicas=3
+2026-07-06 13:58:33 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=113.19 p99=486.38865096359746
+2026-07-06 13:58:48 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=977 burn_error=-0.948 burn_ratio=0.052
+2026-07-06 13:58:48 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=87.81308577828634 required_resources=1.756 target_replicas=3
+2026-07-06 13:58:48 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=109.93 p99=486.38865096359746
+2026-07-06 13:59:03 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=976 burn_error=-0.947 burn_ratio=0.053
+2026-07-06 13:59:03 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=78.614367019366 required_resources=1.572 target_replicas=3
+2026-07-06 13:59:03 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=111.51 p99=486.38865096359746
+2026-07-06 13:59:18 [debug    ] HAProxy fallback latency       delta_requests=1483 interval_avg_ms=50.73 max_rtime_ms=1914.0 p99_est=101.45
+2026-07-06 13:59:18 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=976 burn_error=-0.949 burn_ratio=0.051
+2026-07-06 13:59:18 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=86.95753046294705 required_resources=1.739 target_replicas=3
+2026-07-06 13:59:18 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=108.75 p99=101.45246122724208
+2026-07-06 13:59:33 [debug    ] HAProxy fallback latency       delta_requests=1999 interval_avg_ms=1540.29 max_rtime_ms=1914.0 p99_est=1914.0
+2026-07-06 13:59:33 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=975 burn_error=-0.948 burn_ratio=0.052
+2026-07-06 13:59:33 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=115.15447659887576 required_resources=2.303 target_replicas=3
+2026-07-06 13:59:33 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.4 p99=1914.0
+2026-07-06 13:59:48 [debug    ] HAProxy fallback latency       delta_requests=2269 interval_avg_ms=14694.01 max_rtime_ms=2106.0 p99_est=2106.0
+2026-07-06 13:59:48 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=974 burn_error=-0.947 burn_ratio=0.053
+2026-07-06 13:59:48 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=141.16716677196666 required_resources=2.823 target_replicas=4
+2026-07-06 13:59:48 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=114.67 p99=2106.0
+2026-07-06 14:00:03 [debug    ] HAProxy fallback latency       delta_requests=2294 interval_avg_ms=33754.58 max_rtime_ms=5313.0 p99_est=5313.0
+2026-07-06 14:00:03 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=973 burn_error=-0.946 burn_ratio=0.054
+2026-07-06 14:00:03 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=150.93243512049523 required_resources=3.019 target_replicas=4
+2026-07-06 14:00:03 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.75 p99=5313.0
+2026-07-06 14:00:18 [debug    ] HAProxy fallback latency       delta_requests=2237 interval_avg_ms=14916.42 max_rtime_ms=6351.0 p99_est=6351.0
+2026-07-06 14:00:18 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=972 burn_error=-0.946 burn_ratio=0.054
+2026-07-06 14:00:18 [warning  ] Knative pre-warm non-200       status=404
+2026-07-06 14:00:18 [info     ] controller_decision_v3         action=REACTIVE available_replicas=2 budget_remaining=972 burn_adjustment=-7 burst_ratio=0.4598 capacity_deficit=False confidence=0 current_load=148.10484744834542 decision_id=0604a375 k8s_capacity=80.0 k8s_weight=61 knative_weight=39 p99=6351.0 predicted_load=0 r_effective=40.0 serverless_enabled=True total_load=148.1 weights_after={'k3s': 61, 'knative': 39} weights_before={'k3s': 100, 'knative': 0}
+2026-07-06 14:00:18 [info     ] Weights updated                k3s=61 knative=39
+2026-07-06 14:00:18 [info     ] Weights updated                action=REACTIVE reason='load=148RPS | k8s_cap=80RPS | (burst-routing)' weights={'k3s': 61, 'knative': 39}
+2026-07-06 14:00:18 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=149.93721527284282 required_resources=2.999 target_replicas=4
+2026-07-06 14:00:18 [debug    ] Decision loop completed        action=REACTIVE latency_ms=118.26 p99=6351.0
+2026-07-06 14:00:33 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=971 burn_error=-0.945 burn_ratio=0.055
+2026-07-06 14:00:33 [info     ] controller_decision_v3         action=RECOVERY available_replicas=4 budget_remaining=971 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0 current_load=128.91095159029942 decision_id=db3691c2 k8s_capacity=160.0 k8s_weight=100 knative_weight=0 p99=6351.0 predicted_load=0 r_effective=40.0 serverless_enabled=False total_load=128.9 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 61, 'knative': 39}
+2026-07-06 14:00:34 [info     ] Weights updated                k3s=100 knative=0
+2026-07-06 14:00:34 [info     ] Weights updated                action=RECOVERY reason='load=129RPS | k8s_cap=160RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-06 14:00:34 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=138.50789951932242 required_resources=2.77 target_replicas=4
+2026-07-06 14:00:34 [debug    ] Decision loop completed        action=RECOVERY latency_ms=146.79 p99=6351.0
+2026-07-06 14:00:49 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=970 burn_error=-0.945 burn_ratio=0.055
+2026-07-06 14:00:49 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=123.41222096637668 required_resources=2.468 target_replicas=3
+2026-07-06 14:00:49 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.54 p99=6351.0
+2026-07-06 14:01:04 [debug    ] HAProxy fallback latency       delta_requests=1818 interval_avg_ms=1592.13 max_rtime_ms=6351.0 p99_est=3184.25
+2026-07-06 14:01:04 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=969 burn_error=-0.944 burn_ratio=0.056
+2026-07-06 14:01:04 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=119.11385038650155 required_resources=2.382 target_replicas=3
+2026-07-06 14:01:04 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=109.98 p99=3184.250825082508
+2026-07-06 14:01:19 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=968 burn_error=-0.944 burn_ratio=0.056
+2026-07-06 14:01:19 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=120.28305224988026 required_resources=2.406 target_replicas=3
+2026-07-06 14:01:19 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=109.68 p99=3184.250825082508
+2026-07-06 14:01:34 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=967 burn_error=-0.943 burn_ratio=0.057
+2026-07-06 14:01:34 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=119.28980157137931 required_resources=2.386 target_replicas=3
+2026-07-06 14:01:34 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=120.6 p99=3184.250825082508
+2026-07-06 14:01:49 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=966 burn_error=-0.943 burn_ratio=0.057
+2026-07-06 14:01:49 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=110.61657396348465 required_resources=2.212 target_replicas=3
+2026-07-06 14:01:49 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=106.6 p99=3184.250825082508
+2026-07-06 14:02:04 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=965 burn_error=-0.942 burn_ratio=0.058
+2026-07-06 14:02:04 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=93.19030195661102 required_resources=1.864 target_replicas=3
+2026-07-06 14:02:04 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=111.83 p99=3184.250825082508
+2026-07-06 14:02:19 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=964 burn_error=-0.942 burn_ratio=0.058
+2026-07-06 14:02:19 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=78.76080062964215 required_resources=1.575 target_replicas=3
+2026-07-06 14:02:19 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=106.44 p99=3184.250825082508
+2026-07-06 14:02:34 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=963 burn_error=-0.941 burn_ratio=0.059
+2026-07-06 14:02:34 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=71.54539754690009 required_resources=1.431 target_replicas=3
+2026-07-06 14:02:34 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=105.48 p99=3184.250825082508
+2026-07-06 14:02:49 [debug    ] HAProxy fallback latency       delta_requests=1170 interval_avg_ms=80.15 max_rtime_ms=6351.0 p99_est=160.31
+2026-07-06 14:02:50 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=963 burn_error=-0.942 burn_ratio=0.058
+2026-07-06 14:02:50 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=73.24930320246636 required_resources=1.465 target_replicas=3
+2026-07-06 14:02:50 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=112.21 p99=160.30598290598292
+2026-07-06 14:03:05 [debug    ] HAProxy fallback latency       delta_requests=1329 interval_avg_ms=74.12 max_rtime_ms=6351.0 p99_est=148.24
+2026-07-06 14:03:05 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=963 burn_error=-0.944 burn_ratio=0.056
+2026-07-06 14:03:05 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=82.69797848174125 required_resources=1.654 target_replicas=3
+2026-07-06 14:03:05 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=106.67 p99=148.2377727614748
+2026-07-06 14:03:20 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=963 burn_error=-0.945 burn_ratio=0.055
+2026-07-06 14:03:20 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=80.44374378119275 required_resources=1.609 target_replicas=3
+2026-07-06 14:03:20 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=112.28 p99=148.2377727614748
+2026-07-06 14:03:35 [debug    ] HAProxy fallback latency       delta_requests=780 interval_avg_ms=117.84 max_rtime_ms=6351.0 p99_est=235.69
+2026-07-06 14:03:35 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=962 burn_error=-0.944 burn_ratio=0.056
+2026-07-06 14:03:35 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=62.279239374357104 required_resources=1.246 target_replicas=3
+2026-07-06 14:03:35 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=109.26 p99=235.68974358974359
+2026-07-06 14:03:50 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=961 burn_error=-0.944 burn_ratio=0.056
+2026-07-06 14:03:50 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=49.10356618716301 required_resources=0.982 target_replicas=3
+2026-07-06 14:03:50 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.29 p99=235.68974358974359
+2026-07-06 14:04:05 [debug    ] HAProxy fallback latency       delta_requests=693 interval_avg_ms=13.0 max_rtime_ms=6351.0 p99_est=26.0
+2026-07-06 14:04:05 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=961 burn_error=-0.945 burn_ratio=0.055
+2026-07-06 14:04:05 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=46.22821415765722 required_resources=0.925 target_replicas=3
+2026-07-06 14:04:05 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=106.77 p99=26.0
+2026-07-06 14:04:20 [debug    ] HAProxy fallback latency       delta_requests=655 interval_avg_ms=13.0 max_rtime_ms=6351.0 p99_est=26.0
+2026-07-06 14:04:20 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=961 burn_error=-0.946 burn_ratio=0.054
+2026-07-06 14:04:20 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=44.64177863475254 required_resources=0.893 target_replicas=3
+2026-07-06 14:04:20 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=107.32 p99=26.0
+2026-07-06 14:04:35 [debug    ] HAProxy fallback latency       delta_requests=632 interval_avg_ms=13.0 max_rtime_ms=6351.0 p99_est=26.0
+2026-07-06 14:04:35 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=961 burn_error=-0.947 burn_ratio=0.053
+2026-07-06 14:04:35 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=42.59525049712913 required_resources=0.852 target_replicas=3
+2026-07-06 14:04:35 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=105.98 p99=26.0
+2026-07-06 14:04:50 [debug    ] HAProxy fallback latency       delta_requests=827 interval_avg_ms=13.0 max_rtime_ms=6351.0 p99_est=26.0
+2026-07-06 14:04:50 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=961 burn_error=-0.948 burn_ratio=0.052
+2026-07-06 14:04:50 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=48.25810857081405 required_resources=0.965 target_replicas=3
+2026-07-06 14:04:50 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=106.65 p99=26.0
+2026-07-06 14:05:05 [debug    ] HAProxy fallback latency       delta_requests=1055 interval_avg_ms=13.0 max_rtime_ms=6351.0 p99_est=26.0
+2026-07-06 14:05:05 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=961 burn_error=-0.948 burn_ratio=0.052
+2026-07-06 14:05:06 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=62.29179749946802 required_resources=1.246 target_replicas=3
+2026-07-06 14:05:06 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=108.62 p99=26.0
+2026-07-06 14:05:21 [debug    ] HAProxy fallback latency       delta_requests=1076 interval_avg_ms=94.25 max_rtime_ms=6351.0 p99_est=188.49
+2026-07-06 14:05:21 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=961 burn_error=-0.949 burn_ratio=0.051
+2026-07-06 14:05:21 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=70.4942003194646 required_resources=1.41 target_replicas=3
+2026-07-06 14:05:21 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=116.66 p99=188.49256505576207
+2026-07-06 14:05:36 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=961 burn_error=-0.95 burn_ratio=0.05
+2026-07-06 14:05:36 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=70.33630555053918 required_resources=1.407 target_replicas=3
+2026-07-06 14:05:36 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=99.67 p99=188.49256505576207
+2026-07-06 14:05:51 [debug    ] HAProxy fallback latency       delta_requests=1070 interval_avg_ms=13.0 max_rtime_ms=6351.0 p99_est=26.0
+2026-07-06 14:05:51 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=961 burn_error=-0.951 burn_ratio=0.049
+2026-07-06 14:05:51 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=70.19294748049413 required_resources=1.404 target_replicas=3
+2026-07-06 14:05:51 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=109.84 p99=26.0
+2026-07-06 14:06:06 [debug    ] HAProxy fallback latency       delta_requests=1126 interval_avg_ms=93.52 max_rtime_ms=6351.0 p99_est=187.04
+2026-07-06 14:06:06 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=961 burn_error=-0.952 burn_ratio=0.048
+2026-07-06 14:06:06 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=72.69245742996173 required_resources=1.454 target_replicas=3
+2026-07-06 14:06:06 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=109.43 p99=187.04440497335702
+2026-07-06 14:06:21 [debug    ] HAProxy fallback latency       delta_requests=1386 interval_avg_ms=146.83 max_rtime_ms=6351.0 p99_est=293.67
+2026-07-06 14:06:21 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=960 burn_error=-0.951 burn_ratio=0.049
+2026-07-06 14:06:21 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=83.0914170348457 required_resources=1.662 target_replicas=3
+2026-07-06 14:06:21 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=103.24 p99=293.66810966810965
+2026-07-06 14:06:36 [debug    ] HAProxy fallback latency       delta_requests=1634 interval_avg_ms=130.67 max_rtime_ms=6351.0 p99_est=261.35
+2026-07-06 14:06:36 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=959 burn_error=-0.951 burn_ratio=0.049
+2026-07-06 14:06:36 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=99.9255195024392 required_resources=1.999 target_replicas=3
+2026-07-06 14:06:36 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=111.76 p99=261.34638922888615
+2026-07-06 14:06:51 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=958 burn_error=-0.95 burn_ratio=0.05
+2026-07-06 14:06:51 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=102.26983255696578 required_resources=2.045 target_replicas=3
+2026-07-06 14:06:51 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=117.12 p99=261.34638922888615
+2026-07-06 14:07:06 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=957 burn_error=-0.95 burn_ratio=0.05
+2026-07-06 14:07:06 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=87.59875265060761 required_resources=1.752 target_replicas=3
+2026-07-06 14:07:06 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=113.77 p99=261.34638922888615
+2026-07-06 14:07:21 [debug    ] HAProxy fallback latency       delta_requests=930 interval_avg_ms=14.0 max_rtime_ms=6351.0 p99_est=28.0
+2026-07-06 14:07:21 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=957 burn_error=-0.951 burn_ratio=0.049
+2026-07-06 14:07:22 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=70.22299673842659 required_resources=1.404 target_replicas=3
+2026-07-06 14:07:22 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=107.36 p99=28.0
+2026-07-06 14:07:37 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=957 burn_error=-0.951 burn_ratio=0.049
+2026-07-06 14:07:37 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=53.96701857301049 required_resources=1.079 target_replicas=3
+2026-07-06 14:07:37 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=103.18 p99=28.0
+2026-07-06 14:07:52 [debug    ] HAProxy fallback latency       delta_requests=657 interval_avg_ms=13.0 max_rtime_ms=6351.0 p99_est=26.0
+2026-07-06 14:07:52 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=957 burn_error=-0.952 burn_ratio=0.048
+2026-07-06 14:07:52 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=44.917219175819675 required_resources=0.898 target_replicas=3
+2026-07-06 14:07:52 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=111.55 p99=26.0
+2026-07-06 14:08:07 [debug    ] HAProxy fallback latency       delta_requests=666 interval_avg_ms=13.0 max_rtime_ms=6351.0 p99_est=26.0
+2026-07-06 14:08:07 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=957 burn_error=-0.953 burn_ratio=0.047
+2026-07-06 14:08:07 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=43.75348709016484 required_resources=0.875 target_replicas=3
+2026-07-06 14:08:07 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=106.34 p99=26.0
+2026-07-06 14:08:22 [debug    ] HAProxy fallback latency       delta_requests=770 interval_avg_ms=13.0 max_rtime_ms=6351.0 p99_est=26.0
+2026-07-06 14:08:22 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=957 burn_error=-0.953 burn_ratio=0.047
+2026-07-06 14:08:22 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=47.488531278826315 required_resources=0.95 target_replicas=3
+2026-07-06 14:08:22 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=112.3 p99=26.0
+2026-07-06 14:08:37 [debug    ] HAProxy fallback latency       delta_requests=855 interval_avg_ms=13.0 max_rtime_ms=6351.0 p99_est=26.0
+2026-07-06 14:08:37 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=957 burn_error=-0.954 burn_ratio=0.046
+2026-07-06 14:08:37 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=53.77441332557099 required_resources=1.075 target_replicas=3
+2026-07-06 14:08:37 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=114.43 p99=26.0
+2026-07-06 14:08:52 [debug    ] HAProxy fallback latency       delta_requests=724 interval_avg_ms=13.0 max_rtime_ms=6351.0 p99_est=26.0
+2026-07-06 14:08:52 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=957 burn_error=-0.954 burn_ratio=0.046
+2026-07-06 14:08:52 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=52.238756936489494 required_resources=1.045 target_replicas=3
+2026-07-06 14:08:52 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=105.23 p99=26.0
+2026-07-06 14:09:07 [debug    ] HAProxy fallback latency       delta_requests=581 interval_avg_ms=13.0 max_rtime_ms=6351.0 p99_est=26.0
+2026-07-06 14:09:07 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=957 burn_error=-0.955 burn_ratio=0.045
+2026-07-06 14:09:07 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=43.21417302122331 required_resources=0.864 target_replicas=3
+2026-07-06 14:09:07 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=108.72 p99=26.0
+2026-07-06 14:09:22 [debug    ] HAProxy fallback latency       delta_requests=582 interval_avg_ms=13.0 max_rtime_ms=6351.0 p99_est=26.0
+2026-07-06 14:09:22 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=957 burn_error=-0.956 burn_ratio=0.044
+2026-07-06 14:09:22 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=38.525206194132664 required_resources=0.771 target_replicas=3
+2026-07-06 14:09:22 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=108.91 p99=26.0
+2026-07-06 14:09:37 [debug    ] HAProxy fallback latency       delta_requests=605 interval_avg_ms=183.92 max_rtime_ms=6351.0 p99_est=367.83
+2026-07-06 14:09:37 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=956 burn_error=-0.955 burn_ratio=0.045
+2026-07-06 14:09:37 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=39.280743315776924 required_resources=0.786 target_replicas=3
+2026-07-06 14:09:37 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=101.88 p99=367.8314049586777
+2026-07-06 14:09:53 [debug    ] HAProxy fallback latency       delta_requests=628 interval_avg_ms=14.0 max_rtime_ms=6351.0 p99_est=28.0
+2026-07-06 14:09:53 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=956 burn_error=-0.956 burn_ratio=0.044
+2026-07-06 14:09:53 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=40.811492436686514 required_resources=0.816 target_replicas=3
+2026-07-06 14:09:53 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=107.27 p99=28.0
+2026-07-06 14:10:08 [debug    ] HAProxy fallback latency       delta_requests=660 interval_avg_ms=14.0 max_rtime_ms=6351.0 p99_est=28.0
+2026-07-06 14:10:08 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=956 burn_error=-0.956 burn_ratio=0.044
+2026-07-06 14:10:08 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=42.603264826567596 required_resources=0.852 target_replicas=3
+2026-07-06 14:10:08 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=107.39 p99=28.0
+2026-07-06 14:10:23 [debug    ] HAProxy fallback latency       delta_requests=737 interval_avg_ms=14.0 max_rtime_ms=6351.0 p99_est=28.0
+2026-07-06 14:10:23 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=956 burn_error=-0.957 burn_ratio=0.043
+2026-07-06 14:10:23 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=46.2037279737887 required_resources=0.924 target_replicas=3
+2026-07-06 14:10:23 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=102.01 p99=28.0
+2026-07-06 14:10:38 [debug    ] HAProxy fallback latency       delta_requests=350 interval_avg_ms=316.23 max_rtime_ms=6351.0 p99_est=632.45
+2026-07-06 14:10:38 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=955 burn_error=-0.956 burn_ratio=0.044
+2026-07-06 14:10:38 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=36.045339265284966 required_resources=0.721 target_replicas=3
+2026-07-06 14:10:38 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=101.24 p99=632.4514285714286
+2026-07-06 14:10:53 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=11.653305506328602 required_resources=0.233 target_replicas=3
+2026-07-06 14:10:53 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=107.18 p99=632.4514285714286
+2026-07-06 14:11:08 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-06 14:11:08 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=108.48 p99=632.4514285714286
+2026-07-06 14:11:23 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.02 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-06 14:11:23 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=106.84 p99=632.4514285714286
+2026-07-06 14:11:31 [info     ] Received shutdown signal
+2026-07-06 14:11:31 [info     ] Stopping routing daemon...
+2026-07-06 14:11:31 [info     ] Routing daemon stopped
