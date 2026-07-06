@@ -155,6 +155,10 @@ def analyze_from_experiment(metrics: ScenarioMetrics) -> dict[str, Any]:
         avg_k8s_cpu = 0.0
         avg_k8s_mem = 0.0
     ec2_compute = production_nodes * duration_hours * cloud_node["rate"] if production_nodes > 0 else 0.0
+    # Dynamic nodes provisioned by K3dAutoscaler during experiment
+    if metrics.nodes_provisioned > 0:
+        dynamic_hours = metrics.nodes_provisioned * (metrics.duration_sec - metrics.first_provision_delay_sec) / 3600
+        ec2_compute += dynamic_hours * cloud_node["rate"]
 
     # === LAMBDA PROVISIONED CONCURRENCY ===
     lambda_capacity = lambda_execution = lambda_requests = lambda_overflow = 0.0
