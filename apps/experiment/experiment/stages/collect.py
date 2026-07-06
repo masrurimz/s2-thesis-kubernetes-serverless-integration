@@ -34,6 +34,7 @@ KUBECTL_PATH = os.environ.get(
 NAMESPACE = "default"
 DEPLOYMENT = "test-app-warm"
 K8S_DEPLOYMENT_FILTER = f'deployment="{DEPLOYMENT}",namespace="{NAMESPACE}"'
+SERVERLESS_CONTEXT = os.environ.get("K3D_SERVERLESS_CONTEXT", "k3d-thesis-serverless")
 
 
 def _run_cmd(cmd: List[str], timeout: int = 30, **kwargs: Any) -> subprocess.CompletedProcess:
@@ -245,6 +246,7 @@ class ResourcePoller:
     def _poll_once(self) -> None:
         """Single poll of metrics-server API via kubectl."""
         self._poll_pods()
+        self._poll_serverless_pods()
         self._poll_nodes()
 
     def _poll_pods(self) -> None:
@@ -279,6 +281,44 @@ class ResourcePoller:
                         self._samples.append(sample)
         except Exception as e:
             logger.debug("resource_poll_failed", error=str(e))
+
+    def _poll_serverless_pods(self) -> None:
+        """Poll Knative pod CPU/memory from thesis-serverless cluster."""
+        try:
+            r = _run_cmd(
+                [
+                    KUBECTL_PATH,
+                    "--context",
+                    SERVERLESS_CONTEXT,
+                    "get",
+                    "--raw",
+                    "/apis/metrics.k8s.io/v1beta1/namespaces/default/pods",
+                ],
+                timeout=10,
+            )
+            if r.returncode != 0:
+                return
+            data = json.loads(r.stdout)
+            ts = time.time()
+            for item in data.get("items", []):
+                labels = item.get("metadata", {}).get("labels", {})
+                if "serving.knative.dev/service" not in labels:
+                    continue
+                pod_name = item.get("metadata", {}).get("name", "")
+                for container in item.get("containers", []):
+                    cpu_str = container.get("usage", {}).get("cpu", "0n")
+                    mem_str = container.get("usage", {}).get("memory", "0Ki")
+                    sample = {
+                        "timestamp": ts,
+                        "pod": pod_name,
+                        "backend": "knative",
+                        "cpu_millicores": self._parse_cpu(cpu_str),
+                        "memory_mib": self._parse_memory(mem_str),
+                    }
+                    with self._lock:
+                        self._samples.append(sample)
+        except Exception as e:
+            logger.debug("serverless_resource_poll_failed", error=str(e))
 
     def _poll_nodes(self) -> None:
         """Poll per-node CPU/memory utilization via kubectl top nodes."""
