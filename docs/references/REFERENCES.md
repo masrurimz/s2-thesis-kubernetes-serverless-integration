@@ -48,6 +48,9 @@ All papers downloaded as PDF for offline access. Located in `docs/references/`.
 | **SATA** — SLO Threshold Adaptation | doi:10.3390/electronics13071242 | Static SLO thresholds need 35-47% margin; dynamic threshold adjustment achieves 98% SLA compliance |
 | **CPU Throttling-Aware Autoscaling** | doi:10.1109/PIMRC59610.2024.10817283 | Per-pod capacity must be measured under actual CFS throttling, not assumed from CPU limits |
 | **Demystifying Serverless Costs** | arXiv:2506.01283 | Billing inflates resources up to 4.35× beyond actual consumption; OS scheduling granularity impacts cost |
+| **Skyrise** — Serverless vs VM Cost Break-even | arXiv:2501.07771 | Derives break-even throughput: FaaS cheaper below threshold, VMs cheaper above; Q6 break-even at 558 runs/hr, Q12 at 128 runs/hr |
+| **High Cost of Keeping Warm** | arXiv:2509.03104 | Measures 10-40% serverless overhead from instance churn, 2-10× memory waste; hybrid real+simulation methodology |
+| **BatchBench** — Autoscaling Benchmark | arXiv:2605.12272 | Five-axis evaluation: cost, SLA, responsiveness, thrash, interpretability; paired Wilcoxon + bootstrap CIs |
 
 ## Dataset References
 

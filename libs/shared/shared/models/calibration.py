@@ -29,11 +29,11 @@ class CalibrationConfig(BaseModel):
     pod_memory_mib: int = 128
 
     # Capacity model — MEASURED from t7-capacity-envelope test (no CPU limits)
-    # fib(33): p99 < 200ms up to 150 RPS (50/pod), cliff at 200 RPS (50/pod), cliff at 250 RPS (83.3/pod)
-    # target_cpu_util=0.6 → cap = 3 × 50 × 0.6 = 90 RPS RPS (just above ClarkNet mean 73)
-    # Peaks (>80 RPS) overflow to serverless → meaningful cost differentiation between S1/S4
+    # fib(33): p99 < 200ms up to 150 RPS (50/pod), cliff at 200 RPS (66.7/pod)
+    # target_cpu_util=0.8 → cap = 3 × 50 × 0.8 = 120 RPS (efficient, handles mean 73)
+    # Peaks >120 RPS overflow to serverless (BACC methodology: tau=0.8)
     r_saturation_per_replica: float = 50.0  # Measured: last good level before p99 cliff
-    target_cpu_util: float = 0.6  # Conservative — K8s cap=90 RPS, overflow during ClarkNet peaks
+    target_cpu_util: float = 0.8  # High efficiency — K8s cap=120 RPS, overflow during peaks
 
     # Replica bounds
     min_k8s_replicas: int = 3
