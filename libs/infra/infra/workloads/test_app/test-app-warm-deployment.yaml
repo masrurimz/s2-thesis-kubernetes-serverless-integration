@@ -34,6 +34,9 @@ spec:
               value: "8080"
             - name: GOMAXPROCS
               value: "1"
+            # I/O wait simulation (SeBS: arXiv:2012.14132). Real serverless workloads
+            # spend 50-200ms on I/O (DB queries, API calls, storage). This simulates
+            # that I/O component. Lambda bills for wall-clock duration including waits.
             - name: WORK_DURATION_MS
               value: "10"
             - name: FIB_N
