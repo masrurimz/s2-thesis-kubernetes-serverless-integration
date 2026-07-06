@@ -19,8 +19,8 @@ class CalibrationConfig(BaseModel):
     is the linear coefficient for Algorithm 2 (replicas = alpha * load + beta).
     """
 
-    # Workload tuple — fib(32) measured: p50=8.6ms, p99=27ms at 50 RPS/3pods
-    fib_n: int = 32
+    # Workload tuple — fib(33) measured: p50=8.6ms, p99=27ms at 50 RPS/3pods
+    fib_n: int = 33
     gomaxprocs: int = 1
     slo_threshold_ms: float = 200.0
 
@@ -29,11 +29,11 @@ class CalibrationConfig(BaseModel):
     pod_memory_mib: int = 128
 
     # Capacity model — MEASURED from t7-capacity-envelope test (no CPU limits)
-    # fib(32): p99 < 200ms up to 200 RPS (66.7/pod), cliff at 250 RPS (83.3/pod)
-    # target_cpu_util=0.4 → cap = 3 × 67 × 0.4 = 80.4 RPS (just above ClarkNet mean 73)
+    # fib(33): p99 < 200ms up to 150 RPS (50/pod), cliff at 200 RPS (50/pod), cliff at 250 RPS (83.3/pod)
+    # target_cpu_util=0.6 → cap = 3 × 50 × 0.6 = 90 RPS RPS (just above ClarkNet mean 73)
     # Peaks (>80 RPS) overflow to serverless → meaningful cost differentiation between S1/S4
-    r_saturation_per_replica: float = 67.0  # Measured: last good level before p99 cliff
-    target_cpu_util: float = 0.4  # Aggressive — overflow to serverless at 80 RPS
+    r_saturation_per_replica: float = 50.0  # Measured: last good level before p99 cliff
+    target_cpu_util: float = 0.6  # Conservative — K8s cap=90 RPS, overflow during ClarkNet peaks
 
     # Replica bounds
     min_k8s_replicas: int = 3
