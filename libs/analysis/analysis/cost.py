@@ -112,8 +112,11 @@ def analyze_from_experiment(metrics: ScenarioMetrics) -> dict[str, Any]:
         serverless_requests_tmp = int(metrics.total_requests * (serverless_pct_tmp / 100.0))
         if serverless_requests_tmp > 0 and metrics.knative_cpu_seconds > 1.0:
             knative_cpu_per_req_sec = metrics.knative_cpu_seconds / serverless_requests_tmp
-            metrics.lambda_exec_time_sec = knative_cpu_per_req_sec / POD_CPU_REQUEST + LAMBDA_OVERHEAD_SEC
-            metrics.execution_time_source = "knative_cpu_per_serverless_req"
+            # CPU-derived exec time + I/O wait (not captured by CPU metrics, SeBS: arXiv:2012.14132)
+            metrics.lambda_exec_time_sec = (
+                knative_cpu_per_req_sec / POD_CPU_REQUEST + CALIBRATION.io_wait_ms / 1000 + LAMBDA_OVERHEAD_SEC
+            )
+            metrics.execution_time_source = "knative_cpu_plus_io_wait"
         else:
             # Calibration fallback: metrics-server misses CPU bursts for short-lived
             # fib requests. Lambda bills WALL-CLOCK duration (SeBS: arXiv:2012.14132):
