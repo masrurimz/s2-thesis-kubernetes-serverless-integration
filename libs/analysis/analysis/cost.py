@@ -116,10 +116,11 @@ def analyze_from_experiment(metrics: ScenarioMetrics) -> dict[str, Any]:
             metrics.execution_time_source = "knative_cpu_per_serverless_req"
         else:
             # Calibration fallback: metrics-server misses CPU bursts for short-lived
-            # fib requests. Use measured compute time from capacity test (SeBS: arXiv:2012.14132).
-            # Note: Lambda bills WALL-CLOCK duration. fib(33) is pure CPU (14ms).
-            # Real workloads add I/O waits (50-200ms), making serverless 3-10× more expensive.
-            metrics.lambda_exec_time_sec = CALIBRATION.lambda_compute_ms / 1000 + LAMBDA_OVERHEAD_SEC
+            # fib requests. Lambda bills WALL-CLOCK duration (SeBS: arXiv:2012.14132):
+            # exec_time = CPU compute (14ms) + I/O wait (50ms) + Lambda overhead (10ms) = 74ms
+            metrics.lambda_exec_time_sec = (
+                CALIBRATION.lambda_compute_ms + CALIBRATION.io_wait_ms
+            ) / 1000 + LAMBDA_OVERHEAD_SEC
             metrics.execution_time_source = "calibration_measured"
 
     # --- Serverless request routing ---
