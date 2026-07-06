@@ -39,8 +39,10 @@ class CalibrationConfig(BaseModel):
     lambda_compute_ms: float = 14.0  # Measured fib(33) CPU compute time
     io_wait_ms: float = 50.0  # Simulated I/O wait (DB query, SeBS methodology)
 
-    # Capacity model — OVERWRITE from capacity test measurement
-    r_saturation_per_replica: float = 50.0
+    # Capacity model — MEASURED with 300m CPU limits + 50ms I/O wait
+    # p99 > 200ms at 50 RPS (16.7 RPS/pod). K8s cap = 3 × 16.7 × 0.8 = 40 RPS.
+    # Below ClarkNet mean (73) → significant serverless overflow throughout.
+    r_saturation_per_replica: float = 16.7  # Measured: first p99 > 200ms crossing
     target_cpu_util: float = 0.8
 
     # Replica bounds
