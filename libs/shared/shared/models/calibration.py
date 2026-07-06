@@ -27,6 +27,7 @@ class CalibrationConfig(BaseModel):
     # Pod resources (must match deployment YAMLs) — CPU limits REMOVED (SoCC 2025)
     pod_cpu_millicores: int = 300
     pod_memory_mib: int = 128
+    lambda_compute_ms: float = 14.0  # Measured fib(33) compute time from capacity test
 
     # Capacity model — MEASURED from t7-capacity-envelope test (no CPU limits)
     # fib(33): p99 < 200ms up to 150 RPS (50/pod), cliff at 200 RPS (66.7/pod)

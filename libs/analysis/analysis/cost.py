@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+from shared.models.calibration import CALIBRATION
 
 from analysis.constants import (
     BETA_VALUES,
@@ -116,8 +117,7 @@ def analyze_from_experiment(metrics: ScenarioMetrics) -> dict[str, Any]:
         else:
             # Calibration fallback: metrics-server misses CPU bursts for short-lived
             # fib requests. Use measured per-request compute time from capacity test.
-            # fib(33) at 300m = ~14ms compute + 10ms Lambda overhead = 24ms total
-            metrics.lambda_exec_time_sec = 0.014 + LAMBDA_OVERHEAD_SEC
+            metrics.lambda_exec_time_sec = CALIBRATION.lambda_compute_ms / 1000 + LAMBDA_OVERHEAD_SEC
             metrics.execution_time_source = "calibration_measured"
 
     # --- Serverless request routing ---
@@ -167,7 +167,9 @@ def analyze_from_experiment(metrics: ScenarioMetrics) -> dict[str, Any]:
         pc_capacity_rps = (
             metrics.lambda_pc_instances / metrics.lambda_exec_time_sec if metrics.lambda_exec_time_sec > 0 else 0
         )
-        overflow_rps = max(0, serverless_rps - pc_capacity_rps)
+        # Size overflow from peak demand, not run-average (ClarkNet peak/mean ≈ 2.25)
+        peak_serverless_rps = serverless_rps * 2.25
+        overflow_rps = max(0, peak_serverless_rps - pc_capacity_rps)
         overflow_requests = int(overflow_rps * metrics.duration_sec)
         if overflow_requests > 0:
             overflow_gb_seconds = overflow_requests * LAMBDA_MEM_GB * metrics.lambda_exec_time_sec

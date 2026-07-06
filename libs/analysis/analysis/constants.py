@@ -83,8 +83,8 @@ PHASE_A1_DECISIONS: list[dict] = [
 # ---------------------------------------------------------------------------
 # Pod resource configuration (from K8s manifests: infrastructure/test-app/*.yaml)
 # ---------------------------------------------------------------------------
-POD_CPU_REQUEST = 0.200  # vCPU (200m)
-POD_MEM_REQUEST_GIB = 0.125  # 128Mi
+POD_CPU_REQUEST = 0.300  # vCPU (300m) — matches CalibrationConfig
+POD_MEM_REQUEST_GIB = 0.0625  # 64Mi requests (manifests request 64Mi, limit 128Mi)
 KNATIVE_TARGET_CONCURRENCY = 10  # autoscaling.knative.dev/target: "10"
 
 # EKS control plane (us-east-1, 2025)
@@ -104,8 +104,8 @@ TARGET_MEM_UTIL = 0.70
 # Lambda overhead (network + runtime init per invocation)
 LAMBDA_OVERHEAD_SEC = 0.010  # 10ms typical
 
-# Lambda gives 1 vCPU at 1769 MB. 200m/1000 × 1769 ≈ 354 MB
-LAMBDA_MEM_MB = 354
+# Lambda gives 1 vCPU at 1769 MB. 300m/1000 × 1769 ≈ 531 MB
+LAMBDA_MEM_MB = 531
 LAMBDA_MEM_GB = LAMBDA_MEM_MB / 1024
 
 # AWS Lambda Provisioned Concurrency (x86, us-east-1, 2025 list prices)
