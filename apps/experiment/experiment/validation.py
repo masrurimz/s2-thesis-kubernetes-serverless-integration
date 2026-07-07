@@ -95,6 +95,15 @@ def validate_h3_gru() -> ValidationResult:
 
     # Get actual RMSE from model
     model_rmse = loader.rmse
+    if model_rmse is None:
+        return ValidationResult(
+            hypothesis="H3",
+            proven=False,
+            confidence="low",
+            evidence={"error": "Model RMSE not available in metadata"},
+            limitations=["Model metadata missing RMSE field"],
+            recommendation="Retrain model and ensure RMSE is saved in metadata",
+        )
 
     # Test prediction
     test_history = [100.0] * 30

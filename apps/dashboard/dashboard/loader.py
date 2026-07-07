@@ -202,7 +202,7 @@ def load_resource(run_dir: Path | str) -> list[dict] | None:
     return _sanitize(raw) if raw is not None else None
 
 
-def load_provision(run_dir: Path | str) -> list | None:
+def load_provision(run_dir: Path | str) -> list:
     """Load ``provision_events.json`` (sparse [ts, event, details] tuples).
 
     Returns ``[]`` for empty/missing files so callers can always iterate.

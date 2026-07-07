@@ -684,6 +684,14 @@ def cold_start(
     cs_penalty = a1["cold_start_average"]
     warm_p99 = a1["p99_warm_state_mean"]
 
+    # decomp may be None if S1/S2 p99 data is missing; guard the summary values.
+    if decomp:
+        base_std = decomp["base_std"]
+        s3_excess_std = decomp["s3_excess_std"]
+        s3_pct_from_cold_start = decomp["s3_pct_from_cold_start"]
+    else:
+        base_std = s3_excess_std = s3_pct_from_cold_start = 0.0
+
     print(f"""
   Cold Start Penalty Estimate:
     Measured range: {COLD_START_MS_S3:.0f}-{COLD_START_MS_S4:.0f}ms (avg {cs_penalty:.0f}ms)
@@ -692,9 +700,9 @@ def cold_start(
 
   Variance Attribution (S3 reactive):
     Total p99 std: {stats_map["s3-hybrid-reactive"].p99_std:.0f}ms
-    Base std (no routing): {decomp["base_std"]:.0f}ms
-    Excess std (cold start + routing): {decomp["s3_excess_std"]:.0f}ms
-    → {decomp["s3_pct_from_cold_start"]:.0f}% of S3 variance attributable to cold start/routing
+    Base std (no routing): {base_std:.0f}ms
+    Excess std (cold start + routing): {s3_excess_std:.0f}ms
+    → {s3_pct_from_cold_start:.0f}% of S3 variance attributable to cold start/routing
 
   Correlation (scale_out ↔ p99):""")
 

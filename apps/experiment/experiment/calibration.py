@@ -48,7 +48,7 @@ class CalibrationResult:
 
 def load_test_curl(
     rps: int, duration_sec: int, endpoint: str = "http://localhost:18082/work?duration_ms=10"
-) -> Tuple[int, int, int]:
+) -> Tuple[int, int, float]:
     """
     Run load test using parallel curl requests and measure results via Prometheus.
     Returns: (total_requests, errors, actual_rps)
