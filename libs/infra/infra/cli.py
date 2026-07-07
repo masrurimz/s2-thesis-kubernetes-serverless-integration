@@ -199,9 +199,28 @@ def deploy_app(
         run(["docker", "push", image], check=True)
         console.print("[green]✓ Pushed to registry[/green]")
 
-        # 3. Import to thesis-serverless
-        run(["k3d", "image", "import", image, "-c", "thesis-serverless"], check=False)
+        # 3. Import to thesis-serverless (FAIL if import fails)
+        run(["k3d", "image", "import", image, "-c", "thesis-serverless"], check=True)
         console.print("[green]✓ Imported to thesis-serverless[/green]")
+
+    # 3b. Patch Knative to skip tag resolution for local registry
+    run(
+        [
+            "kubectl",
+            "--context",
+            serverless_ctx,
+            "patch",
+            "configmap",
+            "config-deployment",
+            "-n",
+            "knative-serving",
+            "--type",
+            "merge",
+            "-p",
+            '{"data":{"registries-skipping-tag-resolving":"kind.local,ko.local,dev.local,k3d-registry.localhost:5000"}}',
+        ],
+        check=False,
+    )
 
     # 4. Apply K8s deployment
     k8s_yaml = str(app_dir.joinpath("test-app-warm-deployment.yaml"))

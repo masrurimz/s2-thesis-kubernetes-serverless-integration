@@ -23,7 +23,7 @@ class PrometheusManager:
     def start(self) -> bool:
         """Start Prometheus via docker-compose."""
         console.print("[bold]Starting Prometheus...[/bold]")
-        result = run(["docker-compose", "-f", self._compose_file, "up", "-d"])
+        result = run(["docker", "compose", "-f", self._compose_file, "up", "-d"])
         if result.returncode != 0:
             logger.error("prometheus_start_failed", stderr=result.stderr)
             return False
@@ -34,7 +34,7 @@ class PrometheusManager:
     def stop(self) -> bool:
         """Stop Prometheus via docker-compose."""
         console.print("[bold]Stopping Prometheus...[/bold]")
-        result = run(["docker-compose", "-f", self._compose_file, "down"])
+        result = run(["docker", "compose", "-f", self._compose_file, "down"])
         if result.returncode != 0:
             logger.error("prometheus_stop_failed", stderr=result.stderr)
             return False
@@ -44,5 +44,5 @@ class PrometheusManager:
 
     def is_running(self) -> bool:
         """Check if Prometheus container is running."""
-        result = run(["docker-compose", "-f", self._compose_file, "ps", "--services", "--filter", "status=running"])
+        result = run(["docker", "compose", "-f", self._compose_file, "ps", "--services", "--filter", "status=running"])
         return bool(result.stdout.strip())
