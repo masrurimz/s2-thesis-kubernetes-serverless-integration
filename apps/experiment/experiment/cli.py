@@ -20,6 +20,8 @@ import structlog
 from shared.models.experiment import ExperimentConfig, ExperimentResult
 
 if TYPE_CHECKING:
+    from rich.console import Console
+
     from shared.models.pipeline import PipelineContext
 
 app = typer.Typer(help="Experiment orchestration")
@@ -394,40 +396,73 @@ def _run_replicated(
     """Run replicated experiments with randomized order."""
     from rich.console import Console
 
+    from shared.progress import (
+        countdown,
+        create_progress,
+        elapsed_str,
+        print_run_failure,
+        print_run_header,
+        print_run_result,
+    )
+
     console = Console()
     schedule = [(s, r) for s in scenarios for r in range(1, config.runs + 1)]
     rng = random.Random(config.seed)
     rng.shuffle(schedule)
 
     results: list[ExperimentResult] = []
+    run_durations: list[float] = []
+    total = len(schedule)
 
-    for idx, (scenario, run_id) in enumerate(schedule):
-        console.print(f"  [cyan]Run {idx + 1}/{len(schedule)}:[/cyan] {scenario} run {run_id}")
+    with create_progress(console) as progress:
+        batch_task = progress.add_task("[bold]Batch[/bold]", total=total)
 
-        ctx = _make_ctx(config, scenario, run_id, output_dir)
+        for idx, (scenario, run_id) in enumerate(schedule):
+            print_run_header(console, idx + 1, total, scenario, run_id)
 
-        if dry_run:
-            from experiment.pipeline import Pipeline
-            from experiment.stages.reset import ResetStage
-            from experiment.stages.daemon import DaemonStage
-            from experiment.stages.workload import WorkloadStage
-            from experiment.stages.collect import CollectStage
+            ctx = _make_ctx(config, scenario, run_id, output_dir)
 
-            stages = [ResetStage(), DaemonStage(), WorkloadStage(), CollectStage()]
-            pipeline = Pipeline(stages, ctx)
-            pipeline.dry_run()
-            console.print(f"    [yellow]Dry run: {pipeline.summary()}[/yellow]")
-            continue
+            if dry_run:
+                from experiment.pipeline import Pipeline
+                from experiment.stages.reset import ResetStage
+                from experiment.stages.daemon import DaemonStage
+                from experiment.stages.workload import WorkloadStage
+                from experiment.stages.collect import CollectStage
 
-        # Full run: execute the per-run protocol
-        result = _run_single(scenario, run_id, idx, config, output_dir)
-        if result:
-            results.append(result)
+                stages = [ResetStage(), DaemonStage(), WorkloadStage(), CollectStage()]
+                pipeline = Pipeline(stages, ctx)
+                pipeline.dry_run()
+                console.print(f"    [yellow]Dry run: {pipeline.summary()}[/yellow]")
+                progress.advance(batch_task)
+                continue
 
-        # Inter-run pause
-        if idx < len(schedule) - 1:
-            console.print(f"    [dim]Pausing {INTER_RUN_PAUSE_SEC}s...[/dim]")
-            time.sleep(INTER_RUN_PAUSE_SEC)
+            # Full run: execute the per-run protocol
+            t0 = time.time()
+            result = _run_single(scenario, run_id, idx, config, output_dir, console=console)
+            run_dur = time.time() - t0
+            run_durations.append(run_dur)
+
+            if result:
+                results.append(result)
+                print_run_result(console, result, run_dur)
+            else:
+                print_run_failure(console, scenario, "run failed — see logs above")
+
+            progress.advance(batch_task)
+
+            # Update ETA description with rolling average
+            if run_durations:
+                avg = sum(run_durations) / len(run_durations)
+                remaining = (total - idx - 1) * avg
+                progress.update(
+                    batch_task,
+                    description=f"[bold]Batch[/bold] • ~{elapsed_str(remaining)} remaining",
+                )
+
+            # Inter-run pause
+            if idx < total - 1:
+                with countdown(console, INTER_RUN_PAUSE_SEC, "Inter-run pause"):
+                    pass
 
     return results
 
@@ -438,9 +473,18 @@ def _run_single(
     run_order_idx: int,
     config: ExperimentConfig,
     output_dir: str,
+    *,
+    console: "Console | None" = None,
 ) -> Optional[ExperimentResult]:
     """Execute a single experiment run with full protocol."""
     from datetime import datetime
+
+    from rich.console import Console
+
+    from shared.progress import countdown, run_phase
+
+    if console is None:
+        console = Console()
 
     from shared.models.experiment import ExperimentResult, RunManifest
     from experiment.stages.reset import ResetStage
@@ -508,7 +552,8 @@ def _run_single(
 
         # (C.warm-up) 30s idle warm-up
         logger.info("warmup_start", seconds=WARMUP_SEC)
-        time.sleep(WARMUP_SEC)
+        with countdown(console, WARMUP_SEC, "Warmup"):
+            pass
 
         # Record t_start and begin resource polling
         t_start = time.time()
@@ -516,14 +561,22 @@ def _run_single(
         if scenario != "s2-serverless-only":
             provisioner.clear_log()
             provisioner.start_background()
-
         # (C.2) Execute k6 trace replay
         workload_ctx = _make_ctx(config, scenario, run_id, output_dir)
-        workload_stage.execute(workload_ctx)
+        with run_phase(console, "k6 workload") as phase:
+            phase_task = phase.tasks[0] if phase.tasks else None
+
+            def _on_k6_progress(line: str) -> None:
+                # k6 emits lines like: running (0m30.0s), 0/100 VUs, 234 complete, 0 failed
+                if "running" in line and phase_task is not None:
+                    phase.update(phase_task, description=f"[cyan]k6: {line}[/cyan]")
+
+            workload_stage._run(workload_ctx, on_progress=_on_k6_progress)
 
         # (C.3) Post-k6 cooldown
         logger.info("cooldown_start", seconds=COOLDOWN_SEC)
-        time.sleep(COOLDOWN_SEC)
+        with countdown(console, COOLDOWN_SEC, "Cooldown"):
+            pass
 
         # Stop resource polling
         collect_stage.stop_resource_polling()
