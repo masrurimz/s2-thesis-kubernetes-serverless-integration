@@ -35,7 +35,12 @@ options:
         nodeFilters:
           - server:*
           - agent:*
-      # agent:0 (Knative control plane + workload pods, 1.5 CPU Docker):
+      # server:0 (Knative control plane, 1.0 CPU Docker):
+      # 16000m - 15000m reserved = ~1000m allocatable for control plane pods
+      - arg: --kubelet-arg=system-reserved=cpu=15000m
+        nodeFilters:
+          - server:0
+      # agent:0 (workload pods, 1.5 CPU Docker):
       # 16000m - 14500m reserved = ~1500m allocatable
       - arg: --kubelet-arg=system-reserved=cpu=14500m
         nodeFilters:
