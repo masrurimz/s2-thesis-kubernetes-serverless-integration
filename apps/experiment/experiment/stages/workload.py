@@ -149,7 +149,7 @@ class WorkloadStage(BaseStage):
         reader.start()
 
         try:
-            proc.wait(timeout=1800)  # 30 min max
+            proc.wait(timeout=3600)  # 60 min max (V1 death spiral causes slow k6 completion)
         except subprocess.TimeoutExpired:
             proc.kill()
             proc.wait()
