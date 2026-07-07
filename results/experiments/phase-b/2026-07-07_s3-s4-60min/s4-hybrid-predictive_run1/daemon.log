@@ -1,0 +1,419 @@
+2026-07-07 18:32:52 [info     ] SLOMonitor initialized         threshold_ms=200.0 violation_window=30
+2026-07-07 18:32:52 [info     ] Algorithm1ControllerV3 initialized max_knative=50 r_saturation=66.7 target_cpu_util=0.7 total_budget=1000
+2026-07-07 18:32:52 [info     ] Using V3 controller (Capacity-Driven) scenario=s4-hybrid-predictive version=v3
+2026-07-07 18:32:52 [info     ] HAProxyWeightAdjuster initialized backend=servers host=localhost port=19999
+2026-07-07 18:32:52 [info     ] GRUClient initialized          base_url=http://localhost:8090
+2026-07-07 18:32:52 [info     ] K8sScaler initialized          deployment=test-app-warm namespace=default
+2026-07-07 18:32:52 [info     ] RoutingDaemon initialized      decision_interval=15 description='Algorithm 1 with GRU predictions (Algorithm 2)' scenario=s4-hybrid-predictive use_algorithm=True use_predictions=True
+2026-07-07 18:32:52 [info     ] Starting routing daemon        interval=15 scenario=s4-hybrid-predictive
+2026-07-07 18:32:52 [info     ] Weights updated                k3s=80 knative=20
+2026-07-07 18:32:52 [info     ] Initial weights applied        k3s=80 knative=20
+2026-07-07 18:32:52 [debug    ] HAProxy fallback primed        total_requests=0
+2026-07-07 18:32:52 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-07 18:32:52 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=117.77 p99=0.0
+2026-07-07 18:33:08 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-07 18:33:08 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=109.02 p99=0.0
+2026-07-07 18:33:23 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-07 18:33:23 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=111.55 p99=0.0
+2026-07-07 18:33:38 [debug    ] HAProxy fallback latency       delta_requests=642 interval_avg_ms=61.0 max_rtime_ms=101.0 p99_est=101.0
+2026-07-07 18:33:38 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-5 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-07 18:33:38 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=1000 burn_adjustment=-5 burst_ratio=0 capacity_deficit=False confidence=0 current_load=42.42070909663977 decision_id=b2b4ec82 k8s_capacity=140.1 k8s_weight=100 knative_weight=0 p99=101.0 predicted_load=0 r_effective=46.7 serverless_enabled=False total_load=42.4 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-07 18:33:38 [info     ] Weights updated                k3s=100 knative=0
+2026-07-07 18:33:38 [info     ] Weights updated                action=RECOVERY reason='load=42RPS | k8s_cap=140RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-07 18:33:38 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=21.210354548319884 required_resources=0.318 target_replicas=3
+2026-07-07 18:33:38 [debug    ] Decision loop completed        action=RECOVERY latency_ms=138.83 p99=101.0
+2026-07-07 18:33:53 [debug    ] HAProxy fallback latency       delta_requests=667 interval_avg_ms=61.0 max_rtime_ms=109.0 p99_est=109.0
+2026-07-07 18:33:53 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-6 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-07 18:33:53 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=43.205789108565284 required_resources=0.648 target_replicas=3
+2026-07-07 18:33:53 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=107.79 p99=109.0
+2026-07-07 18:34:08 [debug    ] HAProxy fallback latency       delta_requests=716 interval_avg_ms=63.83 max_rtime_ms=115.0 p99_est=115.0
+2026-07-07 18:34:08 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:34:08 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:34:08 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-6 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-07 18:34:08 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=45.69275132937034 required_resources=0.685 target_replicas=3
+2026-07-07 18:34:08 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=429.62 p99=115.0
+2026-07-07 18:34:23 [debug    ] HAProxy fallback latency       delta_requests=843 interval_avg_ms=89.22 max_rtime_ms=260.0 p99_est=178.43
+2026-07-07 18:34:24 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:34:24 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:34:24 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-07 18:34:24 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=50.944861619423364 required_resources=0.764 target_replicas=3
+2026-07-07 18:34:24 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=538.17 p99=178.4341637010676
+2026-07-07 18:34:39 [debug    ] HAProxy fallback latency       delta_requests=780 interval_avg_ms=60.65 max_rtime_ms=273.0 p99_est=121.29
+2026-07-07 18:34:39 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:34:39 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:34:39 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-07 18:34:39 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=52.37932195337096 required_resources=0.785 target_replicas=3
+2026-07-07 18:34:39 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=536.5 p99=121.29230769230769
+2026-07-07 18:34:54 [debug    ] HAProxy fallback latency       delta_requests=546 interval_avg_ms=37.27 max_rtime_ms=273.0 p99_est=74.55
+2026-07-07 18:34:55 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:34:55 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:34:55 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-07 18:34:55 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=42.770522471870706 required_resources=0.641 target_replicas=3
+2026-07-07 18:34:55 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=424.63 p99=74.54945054945055
+2026-07-07 18:35:10 [debug    ] HAProxy fallback latency       delta_requests=415 interval_avg_ms=41.79 max_rtime_ms=273.0 p99_est=83.58
+2026-07-07 18:35:10 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:35:10 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:35:10 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-07 18:35:10 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=31.09079161313769 required_resources=0.466 target_replicas=3
+2026-07-07 18:35:10 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=422.04 p99=83.57590361445783
+2026-07-07 18:35:25 [debug    ] HAProxy fallback latency       delta_requests=363 interval_avg_ms=48.3 max_rtime_ms=273.0 p99_est=96.61
+2026-07-07 18:35:26 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:35:26 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:35:26 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-07 18:35:26 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=25.220583081535107 required_resources=0.378 target_replicas=3
+2026-07-07 18:35:26 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=427.09 p99=96.60606060606061
+2026-07-07 18:35:41 [debug    ] HAProxy fallback latency       delta_requests=532 interval_avg_ms=61.0 max_rtime_ms=273.0 p99_est=122.0
+2026-07-07 18:35:41 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:35:41 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:35:41 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-07 18:35:41 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=29.01033743227064 required_resources=0.435 target_replicas=3
+2026-07-07 18:35:41 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=426.24 p99=122.0
+2026-07-07 18:35:56 [debug    ] HAProxy fallback latency       delta_requests=825 interval_avg_ms=61.0 max_rtime_ms=273.0 p99_est=122.0
+2026-07-07 18:35:56 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:35:56 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:35:56 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-07 18:35:57 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=43.94907623645338 required_resources=0.659 target_replicas=3
+2026-07-07 18:35:57 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=421.92 p99=122.0
+2026-07-07 18:36:12 [debug    ] HAProxy fallback latency       delta_requests=799 interval_avg_ms=52.08 max_rtime_ms=273.0 p99_est=104.16
+2026-07-07 18:36:12 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:36:12 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:36:12 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-07 18:36:12 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=52.612747218902065 required_resources=0.789 target_replicas=3
+2026-07-07 18:36:12 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=416.54 p99=104.15769712140175
+2026-07-07 18:36:27 [debug    ] HAProxy fallback latency       delta_requests=627 interval_avg_ms=72.37 max_rtime_ms=273.0 p99_est=144.74
+2026-07-07 18:36:27 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:36:27 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:36:27 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-07 18:36:27 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=46.24050345804987 required_resources=0.693 target_replicas=3
+2026-07-07 18:36:27 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=423.46 p99=144.73684210526315
+2026-07-07 18:36:42 [debug    ] HAProxy fallback latency       delta_requests=708 interval_avg_ms=49.05 max_rtime_ms=273.0 p99_est=98.09
+2026-07-07 18:36:43 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:36:43 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:36:43 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-07 18:36:43 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=43.28725090214331 required_resources=0.649 target_replicas=3
+2026-07-07 18:36:43 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=420.85 p99=98.09322033898304
+2026-07-07 18:36:58 [debug    ] HAProxy fallback latency       delta_requests=882 interval_avg_ms=70.6 max_rtime_ms=273.0 p99_est=141.19
+2026-07-07 18:36:58 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:36:58 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:36:58 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-07 18:36:58 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=51.54937711334557 required_resources=0.773 target_replicas=3
+2026-07-07 18:36:58 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=419.94 p99=141.1904761904762
+2026-07-07 18:37:13 [debug    ] HAProxy fallback latency       delta_requests=938 interval_avg_ms=82.93 max_rtime_ms=273.0 p99_est=165.85
+2026-07-07 18:37:14 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:37:14 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:37:14 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-07 18:37:14 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=58.97959987545566 required_resources=0.884 target_replicas=3
+2026-07-07 18:37:14 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=423.47 p99=165.8507462686567
+2026-07-07 18:37:29 [debug    ] HAProxy fallback latency       delta_requests=960 interval_avg_ms=262.09 max_rtime_ms=273.0 p99_est=273.0
+2026-07-07 18:37:29 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:37:29 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:37:29 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=999 burn_error=-0.996 burn_ratio=0.004
+2026-07-07 18:37:29 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=61.535966970787484 required_resources=0.923 target_replicas=3
+2026-07-07 18:37:29 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=421.54 p99=273.0
+2026-07-07 18:37:44 [debug    ] HAProxy fallback latency       delta_requests=1059 interval_avg_ms=265.87 max_rtime_ms=302.0 p99_est=302.0
+2026-07-07 18:37:44 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:37:44 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:37:44 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=998 burn_error=-0.992 burn_ratio=0.008
+2026-07-07 18:37:44 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=65.45654266463497 required_resources=0.981 target_replicas=3
+2026-07-07 18:37:44 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=423.96 p99=302.0
+2026-07-07 18:38:00 [debug    ] HAProxy fallback latency       delta_requests=1184 interval_avg_ms=164.34 max_rtime_ms=383.0 p99_est=328.68
+2026-07-07 18:38:00 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:38:00 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:38:00 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=997 burn_error=-0.988 burn_ratio=0.012
+2026-07-07 18:38:00 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=72.68332681691052 required_resources=1.09 target_replicas=3
+2026-07-07 18:38:00 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=420.74 p99=328.68243243243245
+2026-07-07 18:38:15 [debug    ] HAProxy fallback latency       delta_requests=1361 interval_avg_ms=461.99 max_rtime_ms=585.0 p99_est=585.0
+2026-07-07 18:38:15 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:38:15 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:38:15 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=996 burn_error=-0.985 burn_ratio=0.015
+2026-07-07 18:38:15 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=82.50992203928124 required_resources=1.237 target_replicas=3
+2026-07-07 18:38:15 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=418.34 p99=585.0
+2026-07-07 18:38:30 [debug    ] HAProxy fallback latency       delta_requests=1557 interval_avg_ms=651.25 max_rtime_ms=769.0 p99_est=769.0
+2026-07-07 18:38:31 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:38:31 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:38:31 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=995 burn_error=-0.982 burn_ratio=0.018
+2026-07-07 18:38:31 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=94.61920303414497 required_resources=1.419 target_replicas=3
+2026-07-07 18:38:31 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=420.57 p99=769.0
+2026-07-07 18:38:46 [debug    ] HAProxy fallback latency       delta_requests=1789 interval_avg_ms=5350.04 max_rtime_ms=2380.0 p99_est=2380.0
+2026-07-07 18:38:46 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:38:46 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:38:46 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=994 burn_error=-0.98 burn_ratio=0.02
+2026-07-07 18:38:46 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=108.43346354304839 required_resources=1.626 target_replicas=3
+2026-07-07 18:38:46 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=424.78 p99=2380.0
+2026-07-07 18:39:01 [debug    ] HAProxy fallback latency       delta_requests=1807 interval_avg_ms=17758.96 max_rtime_ms=6239.0 p99_est=6239.0
+2026-07-07 18:39:02 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:39:02 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:39:02 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=993 burn_error=-0.977 burn_ratio=0.023
+2026-07-07 18:39:02 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=116.51717278721055 required_resources=1.747 target_replicas=3
+2026-07-07 18:39:02 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=428.95 p99=6239.0
+2026-07-07 18:39:17 [debug    ] HAProxy fallback latency       delta_requests=1722 interval_avg_ms=6560.74 max_rtime_ms=8541.0 p99_est=8541.0
+2026-07-07 18:39:17 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:39:17 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:39:17 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.975 burn_ratio=0.025
+2026-07-07 18:39:17 [info     ] Knative pre-warm OK            cold_start_ms=2.8
+2026-07-07 18:39:17 [info     ] controller_decision_v3         action=REACTIVE available_replicas=2 budget_remaining=992 burn_adjustment=-7 burst_ratio=0.1638 capacity_deficit=False confidence=0 current_load=111.66829845458825 decision_id=f5533880 k8s_capacity=93.4 k8s_weight=90 knative_weight=10 p99=8541.0 predicted_load=0 r_effective=46.7 serverless_enabled=True total_load=111.7 weights_after={'k3s': 90, 'knative': 10} weights_before={'k3s': 100, 'knative': 0}
+2026-07-07 18:39:17 [info     ] Weights updated                k3s=90 knative=10
+2026-07-07 18:39:17 [info     ] Weights updated                action=REACTIVE reason='load=112RPS | k8s_cap=93RPS | (burst-routing)' weights={'k3s': 90, 'knative': 10}
+2026-07-07 18:39:17 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=114.4074488056558 required_resources=1.715 target_replicas=3
+2026-07-07 18:39:17 [debug    ] Decision loop completed        action=REACTIVE latency_ms=430.7 p99=8541.0
+2026-07-07 18:39:32 [debug    ] HAProxy fallback latency       delta_requests=1396 interval_avg_ms=8074.98 max_rtime_ms=9965.0 p99_est=9965.0
+2026-07-07 18:39:32 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:39:32 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:39:32 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=991 burn_error=-0.973 burn_ratio=0.027
+2026-07-07 18:39:32 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=991 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0 current_load=90.53497504821175 decision_id=47252db0 k8s_capacity=140.1 k8s_weight=100 knative_weight=0 p99=9965.0 predicted_load=0 r_effective=46.7 serverless_enabled=False total_load=90.5 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 90, 'knative': 10}
+2026-07-07 18:39:32 [info     ] Weights updated                k3s=100 knative=0
+2026-07-07 18:39:32 [info     ] Weights updated                action=RECOVERY reason='load=91RPS | k8s_cap=140RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-07 18:39:32 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=101.10163675140001 required_resources=1.516 target_replicas=3
+2026-07-07 18:39:32 [debug    ] Decision loop completed        action=RECOVERY latency_ms=457.09 p99=9965.0
+2026-07-07 18:39:48 [debug    ] HAProxy fallback latency       delta_requests=1130 interval_avg_ms=23122.82 max_rtime_ms=12165.0 p99_est=12165.0
+2026-07-07 18:39:48 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:39:48 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:39:48 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=990 burn_error=-0.971 burn_ratio=0.029
+2026-07-07 18:39:48 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=81.81933057682923 required_resources=1.227 target_replicas=3
+2026-07-07 18:39:48 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=426.08 p99=12165.0
+2026-07-07 18:40:03 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:40:03 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:40:03 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=989 burn_error=-0.969 burn_ratio=0.031
+2026-07-07 18:40:03 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=80.08273438530559 required_resources=1.201 target_replicas=3
+2026-07-07 18:40:03 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=422.6 p99=12165.0
+2026-07-07 18:40:18 [debug    ] HAProxy fallback latency       delta_requests=1132 interval_avg_ms=8498.96 max_rtime_ms=15885.0 p99_est=15885.0
+2026-07-07 18:40:19 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:40:19 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:40:19 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=988 burn_error=-0.968 burn_ratio=0.032
+2026-07-07 18:40:19 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=80.23030883398741 required_resources=1.203 target_replicas=3
+2026-07-07 18:40:19 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=424.78 p99=15885.0
+2026-07-07 18:40:34 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:40:34 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:40:34 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=987 burn_error=-0.966 burn_ratio=0.034
+2026-07-07 18:40:34 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=66.55383797746296 required_resources=0.998 target_replicas=3
+2026-07-07 18:40:34 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=424.37 p99=15885.0
+2026-07-07 18:40:49 [debug    ] HAProxy fallback latency       delta_requests=1601 interval_avg_ms=2522.2 max_rtime_ms=15885.0 p99_est=5044.41
+2026-07-07 18:40:50 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:40:50 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:40:50 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=986 burn_error=-0.965 burn_ratio=0.035
+2026-07-07 18:40:50 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=81.71846319043294 required_resources=1.225 target_replicas=3
+2026-07-07 18:40:50 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=424.13 p99=5044.407245471581
+2026-07-07 18:41:05 [debug    ] HAProxy fallback latency       delta_requests=1927 interval_avg_ms=37578.75 max_rtime_ms=15885.0 p99_est=15885.0
+2026-07-07 18:41:05 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:41:05 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:41:05 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=985 burn_error=-0.963 burn_ratio=0.037
+2026-07-07 18:41:05 [info     ] Knative pre-warm OK            cold_start_ms=3.0
+2026-07-07 18:41:05 [info     ] controller_decision_v3         action=REACTIVE available_replicas=2 budget_remaining=985 burn_adjustment=-7 burst_ratio=0.2522 capacity_deficit=False confidence=0 current_load=124.87315762642689 decision_id=77e59a95 k8s_capacity=93.4 k8s_weight=81 knative_weight=19 p99=15885.0 predicted_load=0 r_effective=46.7 serverless_enabled=True total_load=124.9 weights_after={'k3s': 81, 'knative': 19} weights_before={'k3s': 100, 'knative': 0}
+2026-07-07 18:41:05 [info     ] Weights updated                k3s=81 knative=19
+2026-07-07 18:41:05 [info     ] Weights updated                action=REACTIVE reason='load=125RPS | k8s_cap=93RPS | (burst-routing)' weights={'k3s': 81, 'knative': 19}
+2026-07-07 18:41:05 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=114.3006215275886 required_resources=1.714 target_replicas=3
+2026-07-07 18:41:05 [debug    ] Decision loop completed        action=REACTIVE latency_ms=426.11 p99=15885.0
+2026-07-07 18:41:20 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:41:20 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:41:20 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=984 burn_error=-0.962 burn_ratio=0.038
+2026-07-07 18:41:20 [info     ] controller_decision_v3         action=RECOVERY available_replicas=2 budget_remaining=984 burn_adjustment=-7 burst_ratio=0.076 capacity_deficit=False confidence=0 current_load=101.05791009064846 decision_id=73d23f9e k8s_capacity=93.4 k8s_weight=99 knative_weight=1 p99=15885.0 predicted_load=0 r_effective=46.7 serverless_enabled=True total_load=101.1 weights_after={'k3s': 99, 'knative': 1} weights_before={'k3s': 81, 'knative': 19}
+2026-07-07 18:41:20 [info     ] Weights updated                k3s=99 knative=1
+2026-07-07 18:41:20 [info     ] Weights updated                action=RECOVERY reason='load=101RPS | k8s_cap=93RPS | (reducing-serverless)' weights={'k3s': 99, 'knative': 1}
+2026-07-07 18:41:20 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=112.96553385853767 required_resources=1.694 target_replicas=3
+2026-07-07 18:41:20 [debug    ] Decision loop completed        action=RECOVERY latency_ms=460.61 p99=15885.0
+2026-07-07 18:41:36 [debug    ] HAProxy fallback latency       delta_requests=1502 interval_avg_ms=33103.44 max_rtime_ms=15885.0 p99_est=15885.0
+2026-07-07 18:41:36 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:41:36 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:41:36 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=983 burn_error=-0.961 burn_ratio=0.039
+2026-07-07 18:41:36 [info     ] controller_decision_v3         action=RECOVERY available_replicas=2 budget_remaining=983 burn_adjustment=-7 burst_ratio=0.0388 capacity_deficit=False confidence=0 current_load=97.15063285714521 decision_id=fd075bff k8s_capacity=93.4 k8s_weight=100 knative_weight=0 p99=15885.0 predicted_load=0 r_effective=46.7 serverless_enabled=False total_load=97.2 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 99, 'knative': 1}
+2026-07-07 18:41:36 [info     ] Weights updated                k3s=100 knative=0
+2026-07-07 18:41:36 [info     ] Weights updated                action=RECOVERY reason='load=97RPS | k8s_cap=93RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-07 18:41:36 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=99.10427147389683 required_resources=1.486 target_replicas=3
+2026-07-07 18:41:36 [debug    ] Decision loop completed        action=RECOVERY latency_ms=460.31 p99=15885.0
+2026-07-07 18:41:51 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:41:51 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:41:51 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=982 burn_error=-0.96 burn_ratio=0.04
+2026-07-07 18:41:51 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=97.92706863606324 required_resources=1.468 target_replicas=3
+2026-07-07 18:41:51 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=425.13 p99=15885.0
+2026-07-07 18:42:06 [debug    ] HAProxy fallback latency       delta_requests=1331 interval_avg_ms=43552.37 max_rtime_ms=21413.0 p99_est=21413.0
+2026-07-07 18:42:07 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:42:07 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:42:07 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=981 burn_error=-0.959 burn_ratio=0.041
+2026-07-07 18:42:07 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=92.42810545548673 required_resources=1.386 target_replicas=3
+2026-07-07 18:42:07 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=424.97 p99=21413.0
+2026-07-07 18:42:22 [debug    ] HAProxy fallback latency       delta_requests=1506 interval_avg_ms=18825.42 max_rtime_ms=24211.0 p99_est=24211.0
+2026-07-07 18:42:22 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:42:22 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:42:22 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=980 burn_error=-0.958 burn_ratio=0.042
+2026-07-07 18:42:22 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=91.8590502019054 required_resources=1.377 target_replicas=3
+2026-07-07 18:42:22 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=429.4 p99=24211.0
+2026-07-07 18:42:38 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:42:38 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:42:38 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=979 burn_error=-0.957 burn_ratio=0.043
+2026-07-07 18:42:38 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=100.95796081921969 required_resources=1.514 target_replicas=3
+2026-07-07 18:42:38 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=421.08 p99=24211.0
+2026-07-07 18:42:53 [debug    ] HAProxy fallback latency       delta_requests=472 interval_avg_ms=293058.97 max_rtime_ms=24211.0 p99_est=24211.0
+2026-07-07 18:42:53 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:42:53 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:42:53 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=978 burn_error=-0.956 burn_ratio=0.044
+2026-07-07 18:42:53 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=67.60862357065425 required_resources=1.014 target_replicas=3
+2026-07-07 18:42:53 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=417.77 p99=24211.0
+2026-07-07 18:43:08 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:43:08 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:43:08 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=977 burn_error=-0.955 burn_ratio=0.045
+2026-07-07 18:43:08 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=50.263637358795094 required_resources=0.754 target_replicas=3
+2026-07-07 18:43:08 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=422.03 p99=24211.0
+2026-07-07 18:43:24 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:43:24 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:43:24 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=976 burn_error=-0.954 burn_ratio=0.046
+2026-07-07 18:43:24 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=74.25325992304289 required_resources=1.113 target_replicas=3
+2026-07-07 18:43:24 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=423.74 p99=24211.0
+2026-07-07 18:43:39 [debug    ] HAProxy fallback latency       delta_requests=1292 interval_avg_ms=12121.02 max_rtime_ms=24403.0 p99_est=24242.04
+2026-07-07 18:43:39 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:43:39 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:43:39 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=975 burn_error=-0.954 burn_ratio=0.046
+2026-07-07 18:43:39 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=81.40295881389598 required_resources=1.22 target_replicas=3
+2026-07-07 18:43:39 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=424.46 p99=24242.037151702785
+2026-07-07 18:43:54 [debug    ] HAProxy fallback latency       delta_requests=1083 interval_avg_ms=31708.36 max_rtime_ms=24403.0 p99_est=24403.0
+2026-07-07 18:43:55 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:43:55 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:43:55 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=974 burn_error=-0.953 burn_ratio=0.047
+2026-07-07 18:43:55 [info     ] Knative pre-warm OK            cold_start_ms=2.6
+2026-07-07 18:43:55 [info     ] controller_decision_v3         action=REACTIVE available_replicas=1 budget_remaining=974 burn_adjustment=-7 burst_ratio=0.335 capacity_deficit=False confidence=0 current_load=70.21307493747425 decision_id=38a4cbc9 k8s_capacity=46.7 k8s_weight=73 knative_weight=27 p99=24403.0 predicted_load=0 r_effective=46.7 serverless_enabled=True total_load=70.2 weights_after={'k3s': 73, 'knative': 27} weights_before={'k3s': 100, 'knative': 0}
+2026-07-07 18:43:55 [info     ] Weights updated                k3s=73 knative=27
+2026-07-07 18:43:55 [info     ] Weights updated                action=REACTIVE reason='load=70RPS | k8s_cap=47RPS | (burst-routing)' weights={'k3s': 73, 'knative': 27}
+2026-07-07 18:43:55 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=77.08651401304147 required_resources=1.156 target_replicas=3
+2026-07-07 18:43:55 [debug    ] Decision loop completed        action=REACTIVE latency_ms=474.29 p99=24403.0
+2026-07-07 18:44:10 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:44:10 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:44:10 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=973 burn_error=-0.952 burn_ratio=0.048
+2026-07-07 18:44:10 [info     ] controller_decision_v3         action=RECOVERY available_replicas=2 budget_remaining=973 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0 current_load=86.4651239783919 decision_id=f1056007 k8s_capacity=93.4 k8s_weight=100 knative_weight=0 p99=24403.0 predicted_load=0 r_effective=46.7 serverless_enabled=False total_load=86.5 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 73, 'knative': 27}
+2026-07-07 18:44:10 [info     ] Weights updated                k3s=100 knative=0
+2026-07-07 18:44:10 [info     ] Weights updated                action=RECOVERY reason='load=86RPS | k8s_cap=93RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-07 18:44:10 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=78.33909945793307 required_resources=1.174 target_replicas=3
+2026-07-07 18:44:10 [debug    ] Decision loop completed        action=RECOVERY latency_ms=458.54 p99=24403.0
+2026-07-07 18:44:25 [debug    ] HAProxy fallback latency       delta_requests=923 interval_avg_ms=64654.96 max_rtime_ms=27258.0 p99_est=27258.0
+2026-07-07 18:44:26 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:44:26 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:44:26 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=972 burn_error=-0.952 burn_ratio=0.048
+2026-07-07 18:44:26 [info     ] Knative pre-warm OK            cold_start_ms=2.4
+2026-07-07 18:44:26 [info     ] controller_decision_v3         action=REACTIVE available_replicas=1 budget_remaining=972 burn_adjustment=-7 burst_ratio=0.2206 capacity_deficit=False confidence=0 current_load=59.90261695863275 decision_id=d7ffbc26 k8s_capacity=46.7 k8s_weight=84 knative_weight=16 p99=27258.0 predicted_load=0 r_effective=46.7 serverless_enabled=True total_load=59.9 weights_after={'k3s': 84, 'knative': 16} weights_before={'k3s': 100, 'knative': 0}
+2026-07-07 18:44:26 [info     ] Weights updated                k3s=84 knative=16
+2026-07-07 18:44:26 [info     ] Weights updated                action=REACTIVE reason='load=60RPS | k8s_cap=47RPS | (burst-routing)' weights={'k3s': 84, 'knative': 16}
+2026-07-07 18:44:26 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=73.18387046851232 required_resources=1.097 target_replicas=3
+2026-07-07 18:44:26 [debug    ] Decision loop completed        action=REACTIVE latency_ms=421.99 p99=27258.0
+2026-07-07 18:44:41 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:44:41 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:44:41 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=971 burn_error=-0.951 burn_ratio=0.049
+2026-07-07 18:44:41 [info     ] controller_decision_v3         action=REACTIVE available_replicas=1 budget_remaining=971 burn_adjustment=-7 burst_ratio=0.4069 capacity_deficit=False confidence=0 current_load=78.71692619851042 decision_id=1786824c k8s_capacity=46.7 k8s_weight=66 knative_weight=34 p99=27258.0 predicted_load=0 r_effective=46.7 serverless_enabled=True total_load=78.7 weights_after={'k3s': 66, 'knative': 34} weights_before={'k3s': 84, 'knative': 16}
+2026-07-07 18:44:41 [info     ] Weights updated                k3s=66 knative=34
+2026-07-07 18:44:41 [info     ] Weights updated                action=REACTIVE reason='load=79RPS | k8s_cap=47RPS | (burst-routing)' weights={'k3s': 66, 'knative': 34}
+2026-07-07 18:44:41 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=69.30977157857158 required_resources=1.039 target_replicas=3
+2026-07-07 18:44:41 [debug    ] Decision loop completed        action=REACTIVE latency_ms=427.1 p99=27258.0
+2026-07-07 18:44:56 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:44:56 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:44:56 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=970 burn_error=-0.95 burn_ratio=0.05
+2026-07-07 18:44:56 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=970 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0 current_load=84.52858018222435 decision_id=e58524e9 k8s_capacity=140.1 k8s_weight=100 knative_weight=0 p99=27258.0 predicted_load=0 r_effective=46.7 serverless_enabled=False total_load=84.5 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 66, 'knative': 34}
+2026-07-07 18:44:57 [info     ] Weights updated                k3s=100 knative=0
+2026-07-07 18:44:57 [info     ] Weights updated                action=RECOVERY reason='load=85RPS | k8s_cap=140RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-07 18:44:57 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=81.62275319036738 required_resources=1.224 target_replicas=3
+2026-07-07 18:44:57 [debug    ] Decision loop completed        action=RECOVERY latency_ms=461.44 p99=27258.0
+2026-07-07 18:45:12 [debug    ] HAProxy fallback latency       delta_requests=1155 interval_avg_ms=8334.4 max_rtime_ms=34699.0 p99_est=16668.8
+2026-07-07 18:45:12 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:45:12 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:45:12 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=969 burn_error=-0.95 burn_ratio=0.05
+2026-07-07 18:45:12 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=79.61354102540605 required_resources=1.194 target_replicas=3
+2026-07-07 18:45:12 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=421.07 p99=16668.8
+2026-07-07 18:45:27 [debug    ] HAProxy fallback latency       delta_requests=1066 interval_avg_ms=35224.16 max_rtime_ms=34699.0 p99_est=34699.0
+2026-07-07 18:45:27 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:45:27 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:45:27 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=968 burn_error=-0.949 burn_ratio=0.051
+2026-07-07 18:45:27 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=71.91157636998199 required_resources=1.078 target_replicas=3
+2026-07-07 18:45:27 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=428.69 p99=34699.0
+2026-07-07 18:45:43 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:45:43 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:45:43 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=967 burn_error=-0.949 burn_ratio=0.051
+2026-07-07 18:45:43 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=72.93268860608038 required_resources=1.093 target_replicas=3
+2026-07-07 18:45:43 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=416.88 p99=34699.0
+2026-07-07 18:45:58 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:45:58 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:45:58 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=966 burn_error=-0.948 burn_ratio=0.052
+2026-07-07 18:45:58 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=93.24690165554495 required_resources=1.398 target_replicas=3
+2026-07-07 18:45:58 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=423.43 p99=34699.0
+2026-07-07 18:46:14 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:46:14 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:46:14 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=965 burn_error=-0.948 burn_ratio=0.052
+2026-07-07 18:46:14 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=91.50802466000681 required_resources=1.372 target_replicas=3
+2026-07-07 18:46:14 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=426.72 p99=34699.0
+2026-07-07 18:46:29 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:46:29 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:46:29 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=964 burn_error=-0.947 burn_ratio=0.053
+2026-07-07 18:46:29 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.21312946169735 required_resources=0.963 target_replicas=3
+2026-07-07 18:46:29 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=421.86 p99=34699.0
+2026-07-07 18:46:44 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:46:44 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:46:44 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=963 burn_error=-0.947 burn_ratio=0.053
+2026-07-07 18:46:45 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=50.86034202910517 required_resources=0.763 target_replicas=3
+2026-07-07 18:46:45 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=421.05 p99=34699.0
+2026-07-07 18:47:00 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:47:00 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:47:00 [debug    ] burn_rate_adjustment           actual_burn=0.04 adjustment=-7 allowed_burn=0.83 budget_remaining=962 burn_error=-0.946 burn_ratio=0.054
+2026-07-07 18:47:00 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=48.24332497343951 required_resources=0.723 target_replicas=3
+2026-07-07 18:47:00 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=425.89 p99=34699.0
+2026-07-07 18:47:15 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:47:15 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:47:15 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=961 burn_error=-0.946 burn_ratio=0.054
+2026-07-07 18:47:15 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=46.55230960453747 required_resources=0.698 target_replicas=3
+2026-07-07 18:47:15 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=425.5 p99=34699.0
+2026-07-07 18:47:31 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:47:31 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:47:31 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=960 burn_error=-0.945 burn_ratio=0.055
+2026-07-07 18:47:31 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=42.75315788265689 required_resources=0.641 target_replicas=3
+2026-07-07 18:47:31 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=428.28 p99=34699.0
+2026-07-07 18:47:46 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:47:46 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:47:46 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=959 burn_error=-0.945 burn_ratio=0.055
+2026-07-07 18:47:46 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=49.39346174999895 required_resources=0.741 target_replicas=3
+2026-07-07 18:47:46 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=429.16 p99=34699.0
+2026-07-07 18:48:01 [debug    ] HAProxy fallback latency       delta_requests=1093 interval_avg_ms=465.92 max_rtime_ms=34699.0 p99_est=931.84
+2026-07-07 18:48:02 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:48:02 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:48:02 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=958 burn_error=-0.945 burn_ratio=0.055
+2026-07-07 18:48:02 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=63.64826976362117 required_resources=0.954 target_replicas=3
+2026-07-07 18:48:02 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=422.59 p99=931.8371454711803
+2026-07-07 18:48:17 [debug    ] HAProxy fallback latency       delta_requests=1093 interval_avg_ms=653.03 max_rtime_ms=34699.0 p99_est=1306.05
+2026-07-07 18:48:17 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:48:17 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:48:17 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=957 burn_error=-0.944 burn_ratio=0.056
+2026-07-07 18:48:17 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=70.88555706201046 required_resources=1.063 target_replicas=3
+2026-07-07 18:48:17 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=428.1 p99=1306.0530649588288
+2026-07-07 18:48:32 [debug    ] HAProxy fallback latency       delta_requests=1073 interval_avg_ms=86.0 max_rtime_ms=34699.0 p99_est=172.0
+2026-07-07 18:48:32 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:48:32 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:48:32 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=957 burn_error=-0.945 burn_ratio=0.055
+2026-07-07 18:48:33 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=70.20783253752158 required_resources=1.053 target_replicas=3
+2026-07-07 18:48:33 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=426.27 p99=172.0
+2026-07-07 18:48:48 [debug    ] HAProxy fallback latency       delta_requests=1099 interval_avg_ms=145.36 max_rtime_ms=34699.0 p99_est=290.73
+2026-07-07 18:48:48 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:48:48 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:48:48 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=956 burn_error=-0.945 burn_ratio=0.055
+2026-07-07 18:48:48 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=70.36266639822097 required_resources=1.055 target_replicas=3
+2026-07-07 18:48:48 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=430.51 p99=290.72793448589624
+2026-07-07 18:49:03 [debug    ] HAProxy fallback latency       delta_requests=1189 interval_avg_ms=87.0 max_rtime_ms=34699.0 p99_est=174.0
+2026-07-07 18:49:03 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:49:03 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:49:03 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=956 burn_error=-0.946 burn_ratio=0.054
+2026-07-07 18:49:03 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=74.14775990691811 required_resources=1.112 target_replicas=3
+2026-07-07 18:49:03 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=426.44 p99=174.0
+2026-07-07 18:49:18 [debug    ] HAProxy fallback latency       delta_requests=1489 interval_avg_ms=1501.03 max_rtime_ms=34699.0 p99_est=3002.06
+2026-07-07 18:49:19 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:49:19 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:49:19 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=955 burn_error=-0.945 burn_ratio=0.055
+2026-07-07 18:49:19 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=86.75473194529664 required_resources=1.301 target_replicas=3
+2026-07-07 18:49:19 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=421.48 p99=3002.057756883815
+2026-07-07 18:49:34 [debug    ] HAProxy fallback latency       delta_requests=1660 interval_avg_ms=1375.45 max_rtime_ms=34699.0 p99_est=2750.9
+2026-07-07 18:49:34 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:49:34 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:49:34 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=954 burn_error=-0.945 burn_ratio=0.055
+2026-07-07 18:49:34 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=102.08093497184187 required_resources=1.53 target_replicas=3
+2026-07-07 18:49:34 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=427.49 p99=2750.9036144578313
+2026-07-07 18:49:50 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:49:50 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:49:50 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=953 burn_error=-0.945 burn_ratio=0.055
+2026-07-07 18:49:50 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=99.61596497900234 required_resources=1.493 target_replicas=3
+2026-07-07 18:49:50 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=426.68 p99=2750.9036144578313
+2026-07-07 18:50:05 [warning  ] GRU prediction failed          attempts=3 error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:50:05 [debug    ] GRU prediction failed          error='HTTP 500: {"detail":"Prediction failed: HIP error: invalid device function\\nHIP kernel errors might be asynchr'
+2026-07-07 18:50:05 [debug    ] burn_rate_adjustment           actual_burn=0.05 adjustment=-7 allowed_burn=0.83 budget_remaining=952 burn_error=-0.944 burn_ratio=0.056
+2026-07-07 18:50:05 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.014992503748125937 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=82.58218940720934 required_resources=1.238 target_replicas=3
+2026-07-07 18:50:05 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=422.38 p99=2750.9036144578313

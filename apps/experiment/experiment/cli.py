@@ -564,7 +564,7 @@ def _run_single(
         # (C.2) Execute k6 trace replay
         workload_ctx = _make_ctx(config, scenario, run_id, output_dir)
         with run_phase(console, "k6 workload") as phase:
-            phase_task = phase.tasks[0] if phase.tasks else None
+            phase_task = phase.tasks[0].id if phase.tasks else None
 
             def _on_k6_progress(line: str) -> None:
                 # k6 emits lines like: running (0m30.0s), 0/100 VUs, 234 complete, 0 failed
