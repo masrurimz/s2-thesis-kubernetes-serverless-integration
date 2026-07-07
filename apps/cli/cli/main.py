@@ -105,16 +105,6 @@ def _register_dashboard() -> None:
 def _register_analysis() -> None:
     """Register the analysis sub-app."""
     try:
-        from analysis.cli import app as analysis_app
-
-        app.add_typer(analysis_app, name="analysis", help="Experiment analysis CLI")
-    except ImportError:
-        pass
-
-
-def _register_analysis() -> None:
-    """Register the analysis sub-app."""
-    try:
         from analysis_cli.cli import app as analysis_app
 
         app.add_typer(analysis_app, name="analysis", help="Experiment analysis CLI")

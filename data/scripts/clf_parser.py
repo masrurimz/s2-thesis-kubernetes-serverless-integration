@@ -60,7 +60,8 @@ def parse_clf_file(filepath: Path) -> Iterator[Tuple[datetime, str, int, int]]:
 
     with open_func(filepath, mode, encoding="latin-1", errors="replace") as f:
         for line_num, line in enumerate(f, 1):
-            result = parse_clf_line(line.strip())
+            line_str = line.decode("latin-1", errors="replace") if isinstance(line, bytes) else line
+            result = parse_clf_line(line_str.strip())
             if result:
                 yield result
             elif line_num <= 10:  # Log first few failures for debugging

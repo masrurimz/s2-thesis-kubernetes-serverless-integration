@@ -1,8 +1,6 @@
 """ProvisionerClient Protocol for node-level autoscaler dependency injection."""
 
-from typing import Protocol
-
-from shared.models.provisioning import ProvisionEvent
+from typing import Any, Protocol
 
 
 class ProvisionerClient(Protocol):
@@ -24,7 +22,7 @@ class ProvisionerClient(Protocol):
         """Stop background thread."""
         ...
 
-    def get_log(self) -> list[ProvisionEvent]:
+    def get_log(self) -> list[tuple[float, str, dict[str, Any]]]:
         """Return provisioning event log for experiment metadata."""
         ...
 

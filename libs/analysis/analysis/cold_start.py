@@ -123,7 +123,7 @@ def variance_decomposition(stats: dict[str, ScenarioStats]) -> Optional[dict]:
     s3 = stats.get("s3-hybrid-reactive")
     s4 = stats.get("s4-hybrid-predictive")
 
-    if not all([s1, s2, s3, s4]):
+    if s1 is None or s2 is None or s3 is None or s4 is None:
         return None
 
     base_var = (s1.p99_std**2 + s2.p99_std**2) / 2

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import math
 from pathlib import Path
-from typing import Optional
+from typing import Optional, TypedDict
 
 from analysis.constants import (
     CLOUD_NODES,
@@ -46,6 +46,11 @@ CF_REQUEST_RATE = 0.30  # $/1M requests (after 10M free)
 CF_FREE_REQUESTS = 10_000_000  # per month
 CF_CPU_MS_RATE = 0.02  # $/1M CPU-ms (after 30M free)
 CF_FREE_CPU_MS = 30_000_000  # per month
+
+
+class Workload(TypedDict):
+    label: str
+    cpu_per_request_sec: float
 
 
 def _s1_cost_per_hour(rps: float, cpu_per_request_sec: float) -> float:
@@ -97,7 +102,7 @@ def generate_crossover_graph(output_dir: Path) -> int:
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    workloads = [
+    workloads: list[Workload] = [
         {"label": "fib(32)", "cpu_per_request_sec": 0.01090},
         {"label": "fib(34)", "cpu_per_request_sec": 0.01090 * 2.6},
         {"label": "fib(35)", "cpu_per_request_sec": 0.01090 * (55 / 8)},
