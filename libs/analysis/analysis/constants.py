@@ -86,7 +86,7 @@ from shared.models.calibration import CALIBRATION
 
 POD_CPU_REQUEST = CALIBRATION.pod_cpu_request  # 0.300 (from pod_cpu_millicores=300)
 POD_MEM_REQUEST_GIB = CALIBRATION.pod_memory_request_mib / 1024  # 64Mi
-KNATIVE_TARGET_CONCURRENCY = 10  # autoscaling.knative.dev/target: "10"
+KNATIVE_TARGET_CONCURRENCY = 5  # autoscaling.knative.dev/target: "5"
 
 # EKS control plane (us-east-1, 2025)
 EKS_CONTROL_PLANE_RATE = 0.10  # $/hour
