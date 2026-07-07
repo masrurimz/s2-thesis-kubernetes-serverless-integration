@@ -159,11 +159,17 @@ class WorkloadStage(BaseStage):
         reqs = m.get("http_reqs", {}).get("values", {})
         errs = m.get("errors", {})
         slo = m.get("slo_violations", {}).get("values", {})
+        failed = m.get("http_req_failed", {}).get("values", {})
 
         p99 = dur.get("p(99)")
         p95 = dur.get("p(95)") or 0
         if p99 is None:
-            p99 = p95  # k6 raw JSON may omit p99; fall back to p95
+            p99 = p95  # Fallback if k6 summaryTrendStats omits p(99)
+
+        total_reqs = reqs.get("count") or 0
+        failed_reqs = failed.get("fails", 0) if isinstance(failed, dict) else 0
+        successful_reqs = total_reqs - failed_reqs
+        slo_violations = slo.get("count") or 0
 
         return {
             "scenario": scenario,
@@ -174,10 +180,16 @@ class WorkloadStage(BaseStage):
                 "p99_latency_ms": p99,
                 "avg_latency_ms": dur.get("avg") or 0,
                 "max_latency_ms": dur.get("max") or 0,
+                # Availability: did the request complete? (Google SRE availability SLI)
                 "error_rate": errs.get("rate", 0) if isinstance(errs, dict) else 0,
-                "total_requests": reqs.get("count") or 0,
+                "total_requests": total_reqs,
+                "failed_requests": failed_reqs,
+                "successful_requests": successful_reqs,
                 "actual_rps": reqs.get("rate") or 0,
-                "slo_violations": slo.get("count") or 0,
+                # SLO compliance: was a SUCCESSFUL request fast enough? (Google SRE latency SLI)
+                "slo_violations": slo_violations,
+                # Combined: any request that was either slow OR failed
+                "total_errors": slo_violations + failed_reqs,
                 "app_duration_avg_ms": m.get("app_duration_ms", {}).get("values", {}).get("avg") or 0,
                 "app_duration_p50_ms": m.get("app_duration_ms", {}).get("values", {}).get("p(50)") or 0,
                 "app_duration_p95_ms": m.get("app_duration_ms", {}).get("values", {}).get("p(95)") or 0,
