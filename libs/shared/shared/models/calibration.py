@@ -19,8 +19,8 @@ class CalibrationConfig(BaseModel):
     is the linear coefficient for Algorithm 2 (replicas = alpha * load + beta).
     """
 
-    # Workload tuple — fib(32) measured: p50=8.6ms, p99=27ms at 50 RPS/3pods
-    fib_n: int = 32
+    # Workload tuple — fib(30): 3ms CPU compute, verified by deploy-app
+    fib_n: int = 30
     gomaxprocs: int = 1
     slo_threshold_ms: float = 200.0
 
@@ -34,17 +34,17 @@ class CalibrationConfig(BaseModel):
     node_memory_gb: float = 1.0
 
     # Lambda billing (SeBS: arXiv:2012.14132 — Lambda bills wall-clock duration)
-    # fib(32) = 14ms CPU + 50ms simulated I/O wait (DB query per SeBS/SeBS-Flow).
+    # fib(30) = 3ms CPU + 50ms simulated I/O wait (DB query per SeBS/SeBS-Flow).
     # WORK_DURATION_MS in deployment YAMLs MUST match io_wait_ms.
-    lambda_compute_ms: float = 8.6  # Measured fib(32) CPU compute time
+    lambda_compute_ms: float = 3.0  # Measured fib(30) CPU compute time
     io_wait_ms: float = 50.0  # Simulated I/O wait (DB query, SeBS methodology)
 
-    # Capacity model — MEASURED fib(32), 300m CPU limits, 50ms I/O wait
+    # Capacity model — MEASURED fib(30), 300m CPU limits, 50ms I/O wait
     # p99 < 200ms up to 200 RPS (66.7/pod), cliff at 250 RPS (83.3/pod)
-    # r_sat=66.7 (last good level), util=0.7 → cap = 3 × 66.7 × 0.7 = 140 RPS
-    # Above ClarkNet mean (73), below peak (164) → overflow during 4 peak stages
+    # r_sat=66.7 (last good level), util=0.5 → cap = 3 × 66.7 × 0.5 = 100 RPS
+    # Above ClarkNet mean (73), 8 stages >100 overflow to Knative
     r_saturation_per_replica: float = 66.7  # Measured: last good level before p99 cliff
-    target_cpu_util: float = 0.7  # Conservative — cap=140 RPS, overflow during peaks
+    target_cpu_util: float = 0.5  # Forces overflow during peaks (cap=100, 8 stages exceed)
 
     # Replica bounds
     min_k8s_replicas: int = 3
