@@ -92,18 +92,16 @@ def countdown(console: Console, seconds: int, label: str) -> Generator[None, Non
     if not console.is_terminal:
         console.print(f"  [dim]⏳ {label}: {seconds}s[/dim]")
         time.sleep(seconds)
-        return
-
-    text = Text()
-    remaining = seconds
-    try:
+    else:
+        text = Text()
+        remaining = seconds
         with Live(text, console=console, refresh_per_second=1, transient=True):
             while remaining > 0:
                 text.plain = f"  ⏳ {label}: {remaining}s remaining"
                 time.sleep(1)
                 remaining -= 1
-    finally:
-        console.print(f"  [green]✓[/green] {label}: {seconds}s done")
+    yield
+    console.print(f"  [green]✓[/green] {label}: {seconds}s done")
 
 
 def print_run_header(console: Console, idx: int, total: int, scenario: str, run_id: int) -> None:
