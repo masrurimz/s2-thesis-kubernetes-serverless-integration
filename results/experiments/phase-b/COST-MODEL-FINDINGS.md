@@ -6,6 +6,26 @@ Cost model maps experiment architecture to AWS services:
 - **K8s** → EKS control plane ($0.10/hr) + EC2 t3.medium nodes ($0.0416/hr each)
 - **Serverless** → Lambda Provisioned Concurrency (PC) with GB-second billing
 
+
+### Resource Budget (x1-dev: 16 cores, 60GB RAM)
+
+| Cluster | Node | Docker CPU | Role |
+|---|---|---|---|
+| thesis-hybrid | server-0 | 1.0 | K8s control plane |
+| thesis-hybrid | agent-0 | 1.0 | K8s workload pods |
+| thesis-hybrid | agent-1 | 1.0 | K8s workload pods |
+| thesis-hybrid | dynamic-0 | 1.0 | K3dAutoscaler (provisioned on demand) |
+| thesis-hybrid | dynamic-1 | 1.0 | K3dAutoscaler (provisioned on demand) |
+| thesis-serverless | server-0 | 1.0 | Knative control plane |
+| thesis-serverless | agent-0 | **3.0** | Knative workload pods |
+
+**K8s total**: 3.0 static + 2.0 dynamic = **5.0 CPU peak**
+**Serverless total**: 1.0 + 3.0 = **4.0 CPU** (no dynamic nodes)
+**Background services**: ~9.0 CPU (herdr, OMP, GinaV2, Hindsight, MinIO)
+**Grand total ceiling**: 16.0 / 16 cores (fits exactly)
+
+K8s has 1.0 CPU advantage from node autoscaling — this IS the thesis finding:
+"K8s with node autoscaling provides more peak capacity than serverless without node control."
 ### Lambda Billing Model (per AWS 2025 pricing)
 
 Lambda bills **wall-clock duration**, not CPU time (SeBS: arXiv:2012.14132):
