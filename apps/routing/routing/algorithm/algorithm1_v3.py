@@ -88,7 +88,7 @@ class Algorithm1ConfigV3:
     slo_target_p99_ms: float = 200.0
 
     # Knative integration
-    knative_host: str = "test-app.default.127.0.0.1.sslip.io"
+    knative_host: str = "test-app.default.192.168.0.2.sslip.io"
     knative_url: str = "http://localhost:8083"
     prewarm_timeout_sec: int = 30
 

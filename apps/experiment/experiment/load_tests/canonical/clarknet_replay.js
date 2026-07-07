@@ -44,6 +44,7 @@ export const options = {
         'http_req_duration': ['p(95)<2000', 'p(99)<5000'],
         'http_req_failed': ['rate<0.10'],
     },
+    summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(99)'],
 };
 
 const BASE_URL = __ENV.TARGET_URL || __ENV.BASE_URL || 'http://localhost:18082';
@@ -98,7 +99,7 @@ export default function () {
         }
     }
 
-    if (duration > SLO_THRESHOLD_MS) {
+    if (duration > SLO_THRESHOLD_MS || res.status !== 200) {
         sloViolations.add(1);
     }
 
