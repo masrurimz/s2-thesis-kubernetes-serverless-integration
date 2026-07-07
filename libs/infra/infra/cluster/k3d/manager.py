@@ -187,7 +187,7 @@ class K3dManager:
     def _apply_serverless_node_resources(self) -> None:
         """Apply Docker CPU/memory limits to serverless cluster nodes."""
         nodes = [
-            (f"k3d-{CLUSTER_NAME_SERVERLESS}-server-0", "0.5", "1g"),
+            (f"k3d-{CLUSTER_NAME_SERVERLESS}-server-0", "1.0", "1g"),
             (f"k3d-{CLUSTER_NAME_SERVERLESS}-agent-0", "1.5", "2g"),
         ]
         for container, cpus, memory in nodes:
