@@ -5,6 +5,10 @@ pipeline stages, fails fast on stage failure, and supports dry-run mode.
 """
 
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from rich.console import Console
 
 import structlog
 
@@ -84,3 +88,30 @@ class Pipeline:
         else:
             lines.append(f"Total: {self.total_duration:.1f}s")
         return "\n".join(lines)
+
+    def rich_summary(self, console: "Console") -> None:
+        """Print a rich table summary of pipeline execution."""
+        from rich.table import Table
+
+        table = Table(title=f"Pipeline: {len(self.results)}/{len(self.stages)} stages", show_lines=False)
+        table.add_column("Stage", style="cyan")
+        table.add_column("Status", justify="center")
+        table.add_column("Duration", justify="right")
+        table.add_column("Error")
+
+        for r in self.results:
+            status = "[green]✓[/green]" if r.success else "[red]✗[/red]"
+            table.add_row(
+                r.stage_name,
+                status,
+                f"{r.duration_sec:.1f}s",
+                r.error or "",
+            )
+
+        if self.success:
+            table.caption = f"Total: {self.total_duration:.1f}s"
+        else:
+            failed = [r.stage_name for r in self.results if not r.success]
+            table.caption = f"[red]Failed at: {', '.join(failed)}[/red]"
+
+        console.print(table)
