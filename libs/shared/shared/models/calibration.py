@@ -29,8 +29,14 @@ class CalibrationConfig(BaseModel):
     pod_memory_mib: int = 128  # memory limit
     pod_memory_request_mib: int = 64  # memory request (lower than limit)
 
-    # Node resources (Docker --cpus for k3d nodes, applied by manager.py/autoscaler.py)
-    node_cpu_limit: float = 1.0
+    # Node resources (Docker --cpus per k3d node)
+    # thesis-hybrid: server=1.0, agent=1.0 each (2 agents) + up to 2 dynamic=1.0 each
+    # thesis-serverless: server=1.0, agent=3.0 (matches K8s static+1 dynamic = 4.0 total)
+    k8s_node_cpu_limit: float = 1.0  # Per-node Docker --cpus (thesis-hybrid agents)
+    serverless_agent_cpu: float = 3.0  # thesis-serverless agent Docker --cpus
+    k8s_static_cpu_total: float = 3.0  # 2 agents × 1.0 + server (server doesn't run workload pods)
+    k8s_peak_cpu_total: float = 5.0  # 3 static + 2 dynamic nodes
+    serverless_cpu_total: float = 4.0  # 1.0 server + 3.0 agent (no dynamic nodes)
     node_memory_gb: float = 1.0
 
     # Lambda billing (SeBS: arXiv:2012.14132 — Lambda bills wall-clock duration)
