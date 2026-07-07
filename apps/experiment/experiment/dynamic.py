@@ -467,7 +467,7 @@ class DynamicExperimentRunner:
                     console.print(
                         f"  [green]✓[/green] [bold]{elapsed_str(run_dur)}[/bold] • "
                         f"p99=[magenta]{result.p99_latency_ms:.0f}ms[/magenta] • "
-                        f"rps=[blue]{result.rps:.1f}[/blue] • "
+                        f"rps=[blue]{result.throughput_rps:.1f}[/blue] • "
                         f"errors=[red]{result.error_rate:.4%}[/red] • "
                         f"PREDICTIVE={result.predictive_count}"
                     )
