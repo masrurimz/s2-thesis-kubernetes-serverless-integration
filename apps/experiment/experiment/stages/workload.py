@@ -131,37 +131,54 @@ class WorkloadStage(BaseStage):
             stderr=subprocess.PIPE,
             text=True,
             cwd=str(PROJECT_ROOT),
+            bufsize=1,
         )
 
-        # Stream stderr in a thread; call on_progress for each line
+        # k6 writes its progress UI to stdout. If stdout is piped but not
+        # drained, the child can block once the OS pipe fills and never exit.
+        stdout_lines: list[str] = []
         stderr_lines: list[str] = []
 
-        def _read_stderr() -> None:
-            assert proc.stderr is not None
-            for line in proc.stderr:
-                stderr_lines.append(line)
-                if on_progress:
-                    on_progress(line.strip())
+        def _read_stream(stream: object, sink: list[str], report_progress: bool = False) -> None:
+            for line in stream:  # type: ignore[operator]
+                sink.append(line)
+                if report_progress and on_progress:
+                    stripped = line.strip()
+                    if stripped:
+                        on_progress(stripped)
 
         import threading
 
-        reader = threading.Thread(target=_read_stderr, daemon=True)
-        reader.start()
+        readers = [
+            threading.Thread(target=_read_stream, args=(proc.stdout, stdout_lines, True), daemon=True),
+            threading.Thread(target=_read_stream, args=(proc.stderr, stderr_lines, False), daemon=True),
+        ]
+        for reader in readers:
+            reader.start()
 
         try:
             proc.wait(timeout=3600)  # 60 min max (V1 death spiral causes slow k6 completion)
         except subprocess.TimeoutExpired:
             proc.kill()
             proc.wait()
+            for reader in readers:
+                reader.join(timeout=5)
             logger.error("k6_timeout", scenario=scenario, run_id=run_id)
             return None
 
-        reader.join(timeout=5)
+        for reader in readers:
+            reader.join(timeout=5)
         stderr_text = "".join(stderr_lines)
+        stdout_text = "".join(stdout_lines)
 
         # k6 exit code 99 = thresholds crossed (test completed, data valid)
         if proc.returncode not in (0, 99):
-            logger.error("k6_failed", returncode=proc.returncode, stderr=stderr_text[:500])
+            logger.error(
+                "k6_failed",
+                returncode=proc.returncode,
+                stderr=stderr_text[:500],
+                stdout=stdout_text[:500],
+            )
             return None
         if proc.returncode == 99:
             logger.warning("k6_threshold_crossed", scenario=scenario, run_id=run_id)
