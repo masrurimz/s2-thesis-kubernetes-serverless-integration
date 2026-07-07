@@ -99,7 +99,9 @@ export default function () {
         }
     }
 
-    if (duration > SLO_THRESHOLD_MS || res.status !== 200) {
+    // SLO violation = latency exceeded on a SUCCESSFUL request (Google SRE / AAPA methodology)
+    // Failed requests (non-200) tracked separately via k6 http_req_failed
+    if (duration > SLO_THRESHOLD_MS) {
         sloViolations.add(1);
     }
 
