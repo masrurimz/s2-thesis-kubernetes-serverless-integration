@@ -78,6 +78,13 @@ class Algorithm1ConfigV3:
     # Prediction
     prediction_confidence_threshold: float = 0.5
 
+    # Proactive routing — trend-based amplification (S4 only; S3 has no prediction)
+    # When GRU trend is rising AND load approaching cap, extrapolate forward
+    # to trigger Knative routing BEFORE saturation hits.
+    proactive_trend_threshold: float = 3.0  # Min per-step RPS rise to trigger
+    proactive_approach_ratio: float = 0.6  # Start proactive at 60% of K8s capacity
+    proactive_lookahead_steps: int = 5  # Extrapolation horizon (5 × 15s = 75s ahead)
+
     # Budget-aware pacing (BACC-inspired burn-rate PI)
     total_budget_violations: int = 1000
     experiment_duration_sec: int = 1200  # 20 min per run
@@ -147,6 +154,8 @@ class Algorithm1ControllerV3:
 
         # Violation tracking
         self.violation_detected_time: Optional[float] = None
+        # Proactive routing — prediction trend tracking (S4 only)
+        self._prediction_history: list[float] = []
 
         logger.info(
             "Algorithm1ControllerV3 initialized",
@@ -206,9 +215,40 @@ class Algorithm1ControllerV3:
         k8s_capacity = self._compute_k8s_capacity(available_replicas)
 
         # Step 2: Total load = max(observed, predicted upper bound)
+        # S4 proactive routing: when GRU trend is rising and load approaching cap,
+        # extrapolate forward to trigger Knative routing BEFORE saturation hits.
+        # S3 sends prediction=None → this block is skipped entirely.
         predicted_upper = 0.0
         if prediction and prediction.get("confidence", 0) >= self.config.prediction_confidence_threshold:
-            predicted_upper = prediction.get("predicted_requests", 0)
+            raw_pred = prediction.get("predicted_requests", 0)
+            self._prediction_history.append(raw_pred)
+            if len(self._prediction_history) > 5:
+                self._prediction_history.pop(0)
+
+            # Trend-based proactive amplification
+            if len(self._prediction_history) >= 3:
+                n = len(self._prediction_history)
+                trend_per_step = (self._prediction_history[-1] - self._prediction_history[0]) / (n - 1)
+                approach_ratio = (current_load or 0) / k8s_capacity if k8s_capacity > 0 else 0
+
+                if (
+                    trend_per_step > self.config.proactive_trend_threshold
+                    and approach_ratio > self.config.proactive_approach_ratio
+                ):
+                    # Extrapolate: current load + trend × lookahead horizon
+                    amplified = (current_load or 0) + trend_per_step * self.config.proactive_lookahead_steps
+                    predicted_upper = max(raw_pred, amplified)
+                    logger.debug(
+                        "Proactive amplification",
+                        raw_pred=raw_pred,
+                        amplified=round(predicted_upper, 1),
+                        trend_per_step=round(trend_per_step, 1),
+                        approach_ratio=round(approach_ratio, 2),
+                    )
+                else:
+                    predicted_upper = raw_pred
+            else:
+                predicted_upper = raw_pred
 
         total_load = max(current_load or 0, predicted_upper)
 
