@@ -154,8 +154,9 @@ class Algorithm1ControllerV3:
 
         # Violation tracking
         self.violation_detected_time: Optional[float] = None
-        # Proactive routing — prediction trend tracking (S4 only)
+        # Proactive routing — trend tracking (S4 only; S3 has no prediction)
         self._prediction_history: list[float] = []
+        self._load_history: list[float] = []
 
         logger.info(
             "Algorithm1ControllerV3 initialized",
@@ -215,34 +216,39 @@ class Algorithm1ControllerV3:
         k8s_capacity = self._compute_k8s_capacity(available_replicas)
 
         # Step 2: Total load = max(observed, predicted upper bound)
-        # S4 proactive routing: when GRU trend is rising and load approaching cap,
-        # extrapolate forward to trigger Knative routing BEFORE saturation hits.
-        # S3 sends prediction=None → this block is skipped entirely.
+        # S4 proactive routing: extrapolate ACTUAL load trend forward to trigger
+        # Knative routing BEFORE saturation. GRU confidence gates the decision
+        # (S3 sends prediction=None → skipped entirely).
         predicted_upper = 0.0
+
+        # Track actual load for real-time trend detection
+        self._load_history.append(current_load or 0)
+        if len(self._load_history) > 5:
+            self._load_history.pop(0)
+
         if prediction and prediction.get("confidence", 0) >= self.config.prediction_confidence_threshold:
             raw_pred = prediction.get("predicted_requests", 0)
-            self._prediction_history.append(raw_pred)
-            if len(self._prediction_history) > 5:
-                self._prediction_history.pop(0)
 
-            # Trend-based proactive amplification
-            if len(self._prediction_history) >= 3:
-                n = len(self._prediction_history)
-                trend_per_step = (self._prediction_history[-1] - self._prediction_history[0]) / (n - 1)
+            # Proactive amplification: use ACTUAL load trend (responsive) gated by
+            # GRU confidence (confirms model expects sustained load).
+            # GRU predictions alone lag 2+ min behind real load changes.
+            if len(self._load_history) >= 3:
+                n = len(self._load_history)
+                load_trend = (self._load_history[-1] - self._load_history[0]) / (n - 1)
                 approach_ratio = (current_load or 0) / k8s_capacity if k8s_capacity > 0 else 0
 
                 if (
-                    trend_per_step > self.config.proactive_trend_threshold
+                    load_trend > self.config.proactive_trend_threshold
                     and approach_ratio > self.config.proactive_approach_ratio
                 ):
                     # Extrapolate: current load + trend × lookahead horizon
-                    amplified = (current_load or 0) + trend_per_step * self.config.proactive_lookahead_steps
+                    amplified = (current_load or 0) + load_trend * self.config.proactive_lookahead_steps
                     predicted_upper = max(raw_pred, amplified)
                     logger.debug(
                         "Proactive amplification",
                         raw_pred=raw_pred,
                         amplified=round(predicted_upper, 1),
-                        trend_per_step=round(trend_per_step, 1),
+                        load_trend=round(load_trend, 1),
                         approach_ratio=round(approach_ratio, 2),
                     )
                 else:
