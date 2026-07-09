@@ -33,12 +33,12 @@ class GRUConfig:
     """GRU model configuration."""
 
     input_size: int = 1  # Features per timestep
-    hidden_size: int = 64
-    num_layers: int = 2
-    dropout: float = 0.2
+    hidden_size: int = 128
+    num_layers: int = 1
+    dropout: float = 0.104
     sequence_length: int = 30  # Look-back window
     prediction_horizon: int = 1  # Steps ahead to predict
-    learning_rate: float = 0.001
+    learning_rate: float = 0.000380
     batch_size: int = 32
     epochs: int = 100
     early_stopping_patience: int = 10

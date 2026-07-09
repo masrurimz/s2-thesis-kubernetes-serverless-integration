@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 
 from prediction.gru_predictor import GRUPredictor, GRUConfig
+from shared.models.calibration import CALIBRATION
 
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "processed"
@@ -148,14 +149,10 @@ def main():
         val_end = int(n * 0.85)
         train = df.iloc[:val_end]
         test = df.iloc[val_end:]
-
         config = GRUConfig(
-            hidden_size=128,
-            num_layers=2,
-            dropout=0.2,
+            **CALIBRATION.to_gru_config_kwargs(),
             sequence_length=seq_len,
             prediction_horizon=1,
-            learning_rate=0.0005,
             batch_size=32,
             epochs=200,
             early_stopping_patience=25,
@@ -200,12 +197,9 @@ def main():
         test = df.iloc[val_end:]
 
         config = GRUConfig(
-            hidden_size=128,
-            num_layers=2,
-            dropout=0.2,
+            **CALIBRATION.to_gru_config_kwargs(),
             sequence_length=seq_len,
             prediction_horizon=1,
-            learning_rate=0.0005,
             batch_size=32,
             epochs=200,
             early_stopping_patience=25,

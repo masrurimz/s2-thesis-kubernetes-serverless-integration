@@ -11,6 +11,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 
 from prediction.gru_predictor import GRUPredictor, GRUConfig
+from shared.models.calibration import CALIBRATION
 
 
 def generate_realistic_traffic(duration_hours: int = 72, base_rps: float = 100, noise_std: float = 5) -> pd.DataFrame:
@@ -64,13 +65,9 @@ def main():
     print()
 
     # Train GRU
-    print("[2/3] Training GRU model...")
     config = GRUConfig(
-        hidden_size=128,
-        num_layers=2,
-        sequence_length=60,  # Longer look-back for patterns
+        **CALIBRATION.to_gru_config_kwargs(),
         epochs=100,
-        learning_rate=0.0005,
         early_stopping_patience=15,
     )
     gru = GRUPredictor(config)

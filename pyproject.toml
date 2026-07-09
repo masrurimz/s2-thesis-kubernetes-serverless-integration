@@ -23,9 +23,9 @@ dependencies = [
     "scipy>=1.16.1",
     "joblib",
     "pyarrow>=23.0.0",
-    "torch==2.5.1+rocm6.2; sys_platform == 'linux' and platform_machine == 'x86_64'",
-    "pytorch-triton-rocm==3.1.0; sys_platform == 'linux' and platform_machine == 'x86_64'",
-    # Monitoring
+    "torch>=2.9.0; sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "torchvision>=0.24.0; sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "torchaudio>=2.9.0; sys_platform == 'linux' and platform_machine == 'x86_64'",
     "prometheus-client>=0.21.0",
     # Visualization
     "matplotlib>=3.10.8",
@@ -46,6 +46,9 @@ dependencies = [
     "cli",
     "dashboard",
     "analysis-cli",
+    "torch",
+    "torchvision",
+    "torchaudio",
 ]
 
 [tool.uv.workspace]
@@ -62,11 +65,15 @@ members = [
 ]
 
 
-# AMD ROCm PyTorch index for GPU support
+# AMD ROCm PyTorch stable index — ROCm 7.2 (latest: torch 2.13.0, gfx1103 native)
 [[tool.uv.index]]
 name = "pytorch-rocm"
-url = "https://download.pytorch.org/whl/rocm6.2"
-explicit = true
+url = "https://download.pytorch.org/whl/rocm7.2"
+explicit = false
+
+[tool.uv]
+index-strategy = "unsafe-best-match"
+
 
 [tool.uv.sources]
 shared = { workspace = true }
@@ -81,7 +88,7 @@ analysis-cli = { workspace = true }
 torch = { index = "pytorch-rocm" }
 torchvision = { index = "pytorch-rocm" }
 torchaudio = { index = "pytorch-rocm" }
-pytorch-triton-rocm = { index = "pytorch-rocm" }
+triton-rocm = { index = "pytorch-rocm" }
 
 [dependency-groups]
 dev = [

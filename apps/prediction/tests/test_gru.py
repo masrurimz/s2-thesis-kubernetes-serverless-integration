@@ -11,7 +11,7 @@ from prediction.gru_predictor import GRUPredictor, GRUConfig
 class TestGRUConfig:
     def test_default_values(self):
         config = GRUConfig()
-        assert config.hidden_size == 64
+        assert config.hidden_size == 128
         assert config.sequence_length == 30
         assert config.epochs == 100
 
@@ -38,7 +38,7 @@ class TestGRUPredictor:
     def test_init(self):
         predictor = GRUPredictor()
         assert predictor.is_trained is False
-        assert predictor.config.hidden_size == 64
+        assert predictor.config.hidden_size == 128
 
     def test_train(self, sample_data):
         config = GRUConfig(epochs=5, sequence_length=10)

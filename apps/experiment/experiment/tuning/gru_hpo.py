@@ -16,9 +16,11 @@ from __future__ import annotations
 import json
 import os
 
-# Force CPU mode — AMD gfx1103 causes HIP error during GRU inference/training
-os.environ["CUDA_VISIBLE_DEVICES"] = ""
-
+# Soften MIOpen on gfx1103 — disables conv JIT + limits HW queues to prevent GPU hang
+os.environ.setdefault("MIOPEN_DEBUG_CONV_DIRECT", "0")
+os.environ.setdefault("MIOPEN_FIND_MODE", "FAST")
+os.environ.setdefault("HSA_ENABLE_SDMA", "0")
+os.environ.setdefault("GPU_MAX_HW_QUEUES", "1")
 from datetime import datetime
 from pathlib import Path
 from typing import Callable

@@ -69,6 +69,14 @@ class CalibrationConfig(BaseModel):
     proactive_trend_threshold: float = 3.0
     proactive_approach_ratio: float = 0.6
 
+    # GRU model params — tuned via Optuna HPO (30 trials, val RMSE 4.75%)
+    # HPO date: 2026-07-09. Prior manual tuning: hidden=64, layers=2, RMSE=6.01%
+    gru_hidden_size: int = 128
+    gru_num_layers: int = 1
+    gru_learning_rate: float = 0.000380
+    gru_sequence_length: int = 30
+    gru_dropout: float = 0.104  # Note: nn.GRU ignores dropout when num_layers=1
+
     @property
     def pod_cpu_request(self) -> float:
         """Pod CPU request in vCPU units (e.g., 0.300 for 300m)."""
@@ -128,6 +136,16 @@ class CalibrationConfig(BaseModel):
             "min_replicas": self.min_k8s_replicas,
             "max_replicas": self.max_k8s_replicas,
             "scale_down_threshold": self.scale_down_threshold,
+        }
+
+    def to_gru_config_kwargs(self) -> dict:
+        """Kwargs for GRUConfig(...) constructor — HPO-tuned params."""
+        return {
+            "hidden_size": self.gru_hidden_size,
+            "num_layers": self.gru_num_layers,
+            "learning_rate": self.gru_learning_rate,
+            "sequence_length": self.gru_sequence_length,
+            "dropout": self.gru_dropout,
         }
 
 
