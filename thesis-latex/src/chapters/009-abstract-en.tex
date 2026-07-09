@@ -22,13 +22,15 @@
 
     \vspace{0.5cm}
 
-    Modern cloud architecture has transformed the way web applications are developed, used, and managed, offering significant flexibility, scalability, and efficiency. This evolution includes a shift from traditional infrastructure such as virtual machines to container technology and serverless models. Kubernetes, a container-based cluster management system, is popular for its ability to scale on demand. However, traditional scalability algorithms often fail to handle sudden traffic spikes, resulting in increased latency and inefficient resource allocation. As a solution, serverless computing or Function as a Service (FaaS) provides automatic scalability and cost efficiency by charging only based on actual usage, though this model incurs high costs for constant workloads.
+    Modern cloud architecture faces a trade-off between scalability and cost efficiency. Kubernetes provides strong infrastructure control but is slow to respond to traffic spikes, while serverless computing offers high elasticity at a higher per-request cost. This research designs, implements, and evaluates a hybrid architecture integrating Kubernetes and serverless clusters with Gated Recurrent Unit (GRU)-based workload prediction for proactive traffic distribution.
 
-    This research explores the integration between Kubernetes and serverless computing to optimize the performance and cost efficiency of cloud applications. While several studies have focused on resource allocation prediction, challenges in managing traffic spikes and dynamic resource allocation remain unresolved. This study proposes a traffic distribution strategy utilizing GRU-based workload prediction and a resource reservation mechanism to ensure optimal allocation and fulfillment of tail latency. By combining the strengths of Kubernetes and serverless, this research aims to create a more resilient, responsive, and cost-efficient cloud architecture.
+    The proposed system implements a V3 capacity-driven routing controller that dynamically shifts traffic between Kubernetes and serverless backends based on tail latency monitoring. The proactive routing mechanism uses actual workload trend extrapolation (5 steps $\times$ 15 seconds = 75 seconds ahead) gated by GRU confidence. Evaluation is conducted through 30 replicated controlled experiments across four scenarios: K8s+HPA (baseline), Serverless-only, Hybrid-reactive, and Hybrid-predictive, using the ClarkNet HTTP trace (40 stages $\times$ 30 seconds = 20 minutes, RPS 22--164).
+
+    Results show S4 (Hybrid-predictive) achieves p99 latency = 188\,ms with 702 SLO violations per run, 75\% fewer than S3 (Hybrid-reactive) with 2,805 violations (Cohen's d = 1.21, large effect). S4 is also 20\% cheaper than S1 (\$149/month vs \$187/month) at 98.4\% SLO compliance. The GRU model achieves 400/400 successful predictions with confidence 0.72--0.82 and inference latency 10--13\,ms. The proactive routing mechanism triggers 9 PREDICTIVE actions per run, initiating serverless distribution at 65\% of K8s capacity.
 
     \vspace{0.5cm}
 
-    \textbf{Keywords:} \emph{Cloud Computing, Gated Recurrent Unit, Serverless, Function as A Service, Container, Kubernetes}
+    \textbf{Keywords:} \emph{Cloud Computing, Kubernetes, Serverless, Workload Prediction, GRU, Traffic Distribution, Hybrid Architecture}
 
 \end{center}
 

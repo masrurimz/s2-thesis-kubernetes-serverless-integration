@@ -1,31 +1,73 @@
 %--------------------------------------------------------------------%
-%
-% Title         : Postgraduate Thesis LaTex template
-% Author        : Ravi Vendra Rishika <ravi.vendra.rishika@gmail.com>
-%
-% Page          : Chapter 5
-%
-% It is developed especially for postgraduate students of :
-%   Department of Informatics
-%   Faculty of Intelligent Electrical and Informatics Technology
-%   Institut Teknologi Sepuluh Nopember (ITS)
-%   Surabaya, Indonesia.
-%
-% This LaTex template is intended to make students easier
-% to write master's degree thesis in LaTex using specific
-% Department of Informatics of ITS' format.
-%
+% Page          : Chapter 5 - Kesimpulan dan Saran (Conclusion)
 %--------------------------------------------------------------------%
 
 \chapter{KESIMPULAN DAN SARAN}
 \label{sec:kesimpulan-dan-saran}
 
-Pada bab ini dijelaskan mengenai kesimpulan yang dapat diambil dari penelitian ini dan beberapa saran untuk pengembangan ke depannya. Beberapa poin tersebut dapat dikembangkan maupun diperbaiki di dalam penelitian yang berkelanjutan di masa mendatang, sehingga dapat memberikan khazanah dan kontribusi yang kontinyu terhadap penelitian ini. Penulis sadar bahwa masih banyak kekurangan di dalam penelitian ini yang dapat dikembangkan dan diperbaiki di dalam penelitian selanjutnya.
+Bab ini menyajikan kesimpulan dari penelitian, keterbatasan yang diidentifikasi, serta saran untuk penelitian selanjutnya. Setiap rumusan masalah dijawab dengan merujuk langsung pada bukti eksperimen yang telah dipaparkan pada Bab 4.
 
 \section{Kesimpulan}
+\label{sec:kesimpulan}
 
-\blindtext
+Berdasarkan hasil eksperimen yang telah dilakukan, dapat diambil kesimpulan sebagai berikut:
 
-\section{Saran}
+\subsection{RQ1: Perancangan Prediksi Beban Kerja dengan GRU}
 
-\blindtext
+Model GRU dengan dua lapis rekuren (64 dan 32 unit) berhasil dirancang dan divalidasi untuk prediksi beban kerja HTTP. Model mencapai 400/400 prediksi sukses selama 5 \emph{run} eksperimen dengan tingkat kepercayaan 0,72--0,82 dan latensi inferensi 10--13\,ms pada CPU. Namun, prediksi GRU terbukti \emph{lagging} 2+ menit di belakang lonjakan beban aktual, sehingga mekanisme \emph{proactive routing} menggunakan tren beban aktual yang diekstrapolasi ke depan, dengan kepercayaan GRU sebagai \emph{gate} keputusan.
+
+\subsection{RQ2: Perancangan Pengambilan Keputusan dengan Modifikasi ElaX}
+
+Dua algoritma berhasil dirancang dengan memodifikasi kerangka kerja ElaX:
+
+\begin{enumerate}
+    \item \textbf{Algoritma 1 (Pengontrol Routing V3)}: Pengontrol berbasis kapasitas yang menghitung kapasitas efektif K8s dari \emph{ready replicas}, menggeser lalu lintas ke \emph{serverless} berdasarkan \emph{burst ratio}, dan menerapkan \emph{proactive routing} melalui ekstrapolasi tren beban aktual. Mekanisme ini memicu rata-rata 9 aksi PREDICTIVE per \emph{run}, memulai distribusi ke \emph{serverless} pada 65\% kapasitas K8s.
+
+    \item \textbf{Algoritma 2 (Pengontrol Skalabilitas Cluster)}: Model $R = \alpha x + \beta$ yang menerjemahkan prediksi beban menjadi jumlah replika yang diperlukan. Pada konfigurasi eksperimen, algoritma ini mempertahankan 3 replika karena kapasitas model (200 RPS) melampaui beban puncak ClarkNet (164 RPS).
+\end{enumerate}
+
+\subsection{RQ3: Evaluasi Mekanisme yang Dimodifikasi}
+
+Evaluasi dilakukan melalui 4 skenario $\times$ \emph{n} = 5 replikasi dengan \emph{trace} ClarkNet. Tiga hipotesis penelitian dievaluasi:
+
+\begin{enumerate}
+    \item \textbf{H1 (Efisiensi biaya \emph{hybrid})}: \textbf{Didukung}. S4 (\$149/bulan) 20\% lebih murah dari S1 (\$187/bulan) dengan tingkat kepatuhan SLO 98,4\%, dan 62\% lebih murah dari S2 (\$391/bulan).
+
+    \item \textbf{H2 (Prediktif $>$ Reaktif)}: \textbf{Didukung secara praktis}. S4 memiliki 75\% lebih sedikit pelanggaran SLO dibandingkan S3 (702 vs 2.805 per \emph{run}) dengan \emph{Cohen's d} = 1,21 (\emph{large effect}) dan \emph{95\% CI} yang tidak mencakup nol. Namun, perbedaan tidak mencapai signifikansi statistik pada $\alpha = 0,05$ (\emph{p} = 0,12) akibat variansi sistem yang tinggi pada \emph{n} = 5.
+
+    \item \textbf{H3 (Adekuasi GRU)}: \textbf{Didukung}. Model GRU berfungsi andal (400/400 prediksi), memberikan kepercayaan yang memadai (0,72--0,82) untuk memicu \emph{proactive routing}, dan berkontribusi pada pengurangan pelanggaran SLO sebesar 49\% dibandingkan mode \emph{reactive-only}.
+\end{enumerate}
+
+\section{Keterbatasan}
+\label{sec:keterbatasan}
+
+Penelitian ini memiliki beberapa keterbatasan yang perlu diperhatikan dalam interpretasi hasil:
+
+\begin{enumerate}
+    \item \textbf{Perangkat keras bersama}: Eksperimen dijalankan pada satu mesin 16-inti AMD dengan semua komponen (k3d, Knative, HAProxy, Prometheus, k6, GRU) berkompetisi untuk sumber daya CPU, menghasilkan variansi yang signifikan antar \emph{run}.
+
+    \item \textbf{Ukuran sampel}: \emph{n} = 5 replikasi tidak memberikan \emph{statistical power} yang cukup untuk mencapai signifikansi statistik meskipun \emph{effect size} besar.
+
+    \item \textbf{Generalisasi GRU}: Model memprediksi tren dengan benar tetapi meremehkan magnitudo puncak, sehingga \emph{proactive routing} menggunakan tren beban aktual sebagai sinyal utama.
+
+    \item \textbf{Satu jenis beban kerja}: Eksperimen hanya menggunakan fib(33) \emph{CPU-bound} + 50\,ms I/O \emph{wait}, yang belum tentu mewakili semua profil aplikasi (\emph{I/O-bound}, \emph{memory-bound}, campuran).
+
+    \item \textbf{Kluster k3d pada satu mesin}: Bukan K8s terdistribusi sesungguhnya; \emph{routing} melalui \emph{localhost} tidak mencerminkan latensi jaringan produksi.
+\end{enumerate}
+
+\section{Saran untuk Penelitian Selanjutnya}
+\label{sec:saran}
+
+Berdasarkan keterbatasan yang telah diidentifikasi, beberapa arah penelitian selanjutnya diusulkan:
+
+\begin{enumerate}
+    \item \textbf{Meningkatkan ukuran sampel} ke \emph{n} $\geq$ 30 per skenario untuk memenuhi asumsi normalitas uji parametrik dan mencapai \emph{power} yang memadai ($\beta \geq 0,80$) untuk \emph{effect size} yang teramati (\emph{d} $\approx$ 1,2).
+
+    \item \textbf{Deploy pada kluster K8s multi-node sesungguhnya} untuk menghilangkan bias \emph{localhost} dan mengevaluasi dampak latensi jaringan pada mekanisme \emph{routing}.
+
+    \item \textbf{Menguji dengan beragam profil beban kerja} (\emph{I/O-bound}, \emph{memory-bound}, campuran) untuk mengevaluasi generalisasi mekanisme \emph{proactive routing}.
+
+    \item \textbf{Meningkatkan model GRU} dengan mekanisme \emph{attention} atau \emph{transformer} untuk prediksi puncak yang lebih akurat, atau menggunakan \emph{ensemble} model untuk mengurangi \emph{lag}.
+
+    \item \textbf{Mengeksplorasi \emph{reinforcement learning}} untuk keputusan \emph{routing} yang dapat belajar optimal \emph{trade-off} antara biaya dan latensi secara \emph{online}.
+\end{enumerate}

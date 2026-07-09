@@ -1,25 +1,60 @@
 %--------------------------------------------------------------------%
-%
-% Title         : Postgraduate Thesis LaTex template
-% Author        : Ravi Vendra Rishika <ravi.vendra.rishika@gmail.com>
-%
-% Page          : Appendix 3
-%
-% It is developed especially for postgraduate students of :
-%   Department of Informatics
-%   Faculty of Intelligent Electrical and Informatics Technology
-%   Institut Teknologi Sepuluh Nopember (ITS)
-%   Surabaya, Indonesia.
-%
-% This LaTex template is intended to make students easier
-% to write master's degree thesis in LaTex using specific
-% Department of Informatics of ITS' format.
-%
+% Page          : Appendix C - Code Listings
 %--------------------------------------------------------------------%
 
-\clearpage
+\chapter*{LAMPIRAN C: \emph{Code Listings}}
+\addcontentsline{toc}{chapter}{LAMPIRAN C: \emph{Code Listings}}
 
-% List of Appendix 3
-\addcontentsline{toc}{chapter}
+\section*{Proactive Routing (V3 Controller)}
 
-\chapter{Penjelasan Hasil}
+Berikut adalah potongan kode mekanisme \emph{proactive routing} pada \texttt{algorithm1\_v3.py}:
+
+\begin{lstlisting}[language=Python, caption={Proactive routing berbasis tren beban aktual}, label={lst:proactive}]
+# Track actual load for real-time trend detection
+self._load_history.append(current_load or 0)
+if len(self._load_history) > 5:
+    self._load_history.pop(0)
+
+if prediction and confidence >= threshold:
+    raw_pred = prediction.get("predicted_requests", 0)
+    if len(self._load_history) >= 3:
+        n = len(self._load_history)
+        load_trend = (self._load_history[-1] - self._load_history[0]) / (n - 1)
+        approach_ratio = current_load / k8s_capacity
+
+        if load_trend > 3.0 and approach_ratio > 0.6:
+            # Extrapolate forward: current + trend * lookahead
+            amplified = current_load + load_trend * 5  # 75s ahead
+            predicted_upper = max(raw_pred, amplified)
+\end{lstlisting}
+
+\section*{Kapasitas Efektif K8s}
+
+\begin{lstlisting}[language=Python, caption={Perhitungan kapasitas K8s dan burst ratio}, label={lst:capacity}]
+def _compute_k8s_capacity(self, available_replicas):
+    return max(0, available_replicas) * self.r_effective_per_replica
+
+# r_effective = r_saturation * target_cpu_util
+# = 66.7 * 0.5 = 33.35 RPS/pod
+# 3 pods * 33.35 = 100.05 RPS total capacity
+
+def _compute_routing_split(self, total_load, k8s_capacity):
+    if total_load <= k8s_capacity:
+        return 100, 0, False  # 100% K8s
+    burst_ratio = (total_load - k8s_capacity) / total_load
+    knative_pct = burst_ratio * 100  # e.g., 30% = 30 Knative weight
+\end{lstlisting}
+
+\section*{CalibrationConfig}
+
+\begin{lstlisting}[language=Python, caption={CalibrationConfig sebagai single source of truth}, label={lst:calibration}]
+class CalibrationConfig(BaseModel):
+    fib_n: int = 33
+    io_wait_ms: float = 50.0
+    r_saturation_per_replica: float = 66.7  # Measured: fib(33) capacity test
+    target_cpu_util: float = 0.5  # cap = 3 * 66.7 * 0.5 = 100 RPS
+    min_k8s_replicas: int = 3
+    proactive_trend_threshold: float = 3.0  # RPS/step to trigger
+    proactive_approach_ratio: float = 0.6   # 60% of cap
+    proactive_lookahead_steps: int = 5      # 75s ahead
+\end{lstlisting}

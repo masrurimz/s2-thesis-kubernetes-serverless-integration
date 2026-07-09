@@ -34,9 +34,9 @@ Penelitian ini mengusulkan strategi distribusi lalu lintas antara kluster Kubern
 Berdasarkan latar belakang yang telah dipaparkan, terdapat beberapa rumusan masalah yang dirumuskan sebagai berikut:
 
 \begin{enumerate}
-    \item Bagaimana merancang prediksi beban \emph{traffic} pada sebuah aplikasi dengan menggunakan GRU?
-    \item Bagaimana merancang dan melakukan pengambilan keputusan dengan melakukan modifikasi Elax untuk \emph{scaling} pada server cluster dan mendistribusikan traffic ke jenis kluster yang berbeda?
-    \item Bagaimana mengevaluasi mekanisme Elax yang dimodifikasi untuk \emph{automatic scalling} dan \emph{load distribution} pada integrasi kubernetes dan serverless pada sebuah aplikasi?
+    \item Bagaimana merancang prediksi beban kerja HTTP menggunakan \emph{Gated Recurrent Unit} (GRU) untuk aplikasi \emph{cloud}?
+    \item Bagaimana merancang pengambilan keputusan dengan memodifikasi kerangka kerja ElaX untuk skalabilitas dan distribusi lalu lintas pada kluster heterogen (\emph{Kubernetes} dan \emph{serverless})?
+    \item Bagaimana mengevaluasi mekanisme ElaX yang dimodifikasi untuk \emph{automatic scaling} dan \emph{load distribution} pada integrasi \emph{Kubernetes} dan \emph{serverless}?
 \end{enumerate}
 
 \section{Tujuan Penelitian}
@@ -49,6 +49,18 @@ Berdasarkan rumusan masalah yang telah dijelaskan, tujuan besar dari penelitian 
     \item Menilai performa integrasi Kubernetes dan Serverless dalam meningkatkan kemampuan Scalling aplikasi sehingga bisa mengurangi masalah Latency dan Over-provisioning.
     \item Mengukur dan mengevaluasi pendekatan ini dibandingkan dengan model lain dalam menangani permasalahan latency dan \emph{over-provisioning}.
     \item Mengembangkan metode scalling dan routing traffic yang mengintegrasikan Kubernetes dan Serverless.
+\end{enumerate}
+
+
+\section{Hipotesis Penelitian}
+\label{sec:hipotesis}
+
+Berdasarkan rumusan masalah dan tinjauan pustaka, penelitian ini mengajukan tiga hipotesis:
+
+\begin{enumerate}
+    \item \textbf{H1 (Efisiensi biaya \emph{hybrid})}: Arsitektur \emph{hybrid} dengan distribusi lalu lintas cerdas memberikan efisiensi biaya yang lebih baik dibandingkan pendekatan murni (\emph{Kubernetes-only} atau \emph{serverless-only}) pada tingkat kepatuhan SLO yang setara.
+    \item \textbf{H2 (Prediktif $>$ Reaktif)}: Mekanisme \emph{proactive routing} berbasis prediksi GRU menghasilkan lebih sedikit pelanggaran SLO dibandingkan mekanisme \emph{reactive routing} murni.
+    \item \textbf{H3 (Adekuasi GRU)}: Model GRU memberikan prediksi yang memadai (kepercayaan $\geq$ 0,5, latensi $<$ 50\,ms) untuk mendukung keputusan \emph{routing} proaktif pada beban kerja HTTP.
 \end{enumerate}
 
 \section{Manfaat Penelitian}
@@ -77,7 +89,9 @@ Adapun kontribusi yang diperoleh dari penelitian ini sebagai berikut:
 Agar penelitian yang dilakukan dapat berjalan sesuai dengan tujuan yang dipaparkan, ditetapkan beberapa batasan masalah sebagai berikut:
 
 \begin{enumerate}
-    \item Dataset yang digunakan merupakan dataset traffic dari ClarkNet dan Calgary trace.
-    \item Cloud provider yang digunakan adalah Google Cloud dengan menggunakan Google Kubernetes Engine untuk Kubernetes dan Cloud Function untuk Serverless deployment.
-    \item Basis metode dan algoritma yang digunakan ada Elax dengan modifikasi pada output yang menambahkan decision untuk routing ke Serverless, Pre-Emptive Cold Start, dan Tuning Scaling logic.
+    \item \emph{Workload}: fib(33) \emph{CPU-bound} + 50\,ms I/O \emph{wait}, dengan \emph{trace} HTTP ClarkNet yang direplikasi melalui k6.
+    \item Infrastruktur: kluster k3d pada satu mesin 16-inti AMD, HAProxy untuk \emph{routing}, Knative Serving dengan KPA.
+    \item Metrik: latensi p99 (ambang SLO 200\,ms), pelanggaran SLO, proyeksi biaya bulanan (AWS EKS+EC2+Lambda).
+    \item Tidak ada batasan CPU pada level pod; batas CPU pada level node Docker (\texttt{-{}-cpus}) adalah batas yang sebenarnya.
+    \item Basis metode dan algoritma yang digunakan adalah ElaX dengan modifikasi pengontrol routing V3 berbasis kapasitas dan mekanisme \emph{proactive routing}.
 \end{enumerate}

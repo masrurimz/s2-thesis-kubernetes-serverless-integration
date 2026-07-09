@@ -1,25 +1,69 @@
 %--------------------------------------------------------------------%
-%
-% Title         : Postgraduate Thesis LaTex template
-% Author        : Ravi Vendra Rishika <ravi.vendra.rishika@gmail.com>
-%
-% Page          : Appendix 1
-%
-% It is developed especially for postgraduate students of :
-%   Department of Informatics
-%   Faculty of Intelligent Electrical and Informatics Technology
-%   Institut Teknologi Sepuluh Nopember (ITS)
-%   Surabaya, Indonesia.
-%
-% This LaTex template is intended to make students easier
-% to write master's degree thesis in LaTex using specific
-% Department of Informatics of ITS' format.
-%
+% Page          : Appendix A - Experiment Configuration
 %--------------------------------------------------------------------%
 
-\clearpage
+\chapter*{LAMPIRAN A: Konfigurasi Eksperimen}
+\addcontentsline{toc}{chapter}{LAMPIRAN A: Konfigurasi Eksperimen}
 
-% List of Appendix 1
-\addcontentsline{toc}{chapter}
+\section*{Parameter Kalibrasi}
 
-\chapter{Instrumen Pengujian}
+Tabel berikut menyajikan parameter kalibrasi yang digunakan dalam eksperimen, bersumber dari \texttt{CalibrationConfig} (\texttt{libs/shared/shared/models/calibration.py}).
+
+\begin{table}[htbp]
+    \centering
+    \begin{tabular}{lr}
+        \toprule
+        Parameter & Nilai \\
+        \midrule
+        fib\_n & 33 \\
+        io\_wait\_ms & 50,0 \\
+        lambda\_compute\_ms & 24,0 \\
+        r\_saturation\_per\_replica & 66,7 \\
+        target\_cpu\_util & 0,5 \\
+        min\_k8s\_replicas & 3 \\
+        max\_k8s\_replicas & 10 \\
+        pod\_cpu\_millicores & 300 \\
+        node\_cpu\_limit & 1,0 \\
+        proactive\_trend\_threshold & 3,0 \\
+        proactive\_approach\_ratio & 0,6 \\
+        proactive\_lookahead\_steps & 5 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section*{Alokasi Sumber Daya Kluster}
+
+\begin{table}[htbp]
+    \centering
+    \begin{tabular}{lrr}
+        \toprule
+        Komponen & CPU (Docker) & Pod/Replica \\
+        \midrule
+        K8s server node & 3,0 & --- \\
+        K8s agent node & 3,0 & --- \\
+        Serverless agent node & 3,0 & --- \\
+ Dynamic workload nodes & 1,0 each & --- \\
+        K8s baseline pods & --- & 3 $\times$ 300m \\
+        Knative pods (KPA) & --- & 3 (min-scale) \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section*{Parameter \emph{Trace} ClarkNet}
+
+\begin{table}[htbp]
+    \centering
+    \begin{tabular}{lr}
+        \toprule
+        Parameter & Nilai \\
+        \midrule
+        Jumlah tahap & 40 \\
+        Durasi per tahap & 30 detik \\
+        Total durasi & 1.200 detik (20 menit) \\
+        RPS minimum & 22 \\
+        RPS maksimum & 164 \\
+        RPS rata-rata & 73 \\
+        Jumlah \emph{request} per \emph{run} & 87.840 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
