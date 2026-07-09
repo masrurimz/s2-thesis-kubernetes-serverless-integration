@@ -14,12 +14,18 @@ Uses time-ordered train/val/test splits (70/15/15).
 from __future__ import annotations
 
 import json
+import os
+
+# Force CPU mode — AMD gfx1103 causes HIP error during GRU inference/training
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
 from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
 import numpy as np
 import optuna
+import pandas as pd
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -28,31 +34,29 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
 RESULTS_DIR = PROJECT_ROOT / "results" / "experiments" / "tuning"
 
 
-def _generate_synthetic_data(duration_hours: int = 72) -> np.ndarray:
+def _generate_synthetic_data(duration_hours: int = 72) -> pd.DataFrame:
     """Generate synthetic traffic data for HPO (same as train_gru.py)."""
     from prediction.training.train_gru import generate_realistic_traffic
 
     np.random.seed(42)
-    df = generate_realistic_traffic(duration_hours=duration_hours)
-    return df["total_requests"].values.astype(np.float64)
+    return generate_realistic_traffic(duration_hours=duration_hours)
 
 
-def _load_real_data(dataset: str = "clarknet", resample: str = "5min") -> np.ndarray:
+def _load_real_data(dataset: str = "clarknet", resample: str = "5min") -> pd.DataFrame:
     """Load real ClarkNet/Calgary trace data."""
     data_dir = PROJECT_ROOT / "apps" / "prediction" / "prediction" / "data" / "processed"
     fname = f"{dataset}_real_rps.parquet"
-    import pandas as pd
 
     df = pd.read_parquet(data_dir / fname)
     df = df.resample(resample).sum().fillna(0)
-    return df.iloc[:, 0].values.astype(np.float64)
+    return df
 
 
-def create_gru_objective(data: np.ndarray) -> Callable[[optuna.Trial], float]:
+def create_gru_objective(data: pd.DataFrame) -> Callable[[optuna.Trial], float]:
     """Return Optuna objective function for GRU HPO.
 
     Args:
-        data: 1D array of RPS values (time-ordered).
+        data: DataFrame with 'total_requests' or 'rps' column (time-ordered).
 
     Returns:
         Objective function that returns validation RMSE%.
