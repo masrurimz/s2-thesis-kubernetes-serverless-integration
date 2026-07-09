@@ -53,9 +53,9 @@ class CalibrationConfig(BaseModel):
     # Capacity model — MEASURED fib(33), no CPU limits, 50ms I/O wait
     # p99 < 200ms up to 150 RPS (50/pod), cliff at 200 RPS (66.7/pod)
     # K8s actual saturation: 150 RPS. ClarkNet peak 164 > 150 → S1 saturates
-    # r_sat=66.7 (first p99 crossing), util=0.5 → cap=100 (model capacity)
+    # r_sat=66.7 (first p99 crossing), util=0.659 (HPO-tuned) → cap=131 (model capacity)
     r_saturation_per_replica: float = 66.7
-    target_cpu_util: float = 0.5
+    target_cpu_util: float = 0.659  # HPO-tuned (was 0.5)
 
     # Replica bounds
     min_k8s_replicas: int = 3
@@ -69,10 +69,13 @@ class CalibrationConfig(BaseModel):
     alpha_override: Optional[float] = None
 
     # Controller tuning (V3 burn-rate PI + proactive routing)
-    kp_burn: float = 0.5
+    # HPO-tuned via Optuna TPE screening (10 trials, best SLO=232 vs 702 default)
+    # HPO date: 2026-07-10. Best trial=0.
+    kp_burn: float = 1.49
     ki_burn: float = 0.05
-    proactive_trend_threshold: float = 3.0
-    proactive_approach_ratio: float = 0.6
+    proactive_trend_threshold: float = 4.37
+    proactive_approach_ratio: float = 0.87
+    # target_cpu_util also HPO-tuned (0.659, was 0.5)
 
     # GRU model params — tuned via Optuna HPO (30 trials, val RMSE 4.75%)
     # HPO date: 2026-07-09. Prior manual tuning: hidden=64, layers=2, RMSE=6.01%

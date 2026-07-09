@@ -235,6 +235,30 @@ Implementasi \emph{proactive routing} berbasis tren beban aktual memberikan damp
 
 Mekanisme \emph{proactive routing} bekerja dengan melacak 5 nilai beban aktual terakhir dan menghitung tren per langkah. Ketika tren melebihi 3 RPS/\emph{step} DAN beban saat ini melampaui 60\% kapasitas K8s, pengontrol mengekstrapolasi beban ke depan (5 langkah $\times$ 15 detik = 75 detik) dan menggunakan nilai yang diekstrapolasi untuk menghitung distribusi lalu lintas. Kepercayaan GRU ($\geq$ 0,5) berfungsi sebagai \emph{gate} — mekanisme ini hanya aktif pada S4 yang memiliki prediksi GRU, tidak pada S3.
 
+\subsection{Optimasi Parameter Pengontrol}
+\label{sec:controller-hpo}
+
+Empat parameter pengontrol V3 dioptimalkan melalui \emph{screening} Optuna TPE (10 \emph{trial}, masing-masing 20 menit): \emph{target\_cpu\_util}, \emph{kp\_burn}, \emph{proactive\_trend\_threshold}, dan \emph{proactive\_approach\_ratio}. Tabel~\ref{tab:controller-hpo} menyajikan hasil \emph{screening}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Hasil \emph{screening} HPO pengontrol (10 \emph{trial}, 5 teratas)}
+    \label{tab:controller-hpo}
+    \begin{tabular}{rrrrrr}
+        \toprule
+        Trial & \emph{target\_util} & \emph{kp\_burn} & SLO & p99 (ms) & Objektif \\
+        \midrule
+        \textbf{0} & \textbf{0,659} & \textbf{1,49} & \textbf{232} & \textbf{156} & \textbf{232} \\
+        5 & 0,520 & 0,66 & 318 & 144 & 318 \\
+        3 & 0,410 & 0,45 & 428 & 164 & 428 \\
+        7 & 0,402 & 1,25 & 456 & 160 & 456 \\
+        4 & 0,475 & 0,92 & 828 & 196 & 828 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Konfigurasi terbaik (Trial 0) menghasilkan 232 pelanggaran SLO — penurunan 67\% dari 702 pelanggaran dengan parameter bawaan. Temuan kunci: \emph{target\_cpu\_util} yang lebih tinggi (0,659 vs 0,5 bawaan) memperluas kapasitas model K8s (131 RPS vs 100 RPS), sehingga lebih sedikit lalu lintas yang dialihkan ke \emph{serverless}. Kombinasi dengan \emph{kp\_burn} tinggi (1,49) membuat pengontrol lebih agresif dalam memulihkan (\emph{recovery}) bobot dari \emph{serverless} ke K8s setelah beban turun.
+
 \section{Pembahasan}
 \label{sec:discussion}
 
