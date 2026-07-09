@@ -183,3 +183,17 @@ Kontroler bekerja berdasarkan nilai kondisi sekarang dibandingkan dengan SLO. Ke
 \Until{forever}
 \end{algorithmic}
 \end{figure}
+
+
+\section{Routing dan Distribusi Trafik pada Arsitektur Hybrid}
+\label{sec:routing-distribusi}
+
+Pada arsitektur \emph{hybrid} yang mengintegrasikan \emph{Kubernetes} dan \emph{serverless}, strategi distribusi lalu lintas memegang peranan krusial. Beberapa penelitian terbaru telah mengeksplorasi pendekatan ini:
+
+\emph{PulseNet} \citep{pulsenet2025} mengusulkan arsitektur \emph{dual-track} yang memisahkan lalu lintas menjadi jalur \emph{expedited} (burst ke \emph{serverless}) dan \emph{sustainable} (baseline ke VM), mencapai pengurangan biaya 65--70\%. Pendekatan ini menginspirasi pemisahan kapasitas dasar dan \emph{burst} pada pengontrol V3 penelitian ini.
+
+\citet{dehigama2024} mempelajari biaya optimal dari kombinasi VM dan \emph{serverless} untuk aplikasi web, menemukan penghematan biaya 7,5--28,5\% dengan mengalokasikan VM untuk beban dasar dan \emph{serverless} untuk lonjakan. Pola ini menjadi dasar arsitektur dua-kluster pada penelitian ini.
+
+\emph{LA-IMR} \citep{laimr2026} memperkenalkan model latensi \emph{closed-form} untuk \emph{routing} berbasis kapasitas, mengurangi p99 sebesar 20,7\%. Konsep perhitungan kapasitas efektif dari replika yang tersedia diadopsi pada perhitungan \texttt{k8s\_capacity} di pengontrol V3.
+
+\emph{BACC} \citep{bacc2026} menerapkan pengontrol PI pada \emph{burn-rate} anggaran pelanggaran SLO, memungkinkan \emph{provisioning} yang diatur oleh anggaran. Mekanisme \emph{burn-rate adjustment} pada pengontrol V3 mengadaptasi konsep ini untuk mengatur agresivitas \emph{routing} ke \emph{serverless} berdasarkan tingkat konsumsi anggaran SLO.

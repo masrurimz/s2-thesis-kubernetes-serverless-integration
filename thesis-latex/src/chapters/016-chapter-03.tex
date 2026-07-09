@@ -174,6 +174,85 @@ Bagian ini bertujuan untuk mengukur performa metode pengambilan keputusan dalam 
     \item \textbf{Jenis metode scalling} (Variabel Kontrol): Mencakup cluster autoscaler, metode ELAX, dan metode yang diusulkan dari modifikasi ELAX.
 \end{enumerate}
 
+\section{Arsitektur Sistem}
+\label{sec:arsitektur-sistem}
+
+Sistem yang diusulkan menggunakan arsitektur dua-kluster yang terpisah untuk mencegah interferensi \emph{scheduler}:
+
+\begin{enumerate}
+    \item \textbf{Kluster \emph{thesis-hybrid}}: K8s dengan k3d, 3 pod baseline (\emph{test-app-warm}), K3dAutoscaler untuk node dinamis (maks 2 node). Tidak ada batasan CPU pada level pod; batas CPU pada level node Docker (\texttt{-{}-cpus=1.0}) adalah batas yang sebenarnya.
+    \item \textbf{Kluster \emph{thesis-serverless}}: Knative Serving dengan KPA, \emph{min-scale}=3, \emph{target}=10. Tidak ada node \emph{autoscaler} (KPA menangani penskalaan pod).
+    \item \textbf{HAProxy}: \emph{Reverse proxy} dengan dua \emph{backend} — K8s via Docker DNS, Knative via \emph{host.docker.internal}. Distribusi lalu lintas berdasarkan bobot (0--100).
+    \item \textbf{Server GRU}: FastAPI pada port 8090, menyediakan endpoint \texttt{/predict} untuk prediksi beban kerja.
+    \item \textbf{Daemon Routing}: Algoritma 1 (V3) + Algoritma 2 pada port 9104, interval keputusan 15 detik.
+\end{enumerate}
+
+\section{Algoritma 1: Pengontrol Routing V3}
+\label{sec:algoritma-1-v3}
+
+Pengontrol routing V3 (\emph{Capacity-Driven}) mengambil keputusan berdasarkan kapasitas efektif K8s, bukan \emph{error} SLO. Kapasitas efektif dihitung sebagai:
+
+\begin{equation}
+    k8s\_capacity = available\_replicas \times r\_saturation \times target\_cpu\_util
+\end{equation}
+
+dengan $r\_saturation = 66,7$ RPS/pod (terukur dari uji kapasitasitas fib(33)) dan $target\_cpu\_util = 0,5$, sehingga $k8s\_capacity = 3 \times 66,7 \times 0,5 \approx 100$ RPS.
+
+Total beban dihitung sebagai $total\_load = \max(current\_load, predicted\_upper)$, dan \emph{burst ratio} menentukan bobot Knative:
+
+\begin{equation}
+    knative\_weight = \frac{total\_load - k8s\_capacity}{total\_load} \times 100
+\end{equation}
+
+\subsection{Proactive Routing}
+
+Mekanisme \emph{proactive routing} melacak 5 nilai beban aktual terakhir dan menghitung tren per langkah. Ketika tren melebihi 3 RPS/\emph{step} DAN beban saat ini melampaui 60\% kapasitas K8s, beban diekstrapolasi ke depan:
+
+\begin{equation}
+    amplified = current\_load + load\_trend \times lookahead\_steps
+\end{equation}
+
+dengan $lookahead\_steps = 5$ (5 $\times$ 15 detik = 75 detik ke depan). Kepercayaan GRU ($\geq 0,5$) berfungsi sebagai \emph{gate} — mekanisme ini hanya aktif pada skenario S4.
+
+\section{Algoritma 2: Pengontrol Skalabilitas Cluster}
+\label{sec:algoritma-2}
+
+Algoritma 2 mengadaptasi model ElaX $R = \alpha x + \beta$ untuk menerjemahkan prediksi beban menjadi jumlah replika yang diperlukan:
+
+\begin{equation}
+    target\_replicas = \lceil \alpha \times predicted\_load \times buffer \rceil
+\end{equation}
+
+dengan $\alpha = 0,015$ (efisiensi CPU), $buffer = 1,2$, dan \emph{clamping} ke rentang $[3, 10]$. Pada konfigurasi eksperimen, algoritma ini selalu mempertahankan 3 replika karena kapasitas model (200 RPS) melampaui beban puncak ClarkNet (164 RPS).
+
+\section{Rancangan Pengujian}
+\label{sec:rancangan-pengujian}
+
+Evaluasi dilakukan melalui 4 skenario yang dirangkum pada Tabel~\ref{tab:skenario-eksperimen}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Skenario eksperimen}
+    \label{tab:skenario-eksperimen}
+    \begin{tabular}{llll}
+        \toprule
+        Skenario & Pod Autoscaler & Node Autoscaler & Routing \\
+        \midrule
+        S1 & HPA (CPU 50\%) & K3dAutoscaler & 100\% K8s \\
+        S2 & KPA (Knative) & --- & 100\% Serverless \\
+        S3 & Alg. 2 & K3dAutoscaler & V3 (reaktif) \\
+        S4 & Alg. 2 & K3dAutoscaler & V3 (proaktif) \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Beban kerja menggunakan \emph{trace} ClarkNet yang direplikasi melalui k6 (40 tahap $\times$ 30 detik = 20 menit, rentang RPS 22--164). Setiap skenario diulang $n = 5$ kali. Metrik yang diukur: latensi p99 (ambang SLO 200\,ms), pelanggaran SLO, dan proyeksi biaya bulanan. Uji statistik menggunakan Welch \emph{t-test}, Mann-Whitney U, dan Cohen's \emph{d}.
+
+\section{Metode Analisis Biaya}
+\label{sec:metode-biaya}
+
+Model biaya AWS memproyeksikan biaya berdasarkan tiga komponen: (1) EKS \emph{Control Plane} (\$0,10/jam), (2) EC2 \emph{Compute} (t3.medium, \$0,0416/jam per node), dan (3) Lambda yang mencakup \emph{Provisioned Concurrency}, eksekusi (berdasarkan \emph{wall-clock duration}, metodologi SeBS \citep{sebs2020}), dan \emph{requests}. Memori Lambda disesuaikan dari permintaan CPU pod: $\lceil 0,3 \times 1769 \rceil = 531$\,MB.
+
 \section{Penyusunan Laporan}
 \label{sec:penyusunan-laporan}
 
