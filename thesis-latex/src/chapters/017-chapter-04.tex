@@ -257,7 +257,24 @@ Empat parameter pengontrol V3 dioptimalkan melalui \emph{screening} Optuna TPE (
     \end{tabular}
 \end{table}
 
-Konfigurasi terbaik (Trial 0) menghasilkan 232 pelanggaran SLO — penurunan 67\% dari 702 pelanggaran dengan parameter bawaan. Temuan kunci: \emph{target\_cpu\_util} yang lebih tinggi (0,659 vs 0,5 bawaan) memperluas kapasitas model K8s (131 RPS vs 100 RPS), sehingga lebih sedikit lalu lintas yang dialihkan ke \emph{serverless}. Kombinasi dengan \emph{kp\_burn} tinggi (1,49) membuat pengontrol lebih agresif dalam memulihkan (\emph{recovery}) bobot dari \emph{serverless} ke K8s setelah beban turun.
+Konfigurasi terbaik (Trial 0) menghasilkan 232 pelanggaran SLO dalam \emph{single-run} — penurunan 67\% dari 702 pelanggaran dengan parameter bawaan. Namun, validasi \emph{holdout} $n=5$ mengungkap fenomena \emph{overfitting}: rata-rata SLO melonjak ke 2.886 pelanggaran (vs 702 dengan default), dengan p99 rata-rata 311\,ms (vs 188\,ms). Tabel~\ref{tab:holdout-overfit} membandingkan hasil \emph{single-run} HPO dengan validasi \emph{holdout}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Overfitting HPO pengontrol: \emph{single-run} vs validasi \emph{holdout} ($n=5$)}
+    \label{tab:holdout-overfit}
+    \begin{tabular}{lrr}
+        \toprule
+        Metrik & Parameter Default & Parameter HPO \\
+        \midrule
+        \emph{Single-run} SLO & 702 & 232 \\
+        \emph{Holdout} mean SLO ($n=5$) & 702 & 2.886 \\
+        \emph{Holdout} mean p99 (ms) & 188 & 311 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\textbf{Penyebab}: \emph{target\_cpu\_util} = 0,659 (vs 0,5 default) mempersempit \emph{safety margin} K8s dari 100 RPS menjadi 131 RPS kapasitas model. Pada \emph{single-run} dengan kondisi menguntungkan, ini mengurangi perluasan ke \emph{serverless}. Namun under variansi sistem tinggi, margin yang lebih sempit menyebabkan saturasi K8s yang lebih sering dan parah. Temuan ini menunjukkan bahwa HPO pada sistem \emph{online} dengan variansi tinggi memerlukan validasi multi-\emph{run}, bukan optimasi \emph{single-run}. Parameter bawaan yang konservatif (\emph{target\_cpu\_util} = 0,5) dipertahankan sebagai konfigurasi produksi.
 
 \section{Pembahasan}
 \label{sec:discussion}
