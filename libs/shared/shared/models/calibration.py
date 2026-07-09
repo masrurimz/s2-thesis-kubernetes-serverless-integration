@@ -63,6 +63,12 @@ class CalibrationConfig(BaseModel):
     scale_down_threshold: float = 0.5
     alpha_override: Optional[float] = None
 
+    # Controller tuning (V3 burn-rate PI + proactive routing)
+    kp_burn: float = 0.5
+    ki_burn: float = 0.05
+    proactive_trend_threshold: float = 3.0
+    proactive_approach_ratio: float = 0.6
+
     @property
     def pod_cpu_request(self) -> float:
         """Pod CPU request in vCPU units (e.g., 0.300 for 300m)."""
@@ -107,6 +113,10 @@ class CalibrationConfig(BaseModel):
             "min_k8s_replicas": self.min_k8s_replicas,
             "max_k8s_replicas": self.max_k8s_replicas,
             "slo_target_p99_ms": self.slo_threshold_ms,
+            "kp_burn": self.kp_burn,
+            "ki_burn": self.ki_burn,
+            "proactive_trend_threshold": self.proactive_trend_threshold,
+            "proactive_approach_ratio": self.proactive_approach_ratio,
         }
 
     def to_scaling_config_overrides(self) -> dict:

@@ -253,6 +253,27 @@ Beban kerja menggunakan \emph{trace} ClarkNet yang direplikasi melalui k6 (40 ta
 
 Model biaya AWS memproyeksikan biaya berdasarkan tiga komponen: (1) EKS \emph{Control Plane} (\$0,10/jam), (2) EC2 \emph{Compute} (t3.medium, \$0,0416/jam per node), dan (3) Lambda yang mencakup \emph{Provisioned Concurrency}, eksekusi (berdasarkan \emph{wall-clock duration}, metodologi SeBS \citep{sebs2020}), dan \emph{requests}. Memori Lambda disesuaikan dari permintaan CPU pod: $\lceil 0,3 \times 1769 \rceil = 531$\,MB.
 
+\section{Kalibrasi dan Optimasi Parameter}
+\label{sec:kalibrasi-optimasi}
+
+Konstanta pengontrol dan model GRU pada penelitian ini ditentukan melalui prosedur kalibrasi tiga tahap yang dapat diulang (\emph{repeatable}) dan didukung oleh metode dari literatur:
+
+\subsection{Kalibrasi Kapasitas}
+
+Kapasitas efektif K8s ($r\_saturation$) diukur melalui uji kapasitasitas berjenjang (\emph{ramp test}): beban RPS ditingkatkan bertahap dari 50 hingga 200 RPS, dan latensi p99 dicatat pada setiap level. Titik saturasi ditentukan sebagai level RPS pertama di mana p99 melampaui ambang SLO (200\,ms). Pengujian diulang $n = 3$ kali per level untuk menghitung rata-rata dan interval kepercayaan 95\%, mengikuti pendekatan baseline Ziegler-Nichols untuk kalibrasi pengontrol PI \citep{yang2019elax}.
+
+\subsection{Optimasi Hiperparameter GRU}
+
+Pencarian hiperparameter model GRU dilakukan secara \emph{offline} menggunakan \emph{Tree-structured Parzen Estimator} (TPE) melalui kerangka kerja Optuna \citep{optuna2019}. Ruang pencarian meliputi \emph{hidden\_size} $\in \{32, 64, 128, 256\}$, \emph{num\_layers} $\in \{1, 2, 3\}$, \emph{learning\_rate} $\in [10^{-4}, 10^{-2}]$ (log-uniform), \emph{sequence\_length} $\in \{15, 30, 60, 120\}$, dan \emph{dropout} $\in [0, 0, 0,5]$. Sebanyak 30 percobaan dijalankan dengan pemangkas median (\emph{median pruner}) untuk menghentikan percobaan yang tidak menjanjikan. Data dibagi dengan urutan waktu (\emph{time-ordered split} 70/15/15), bukan diacak, untuk menjaga integritas deret waktu.
+
+\subsection{Pencarian Parameter Pengontrol}
+
+Parameter pengontrol V3 dioptimasi melalui pencarian dua tahap. Tahap pertama (\emph{screening}): 10 percobaan satu-\emph{run} untuk mengidentifikasi wilayah parameter yang menjanjikan, mencari 4 parameter berdampak tertinggi (\emph{proactive\_trend\_threshold}, \emph{proactive\_approach\_ratio}, \emph{kp\_burn}, \emph{target\_cpu\_util}). Tahap kedua (\emph{confirmation}): 3 kandidat teratas diulang dengan $n = 3$ untuk stabilitas statistik. Tujuan optimasi adalah meminimalkan pelanggaran SLO dengan kendala $p99 \leq 500$\,ms dan batas biaya (\emph{cost guardrail}), mengikuti pola optimasi Bayesian terkendali \citep{pobo2024}. Pendekatan aturan-berbasis (\emph{rule-based}) yang terkalibrasi terbukti mengalahkan pembelajaran penguatan mendalam dalam benchmark RLScale-Bench \citep{rayscale2026}, memvalidasi pilihan desain pengontrol V3.
+
+\subsection{Karakterisasi Beban Kerja dan Pemicu Pelatihan Ulang}
+
+\emph{Demand Complexity Index} (DCI) dihitung sebagai metrik pelaporan untuk mendeteksi pergeseran distribusi beban kerja \citep{dci2025}. DCI menggabungkan koefisien variasi, rasio permintaan nol, dan tingkat lonjakan. Jika DCI bergeser lebih dari 30\% dari baseline, hal ini ditandai untuk investigasi. Pemicu pelatihan ulang otomatis memerlukan pergeseran DCI \emph{dan} degradasi ramalan, mengikuti pola deteksi titik perubahan HyPA \citep{hypa2023}.
+
 \section{Penyusunan Laporan}
 \label{sec:penyusunan-laporan}
 
