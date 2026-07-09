@@ -84,12 +84,8 @@ def run_single_experiment(
     env["CALIBRATION_OVERRIDE"] = str(config_path)
 
     cmd = [
-        "uv",
+        str(Path(PROJECT_ROOT) / ".venv" / "bin" / "thesis-experiment"),
         "run",
-        "thesis-experiment",
-        "run",
-        "--controller",
-        "v3",
         "--runs",
         "1",
         "--scenarios",

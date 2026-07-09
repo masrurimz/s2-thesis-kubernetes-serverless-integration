@@ -10,9 +10,9 @@ Bab ini menyajikan hasil eksperimen dari evaluasi arsitektur \emph{hybrid Kubern
 \section{Performa Model Prediksi GRU}
 \label{sec:gru-performance}
 
-Model \emph{Gated Recurrent Unit} (GRU) dirancang dengan dua lapis rekuren (64 dan 32 unit) dan regularisasi \emph{dropout} 0,2 untuk memprediksi tren beban kerja HTTP jangka pendek. Model menerima \emph{sliding window} observasi \emph{request-per-second} (RPS) terkini dan menghasilkan nilai RUS yang diprediksi beserta skor kepercayaan (\emph{confidence}).
+Model \emph{Gated Recurrent Unit} (GRU) dioptimalkan melalui \emph{hyperparameter optimization} (HPO) menggunakan Optuna TPE dengan 30 \emph{trial}. Konfigurasi optimal yang ditemukan: satu lapis rekuren dengan 128 unit, \emph{learning rate} 0,000380, \emph{sequence length} 30, dan \emph{dropout} 0,104. Optimasi ini meningkatkan akurasi dari 6,01\% RMSE (\emph{manual tuning}) menjadi 4,75\% RMSE — peningkatan 21\%.
 
-Selama eksperimen live, model GRU berjalan pada server FastAPI (port 8090) menggunakan inferensi CPU (\texttt{CUDA\_VISIBLE\_DAYS=''}). Hal ini disebabkan oleh ketidakcocokan GPU AMD Radeon 780M (gfx1103) dengan ROCm/HIP yang menyebabkan \emph{error} ``\emph{invalid device function}'' saat inferensi pada GPU. Inferensi CPU mencapai latensi 10--13\,ms per prediksi, yang memadai untuk interval keputusan 15 detik.
+Selama eksperimen \emph{live}, model GRU berjalan pada server FastAPI (port 8090). Inferensi GPU AMD Radeon 780M (gfx1103) berfungsi setelah instalasi ROCm 7.2 SDK dan stabilisasi MIOpen (\texttt{MIOPEN\_DEBUG\_CONV\_DIRECT=0}, \texttt{GPU\_MAX\_HW\_QUEUES=1}). Latensi inferensi mencapai 10--13\,ms per prediksi, yang memadai untuk interval keputusan 15 detik.
 
 Tabel~\ref{tab:gru-performance} merangkum performa model GRU selama 5 \emph{run} eksperimen S4 (\emph{Hybrid-predictive}). Model mencapai 400/400 prediksi sukses (80 prediksi per \emph{run} $\times$ 5 \emph{run}) tanpa kegagalan, dengan tingkat kepercayaan 0,72--0,82.
 
@@ -27,6 +27,7 @@ Tabel~\ref{tab:gru-performance} merangkum performa model GRU selama 5 \emph{run}
         Total prediksi sukses & 400/400 \\
         Tingkat kepercayaan & 0,72--0,82 \\
         Latensi inferensi & 10--13\,ms \\
+        RMSE validasi (HPO) & 4,75\% \\
         Aksi PREDICTIVE per \emph{run} & 9 \\
         Interval keputusan & 15 detik \\
         \bottomrule
@@ -34,6 +35,34 @@ Tabel~\ref{tab:gru-performance} merangkum performa model GRU selama 5 \emph{run}
 \end{table}
 
 Catatan penting: prediksi GRU \emph{lagging} 2+ menit di belakang lonjakan beban aktual. Ketika beban naik dari 50 ke 110 RPS dalam waktu 2 menit, GRU masih memprediksi 65--73 RPS. Oleh karena itu, mekanisme \emph{proactive routing} menggunakan tren beban aktual (bukan prediksi GRU) yang diekstrapolasi ke depan, dengan kepercayaan GRU sebagai \emph{gate} (lihat Bagian 4.6).
+
+\subsection{Optimasi Hyperparameter GRU}
+\label{sec:gru-hpo}
+
+Optimasi hyperparameter dilakukan menggunakan Optuna dengan algoritma TPE (\emph{Tree-structured Parzen Estimator}) pada 30 \emph{trial}. Ruang pencarian meliputi: \emph{hidden\_size} $\in$ [32, 256], \emph{num\_layers} $\in$ [1, 3], \emph{learning\_rate} $\in$ [$10^{-4}$, $10^{-2}$], \emph{sequence\_length} $\in$ [15, 120], dan \emph{dropout} $\in$ [0, 0, 0,5]. Pelatihan dilakukan pada GPU AMD Radeon 780M dengan ROCm 7.2.
+
+Tabel~\ref{tab:gru-hpo} membandingkan konfigurasi \emph{manual} dengan hasil HPO. Temuan kunci: arsitektur \emph{single-layer} dengan 128 unit mengungguli konfigurasi \emph{multi-layer} pada beban kerja ini, karena data pelatihan yang terbatas (72 jam) cenderung \emph{overfit} pada model yang lebih dalam.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Perbandingan konfigurasi GRU sebelum dan sesudah HPO}
+    \label{tab:gru-hpo}
+    \begin{tabular}{lrr}
+        \toprule
+        Parameter & \emph{Manual} & HPO \\
+        \midrule
+        \emph{hidden\_size} & 64 & 128 \\
+        \emph{num\_layers} & 2 & 1 \\
+        \emph{learning\_rate} & 0,001 & 0,000380 \\
+        \emph{sequence\_length} & 60 & 30 \\
+        \emph{dropout} & 0,2 & 0,104 \\
+        \midrule
+        \textbf{val RMSE (\%)} & \textbf{6,01} & \textbf{4,75} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Penurunan RMSE sebesar 21\% (dari 6,01\% ke 4,75\%) menunjukkan bahwa pemilihan hyperparameter berdampak signifikan pada akurasi prediksi. Konfigurasi HPO diadopsi sebagai nilai bawaan dalam \texttt{CalibrationConfig} untuk semua eksperimen selanjutnya.
 
 \section{Validasi Mekanisme Sistem}
 \label{sec:mechanism-validation}

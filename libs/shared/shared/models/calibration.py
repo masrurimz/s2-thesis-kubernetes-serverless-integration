@@ -3,8 +3,13 @@
 All calibration-sensitive values live here as a single source of truth.
 Values are overwritten from measured capacity envelope test results —
 defaults are starting guesses, NOT validated constants.
+
+Supports CALIBRATION_OVERRIDE env var: path to JSON file with partial
+CalibrationConfig fields to override at import time (used by controller HPO).
 """
 
+import json as _json
+import os as _os
 from typing import Optional
 
 from pydantic import BaseModel
@@ -149,4 +154,10 @@ class CalibrationConfig(BaseModel):
         }
 
 
-CALIBRATION = CalibrationConfig()
+_override_path = _os.environ.get("CALIBRATION_OVERRIDE")
+if _override_path:
+    with open(_override_path) as _f:
+        _overrides = _json.load(_f)
+    CALIBRATION = CalibrationConfig(**_overrides)
+else:
+    CALIBRATION = CalibrationConfig()
