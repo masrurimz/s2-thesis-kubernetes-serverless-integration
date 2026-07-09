@@ -43,15 +43,9 @@ def write_trial_config(trial_id: str, params: Dict) -> Path:
     config_path = trial_dir / "config.json"
 
     with open(config_path, "w") as f:
-        json.dump(
-            {
-                "trial_id": trial_id,
-                "params": params,
-                "timestamp": datetime.now().isoformat(),
-            },
-            f,
-            indent=2,
-        )
+        # Write flat CalibrationConfig fields — CALIBRATION_OVERRIDE reader
+        # does CalibrationConfig(**json.load(f)), so params must be top-level
+        json.dump(params, f, indent=2)
 
     return config_path
 
