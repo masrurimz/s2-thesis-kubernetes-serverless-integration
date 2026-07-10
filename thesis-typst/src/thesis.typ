@@ -156,7 +156,7 @@ Peneliti menyadari bahwa dalam penyusunan laporan tesis ini masih terdapat banya
 
 #v(2em)
 #align(right)[
-  Surabaya, 13 Mei 2024 \
+  Surabaya, Juli 2026 \
   \
   \
   \
