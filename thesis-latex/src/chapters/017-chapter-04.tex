@@ -274,7 +274,11 @@ Konfigurasi terbaik (Trial 0) menghasilkan 232 pelanggaran SLO dalam \emph{singl
     \end{tabular}
 \end{table}
 
-\textbf{Penyebab}: \emph{target\_cpu\_util} = 0,659 (vs 0,5 default) mempersempit \emph{safety margin} K8s dari 100 RPS menjadi 131 RPS kapasitas model. Pada \emph{single-run} dengan kondisi menguntungkan, ini mengurangi perluasan ke \emph{serverless}. Namun under variansi sistem tinggi, margin yang lebih sempit menyebabkan saturasi K8s yang lebih sering dan parah. Temuan ini menunjukkan bahwa HPO pada sistem \emph{online} dengan variansi tinggi memerlukan validasi multi-\emph{run}, bukan optimasi \emph{single-run}. Parameter bawaan yang konservatif (\emph{target\_cpu\_util} = 0,5) dipertahankan sebagai konfigurasi produksi.
+\textbf{Penyebab}: \emph{target\_cpu\_util} = 0,659 (vs 0,5 default) mempersempit \emph{safety margin} K8s dari 100 RPS menjadi 131 RPS kapasitas model. Pada \emph{single-run} dengan kondisi menguntungkan, ini mengurangi perluasan ke \emph{serverless}. Namun under variansi sistem tinggi, margin yang lebih sempit menyebabkan saturasi K8s yang lebih sering dan parah.
+
+Fenomena \emph{overfitting} pada HPO telah dipelajari secara ekstensif dalam konteks pembelajaran mesin \cite{cawley2010overfitting}, namun aplikasinya pada sistem \emph{online} dengan evaluasi yang mahal dan bising belum banyak dieksplorasi. Berbeda dengan HPO pada model ML (di mana evaluasi memerlukan hitungan detik), setiap evaluasi pada sistem kami memerlukan eksperimen 20 menit penuh pada \emph{shared resources}, dengan variansi dari penjadwalan CPU, waktu inisialisasi kontainer, dan kondisi \emph{runtime} lainnya. Tantangan ini beririsan dengan HPO non-stasioner \cite{nonstationary2022}, di mana performa relatif konfigurasi dapat berubah seiring waktu.
+
+\textbf{Metodologi dua tahap}: Berdasarkan temuan ini, kami mengusulkan pendekatan dua tahap untuk HPO pengontrol sistem \emph{online}: (1) \emph{Screening} — $n$ \emph{trial single-run} untuk mengidentifikasi region parameter yang menjanjikan; (2) \emph{Confirmation} — $k$ kandidat teratas divalidasi dengan $m$ \emph{run} masing-masing, dengan seleksi berdasarkan \emph{median} (bukan \emph{mean}) untuk resistensi terhadap \emph{outlier}. Implementasi fungsi \texttt{run\_controller\_hpo\_robust()} mengotomatisasi pipeline ini. Parameter bawaan yang konservatif (\emph{target\_cpu\_util} = 0,5) dipertahankan ketika tidak ada kandidat yang menunjukkan peningkatan \emph{robust} dalam tahap konfirmasi.
 
 \section{Pembahasan}
 \label{sec:discussion}

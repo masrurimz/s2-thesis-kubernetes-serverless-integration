@@ -222,7 +222,7 @@ def run_controller_confirmation(
             result = run_single_experiment(config_path, scenario=scenario, output_dir=run_output)
             results.append(result)
 
-        # Compute statistics
+        # Compute statistics — use median to resist outliers (Cawley & Talbot 2010)
         slo_values = [r.get("slo_violations_k6", 10000) for r in results]
         p99_values = [r.get("p99_latency_ms", 1000) for r in results]
 
@@ -232,8 +232,10 @@ def run_controller_confirmation(
             "trial_number": trial["number"],
             "params": params,
             "n_runs": n_runs,
+            "median_slo": float(np.median(slo_values)),
             "mean_slo": float(np.mean(slo_values)),
             "std_slo": float(np.std(slo_values)),
+            "median_p99": float(np.median(p99_values)),
             "mean_p99": float(np.mean(p99_values)),
             "std_p99": float(np.std(p99_values)),
             "all_slo": slo_values,
@@ -244,16 +246,82 @@ def run_controller_confirmation(
         logger.info(
             "confirmation_result",
             trial=trial["number"],
+            median_slo=confirmation["median_slo"],
+            median_p99=round(confirmation["median_p99"], 1),
             mean_slo=confirmation["mean_slo"],
-            mean_p99=round(confirmation["mean_p99"], 1),
         )
 
-    # Select winner: lowest mean SLO with p99 < 200ms
-    eligible = [c for c in confirmations if c["mean_p99"] < 200]
-    winner = min(eligible, key=lambda x: x["mean_slo"]) if eligible else None
+    # Select winner: lowest MEDIAN SLO with median p99 < 200ms
+    eligible = [c for c in confirmations if c["median_p99"] < 200]
+    winner = min(eligible, key=lambda x: x["median_slo"]) if eligible else None
 
     return {
         "confirmations": confirmations,
         "winner": winner,
         "timestamp": datetime.now().isoformat(),
+    }
+
+
+def run_controller_hpo_robust(
+    n_screening: int = 10,
+    top_k: int = 3,
+    n_confirm_runs: int = 3,
+    scenario: str = "s4-hybrid-predictive",
+) -> Dict:
+    """Two-stage controller HPO robust to system variance.
+
+    Stage 1 (Screening): Single-run trials to identify promising regions.
+    Stage 2 (Confirmation): Multi-run validation of top-K candidates.
+
+    The confirmation stage uses MEDIAN (not mean) to resist outliers,
+    following Cawley & Talbot (2010) on HPO overfitting.
+
+    Args:
+        n_screening: Number of screening trials (~20 min each).
+        top_k: Number of top screening candidates to confirm.
+        n_confirm_runs: Runs per candidate in confirmation stage.
+
+    Returns:
+        Dict with screening results, confirmation results, and recommendation.
+    """
+    logger.info("robust_hpo_start", n_screening=n_screening, top_k=top_k, n_confirm_runs=n_confirm_runs)
+
+    # Stage 1: Screening
+    screening_results = run_controller_screening(n_trials=n_screening, scenario=scenario)
+
+    # Stage 2: Confirmation of top-K
+    confirmation = run_controller_confirmation(
+        screening_results[:top_k],
+        n_runs=n_confirm_runs,
+        scenario=scenario,
+    )
+
+    # If no confirmation winner met p99 < 200ms, retain defaults
+    if confirmation.get("winner") is None:
+        logger.info(
+            "robust_hpo_complete",
+            recommendation="retain_defaults",
+            reason="No candidate achieved mean p99 < 200ms in confirmation",
+        )
+        return {
+            "screening": screening_results,
+            "confirmation": confirmation,
+            "recommendation": "retain_defaults",
+            "reason": "No robust improvement over defaults found",
+        }
+
+    winner = confirmation["winner"]
+    logger.info(
+        "robust_hpo_complete",
+        recommendation="adopt_tuned",
+        winner_trial=winner["trial_number"],
+        mean_slo=winner["mean_slo"],
+        mean_p99=round(winner["mean_p99"], 1),
+    )
+
+    return {
+        "screening": screening_results,
+        "confirmation": confirmation,
+        "recommendation": "adopt_tuned",
+        "winner": winner,
     }
