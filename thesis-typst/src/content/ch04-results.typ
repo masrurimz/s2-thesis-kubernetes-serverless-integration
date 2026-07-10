@@ -1,123 +1,137 @@
 // Chapter 4 — Results and Discussion
-// English-first. Numbers from archived/thesis-latex 017-chapter-04.tex (authoritative)
-// cross-checked against results/claims/CLAIMS_TO_EVIDENCE.md and thesis/chapters/04-results/*.md
+// English-first. Numbers sourced ONLY from results/claims/FINAL_NUMBERS.md
+// (the single source of truth), which in turn quotes only REGISTRY.yaml
+// bundles with role: final. Do not introduce numbers from any other file.
 
 = RESULTS AND DISCUSSION
 
-This chapter presents the experimental results obtained from evaluating the hybrid Kubernetes-serverless architecture with GRU-based workload prediction. The results are organized into sections covering GRU model performance, system mechanism validation, comparative evaluation across deployment scenarios, cost analysis, and an integrative discussion. All claims are traceable to raw data in the project evidence registry under `results/`.
+This chapter presents the experimental results obtained from evaluating the hybrid Kubernetes-serverless architecture with GRU-based workload prediction. The results are organized into sections covering GRU model performance, system mechanism validation, the comparative evaluation across deployment scenarios, cost analysis, and an integrative discussion. Every quantitative claim in this chapter is traceable to a designated final bundle recorded in the experiment registry under `results/`, as consolidated in `results/claims/FINAL_NUMBERS.md`.
 
 == GRU Prediction Model Performance
 
-The GRU prediction model was optimized through hyperparameter optimization (HPO) using Optuna TPE with 30 trials. The optimal configuration found: one recurrent layer with 128 units, learning rate 0.000380, sequence length 30, and dropout 0.104. This optimization improved accuracy from 6.01% RMSE (manual tuning) to 4.75% RMSE — a 21% improvement.
-
-During live experiments, the GRU model ran on a FastAPI server (port 8090). AMD Radeon 780M (gfx1103) GPU inference functioned after installing ROCm 7.2 SDK and stabilizing MIOpen. Inference latency reached 10-13 ms per prediction, well within the 15-second decision interval.
+The GRU prediction model was tuned through hyperparameter optimization. On synthetic validation data, optimization reduced the root-mean-square error from 6.01% under manual tuning to 4.75%, with a mean absolute error of 4.91%. During live experiments the model issued predictions with a confidence range of 0.72 to 0.82 and an inference latency of approximately 40 ms, comfortably within the controller's decision interval. On real ClarkNet traces the best 5-minute-horizon model reached an RMSE of 17.78%, an MAE of 14.48%, and a MAPE of 18.74% — substantially above the synthetic accuracy, so prediction on real traffic is characterized as a partial validation rather than a confirmed target.
 
 #figure(
   kind: table,
   table(
     columns: (auto, auto),
     [Metric], [Value],
-    [Total successful predictions], [400/400],
-    [Confidence range], [0.72 - 0.82],
-    [Inference latency], [10 - 13 ms],
-    [Validation RMSE (post-HPO)], [4.75%],
-    [PREDICTIVE actions per run], [9],
-    [Decision interval], [15 seconds],
+    [Synthetic RMSE (manual tuning)], [6.01%],
+    [Synthetic RMSE (post-HPO)], [4.75%],
+    [Synthetic MAE], [4.91%],
+    [Inference latency], [~40 ms],
+    [Confidence range (live)], [0.72 to 0.82],
+    [ClarkNet RMSE (5-min, best)], [17.78%],
+    [ClarkNet MAE], [14.48%],
+    [ClarkNet MAPE], [18.74%],
   ),
-  caption: [GRU model performance during live experiments (n=5, S4 scenario)],
+  caption: [GRU model performance. Synthetic metrics from the final training bundle; ClarkNet metrics from the real-trace evaluation bundle.],
 ) <tab:gru-performance>
 
-An important finding: the GRU predictions lagged 2+ minutes behind actual load surges. When load rose from 50 to 110 RPS in 2 minutes, the GRU still predicted 65-73 RPS. Therefore, the proactive routing mechanism uses actual load trend (not GRU prediction) extrapolated forward, with GRU confidence as a gate (see Section 4.5).
+An operational finding shaped the design of the predictive controller: during live experiments the GRU predictions lagged behind actual load surges. The proactive routing mechanism therefore extrapolates the observed load trend forward, with the GRU confidence score acting as a gating signal rather than the prediction itself driving the routing decision (see the comparative evaluation below).
 
 == System Mechanism Validation (Phase A1)
 
-Phase A1 validated the correct operation of individual system mechanisms under controlled ramp-load conditions. The workload profile was: 60 seconds baseline at 20 RPS, 60 seconds ramp from 20 to 100 RPS, and 120 seconds sustained peak at 100 RPS. The GRU prediction server was running with a lowered confidence threshold (0.6) to increase PREDICTIVE eligibility.
-
-The routing controller made 18 decisions over the experiment duration, demonstrating all four action types in their correct priority order. The decision distribution was: MAINTAIN 8, SCALE_OUT 7, OPTIMIZE_COST 2, PREDICTIVE 1.
-
-Weight shifting was validated: the system correctly shifted traffic weights from 100/0 (pure K8s) through five SCALE_OUT steps to 50/50 (maximum serverless engagement) as p99 latency exceeded the 200ms SLO threshold. Each step reduced the K8s weight by 10 percentage points.
-
-The PREDICTIVE action was validated at Decision 9: the system was in a healthy state (p99 = 146ms, below the 200ms threshold), the GRU predicted a 47% workload increase with 72% confidence, and the controller triggered PREDICTIVE to maintain 50/50 weights — preserving serverless readiness before any SLO violation occurred. This is the core contribution of the predictive mechanism: the ability to maintain serverless engagement during healthy periods when a surge is anticipated.
-
-== Comparative Evaluation
-
-The comparative evaluation spans two experimental phases: Phase B (20 replicated runs under steady-state ClarkNet trace replay load) and a proactive routing evaluation (n=5 per scenario, dynamic workload). Both compare the four deployment scenarios: S1 (K8s+HPA), S2 (Serverless-only), S3 (Hybrid-reactive), and S4 (Hybrid-predictive).
-
-The ClarkNet trace-driven replay used 40 stages of 30 seconds each (20 minutes total, RPS 22-164, mean 73). Evaluation was conducted through 30 replicated controlled experiments: 20 runs (4 scenarios x 5 replications) from the fib33_n5 experiments and 10 runs (2 scenarios x 5 replications) from the fib33_proactive experiments.
-
-=== Per-Scenario Results (n=5, Proactive Routing)
+Phase A1 validated the correct operation of the individual system mechanisms under a controlled ramp-load profile. Over the experiment duration the routing controller made 18 decisions, exhibiting all four action types in their correct priority order: SCALE_OUT (7), MAINTAIN (8), OPTIMIZE_COST (2), and PREDICTIVE (1).
 
 #figure(
   kind: table,
   table(
-    columns: (auto, auto, auto, auto, auto, auto),
-    [Scenario], [p50 (ms)], [p95 (ms)], [p99 (ms)], [SLO/run], [USD/month],
-    [S1 (K8s+HPA)], [63.9], [77.1], [109.8], [41], [187],
-    [S2 (Serverless)], [65.2], [75.5], [77.8], [7], [391],
-    [S3 (Reactive)], [64.9], [157.3], [309.5], [2805], [142],
-    [S4 (Predictive)], [64.7], [99.2], [187.9], [702], [149],
+    columns: (auto, auto),
+    [Action], [Count],
+    [SCALE_OUT], [7],
+    [MAINTAIN], [8],
+    [OPTIMIZE_COST], [2],
+    [PREDICTIVE], [1],
+    [Total], [18],
   ),
-  caption: [Per-scenario summary results (n=5, ClarkNet trace replay)],
+  caption: [Routing-controller decision distribution during the Phase A1 ramp-load experiment.],
+) <tab:phase-a1-decisions>
+
+Weight shifting was validated: traffic weights moved from 100/0 (pure Kubernetes) through successive scale-out steps to 50/50 (maximum serverless engagement) as tail latency exceeded the SLO threshold, each step shifting the split by ten percentage points. The PREDICTIVE action was validated while the system was in a healthy state (p99 = 146 ms): the GRU predicted a 47% workload increase with 72% confidence, and the controller triggered PREDICTIVE to maintain the 50/50 split — preserving serverless readiness before any SLO violation occurred. This is the core contribution of the predictive mechanism: the ability to sustain serverless engagement during healthy periods when a surge is anticipated.
+
+== Comparative Evaluation
+
+The comparative evaluation compares four deployment scenarios: S1 (Kubernetes with HPA), S2 (serverless-only), S3 (hybrid with reactive routing), and S4 (hybrid with predictive routing). All scenarios replayed the ClarkNet HTTP trace at a mean of 73.2 requests per second with a 0.000% error rate, with n = 5 replications per scenario and no excluded runs. S1 and S2 are drawn from the fib33_n5 bundle, in which the proactive routing mechanism is not yet enabled. S3 and S4 are drawn from the fib33_proactive bundle, in which proactive routing is enabled. The pre-proactive S3 and S4 values (p99 of 382.1 ms and 233.6 ms respectively) are superseded by the proactive bundle and are not used for the predictive-versus-reactive comparison; they are retained only for the like-for-like S4-versus-S1 comparison reported below.
+
+#figure(
+  kind: table,
+  table(
+    columns: (auto, auto, auto, auto, auto),
+    [Scenario], [p50 (ms)], [p95 (ms)], [p99 (ms)], [SLO Violations],
+    [S1 (K8s+HPA)], [63.9], [77.1], [109.8], [206],
+    [S2 (Serverless)], [65.2], [75.5], [77.8], [35],
+    [S3 (Reactive)], [64.9], [157.3], [309.5], [14027],
+    [S4 (Predictive)], [64.7], [99.2], [187.9], [3509],
+  ),
+  caption: [Per-scenario summary (n = 5 runs each). S1/S2 from the fib33_n5 bundle; S3/S4 from the fib33_proactive bundle. SLO violation counts are totals across the five runs.],
 ) <tab:scenario-summary>
 
-S1 (K8s+HPA) achieves the lowest p99 (109.8 ms) but at the highest cost (USD 187/month) because HPA scales to 10 pods. S2 (Serverless-only) has the absolute lowest p99 (77.8 ms) but the highest cost (USD 391/month). S4 (Hybrid-predictive) achieves the best balance with p99 = 187.9 ms and cost USD 149/month.
+Across the four scenarios the p50 latencies are closely grouped (63.9 to 65.2 ms), so the scenarios are differentiated primarily by tail latency and by SLO violations. S2 (serverless-only) achieves the lowest p99 (77.8 ms) and the fewest SLO violations (35), while the hybrid scenarios S3 and S4 show higher p99 under the proactive configuration than either single-backend scenario. The role of the hybrid scenarios is therefore assessed through two directed comparisons: the predictive scenario against the reactive scenario (S4 vs S3), and the hybrid predictive scenario against pure Kubernetes (S4 vs S1).
 
-=== Statistical Analysis
+=== Predictive versus Reactive (S4 vs S3)
 
-Statistical comparison between S4 (Hybrid-predictive) and S3 (Hybrid-reactive) was conducted using Welch's t-test and Mann-Whitney U.
+Statistical comparison between S4 (hybrid-predictive) and S3 (hybrid-reactive) was conducted using Welch's t-test and the Mann-Whitney U test, with effect size reported as Cohen's d. All values are per-run means from the fib33_proactive bundle.
 
 #figure(
   kind: table,
   table(
     columns: (auto, auto, auto),
     [Metric], [p99 (ms)], [SLO Violations],
-    [S3 mean], [309.5], [2805],
-    [S4 mean], [187.9], [702],
-    [Difference], [-121.6 (39%)], [-2104 (75%)],
+    [S3 mean], [309.54], [2805.40],
+    [S4 mean], [187.90], [701.80],
+    [Difference], [-121.65 (-39.3%)], [-2103.60 (-75.0%)],
     [Welch t-stat], [-1.919], [-1.922],
-    [Welch p-value], [0.122], [0.125],
+    [Welch p-value], [0.1216], [0.1247],
     [Mann-Whitney U], [9.0], [9.0],
-    [Cohen's d], [-1.21 (large)], [-1.22 (large)],
-    [95% CI], [[-229, -10]], [[-3996, -240]],
+    [Mann-Whitney p], [0.5476], [0.5476],
+    [95% CI], [[-229.35, -10.33]], [[-3995.60, -239.80]],
+    [Cohen's d], [-1.214 (large)], [-1.215 (large)],
+    [Significance (α = 0.05)], [Not significant], [Not significant],
   ),
-  caption: [Statistical comparison S4 vs S3 (n=5)],
+  caption: [Statistical comparison of S4 versus S3 (n = 5 per scenario, proactive bundle).],
 ) <tab:statistical-comparison>
 
-The difference between S4 and S3 did not reach statistical significance at alpha = 0.05 (p = 0.12). However, Cohen's d = 1.21 indicates a large effect size, and the 95% confidence interval for both metrics does not include zero, supporting a consistent direction of effect. The high variance of S3 (one run reached 143 ms/191 SLO) inflates the standard deviation and prevents statistical significance at n = 5.
+The predictive scenario S4 reduced mean p99 latency by 39.3% (from 309.54 ms to 187.90 ms) and mean SLO violations by 75.0% (from 2805.40 to 701.80 per run) relative to the reactive scenario S3. Both reductions correspond to large effect sizes (Cohen's d = 1.214 and 1.215). However, neither difference reached statistical significance at α = 0.05: Welch's t-test gave p = 0.1216 for p99 latency and p = 0.1247 for SLO violations, and the non-parametric Mann-Whitney U test gave p = 0.5476 for both metrics. The 95% confidence intervals (p99: -229.35 to -10.33 ms; SLO: -3995.60 to -239.80) exclude zero, supporting a consistent direction of effect. With only n = 5 runs per scenario and high run-to-run variance in S3, the comparison is underpowered. The defensible conclusion is that the predictive mechanism is validated and produces a large, consistently directed improvement, while statistical superiority over the reactive baseline is not established at the chosen significance level.
 
-== Cost Analysis
+=== Hybrid versus Pure Kubernetes (S4 vs S1)
 
-Cost analysis maps the experiment's local k3s architecture to equivalent AWS services, producing a unified cost projection from measured resource consumption. The mapping is: K8s HPA pods map to EKS control plane plus EC2 nodes, Knative KPA pods map to AWS Lambda Provisioned Concurrency.
+Comparing the hybrid predictive scenario against pure Kubernetes points the other way. To keep the comparison like-for-like, both values are taken from the fib33_n5 bundle (pre-proactive configuration), where S4 recorded a mean p99 of 233.64 ms against 109.78 ms for S1.
 
 #figure(
   kind: table,
   table(
-    columns: (auto, auto, auto, auto),
-    [Scenario], [USD/month], [USD/1M req], [Serverless traffic],
-    [S1 (K8s+HPA)], [187], [1.04], [0%],
-    [S2 (Serverless)], [391], [2.17], [100%],
-    [S3 (Reactive)], [142], [0.79], [2.7%],
-    [S4 (Predictive)], [149], [0.82], [6.5%],
+    columns: (auto, auto),
+    [Metric], [Value],
+    [S1 mean p99], [109.78 ms],
+    [S4 mean p99], [233.64 ms],
+    [Difference], [+123.86 ms (+112.8%)],
+    [Welch t-stat], [4.488],
+    [Welch p-value], [0.0104],
+    [Cohen's d], [2.839 (large)],
+    [Significance (α = 0.05)], [Significant — S4 worse],
   ),
-  caption: [Monthly cost projection (AWS, 30 days continuous)],
-) <tab:cost-summary>
+  caption: [Statistical comparison of S4 versus S1 on p99 latency (n = 5 per scenario, fib33_n5 bundle).],
+) <tab:s4-vs-s1>
 
-S4 spends USD 7/month more than S3 due to higher serverless traffic (6.5% vs 2.7%), but achieves 75% fewer SLO violations. S4 is also 20% cheaper than S1 (USD 149 vs USD 187/month) because it does not require HPA scaling to 10 pods and 2 additional nodes.
+S4 was significantly worse than S1 on p99 latency (Welch p = 0.0104, Cohen's d = 2.839). This significant negative result is attributed to localhost routing bias: on the single-node k3d testbed there is no network latency for the hybrid path to absorb, so the routing layer adds overhead without the latency benefit that a multi-node deployment would provide. H1 (hybrid superiority over pure Kubernetes) is therefore not supported by these results; the hybrid mechanism itself is nonetheless validated.
 
-== Impact of Proactive Routing
+== Cost Analysis
 
-Implementation of proactive routing based on actual load trend yielded a significant performance impact on S4. Before implementation (reactive-only mode), S4 averaged 1,369 SLO violations per run with 0 PREDICTIVE actions. After implementation, the average dropped to 702 SLO violations with 9 PREDICTIVE actions per run — a 49% improvement.
+Cost analysis for this architecture maps the local testbed to equivalent cloud services — Kubernetes HPA pods to a managed control plane plus compute nodes, and Knative concurrency to provisioned function concurrency — and projects a unified monthly cost from measured resource consumption. However, no cost bundle is designated as final for the July fib33 experiments. The earlier cost bundles correspond to a different controller version and are not comparable to the proactive routing evaluated here; mixing their estimates with the July latency results would conflate two configurations.
 
-This demonstrates that the proactive routing mechanism (actual trend extrapolation gated by GRU confidence) is effective at reducing SLO violations, even though the GRU prediction itself lags actual load changes.
+Accordingly, this chapter does not present a cost comparison as a final result. Directional cost estimates from the earlier configuration exist, but they require re-running against the final controller before they can support a thesis-level claim. The latency and SLO results above therefore stand without an accompanying final cost figure, and cost analysis is deferred to a confirmatory evaluation on the final controller.
 
 == Discussion
 
-The experimental evaluation validates the mechanistic correctness of the hybrid architecture while revealing that statistical superiority over baseline approaches could not be definitively established within the constraints of the testbed.
+The experimental evaluation validates the mechanistic correctness of the hybrid architecture while showing that statistical superiority over the baseline approaches could not be established within the constraints of the single-node testbed.
 
-Mechanisms validated include: GRU prediction achieves target accuracy on synthetic data (RMSE 4.75% post-HPO) and demonstrates meaningful generalization to real traces. The routing controller correctly implements the priority-based decision framework. Predictive pre-warming triggered before SLO violations in Phase A1. Proactive routing reduced SLO violations by 49% compared to reactive-only mode.
+Several mechanisms were validated. The GRU model meets its accuracy target on synthetic data, with a validation RMSE of 4.75% after hyperparameter optimization and an MAE of 4.91%, at an inference latency of approximately 40 ms; on real ClarkNet traces the error is substantially higher (RMSE 17.78%, MAPE 18.74%), so real-traffic prediction is a partial validation. The routing controller correctly implements the priority-based decision framework, exhibiting all four action types. Predictive pre-warming triggered before any SLO violation during the Phase A1 ramp-load experiment, and traffic weights shifted from 100/0 to 50/50 as intended.
 
-The tension between large effect sizes (Cohen's d = 1.21) and non-significant p-values (p = 0.12) reflects a statistical power limitation, not an absence of practical difference. A post-hoc power analysis suggests approximately n = 15-20 runs per scenario would be required to detect this effect size at alpha = 0.05 with 80% power. The current n = 5 provides approximately 30-40% power.
+For the predictive-versus-reactive comparison, S4 reduced mean p99 latency by 39.3% and mean SLO violations by 75.0% relative to S3, with large effect sizes (Cohen's d of 1.214 and 1.215). These differences did not reach statistical significance at α = 0.05 (Welch p = 0.1216 for p99 and p = 0.1247 for SLO violations) with n = 5 runs per scenario. The 95% confidence intervals exclude zero, indicating a consistent direction of effect, but the small sample and the high run-to-run variance of S3 leave the comparison underpowered. The defensible conclusion is that the predictive mechanism is validated and produces a large, consistently directed improvement, while statistical superiority is not established at the chosen significance level.
 
-Three testbed constraints systematically affect interpretation. The localhost routing bias of the single-node k3d testbed eliminates network latency between components, disproportionately advantaging S1 (K8s-only). The artificial node capacity constraint (400m allocatable) forces autoscaler triggers at lower loads than production. The GRU prediction lag of 2+ minutes behind actual load surges required the proactive routing mechanism to use actual trend extrapolation rather than direct GRU prediction.
+For the hybrid-versus-pure-Kubernetes comparison, the result points the other way: on the localhost testbed the pre-proactive predictive scenario (S4, p99 = 233.64 ms) was significantly worse than pure Kubernetes (S1, p99 = 109.78 ms; Welch p = 0.0104, Cohen's d = 2.839). This negative result is attributed to localhost routing bias — on a single node there is no network latency for the hybrid path to absorb, so the routing layer adds overhead without the latency benefit of multi-node deployment. Hybrid superiority over pure Kubernetes is therefore not supported by these results; the mechanism is nonetheless validated.
 
-The results support the following defensible framing: the hybrid Kubernetes-serverless system with GRU-based prediction has been designed, implemented, and its mechanisms validated. All proposed components function correctly under appropriate conditions. Statistical performance superiority over baselines was not established due to testbed constraints, but the large effect sizes and consistent direction of improvement suggest that production deployment on multi-node infrastructure with adequate sample sizes would likely confirm these differences.
+Three testbed constraints systematically affect interpretation. First, the single-node k3d deployment eliminates inter-component network latency, disproportionately favoring the Kubernetes-only scenario. Second, the artificial node capacity constraint triggers autoscaling at lower loads than a production cluster. Third, GRU predictions lag actual load changes, which is why the proactive mechanism extrapolates the observed load trend rather than consuming the raw prediction.
+
+Taken together, the results support a measured framing. The hybrid Kubernetes-serverless system with GRU-based prediction has been designed and implemented, and each of its mechanisms has been validated under appropriate conditions. Statistical performance superiority over the baselines was not established, largely because of testbed constraints and a small sample size. The large effect sizes and the consistent direction of improvement for the predictive mechanism indicate that production deployment on multi-node infrastructure with adequate replication would be the appropriate setting for a confirmatory evaluation.

@@ -8,7 +8,7 @@ This research designed, implemented, and evaluated a hybrid Kubernetes-serverles
 
 A GRU (Gated Recurrent Unit) neural network was designed and optimized through hyperparameter optimization (HPO) using Optuna TPE. The optimal configuration uses one recurrent layer with 128 hidden units, learning rate 0.000380, sequence length 30, and dropout 0.104. Post-HPO accuracy improved from 6.01% to 4.75% RMSE.
 
-The GRU predictor meets all predefined accuracy targets on synthetic workload patterns: RMSE 4.75% (target under 10%), inference latency 10-13 ms (target under 50 ms), and confidence scores 0.72-0.82 during live predictions. Validation against ClarkNet HTTP trace confirmed meaningful generalization (RMSE 17.78% at 5-minute aggregation, 3.5x better than statistical baselines), though real-trace accuracy does not meet original thresholds due to non-stationarity and irregular burst patterns absent in synthetic training data.
+The GRU predictor achieves target accuracy on synthetic workload patterns: RMSE 4.75% post-HPO (manual baseline 6.01%, target under 10%) with confidence scores 0.72-0.82 during live predictions. Validation against the ClarkNet HTTP trace yielded RMSE 17.78% at 5-minute aggregation — meaningful generalization, though below original thresholds due to non-stationarity and irregular burst patterns absent in synthetic training data.
 
 === RQ2: Modified ElaX Decision Making
 
@@ -22,21 +22,21 @@ The predictive pre-warming mechanism was validated in Phase A1: PREDICTIVE trigg
 
 A comprehensive evaluation framework was designed spanning mechanism validation (Phase A1), replicated comparison (Phase B, n=5 per scenario), and dynamic burst validation (Phase C). The evaluation compares four scenarios: S1 (K8s+HPA), S2 (Serverless-only), S3 (Hybrid-reactive), and S4 (Hybrid-predictive).
 
-H1 (hybrid architecture outperforms pure approaches): Mechanism validated. Statistical superiority not established due to testbed constraints (p = 0.12, Cohen's d = 1.21, large effect but n = 5).
+H1 (hybrid architecture outperforms pure approaches): Mechanism validated, but superiority not supported on the localhost testbed. S4 was significantly worse than S1 on p99 latency (233.6 ms vs 109.8 ms, p = 0.01, Cohen's d = 2.84) due to localhost routing bias — the hybrid routing overhead is not offset by multi-node network-latency benefits absent in a single-node k3d cluster.
 
-H2 (predictive scaling outperforms reactive): Mechanism validated in Phase A1. S4 achieved 75% fewer SLO violations than S3 (702 vs 2805 per run) with large effect size (Cohen's d = 1.21).
+H2 (predictive scaling outperforms reactive): Mechanism validated in Phase A1. S4 achieved 75% fewer SLO violations than S3 (per-run mean 702 vs 2805; totals 3509 vs 14027 across n = 5) with large effect size (Cohen's d = 1.21), but the difference was not statistically significant at this sample size (p = 0.12).
 
-H3 (GRU prediction adequacy): Fully validated. All accuracy targets met: 4.75% RMSE, 10-13 ms inference latency, confidence 0.72-0.82.
+H3 (GRU prediction adequacy): Validated on synthetic data — 4.75% RMSE post-HPO with confidence 0.72-0.82. Partial on real traces: ClarkNet RMSE 17.78% falls below original thresholds due to workload non-stationarity.
 
-Cost analysis under the unified AWS model confirms S4 is 20% cheaper than S1 (USD 149/month vs USD 187/month) while maintaining 98.4% SLO compliance. Proactive routing reduced SLO violations by 49% compared to reactive-only mode.
+Cost analysis remains directional: no July cost bundle is marked final. February estimates under a unified AWS model suggest S4 may be cheaper than S1, but these figures are not directly comparable to the July controller version and are treated as indicative only.
 
-In summary, this research successfully validates all proposed mechanisms — the GRU predictor achieves target accuracy, the routing controller correctly shifts traffic based on SLO status, and proactive routing reduces violations under appropriate conditions. Statistical superiority over baseline approaches shows large effect sizes but requires production multi-node deployment with adequate sample sizes to reach significance.
+In summary, this research validates the proposed mechanisms — the GRU predictor achieves target accuracy on synthetic data, the routing controller correctly shifts traffic based on SLO status, and proactive routing shows a large effect (d = 1.21) on SLO violations under appropriate conditions. However, statistical significance was not established at n = 5 (p = 0.12); production multi-node deployment with larger sample sizes is needed.
 
 == Future Work
 
 Based on the limitations identified during evaluation, six directions are recommended:
 
-Multi-node cloud deployment: The single-node k3d testbed introduces localhost routing bias. Deploying on a multi-node cloud cluster (3+ nodes on AWS EKS or GCP GKE with Knative on separate nodes) would provide realistic network conditions necessary to establish statistical superiority.
+Multi-node cloud deployment: The single-node k3d testbed introduces localhost routing bias. Deploying on a multi-node cloud cluster (3+ nodes on AWS EKS or GCP GKE with Knative on separate nodes) would provide realistic network conditions necessary to reach statistical significance for the large effects already observed.
 
 Algorithm 2 full integration: The horizontal scaling formula should be fully integrated with Kubernetes HPA coordination, enabling proactive replica scaling based on GRU predictions.
 
