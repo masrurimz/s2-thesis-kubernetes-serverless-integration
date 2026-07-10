@@ -2,35 +2,32 @@
 
 **Every thesis claim must trace to raw data and a reproduction command.**
 
+**Performance numbers are drawn exclusively from `results/claims/FINAL_NUMBERS.md`, which cites only REGISTRY bundles with `role: final`.** See that file for exact figures and framing rules.
+
 ---
 
 ## H1: Hybrid Routing Mechanism
 
 ### Claim 1 (Mechanism): Dynamic weight shifting works
 - **Evidence:** `results/experiments/phase-a1/2026-02-12_predictive-trigger/report.md` — Weight table: 100/0 → 90/10 → ... → 50/50
+- **Registry ID:** `experiments.2026-02-12-predictive-trigger` (final)
 - **Raw Data:** Decision log in report (captured from daemon at runtime)
-- **Reproduce:** See meta.yaml in same bundle
-- **Status:** ✅ Validated
+- **Status:** ✅ Mechanism validated
 
 ### Claim 2 (Mechanism): Serverless backend engages under load
 - **Evidence:** `results/experiments/phase-a1/2026-02-12_predictive-trigger/report.md` — Knative weight > 0 during high load
+- **Registry ID:** `experiments.2026-02-12-predictive-trigger` (final)
 - **Raw Data:** Same as Claim 1
-- **Status:** ✅ Validated
+- **Status:** ✅ Mechanism validated
 
 ### Claim 3 (Performance): S4 vs S1 latency comparison
-- **Evidence (attempt 1):** `results/experiments/phase-b/2026-02-12_replicated-20runs/report.md` — INVALIDATED (bugs 1-3)
-- **Evidence (attempt 2):** `results/experiments/phase-b/2026-02-14_clarknet-replay/report.md` — INVALIDATED (bugs 4-7)
-- **Evidence (attempt 3 — VALID):** `results/experiments/phase-b/2026-02-15_clarknet-replay/reanalysis_report.md`
-- **Raw Data:** `results/experiments/phase-b/2026-02-15_clarknet-replay/results_final.json` (20 runs)
-- **Result:** S4 p99 = 2821.69 ± 424.33 ms vs S1 p99 = 5.89 ± 0.01 ms. S4 is significantly worse (p<0.001 Welch corrected, d=9.384). Hybrid routing with partial serverless engagement causes severe tail-latency inflation from cold-start/queueing effects.
-- **Reproduce:** `uv run python scripts/reanalyze_phase_b.py --results-dir results/experiments/phase-b/2026-02-15_clarknet-replay`
-- **Status:** ❌ H1 not supported for performance superiority — hybrid is worse than baselines on p99. This is a **valid negative result** with design implications (see Claim 3a).
+- **Evidence:** `results/experiments/phase-b/2026-07-08_fib33_n5/report.md` (pre-proactive S1 and S4, n=5 each)
+- **Registry ID:** `experiments.2026-07-08-fib33-n5` (final)
+- **Raw Data:** Per-run HAProxy p99 latency in report tables
+- **Result:** S1 mean p99 = 109.78 ms vs S4 mean p99 = 233.64 ms. S4 is significantly worse on p99 (Welch p = 0.0104, Cohen's d = 2.839, large effect). The +112.8% increase is attributable to localhost routing bias: on a single-node k3d testbed, hybrid routing adds overhead without the network-latency benefit of multi-node deployment.
+- **Status:** ⚠️ Mechanism validated, superiority NOT established. This is a valid negative result with a clear confound (localhost bias). The routing mechanism shifts traffic as designed (Claims 1–2), but the localhost testbed cannot demonstrate a performance benefit for hybrid routing over pure K8s.
 
-### Claim 3a (Design Insight): Hybrid tail-latency caused by serverless cold-start interaction
-- **Evidence:** `results/experiments/phase-b/2026-02-15_clarknet-replay/reanalysis_report.md` — S2 (serverless-only) p99 = 9.31ms (warm), but S3 (5% serverless share) p99 = 3280ms. Low serverless share causes intermittent cold-starts/queueing.
-- **Raw Data:** Same as Claim 3
-- **Result:** Partial serverless engagement (5-25% traffic) triggers repeated scale-from-zero penalties. S4 (25% share) performs better than S3 (5% share) because higher traffic keeps serverless warm.
-- **Status:** ✅ Validated — important design implication for hybrid architectures
+> **Superseded evidence:** Previous H1 performance claims cited `phase-b/2026-02-12_replicated-20runs` (Bugs 1–3), `phase-b/2026-02-14_clarknet-replay` (Bugs 4–7), and `phase-b/2026-02-15_clarknet-replay` (different controller/workload version). All are superseded by the July 2026 V3-controller fib33 runs. See "Superseded Evidence" section below.
 
 ---
 
@@ -38,17 +35,20 @@
 
 ### Claim 4 (Mechanism): PREDICTIVE action triggers before violation
 - **Evidence:** `results/experiments/phase-a1/2026-02-12_predictive-trigger/report.md`
-- **Raw Data:** Decision log — action=PREDICTIVE at p99=146ms, predicted 47% load increase, confidence 72%
-- **Status:** ✅ Validated (in Phase A1 ramp test only)
+- **Registry ID:** `experiments.2026-02-12-predictive-trigger` (final)
+- **Raw Data:** Decision log — action=PREDICTIVE at p99=146 ms, predicted 47% load increase, confidence 72%
+- **Status:** ✅ Mechanism validated (Phase A1 ramp test)
 
 ### Claim 5 (Superiority): S4 reduces SLO violations vs S3
-- **Evidence (attempt 1):** `results/experiments/phase-b/2026-02-12_replicated-20runs/report.md` — INVALIDATED (bugs 1-3)
-- **Evidence (attempt 2):** `results/experiments/phase-b/2026-02-14_clarknet-replay/report.md` — INVALIDATED (bugs 4-7)
-- **Evidence (attempt 3 — VALID):** `results/experiments/phase-b/2026-02-15_clarknet-replay/reanalysis_report.md`
-- **Raw Data:** `results/experiments/phase-b/2026-02-15_clarknet-replay/results_final.json`
-- **Result:** S4 SLO violations = 11302 ± 1974 vs S3 = 16519 ± 1521 → **31.6% reduction** (Welch p=0.0037 Holm-corrected, Cohen's d=-2.961 large effect). S4 gru_predictions_used=80/run, S3=0. S4 p99 14% lower but not significant (p=0.073).
-- **Reproduce:** `uv run python scripts/reanalyze_phase_b.py --results-dir results/experiments/phase-b/2026-02-15_clarknet-replay`
-- **Status:** ✅ H2 supported — GRU prediction significantly reduces SLO violations (mechanism + superiority validated)
+- **Evidence:** `results/experiments/phase-b/2026-07-08_fib33_proactive/report.md` (S3 and S4 with proactive routing, n=5 each)
+- **Registry ID:** `experiments.2026-07-08-fib33-proactive` (final)
+- **Raw Data:** Per-run p99 latency and SLO violation counts in report tables
+- **Result (p99 latency):** S4 mean p99 = 187.90 ms vs S3 mean p99 = 309.54 ms → −39.3% reduction (Welch p = 0.1216, not significant at α=0.05; Cohen's d = −1.214, large effect).
+- **Result (SLO violations):** S4 mean = 701.80 vs S3 mean = 2805.40 → −75.0% reduction (Welch p = 0.1247, not significant at α=0.05; Cohen's d = −1.215, large effect).
+- **Reproduce:** See bundle meta and `scripts/run_phase_b_experiments.py` configuration for the proactive routing scenario set.
+- **Status:** ⚠️ Mechanism validated, statistical superiority NOT established. The PREDICTIVE trigger fires (Claim 4), and the direction and magnitude of the effect are large (75% SLO reduction, d≈1.21), but with n=5 the difference is not statistically significant (p≈0.12). The thesis reports this as "large effect size (d=1.21) but not statistically significant (p=0.12, n=5)."
+
+> **Superseded evidence:** Previous H2 claims cited `phase-b/2026-02-15_clarknet-replay` (reported p=0.0037, d=−2.96 for SLO reduction). That bundle used a different controller version, workload, and was discovered to have metric contamination issues. It is superseded by the July 2026 proactive bundle with the V3 controller.
 
 ---
 
@@ -56,29 +56,31 @@
 
 ### Claim 6: RMSE below 10% target
 - **Evidence (synthetic):** `results/models/gru/2026-02-10_training-synthetic/report.md`
+- **Registry ID:** `models.2026-02-10-training-synthetic` (final)
 - **Evidence (real traces):** `results/models/gru/2026-02-13_training-clarknet-calgary/report.md`
-- **Raw Data (synthetic):** Training logs, model artifact at `controller/data/models/gru_model.pt`
-- **Raw Data (real):** `results/models/gru/2026-02-13_training-clarknet-calgary/raw/training_results.json`, model at `controller/data/models/gru_model_real.pt`
+- **Registry ID:** `models.2026-02-13-training-clarknet-calgary` (final)
 - **Results (synthetic):**
-  - Test RMSE% = 6.01% (target <10%) ✅
+  - Test RMSE% = 6.01% manual tuning (target <10%) ✅
+  - Test RMSE% = 4.75% post-HPO (target <10%) ✅
   - Test MAE% = 4.91% (target <5%) ✅
-  - MAPE ≈ 4.91% (estimated) ✅
+  - Inference latency ≈ 40 ms (target <50 ms) ✅
 - **Results (real — ClarkNet 5-min, best):**
   - Test RMSE% = 17.78% (target <10%) ❌
   - Test MAE% = 14.48% (target <5%) ❌
   - MAPE = 18.74% ❌
-- **Reproduce (real):** `HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python -m prediction.train_gru_real`
 - **Note:** GRU outperforms baselines on real data (baseline MAPE ~65% vs GRU 18.74%) but does not meet original thresholds. Gap is expected: real traces have non-stationarity and irregular bursts absent in synthetic data.
-- **Status:** ⚠️ Partially validated — mechanism works, thresholds not met on real data
+- **Status:** ⚠️ Partially validated — synthetic accuracy meets all targets; real-trace accuracy below target thresholds. Mechanism works on both; thresholds not met on real data.
 
 ### Claim 7: Live prediction latency acceptable
 - **Evidence:** `results/experiments/phase-a1/2026-02-12_predictive-trigger/report.md`
-- **Result:** ~40ms (target <50ms)
+- **Registry ID:** `experiments.2026-02-12-predictive-trigger` (final)
+- **Result:** ~40 ms (target <50 ms)
 - **Status:** ✅ Validated
 
 ### Claim 8: Confidence scores meaningful
 - **Evidence:** `results/experiments/phase-a1/2026-02-12_predictive-trigger/report.md`
-- **Result:** Range 0.72-0.88 during live predictions
+- **Registry ID:** `experiments.2026-02-12-predictive-trigger` (final)
+- **Result:** Range 0.72–0.82 during live predictions
 - **Status:** ✅ Validated
 
 ---
@@ -87,121 +89,80 @@
 
 ### Claim 9 (Testbed): HPA works correctly on k3d
 - **Evidence:** `results/experiments/validation/2026-02-13_infrastructure-validation/report.md` — T2: scale 2→10 under load, 10→2 after cooldown
-- **Reproduce:** See Commands Used in report.md (T2 section)
 - **Status:** ✅ Validated — S1 can use native HPA as baseline
 
 ### Claim 10 (Design Decision): HPA and kubectl scale are mutually exclusive
 - **Evidence:** `results/experiments/validation/2026-02-13_infrastructure-validation/report.md` — T3: HPA reverts kubectl scale changes
-- **Reproduce:** See Commands Used in report.md (T3 section)
 - **Status:** ✅ Validated — S3/S4 must delete HPA; Algorithm 2 owns replicas via kubectl scale
 
 ### Claim 11 (Testbed): Knative KPA autoscaling works on k3d
 - **Evidence:** `results/experiments/validation/2026-02-13_infrastructure-validation/report.md` — T4: scale 1→7 under CPU-heavy load, scale-to-zero after 60s
-- **Reproduce:** See Commands Used in report.md (T4 section)
 - **Status:** ✅ Validated — S2 viable as Knative-only baseline
-
-### Claim 11a (Pipeline): Two-tier validity gates are emitted end-to-end
-- **Evidence:** `results/experiments/phase-b/2026-02-19_pilot-n2-validity-gates-rerun/report.md` — Run Validity, Stress Validity, and Analysis Set sections
-- **Raw Data:** `results/experiments/phase-b/2026-02-19_pilot-n2-validity-gates-rerun/results_final.json` (`run_validity_passed`, `stress_validity_passed`, `validity_gate_passed`)
-- **Reproduce:** `HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python scripts/run_phase_b_experiments.py --phase full --runs 2 --output /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/experiments/phase-b/2026-02-19_pilot-n2-validity-gates-rerun`
-- **Status:** ✅ Validated — all scenarios 2/2 run-valid and 2/2 stress-valid in pilot
 
 ---
 
 ## Cost Analysis
 
+> **Gap (2026-07-10 audit):** No cost bundle is marked `role: final` for the July 2026 fib33 experiments. The Feb 2026 cost bundles use a different controller version and workload profile; their numbers must not be mixed with July latency/SLO results. Cost discussion in Ch4 should note this gap or use Feb directional estimates with explicit caveats about controller-version mismatch.
+
 ### Claim 12a (Cost Mechanism): CPU throttling + concurrency creates hidden serverless cost multiplier
 - **Evidence:** `results/cost/2026-02-17_three-model-cost-comparison/report.md` §Key Finding: CPU Throttling and Little's Law
-- **Raw Data:** `controller/results/cost_analysis/cost_analysis_20260217_144437.json` *(directory removed during repo restructuring; raw data preserved in git history)*
-- **Result:** Knative pod (200m CPU, target-concurrency=10) creates 50× CPU slowdown per request. Lambda bills wall-clock (2.515s for S2) not CPU time (9.77ms), creating ~364× cost multiplier. K8s pods also throttled: Little's Law service time S1=105ms, S3=262ms, S4=1.309s (not the naive 10ms hardcode).
-- **Status:** ✅ Validated — mechanism insight about serverless cost drivers
+- **Status:** ✅ Validated — mechanism insight about serverless cost drivers. Note: directional analysis from Feb controller version; not recomputed on July data.
 
 ### Claim 12b (Cost Projection): Production cost comparison under t3.medium sizing
-- **Evidence:** `results/cost/2026-02-17_three-model-cost-comparison/report.md` §Model 3b, §Thesis Implications
-- **Raw Data:** `controller/results/cost_analysis/cost_analysis_20260217_144437.json` *(directory removed during repo restructuring; raw data preserved in git history)*
-- **Source Experiment:** `results/experiments/phase-b/2026-02-16_validation-metrics-fixes/`
-- **Reproduce:** `uv run python scripts/cost_analyzer.py --experiment-dir results/experiments/phase-b/2026-02-16_validation-metrics-fixes`
-- **Production Assumptions:** t3.medium ($0.0416/hr), 1.8 vCPU allocatable, +1 HA headroom node, EKS $0.10/hr
-- **Results (Model 3b EC2 Production — monthly):** S1 $162, S2 $192, S3 $192, S4 $222
-- **Results (Model 1 Lambda PC — monthly):** S1 $162, S2 $2,326, S3 $636, S4 $897
-- **Results ($/1M successful — EC2 Production):** S1 $2.91, S2 $1.13, S3 $1.33, S4 $1.52
-- **Interpretation Constraint:** These are analytical projections using experiment throughput/pod-count inputs mapped to production node sizing. NOT direct measurements from the stress harness (which used 400m allocatable per node).
-- **Status:** ✅ Analysis complete — supports H3 cost discussion
+- **Evidence:** `results/cost/2026-02-17_three-model-cost-comparison/report.md` §Model 3b
+- **Status:** ⚠️ Directional analysis from Feb controller version. Not recomputed on July data. Use with explicit caveats.
 
 ### Claim 12c (Cost Crossover): fib(34) crossover occurs within experiment RPS band
 - **Evidence:** `results/cost/2026-02-18_fib34-unified-aws-cost/report.md` §Crossover Points
-- **Raw Data:** `results/cost/2026-02-18_fib34-unified-aws-cost/cost_results.json`, `results/cost/cost_crossover_rps.png`
-- **Source Experiment:** `results/experiments/phase-b/2026-02-18_fib34-validation/`
-- **Reproduce:**
-  - `HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python scripts/cost_analyzer.py --experiment-dir results/experiments/phase-b/2026-02-18_fib34-validation`
-  - `HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python scripts/cost_analyzer.py --crossover-graph`
-- **Result:** S1 vs S2 crossover at ~65.9 RPS for fib(34), inside the observed ~50–73 RPS range; fib(32) crossover at ~97.9 RPS remains outside the band.
-- **Status:** ✅ Validated — workload sensitivity shifts crossover into measurable range
-
-### Claim 12d (Cost Fairness): Fairness-normalized metrics produced on updated pilot pipeline
-- **Evidence:** `results/cost/2026-02-19_pilot-n2-unified-aws-cost/report.md`
-- **Raw Data:** `results/cost/2026-02-19_pilot-n2-unified-aws-cost/cost_results.json`
-- **Source Experiment:** `results/experiments/phase-b/2026-02-19_pilot-n2-validity-gates-rerun/`
-- **Reproduce:** `HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python scripts/cost_analyzer.py --experiment-dir /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/experiments/phase-b/2026-02-19_pilot-n2-validity-gates-rerun`
-- **Result:** `$ / 1M requests` and `$ / 1M successful` are populated for all scenarios; pilot directional result shows S4 better than S3 on `$ / 1M successful`.
-- **Status:** ✅ Validated for pipeline output (pilot n=2; not final inferential evidence)
-
-### Claim 12e (Cost Model Correction): Serverless-specific execution-time sizing is applied to hybrid/serverless scenarios
-- **Evidence:** `results/cost/2026-02-21_all-scenarios-rerun-v2-unified-aws-cost/report.md`
-- **Raw Data:**
-  - `results/cost/2026-02-21_all-scenarios-rerun-v2-unified-aws-cost/cost_results.json`
-  - `results/experiments/phase-b/2026-02-21_all-scenarios-rerun-v2/results_final.json`
-- **Source Experiment:** `results/experiments/phase-b/2026-02-21_all-scenarios-rerun-v2/`
-- **Reproduce:** `HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python scripts/cost_analyzer.py --experiment-dir /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/experiments/phase-b/2026-02-21_all-scenarios-rerun-v2`
-- **Result:** Analyzer uses app-duration-informed execution sizing (`execution_time_source=app_duration_avg`) for S2/S3/S4. Reported totals per 1200s run: S1=$0.061, S2=$0.169, S3=$0.486, S4=$0.432; S4 < S3 after correction.
-- **Interpretation Constraint:** n=1 per scenario; directional/pipeline-validating evidence, not final inferential ranking.
-- **Status:** ✅ Validated for model behavior and reporting pipeline
+- **Status:** ⚠️ Directional analysis from Feb controller version.
 
 ---
 
 ## Summary
 
-| Type | Claim | Bundle | Status |
-|------|-------|--------|--------|
-| Mechanism | Weight shifting | phase-a1/predictive-trigger | ✅ |
-| Mechanism | Serverless engagement | phase-a1/predictive-trigger | ✅ |
-| Mechanism | PREDICTIVE trigger | phase-a1/predictive-trigger | ✅ |
-| Mechanism | GRU inference (synthetic) | models/gru/training-synthetic | ✅ |
-| Mechanism | GRU inference (real traces) | models/gru/training-clarknet-calgary | ⚠️ Mechanism works, targets not met |
-| Performance | S4 vs S1 latency | phase-b/2026-02-15_clarknet-replay | ❌ H1 not supported (hybrid p99 >> baseline) |
-| Design Insight | Hybrid cold-start tail-latency | phase-b/2026-02-15_clarknet-replay | ✅ Validated |
-| Superiority | S4 fewer violations than S3 | phase-b/2026-02-15_clarknet-replay | ✅ H2 supported (p=0.0037, d=-2.96) |
+| Type | Claim | Registry ID | Status |
+|------|-------|-------------|--------|
+| Mechanism | Weight shifting | `experiments.2026-02-12-predictive-trigger` | ✅ Mechanism validated |
+| Mechanism | Serverless engagement | `experiments.2026-02-12-predictive-trigger` | ✅ Mechanism validated |
+| Mechanism | PREDICTIVE trigger | `experiments.2026-02-12-predictive-trigger` | ✅ Mechanism validated |
+| Mechanism | GRU inference (synthetic) | `models.2026-02-10-training-synthetic` | ✅ Validated (4.75% RMSE post-HPO) |
+| Mechanism | GRU inference (real traces) | `models.2026-02-13-training-clarknet-calgary` | ⚠️ Mechanism works, targets not met |
+| Performance (H1) | S4 vs S1 latency | `experiments.2026-07-08-fib33-n5` | ⚠️ Mechanism validated, superiority NOT established (S4 p99=233.6 vs S1 p99=109.8, localhost bias) |
+| Performance (H2) | S4 fewer SLO violations than S3 | `experiments.2026-07-08-fib33-proactive` | ⚠️ Mechanism validated, large effect (d=1.21, −75% SLO) but NOT significant (p=0.12, n=5) |
+| Performance (H2) | S4 p99 vs S3 p99 | `experiments.2026-07-08-fib33-proactive` | ⚠️ Large effect (d=1.21, −39.3%) but NOT significant (p=0.12, n=5) |
 | Testbed | HPA works on k3d | validation/infrastructure-validation | ✅ |
 | Design Decision | HPA vs kubectl scale exclusive | validation/infrastructure-validation | ✅ |
 | Testbed | Knative KPA works on k3d | validation/infrastructure-validation | ✅ |
-| Cost Mechanism | Throttling cost multiplier | cost/2026-02-17_three-model-cost-comparison | ✅ Validated |
-| Cost Projection | Production 3-model comparison | cost/2026-02-17_three-model-cost-comparison | ✅ Analysis complete |
-| Cost Crossover | fib(34) crossover in observed band | cost/2026-02-18_fib34-unified-aws-cost | ✅ Validated |
-| Cost Fairness Pipeline | Fairness-normalized outputs emitted | cost/2026-02-19_pilot-n2-unified-aws-cost | ✅ Validated (pilot) |
-| Cost Model Correction | Serverless-specific execution sizing | cost/2026-02-21_all-scenarios-rerun-v2-unified-aws-cost | ✅ Validated (directional n=1) |
+| Cost Mechanism | Throttling cost multiplier | cost/2026-02-17 (Feb directional) | ✅ Mechanism validated |
+| Cost Projection | Production comparison | cost/2026-02-17 (Feb directional) | ⚠️ Not recomputed on July data |
+| Cost Crossover | fib(34) crossover in observed band | cost/2026-02-18 (Feb directional) | ⚠️ Not recomputed on July data |
 
 ---
 
-## Invalidated Evidence (Audit Trail)
+## Superseded Evidence (Audit Trail)
 
-### Round 1 (2026-02-12): Bugs 1-3
-Previous Phase B data (`phase-b/2026-02-12_replicated-20runs`) and Phase C data (`phase-c/2026-02-13_dynamic-workload`) are invalidated due to three critical bugs fixed 2026-02-14:
-1. SLO monitor used HAProxy ttime (total time) instead of rtime (response time) → false p99 readings
-2. Algorithm 1 priority order reversed (OPTIMIZE_COST before PREDICTIVE) → PREDICTIVE never reachable
-3. Prometheus not scraping routing daemon → missing controller metrics
+### Feb 2026 Phase B bundles — superseded by July 2026 finals
 
-Additionally, previous experiments used `/health` endpoint (near-zero CPU), making autoscaler and capacity results non-comparable to post-fix `/work` endpoint experiments.
+The following Feb 2026 experiment bundles were previously cited as primary performance evidence. They are **superseded** by the July 2026 V3-controller fib33 runs designated `role: final` in REGISTRY.yaml. Numbers from these bundles must NOT appear in thesis Ch4/Ch5/abstracts.
 
-### Round 2 (2026-02-14): Bugs 4-7
-Phase B rerun (`phase-b/2026-02-14_clarknet-replay`) with /work endpoint also invalidated due to four experiment design bugs:
-4. HAProxy server name mismatch: ScenarioResetter uses 'k3s-cluster' but actual server is 'k3s' → weight resets silently failed
-5. Stale daemon process on port 9104 not killed between runs → Prometheus scrapes old daemon metrics across scenarios
-6. Prometheus counter query missing `_total` suffix → gru_predictions_used=0 for all scenarios
-7. No pre-run invariant checks to catch any of these
+| Superseded bundle | Reason | Superseded by |
+|---|---|---|
+| `phase-b/2026-02-12_replicated-20runs` | Bugs 1–3 (SLO monitor wrong HAProxy column, priority order reversed, Prometheus not scraping daemon) | `experiments.2026-07-08-fib33-n5` |
+| `phase-b/2026-02-14_clarknet-replay` | Bugs 4–7 (HAProxy server name mismatch, stale daemon, missing `_total` suffix, no invariant checks) | `experiments.2026-07-08-fib33-n5` |
+| `phase-b/2026-02-15_clarknet-replay` | Different controller/workload version; metric contamination | `experiments.2026-07-08-fib33-n5` (H1) and `experiments.2026-07-08-fib33-proactive` (H2) |
+| `phase-b/2026-02-16_validation-metrics-fixes` | Pre-V3 controller | `experiments.2026-07-08-fib33-n5` |
+| `phase-b/2026-02-18_fib34-validation` | Pre-V3 controller, different workload | `experiments.2026-07-08-fib33-n5` |
+| `phase-b/2026-02-19_pilot-n2-validity-gates-rerun` | Pilot n=2, pre-V3 controller | `experiments.2026-07-08-fib33-n5` |
+| `phase-b/2026-02-21_all-scenarios-rerun-v2` | Pre-V3 controller, n=1 per scenario | `experiments.2026-07-08-fib33-n5` and `experiments.2026-07-08-fib33-proactive` |
 
-k6 latency data from round 2 remains valid; all daemon/routing metrics are garbage.
+### Feb 2026 bundles still final (different purpose, not superseded)
 
-See `results/claims/INCONSISTENCIES.md` for full details.
+| Bundle | Registry ID | Why still final |
+|---|---|---|
+| `phase-a1/2026-02-12_predictive-trigger` | `experiments.2026-02-12-predictive-trigger` | Unique ramp test demonstrating PREDICTIVE mechanism; no July equivalent |
+| `models/gru/2026-02-10_training-synthetic` | `models.2026-02-10-training-synthetic` | GRU synthetic training; no later retraining supersedes it |
+| `models/gru/2026-02-13_training-clarknet-calgary` | `models.2026-02-13-training-clarknet-calgary` | GRU real-trace validation; no later retraining supersedes it |
 
 ---
 
@@ -225,7 +186,7 @@ HSA_OVERRIDE_GFX_VERSION=11.0.0 PREDICTION_CONFIDENCE_THRESHOLD=0.6 \
   uv run python -m daemon.routing_daemon --scenario s4-hybrid-predictive
 ```
 
-### Full Phase B
+### Full Phase B (July 2026 configuration)
 ```bash
 HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python scripts/run_phase_b_experiments.py \
   --phase full --runs 5 --duration 300
@@ -235,9 +196,19 @@ HSA_OVERRIDE_GFX_VERSION=11.0.0 uv run python scripts/run_phase_b_experiments.py
 
 ## Training Data Note
 
-- GRU originally trained on **synthetic data** → RMSE% 6.01%, MAE% 4.91% ✅
+- GRU trained on **synthetic data** → RMSE% 4.75% post-HPO, MAE% 4.91% ✅
 - GRU retrained on **real ClarkNet/Calgary traces** (2026-02-13) → best RMSE% 17.78%, MAE% 14.48% ❌
 - ClarkNet provides usable signal at 5-min+ aggregation; Calgary too sparse for GRU
 - Real-data results are a known limitation to acknowledge in thesis
 
-**Last Updated:** 2026-02-21 (cost-model correction + all-scenarios rerun-v2 evidence mapped)
+---
+
+## Framing Rules for Thesis
+
+1. **Never say** "proven", "hypothesis proven", "demonstrated superiority" for H1/H2.
+2. **Use** "mechanism validated" for what works (weight shifting, PREDICTIVE trigger, GRU inference).
+3. **Use** "large effect size (d=1.21) but not statistically significant (p=0.12, n=5)" for H2 SLO/p99 reduction.
+4. **Use** "localhost routing bias limits interpretation" for H1 negative result.
+5. **Use** "mechanism validated on synthetic data; real-trace accuracy below target thresholds" for H3 partial validation.
+
+**Last Updated:** 2026-07-10

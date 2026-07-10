@@ -158,3 +158,20 @@ Previous Phase B (2026-02-12) and Phase C data should be treated as **invalidate
   - Added EKS control plane $0.10/hr
   - Report rewritten with two-world framing
   - Cross-ref: `thesis/protocol/THREATS_TO_VALIDITY.md` (new construct validity threat)
+
+## 2026-07-10: Triple-Source Number Mismatch Across Typst Ch4 / CLAIMS / Feb Bundles
+
+- **Issue:** During the July 2026 SSOT audit, performance numbers for H1/H2 were found to disagree across three independent sources:
+  1. **Typst Ch4** (`thesis-typst/src/content/ch04-results.typ`) — contained numbers from the Feb 2026 `fib33_proactive` run (e.g., S3 p99=309.5, S4 p99=187.9) without these bundles having been promoted to `role: final` in REGISTRY.yaml.
+  2. **CLAIMS_TO_EVIDENCE.md** (dated 2026-02-21) — still pointed at `phase-b/2026-02-15_clarknet-replay` as primary H2 evidence (reporting p=0.0037, d=−2.96), a bundle using a different controller version and workload.
+  3. **Feb 2026 experiment bundles** — the `2026-02-15_clarknet-replay` bundle itself reported numbers inconsistent with the July 2026 V3-controller reruns (e.g., S4 p99=2821 ms in Feb vs S4 p99=187.9 ms in July, a 15× difference attributable to controller version and workload changes).
+
+- **Root Cause:** No single registry tracked which experiment bundles were "final" (thesis-facing) vs intermediate. Typst Ch4 was updated directly from experiment reports without a gating step. CLAIMS was last updated 2026-02-21 and never refreshed when July runs landed. Each source drifted independently.
+
+- **Resolution:**
+  - `REGISTRY.yaml` created with explicit `role: final` classification for all experiment dirs; only `role: final` bundles feed thesis numbers.
+  - `FINAL_NUMBERS.md` created as the single numeric SSOT, quoting only from `role: final` bundles.
+  - `CLAIMS_TO_EVIDENCE.md` rebuilt (2026-07-10) to reference only final bundles; Feb 2026 Phase B bundles marked superseded.
+  - Typst Ch4 to be rewritten in a subsequent step from `FINAL_NUMBERS.md` only.
+
+- **Impact:** Any thesis draft produced before 2026-07-10 may contain numbers from superseded Feb bundles. The correct July 2026 numbers are: S1 p99=109.8, S2 p99=77.8 (from `experiments.2026-07-08-fib33-n5`); S3 p99=309.5, S4 p99=187.9 (from `experiments.2026-07-08-fib33-proactive`). H2 significance: p=0.12 (not significant), d=1.21 (large effect).
