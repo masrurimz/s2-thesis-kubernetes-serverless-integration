@@ -1,10 +1,11 @@
 """Workload calibration: find the Goldilocks RPS for thesis experiments.
 
-Sweeps scenarios x RPS levels with a curl-based load test, reads p99/error
-metrics from Prometheus, and recommends the lowest RPS that produces a
-"stressed but functional" load (200ms < p99 <= 500ms, error_rate <= 10%).
+Sweeps scenarios x RPS levels with a k6 constant-arrival-rate load test,
+reads p99/error metrics from k6's built-in metrics output, and recommends
+the lowest RPS that produces a "stressed but functional" load
+(200ms < p99 <= 500ms, error_rate <= 10%).
 
-Ported from scripts/run_calibration.py. Entry point: run_full_calibration().
+Entry point: run_full_calibration().
 """
 
 from __future__ import annotations
@@ -46,132 +47,85 @@ class CalibrationResult:
     recommended: bool
 
 
-def load_test_curl(
-    rps: int, duration_sec: int, endpoint: str = "http://localhost:18082/work?duration_ms=10"
-) -> Tuple[int, int, float]:
+def load_test_k6(
+    rps: int,
+    duration_sec: int,
+    endpoint: str = "/fib?n=33",
+    base_url: str = "http://localhost:18082",
+) -> Dict[str, float]:
+    """Run load test using k6 constant-arrival-rate and parse metrics from JSON output.
+
+    Returns dict with keys: p50_ms, p95_ms, p99_ms, error_rate, actual_rps, total_requests.
     """
-    Run load test using parallel curl requests and measure results via Prometheus.
-    Returns: (total_requests, errors, actual_rps)
-    """
-    logger.info("starting_load_test", rps=rps, duration_sec=duration_sec)
+    import json
 
-    total_requests = 0
-    errors = 0
-    start_time = time.time()
+    k6_script = PROJECT_ROOT / "apps/experiment/experiment/load_tests/calibration/calibration.js"
+    duration_min = max(1, round(duration_sec / 60))
 
-    # Max 100 parallel curl per second
-    batch_size = min(rps, 100)
+    cmd = [
+        "k6",
+        "run",
+        "--quiet",
+        "-e",
+        f"RPS={rps}",
+        "-e",
+        f"DURATION={duration_min}",
+        "-e",
+        f"ENDPOINT={endpoint}",
+        "-e",
+        f"BASE_URL={base_url}",
+        str(k6_script),
+    ]
 
-    while time.time() - start_time < duration_sec:
-        batch_start = time.time()
+    logger.info("starting_k6_load_test", rps=rps, duration_min=duration_min, endpoint=endpoint)
 
-        # Spawn parallel curl processes
-        procs = []
-        for _ in range(batch_size):
-            proc = subprocess.Popen(
-                [
-                    "curl",
-                    "-s",
-                    "-o",
-                    "/dev/null",
-                    "-w",
-                    "%{http_code}",
-                    "-H",
-                    "Host: test-app.default.127.0.0.1.sslip.io",
-                    endpoint,
-                ],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,
-            )
-            procs.append(proc)
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=duration_sec + 120, cwd=str(PROJECT_ROOT))
 
-        # Collect results
-        for proc in procs:
-            try:
-                stdout, _ = proc.communicate(timeout=5)
-                status_code = stdout.decode().strip()
-                total_requests += 1
-                if status_code != "200":
-                    errors += 1
-            except subprocess.TimeoutExpired:
-                proc.kill()
-                errors += 1
+    if result.returncode != 0:
+        logger.error("k6_failed", returncode=result.returncode, stderr=result.stderr[:500])
+        return {"p50_ms": 0.0, "p95_ms": 0.0, "p99_ms": 0.0, "error_rate": 1.0, "actual_rps": 0.0, "total_requests": 0}
 
-        # Sleep to maintain target RPS rate
-        elapsed = time.time() - batch_start
-        sleep_time = max(0, 1.0 - elapsed)
-        if sleep_time > 0:
-            time.sleep(sleep_time)
-
-    actual_duration = time.time() - start_time
-    actual_rps = total_requests / actual_duration if actual_duration > 0 else 0
-    error_rate = errors / total_requests if total_requests > 0 else 0
+    # k6 calibration.js outputs JSON summary to stdout via handleSummary
+    try:
+        metrics = json.loads(result.stdout.strip())
+    except json.JSONDecodeError:
+        # Try to find JSON in the output (k6 might print other lines)
+        for line in result.stdout.strip().split("\n"):
+            line = line.strip()
+            if line.startswith("{"):
+                try:
+                    metrics = json.loads(line)
+                    break
+                except json.JSONDecodeError:
+                    continue
+        else:
+            logger.error("k6_json_parse_failed", stdout=result.stdout[:500])
+            return {
+                "p50_ms": 0.0,
+                "p95_ms": 0.0,
+                "p99_ms": 0.0,
+                "error_rate": 1.0,
+                "actual_rps": 0.0,
+                "total_requests": 0,
+            }
 
     logger.info(
         "load_test_complete",
-        total_requests=total_requests,
-        errors=errors,
-        actual_rps=round(actual_rps, 2),
-        error_rate=round(error_rate, 4),
+        rps=rps,
+        actual_rps=metrics.get("actual_rps", 0),
+        p99_ms=metrics.get("p99_ms", 0),
+        error_rate=metrics.get("error_rate", 0),
+        total_requests=metrics.get("total_requests", 0),
     )
 
-    return total_requests, errors, actual_rps
-
-
-def get_prometheus_metrics(url: str = settings.PROMETHEUS_URL) -> Dict[str, float]:
-    """Get latency and error metrics from Prometheus."""
-    metrics = {
-        "p50": 0.0,
-        "p95": 0.0,
-        "p99": 0.0,
-        "error_rate": 0.0,
-        "throughput": 0.0,
+    return {
+        "p50_ms": metrics.get("p50_ms", 0.0),
+        "p95_ms": metrics.get("p95_ms", 0.0),
+        "p99_ms": metrics.get("p99_ms", 0.0),
+        "error_rate": metrics.get("error_rate", 0.0),
+        "actual_rps": metrics.get("actual_rps", 0.0),
+        "total_requests": metrics.get("total_requests", 0),
     }
-
-    try:
-        # Get p99 latency
-        resp = requests.get(
-            f"{url}/api/v1/query",
-            params={
-                "query": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[1m])) by (le)) * 1000"
-            },
-            timeout=10,
-        )
-        if resp.status_code == 200:
-            data = resp.json()
-            if data.get("status") == "success":
-                results = data.get("data", {}).get("result", [])
-                if results:
-                    metrics["p99"] = float(results[0].get("value", [0, 0])[1])
-
-        # Get error rate
-        resp = requests.get(
-            f"{url}/api/v1/query",
-            params={
-                "query": 'sum(rate(http_requests_total{status=~"5.."}[1m])) / sum(rate(http_requests_total[1m])) * 100'
-            },
-            timeout=10,
-        )
-        if resp.status_code == 200:
-            data = resp.json()
-            if data.get("status") == "success":
-                results = data.get("data", {}).get("result", [])
-                if results:
-                    metrics["error_rate"] = float(results[0].get("value", [0, 0])[1])
-
-        # Get throughput
-        resp = requests.get(f"{url}/api/v1/query", params={"query": "sum(rate(http_requests_total[1m]))"}, timeout=10)
-        if resp.status_code == 200:
-            data = resp.json()
-            if data.get("status") == "success":
-                results = data.get("data", {}).get("result", [])
-                if results:
-                    metrics["throughput"] = float(results[0].get("value", [0, 0])[1])
-
-    except Exception as e:
-        logger.warning("prometheus_query_failed", error=str(e))
-
-    return metrics
 
 
 def determine_stress_level(p99: float, error_rate: float) -> Tuple[str, bool]:
@@ -247,11 +201,8 @@ def run_calibration(
     # Wait for system to stabilize
     time.sleep(5)
 
-    # Run load test
-    total_reqs, errors, actual_rps = load_test_curl(rps, duration_sec)
-
-    # Get metrics from Prometheus
-    prom_metrics = get_prometheus_metrics()
+    # Run k6 load test (generates load + measures latency in one step)
+    k6_metrics = load_test_k6(rps, duration_sec)
 
     # Stop daemon if running
     if daemon_proc:
@@ -260,17 +211,17 @@ def run_calibration(
         time.sleep(3)  # Cool down
 
     # Determine stress level
-    stress_level, recommended = determine_stress_level(prom_metrics["p99"], prom_metrics["error_rate"])
+    stress_level, recommended = determine_stress_level(k6_metrics["p99_ms"], k6_metrics["error_rate"])
 
     return CalibrationResult(
         scenario=scenario,
         rps=rps,
         duration_sec=duration_sec,
-        p50_ms=prom_metrics["p50"],
-        p95_ms=prom_metrics["p95"],
-        p99_ms=prom_metrics["p99"],
-        error_rate=prom_metrics["error_rate"],
-        actual_rps=actual_rps,
+        p50_ms=k6_metrics["p50_ms"],
+        p95_ms=k6_metrics["p95_ms"],
+        p99_ms=k6_metrics["p99_ms"],
+        error_rate=k6_metrics["error_rate"],
+        actual_rps=k6_metrics["actual_rps"],
         stress_level=stress_level,
         recommended=recommended,
     )
