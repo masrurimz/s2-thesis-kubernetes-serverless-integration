@@ -122,6 +122,28 @@ Cost analysis for this architecture maps the local testbed to equivalent cloud s
 
 Accordingly, this chapter does not present a cost comparison as a final result. Directional cost estimates from the earlier configuration exist, but they require re-running against the final controller before they can support a thesis-level claim. The latency and SLO results above therefore stand without an accompanying final cost figure, and cost analysis is deferred to a confirmatory evaluation on the final controller.
 
+== Controller HPO and Holdout Validation
+
+Four controller parameters were explored via Optuna TPE screening (10 trials, 20 minutes each): `target_cpu_util`, `kp_burn`, `proactive_trend_threshold`, and `proactive_approach_ratio`. The best single-run configuration (Trial 0: `target_cpu_util`=0.659, `kp_burn`=1.49) produced 232 SLO violations — a 67% reduction from the 702 violations with default parameters.
+
+However, holdout validation with n=5 revealed severe overfitting: the HPO-tuned parameters produced a mean of 2,886 SLO violations per run (vs 702 with defaults) and a mean p99 of 311 ms (vs 188 ms). The HPO configuration narrowed the K8s safety margin from 100 RPS to 131 RPS model capacity, which reduced serverless engagement under favorable conditions but caused more frequent and severe K8s saturation under high system variance.
+
+#figure(
+  kind: table,
+  table(
+    columns: (auto, auto, auto),
+    [Metric], [Default Parameters], [HPO Parameters],
+    [Single-run SLO], [702], [232],
+    [Holdout mean SLO (n=5)], [702], [2886],
+    [Holdout mean p99 (ms)], [188], [311],
+  ),
+  caption: [Controller HPO overfitting: single-run vs holdout validation (n=5)],
+) <tab:holdout-overfit>
+
+A Gaussian Process surrogate was then built from 20 existing experiment data points (12 unique parameter combinations). Monte Carlo screening of 10,000 samples showed only 5.5% satisfied the p99 < 200 ms constraint. The top GP candidate (`target_cpu_util` ≈ 0.45, `kp_burn` ≈ 0.6) showed promise at n=1 (SLO=565, p99=156 ms) but n=5 holdout confirmation revealed this as an outlier: SLO=5,803 and p99=434 ms.
+
+The key finding: on a shared-resource system with high variance, **no parameter deviation from the default calibration survived n=5 holdout validation**. The default `target_cpu_util` = 0.5, calibrated from the capacity test, remains optimal. This is consistent with overfitting risks in model selection @cawley2010overfitting and highlights the challenge of HPO in online systems where each evaluation requires a full 20-minute experiment under noisy shared-resource conditions @nonstationary2022 @falkner2018bohb. The two-stage methodology (screening + robust confirmation) and surrogate-assisted approach adapt techniques from @kapetanios2022.
+
 == Discussion
 
 The experimental evaluation validates the mechanistic correctness of the hybrid architecture while showing that statistical superiority over the baseline approaches could not be established within the constraints of the single-node testbed.
