@@ -73,10 +73,12 @@ class CalibrationConfig(BaseModel):
     alpha_override: Optional[float] = None
 
     # Controller tuning (V3 burn-rate PI + proactive routing)
-    # NOTE: Controller HPO screening (10 trials) found target_cpu_util=0.659, kp_burn=1.49
-    # performed best in single-run (SLO=232). However, n=5 holdout validation showed
-    # these params OVERFIT: mean SLO=2886 vs 702 with defaults. Conservative defaults
-    # (target_cpu_util=0.5) provide better robustness under system variance.
+    # NOTE: Three tuning attempts all failed n=5 holdout vs defaults (SLO=702, p99=188ms):
+    #   1. Aggressive HPO (cpu=0.659, kp=1.49): single-run SLO=232 → holdout mean SLO=2886
+    #   2. GP surrogate candidate (cpu=0.45, kp=0.6): single-run SLO=565 → holdout mean SLO=5803
+    #   3. All other screening trials: worse than defaults in single-run
+    # Root cause: shared-resource system variance is too high for any param deviation.
+    # Defaults calibrated from capacity ramp test remain optimal.
     kp_burn: float = 0.5
     ki_burn: float = 0.05
     proactive_trend_threshold: float = 3.0
