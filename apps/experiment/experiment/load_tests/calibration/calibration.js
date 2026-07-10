@@ -36,6 +36,7 @@ export const options = {
         http_req_duration: ['p(99)<500'],
         errors: ['rate<0.10'],
     },
+    summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(99)'],
 };
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:18082';
@@ -67,12 +68,13 @@ export function handleSummary(data) {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     
     // Calculate key metrics
-    const p50 = data.metrics.http_req_duration?.['p(50)'] || 0;
-    const p95 = data.metrics.http_req_duration?.['p(95)'] || 0;
-    const p99 = data.metrics.http_req_duration?.['p(99)'] || 0;
-    const errorRate = data.metrics.errors?.rate || 0;
-    const totalRequests = data.metrics.http_reqs?.count || 0;
-    const actualRPS = data.metrics.http_reqs?.rate || 0;
+    const durValues = data.metrics.http_req_duration?.values || {};
+    const p50 = durValues['p(50)'] || durValues.med || 0;
+    const p95 = durValues['p(95)'] || 0;
+    const p99 = durValues['p(99)'] || 0;
+    const errorRate = data.metrics.errors?.values?.rate || data.metrics.errors?.rate || 0;
+    const totalRequests = data.metrics.http_reqs?.values?.count || data.metrics.http_reqs?.count || 0;
+    const actualRPS = data.metrics.http_reqs?.values?.rate || data.metrics.http_reqs?.rate || 0;
     
     // Determine stress level
     let stressLevel = 'healthy';
