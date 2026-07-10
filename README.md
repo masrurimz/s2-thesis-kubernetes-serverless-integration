@@ -10,6 +10,8 @@ Master's thesis: *"Decision Making and Elastic Scalability Management in Heterog
 | `scripts/` | Reproduction + analysis scripts (experiment runners, statistics, plotting) |
 | `results/` | **Single source of truth** for all experiment evidence (bundles with raw data + reports) |
 | `thesis/` | Narrative only: chapters, protocol, appendices |
+| `thesis-typst/` | Canonical thesis book (Typst ITS-IF): English-first + dual abstracts |
+| `archived/thesis-latex/` | Previous LaTeX (read-only) |
 | `infrastructure/` | K3s/K3d, HAProxy, Knative, Prometheus, k6 load tests |
 | `data/` | Input datasets: ClarkNet/Calgary HTTP traces, processed parquet |
 | `docs/` | Setup guides, specs, deployment docs |
@@ -19,7 +21,7 @@ Master's thesis: *"Decision Making and Elastic Scalability Management in Heterog
 
 - **Evidence** → [`results/README.md`](results/README.md) — experiment registry, hypothesis coverage
 - **Reproduce** → [`scripts/README.md`](scripts/README.md) — all reproduction + analysis scripts
-- **Read thesis** → [`thesis/chapters/`](thesis/chapters/) — full narrative
+- **Read thesis** → [`thesis-typst/`](thesis-typst/) (Typst, canonical) or markdown under `thesis/chapters/`
 - **Claims audit** → [`results/claims/CLAIMS_TO_EVIDENCE.md`](results/claims/CLAIMS_TO_EVIDENCE.md)
 
 ## Quick Start
