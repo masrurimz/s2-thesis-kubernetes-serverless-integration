@@ -280,6 +280,8 @@ Fenomena \emph{overfitting} pada HPO telah dipelajari secara ekstensif dalam kon
 
 \textbf{Metodologi dua tahap}: Berdasarkan temuan ini, kami mengusulkan pendekatan dua tahap untuk HPO pengontrol sistem \emph{online}: (1) \emph{Screening} — $n$ \emph{trial single-run} untuk mengidentifikasi region parameter yang menjanjikan; (2) \emph{Confirmation} — $k$ kandidat teratas divalidasi dengan $m$ \emph{run} masing-masing, dengan seleksi berdasarkan \emph{median} (bukan \emph{mean}) untuk resistensi terhadap \emph{outlier}. Implementasi fungsi \texttt{run\_controller\_hpo\_robust()} mengotomatisasi pipeline ini. Parameter bawaan yang konservatif (\emph{target\_cpu\_util} = 0,5) dipertahankan ketika tidak ada kandidat yang menunjukkan peningkatan \emph{robust} dalam tahap konfirmasi.
 
+\textbf{Surrogate-assisted screening}: Untuk mengatasi biaya evaluasi yang mahal, kami membangun \emph{Gaussian Process} (GP) \emph{surrogate} dari 20 titik data eksperimen yang ada (12 kombinasi parameter unik). GP ini memprediksi SLO dan p99 untuk kombinasi parameter baru dalam hitungan detik. \emph{Monte Carlo screening} terhadap 10.000 sampel parameter menunjukkan bahwa hanya 5,5\% memenuhi konstrain p99 < 200\,ms — wilayah aman sangat sempit. Kandidat teratas yang diprediksi GP (target\_cpu\_util $\approx$ 0,45, kp\_burn $\approx$ 0,6) berdekatan dengan parameter bawaan, mengkonfirmasi bahwa kalibrasi berbasis uji kapasitas telah mengidentifikasi region yang mendekati optimal. Pendekatan ini mengadaptasi konsep \emph{multi-fidelity optimization} dari BOHB \citep{falkner2018bohb} dan \emph{digital twin} dari KAPETÁNIOS \citep{kapetanios2022} ke konteks \emph{routing controller} awan.
+
 \section{Pembahasan}
 \label{sec:discussion}
 
