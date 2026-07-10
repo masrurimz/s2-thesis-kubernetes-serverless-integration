@@ -55,6 +55,9 @@ Rules:
 - **Known issues:** [`claims/INCONSISTENCIES.md`](claims/INCONSISTENCIES.md)
 - **Experiment protocol:** [`../thesis/protocol/EXPERIMENT_PROTOCOL.md`](../thesis/protocol/EXPERIMENT_PROTOCOL.md)
 - **Threats to validity:** [`../thesis/protocol/THREATS_TO_VALIDITY.md`](../thesis/protocol/THREATS_TO_VALIDITY.md)
+- **Experiment registry (SSOT):** [`experiments/REGISTRY.yaml`](experiments/REGISTRY.yaml) — machine-readable classification of all experiment bundles
+- **Scanner:** `uv run python scripts/audit_experiment_registry.py --write` (run after every experiment)
+- **Citation inventory:** [`claims/DOCX_CITATION_INVENTORY.md`](claims/DOCX_CITATION_INVENTORY.md) — DOCX-first citation audit
 
 ---
 
