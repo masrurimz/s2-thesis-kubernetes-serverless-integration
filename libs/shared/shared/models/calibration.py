@@ -54,11 +54,12 @@ class CalibrationConfig(BaseModel):
     lambda_compute_ms: float = 24.0  # Measured fib(33) CPU compute time
     io_wait_ms: float = 50.0  # Simulated I/O wait (DB query, SeBS methodology)
 
-    # Capacity model — MEASURED fib(33), no CPU limits, 50ms I/O wait
-    # p99 < 200ms up to 150 RPS (50/pod), cliff at 200 RPS (66.7/pod)
-    # K8s actual saturation: 150 RPS. ClarkNet peak 164 > 150 → S1 saturates
-    # r_sat=66.7 (first p99 crossing), util=0.5 → cap=100 (model capacity)
-    r_saturation_per_replica: float = 66.7
+    # Capacity model — MEASURED fib(33), 300m CPU limit, 50ms I/O wait
+    # With 300m CFS quota: each request takes ~100ms wall (24ms CPU + CFS throttle)
+    # r_sat=16.7 measured July 5-6 (commit 9905595) with 300m limit + fib(33)
+    # 3 pods × 8.35 r_effective = 25 RPS capacity → ClarkNet mean 73 > 25 → S1 saturates
+    # This is the value that makes S4 hybrid routing valuable (burst to serverless)
+    r_saturation_per_replica: float = 16.7
     target_cpu_util: float = 0.5
 
     # Replica bounds
