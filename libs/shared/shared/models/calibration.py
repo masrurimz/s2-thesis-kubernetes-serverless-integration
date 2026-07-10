@@ -4,15 +4,17 @@ All calibration-sensitive values live here as a single source of truth.
 Values are overwritten from measured capacity envelope test results —
 defaults are starting guesses, NOT validated constants.
 
-Supports CALIBRATION_OVERRIDE env var: path to JSON file with partial
-CalibrationConfig fields to override at import time (used by controller HPO).
+Config injection: use CalibrationConfig.load(path=...) for explicit merge,
+or get_calibration() to resolve CALIBRATION_OVERRIDE env at call time.
+The module-level CALIBRATION singleton is NEVER mutated by env at import.
 """
 
 import json as _json
 import os as _os
-from typing import Optional
+from pathlib import Path as _Path
+from typing import Any, Mapping, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class CalibrationConfig(BaseModel):
@@ -23,6 +25,8 @@ class CalibrationConfig(BaseModel):
     SLO threshold, measured by ramping load against 3 pods. alpha = 1/r_saturation
     is the linear coefficient for Algorithm 2 (replicas = alpha * load + beta).
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     # Workload tuple — fib(33): 3ms CPU compute, verified by deploy-app
     fib_n: int = 33
@@ -157,11 +161,44 @@ class CalibrationConfig(BaseModel):
             "dropout": self.gru_dropout,
         }
 
+    @classmethod
+    def load(
+        cls,
+        path: str | _Path | None = None,
+        overrides: Mapping[str, Any] | None = None,
+    ) -> "CalibrationConfig":
+        """Load defaults, then merge optional JSON file and/or dict overrides.
 
-_override_path = _os.environ.get("CALIBRATION_OVERRIDE")
-if _override_path:
-    with open(_override_path) as _f:
-        _overrides = _json.load(_f)
-    CALIBRATION = CalibrationConfig(**_overrides)
-else:
-    CALIBRATION = CalibrationConfig()
+        Merge semantics: only provided keys replace defaults; unknown keys raise
+        ValidationError (Pydantic). Partial trial JSONs are valid.
+
+        Uses model_dump → dict merge → model_validate to ensure full re-validation
+        (model_copy skips validation in Pydantic v2).
+        """
+        base = cls().model_dump()
+        if path is not None:
+            p = _Path(path)
+            if not p.is_file():
+                raise FileNotFoundError(f"Calibration override not found: {p}")
+            data = _json.loads(p.read_text())
+            if not isinstance(data, dict):
+                raise TypeError(f"Calibration JSON must be an object, got {type(data)}")
+            base.update(data)
+        if overrides:
+            base.update(dict(overrides))
+        return cls.model_validate(base)
+
+
+def get_calibration() -> CalibrationConfig:
+    """Resolve active calibration: CALIBRATION_OVERRIDE env if set, else defaults.
+
+    Prefer injecting CalibrationConfig via constructors/CLI over calling this
+    repeatedly. Exists so subprocess-spawned daemons keep working.
+    """
+    path = _os.environ.get("CALIBRATION_OVERRIDE")
+    return CalibrationConfig.load(path) if path else CalibrationConfig()
+
+
+# Module-level default for production/import convenience — NOT mutated by env
+# at import time. HPO subprocesses must call get_calibration() or pass path.
+CALIBRATION = CalibrationConfig()

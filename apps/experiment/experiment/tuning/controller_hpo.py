@@ -86,6 +86,8 @@ def run_single_experiment(
         scenario,
         "--output",
         output_dir,
+        "--calibration",
+        str(config_path),
     ]
 
     logger.info("running_experiment", cmd=" ".join(cmd), config=str(config_path))

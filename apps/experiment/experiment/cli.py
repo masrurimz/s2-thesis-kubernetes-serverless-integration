@@ -50,10 +50,15 @@ def run(
     dry_run: bool = typer.Option(False, help="Simulate pipeline without side effects"),
     controller: str = typer.Option("v3", help="Controller version for S3/S4"),
     workload: str = typer.Option("clarknet", help="Workload trace: clarknet|spike|periodic|ramp|stationary"),
+    calibration: Optional[str] = typer.Option(None, help="Path to CalibrationConfig JSON overrides"),
 ) -> None:
     """Run experiment phase through the full pipeline."""
     from rich.console import Console
     from rich.panel import Panel
+
+    # Set env early so all subprocess children (daemon) inherit it
+    if calibration:
+        os.environ["CALIBRATION_OVERRIDE"] = calibration
 
     console = Console()
 

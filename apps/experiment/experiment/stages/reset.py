@@ -15,7 +15,7 @@ import requests
 import structlog
 
 from shared.config import settings
-from shared.models.calibration import CALIBRATION
+from shared.models.calibration import get_calibration
 from shared.models.pipeline import PipelineContext
 from shared.protocols import ProvisionerClient
 
@@ -184,7 +184,7 @@ class ResetStage(BaseStage):
         _kubectl(["delete", "hpa", DEPLOYMENT, "--ignore-not-found"])
         time.sleep(2)
 
-        baseline_replicas = CALIBRATION.baseline_replicas_s3_s4
+        baseline_replicas = get_calibration().baseline_replicas_s3_s4
         r = _kubectl(["scale", f"deployment/{DEPLOYMENT}", f"--replicas={baseline_replicas}"])
         if r.returncode != 0:
             logger.error("scale_baseline_failed", stderr=r.stderr.strip())
