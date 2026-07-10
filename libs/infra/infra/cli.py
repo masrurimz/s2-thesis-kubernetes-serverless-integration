@@ -126,6 +126,43 @@ def verify() -> None:
         raise typer.Exit(1)
 
 
+@app.command(name="apply-resources")
+def apply_resources() -> None:
+    """Apply Docker CPU/memory limits to existing k3d cluster nodes.
+
+    Idempotent: safe to re-run. Enforces CalibrationConfig values for
+    node-level CPU limits on both hybrid and serverless clusters.
+    Use after cluster creation or after manual changes to restore correct limits.
+    """
+    from infra.cluster.k3d.manager import K3dManager
+
+    k3d = K3dManager()
+
+    console.rule("[bold]Applying Docker Resource Limits")
+
+    # Hybrid cluster nodes
+    console.print("[bold cyan]Hybrid cluster (thesis-hybrid)[/bold cyan]")
+    hybrid_ok = k3d.apply_node_resources()
+    if hybrid_ok:
+        console.print("  [green]✓ All hybrid nodes updated[/green]")
+    else:
+        console.print("  [yellow]⚠ Some hybrid nodes failed (see logs)[/yellow]")
+
+    # Serverless cluster nodes
+    console.print("[bold cyan]Serverless cluster (thesis-serverless)[/bold cyan]")
+    serverless_ok = k3d.apply_serverless_node_resources()
+    if serverless_ok:
+        console.print("  [green]✓ All serverless nodes updated[/green]")
+    else:
+        console.print("  [yellow]⚠ Some serverless nodes failed (see logs)[/yellow]")
+
+    if hybrid_ok and serverless_ok:
+        console.rule("[bold green]All Resource Limits Applied")
+    else:
+        console.print("[yellow]⚠ Some updates failed — check cluster status[/yellow]")
+        raise typer.Exit(1)
+
+
 @app.command()
 def status() -> None:
     """Show infrastructure status."""

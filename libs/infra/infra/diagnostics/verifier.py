@@ -12,9 +12,12 @@ import structlog
 logger = structlog.get_logger(__name__)
 
 CLUSTER_NAME = "thesis-hybrid"
+CLUSTER_NAME_SERVERLESS = "thesis-serverless"
 NODE_SERVER = f"k3d-{CLUSTER_NAME}-server-0"
-NODE_INFRA = f"k3d-{CLUSTER_NAME}-agent-0"
-NODE_WORKLOAD = f"k3d-{CLUSTER_NAME}-agent-1"
+NODE_WORKLOAD_0 = f"k3d-{CLUSTER_NAME}-agent-0"
+NODE_WORKLOAD_1 = f"k3d-{CLUSTER_NAME}-agent-1"
+NODE_SERVERLESS_SERVER = f"k3d-{CLUSTER_NAME_SERVERLESS}-server-0"
+NODE_SERVERLESS_AGENT = f"k3d-{CLUSTER_NAME_SERVERLESS}-agent-0"
 
 
 class ClusterVerifier:
@@ -120,18 +123,27 @@ class ClusterVerifier:
         return float(cpu_str)
 
     def verify_all(self) -> dict[str, bool]:
-        """Run all checks and return a named mapping of results."""
+        """Run all checks and return a named mapping of results.
+
+        Both hybrid agents are workload nodes at 1.0 CPU each.
+        Serverless agent has 3.0 CPU for Knative capacity.
+        """
         results: dict[str, bool] = {
-            "docker_cpus_server": self.check_docker_cpus(NODE_SERVER, expected=1.0),
-            "docker_cpus_infra": self.check_docker_cpus(NODE_INFRA, expected=2.0),
-            "docker_cpus_workload": self.check_docker_cpus(NODE_WORKLOAD, expected=1.0),
-            "workload_node_allocatable_bounded": self.check_allocatable_bounded(NODE_WORKLOAD, max_cores=2.0),
-            "infra_node_allocatable_bounded": self.check_allocatable_bounded(NODE_INFRA, max_cores=3.0),
+            # Hybrid cluster — Docker CPU limits
+            "docker_cpus_hybrid_server": self.check_docker_cpus(NODE_SERVER, expected=1.0),
+            "docker_cpus_hybrid_agent0": self.check_docker_cpus(NODE_WORKLOAD_0, expected=1.0),
+            "docker_cpus_hybrid_agent1": self.check_docker_cpus(NODE_WORKLOAD_1, expected=1.0),
+            # Hybrid cluster — allocatable bounded by Docker limit
+            "allocatable_hybrid_agent0_bounded": self.check_allocatable_bounded(NODE_WORKLOAD_0, max_cores=1.5),
+            "allocatable_hybrid_agent1_bounded": self.check_allocatable_bounded(NODE_WORKLOAD_1, max_cores=1.5),
+            # Hybrid cluster — node labels
             "node_labels_correct": (
                 self.check_node_label(NODE_SERVER, "node-type", "system")
-                and self.check_node_label(NODE_INFRA, "node-type", "infra")
-                and self.check_node_label(NODE_WORKLOAD, "node-type", "workload")
+                and self.check_node_label(NODE_WORKLOAD_0, "node-type", "workload")
+                and self.check_node_label(NODE_WORKLOAD_1, "node-type", "workload")
             ),
-            "capacity_ratio_acceptable": self.check_capacity_ratio(NODE_INFRA, NODE_WORKLOAD, max_ratio=4.0),
+            # Serverless cluster — Docker CPU limits
+            "docker_cpus_serverless_server": self.check_docker_cpus(NODE_SERVERLESS_SERVER, expected=1.0),
+            "docker_cpus_serverless_agent": self.check_docker_cpus(NODE_SERVERLESS_AGENT, expected=3.0),
         }
         return results

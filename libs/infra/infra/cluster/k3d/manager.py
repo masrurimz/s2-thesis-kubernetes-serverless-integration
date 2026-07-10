@@ -71,7 +71,7 @@ class K3dManager:
         console.print(f"[green]✓ Cluster '{self.cluster_name}' created.[/green]")
 
         console.print("[bold]Applying Docker CPU/memory limits to nodes...[/bold]")
-        self._apply_node_resources()
+        self.apply_node_resources()
 
         console.print("[bold]Labeling nodes (system/infra/workload)...[/bold]")
         self._label_nodes()
@@ -82,19 +82,22 @@ class K3dManager:
     # Node resource bounds (Docker --cpus/--memory to mimic cloud VM sizing)
     # ------------------------------------------------------------------
 
-    def _apply_node_resources(self) -> None:
+    def apply_node_resources(self) -> bool:
         """Apply Docker CPU/memory limits to each k3d node container.
 
+        Idempotent: safe to re-run on existing clusters.
         All agent nodes at 1.0 CPU fit ~3 pods at 300m each.
         Knative is now in a separate cluster (thesis-serverless).
         Tolerates per-node failure (logs warning, continues).
+
+        Returns True if all nodes updated successfully.
         """
-        # (container_name, cpus, memory)
         nodes = [
             ("k3d-thesis-hybrid-server-0", "1.0", "1g"),
             ("k3d-thesis-hybrid-agent-0", "1.0", "1g"),
             ("k3d-thesis-hybrid-agent-1", "1.0", "1g"),
         ]
+        all_ok = True
         for container, cpus, memory in nodes:
             result = run(
                 ["docker", "update", "--cpus", cpus, "--memory", memory, "--memory-swap", memory, container],
@@ -108,6 +111,10 @@ class K3dManager:
                     memory=memory,
                     stderr=result.stderr,
                 )
+                all_ok = False
+            else:
+                logger.info("docker_update_node_ok", container=container, cpus=cpus)
+        return all_ok
 
     def _label_nodes(self) -> None:
         """Label nodes with node-type for scheduling isolation.
@@ -181,15 +188,20 @@ class K3dManager:
         logger.info("k3d_serverless_create_ok", cluster=CLUSTER_NAME_SERVERLESS)
         console.print(f"[green]✓ Cluster '{CLUSTER_NAME_SERVERLESS}' created.[/green]")
 
-        self._apply_serverless_node_resources()
+        self.apply_serverless_node_resources()
         return True
 
-    def _apply_serverless_node_resources(self) -> None:
-        """Apply Docker CPU/memory limits to serverless cluster nodes."""
+    def apply_serverless_node_resources(self) -> bool:
+        """Apply Docker CPU/memory limits to serverless cluster nodes.
+
+        Idempotent: safe to re-run on existing clusters.
+        Returns True if all nodes updated successfully.
+        """
         nodes = [
             (f"k3d-{CLUSTER_NAME_SERVERLESS}-server-0", "1.0", "1g"),
             (f"k3d-{CLUSTER_NAME_SERVERLESS}-agent-0", "3.0", "2g"),
         ]
+        all_ok = True
         for container, cpus, memory in nodes:
             result = run(
                 ["docker", "update", "--cpus", cpus, "--memory", memory, "--memory-swap", memory, container],
@@ -203,6 +215,10 @@ class K3dManager:
                     memory=memory,
                     stderr=result.stderr,
                 )
+                all_ok = False
+            else:
+                logger.info("docker_update_serverless_node_ok", container=container, cpus=cpus)
+        return all_ok
 
     def delete_serverless(self) -> bool:
         """Delete the thesis-serverless cluster."""

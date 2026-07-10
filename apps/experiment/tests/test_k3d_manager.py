@@ -2,7 +2,7 @@ from unittest.mock import patch, MagicMock
 
 
 class TestApplyNodeResources:
-    """Verify _apply_node_resources() issues correct docker update commands."""
+    """Verify apply_node_resources() issues correct docker update commands."""
 
     @patch("infra.cluster.k3d.manager.run")
     def test_issues_docker_update_for_all_three_nodes(self, mock_run):
@@ -10,7 +10,7 @@ class TestApplyNodeResources:
         from infra.cluster.k3d.manager import K3dManager
 
         mgr = K3dManager()
-        mgr._apply_node_resources()
+        mgr.apply_node_resources()
 
         docker_calls = [
             c.args[0]
@@ -20,12 +20,12 @@ class TestApplyNodeResources:
         assert len(docker_calls) == 3
 
     @patch("infra.cluster.k3d.manager.run")
-    def test_infra_node_gets_2_cpus(self, mock_run):
+    def test_agent0_gets_1_cpu(self, mock_run):
         mock_run.return_value = MagicMock(returncode=0)
         from infra.cluster.k3d.manager import K3dManager
 
         mgr = K3dManager()
-        mgr._apply_node_resources()
+        mgr.apply_node_resources()
 
         agent0_calls = [
             c.args[0]
@@ -35,7 +35,7 @@ class TestApplyNodeResources:
         assert len(agent0_calls) > 0
         call = agent0_calls[0]
         cpus_idx = call.index("--cpus")
-        assert call[cpus_idx + 1] == "2.0"
+        assert call[cpus_idx + 1] == "1.0"
 
     @patch("infra.cluster.k3d.manager.run")
     def test_workload_node_gets_1_cpu(self, mock_run):
@@ -43,7 +43,7 @@ class TestApplyNodeResources:
         from infra.cluster.k3d.manager import K3dManager
 
         mgr = K3dManager()
-        mgr._apply_node_resources()
+        mgr.apply_node_resources()
 
         agent1_calls = [
             c.args[0]
@@ -61,7 +61,7 @@ class TestApplyNodeResources:
         from infra.cluster.k3d.manager import K3dManager
 
         mgr = K3dManager()
-        mgr._apply_node_resources()
+        mgr.apply_node_resources()
 
         server_calls = [
             c.args[0]
@@ -80,7 +80,7 @@ class TestApplyNodeResources:
 
         mgr = K3dManager()
         # Should not raise
-        mgr._apply_node_resources()
+        mgr.apply_node_resources()
 
 
 class TestLabelNodes:
@@ -117,7 +117,7 @@ class TestLabelNodes:
         assert any("node-type=system" in s for s in server_calls)
 
     @patch("infra.cluster.k3d.manager.run")
-    def test_agent0_labeled_infra(self, mock_run):
+    def test_agent0_labeled_workload(self, mock_run):
         mock_run.return_value = MagicMock(returncode=0)
         from infra.cluster.k3d.manager import K3dManager
 
@@ -129,7 +129,7 @@ class TestLabelNodes:
             for c in mock_run.call_args_list
             if len(c.args) > 0 and any("agent-0" in str(a) for a in c.args[0])
         ]
-        assert any("node-type=infra" in s for s in agent0_calls)
+        assert any("node-type=workload" in s for s in agent0_calls)
 
     @patch("infra.cluster.k3d.manager.run")
     def test_agent1_labeled_workload(self, mock_run):
