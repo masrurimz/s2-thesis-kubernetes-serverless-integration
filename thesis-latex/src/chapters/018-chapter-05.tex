@@ -14,7 +14,7 @@ Berdasarkan hasil eksperimen yang telah dilakukan, dapat diambil kesimpulan seba
 
 \subsection{RQ1: Perancangan Prediksi Beban Kerja dengan GRU}
 
-Model GRU dengan dua lapis rekuren (64 dan 32 unit) berhasil dirancang dan divalidasi untuk prediksi beban kerja HTTP. Model mencapai 400/400 prediksi sukses selama 5 \emph{run} eksperimen dengan tingkat kepercayaan 0,72--0,82 dan latensi inferensi 10--13\,ms pada CPU. Namun, prediksi GRU terbukti \emph{lagging} 2+ menit di belakang lonjakan beban aktual, sehingga mekanisme \emph{proactive routing} menggunakan tren beban aktual yang diekstrapolasi ke depan, dengan kepercayaan GRU sebagai \emph{gate} keputusan.
+Model GRU dioptimalkan melalui \emph{hyperparameter optimization} (HPO) menggunakan Optuna TPE (30 \emph{trial}), menghasilkan konfigurasi optimal: satu lapis rekuren dengan 128 unit, \emph{learning rate} 0,000380, \emph{sequence length} 30, dan \emph{dropout} 0,104 (RMSE 4,75\%, turun dari 6,01\% dengan \emph{manual tuning}). Model mencapai 400/400 prediksi sukses selama 5 \emph{run} eksperimen dengan tingkat kepercayaan 0,72--0,82 dan latensi inferensi 10--13\,ms. Namun, prediksi GRU terbukti \emph{lagging} 2+ menit di belakang lonjakan beban aktual, sehingga mekanisme \emph{proactive routing} menggunakan tren beban aktual yang diekstrapolasi ke depan, dengan kepercayaan GRU sebagai \emph{gate} keputusan.
 
 \subsection{RQ2: Perancangan Pengambilan Keputusan dengan Modifikasi ElaX}
 
@@ -35,7 +35,7 @@ Evaluasi dilakukan melalui 4 skenario $\times$ \emph{n} = 5 replikasi dengan \em
 
     \item \textbf{H2 (Prediktif $>$ Reaktif)}: \textbf{Didukung secara praktis}. S4 memiliki 75\% lebih sedikit pelanggaran SLO dibandingkan S3 (702 vs 2.805 per \emph{run}) dengan \emph{Cohen's d} = 1,21 (\emph{large effect}) dan \emph{95\% CI} yang tidak mencakup nol. Namun, perbedaan tidak mencapai signifikansi statistik pada $\alpha = 0,05$ (\emph{p} = 0,12) akibat variansi sistem yang tinggi pada \emph{n} = 5.
 
-    \item \textbf{H3 (Adekuasi GRU)}: \textbf{Didukung}. Model GRU berfungsi andal (400/400 prediksi), memberikan kepercayaan yang memadai (0,72--0,82) untuk memicu \emph{proactive routing}, dan berkontribusi pada pengurangan pelanggaran SLO sebesar 49\% dibandingkan mode \emph{reactive-only}.
+    \item \textbf{H3 (Adekuasi GRU)}: \textbf{Didukung}. Model GRU berfungsi andal (400/400 prediksi), memberikan kepercayaan yang memadai (0,72--0,82) untuk memicu \emph{proactive routing}, dan berkontribusi pada pengurangan pelanggaran SLO sebesar 49\% dibandingkan mode \emph{reactive-only}. Selain itu, optimasi hiperparameter melalui Optuna TPE meningkatkan akurasi prediksi sebesar 21\% (RMSE 6,01\% $\rightarrow$ 4,75\%). Temuan metodologis: HPO \emph{single-run} pada pengontrol \emph{online} menyebabkan \emph{overfitting} (divalidasi melalui \emph{holdout} $n=5$). Sebagai mitigasi, \emph{surrogate-assisted screening} dengan \emph{Gaussian Process} diusulkan untuk mengidentifikasi kandidat parameter, dengan validasi $n \geq 5$ wajib sebelum adopsi.
 \end{enumerate}
 
 \section{Keterbatasan}
@@ -70,4 +70,6 @@ Berdasarkan keterbatasan yang telah diidentifikasi, beberapa arah penelitian sel
     \item \textbf{Meningkatkan model GRU} dengan mekanisme \emph{attention} atau \emph{transformer} untuk prediksi puncak yang lebih akurat, atau menggunakan \emph{ensemble} model untuk mengurangi \emph{lag}.
 
     \item \textbf{Mengeksplorasi \emph{reinforcement learning}} untuk keputusan \emph{routing} yang dapat belajar optimal \emph{trade-off} antara biaya dan latensi secara \emph{online}.
+
+    \item \textbf{Surrogate-assisted multi-fidelity HPO} untuk pengontrol \emph{online}: pendekatan dua tahap (\emph{screening} + \emph{confirmation}) dengan \emph{Gaussian Process} \emph{surrogate} dan validasi $n \geq 5$ sebelum mengadopsi parameter yang dioptimalkan, untuk mencegah \emph{overfitting} yang teramati pada penelitian ini.
 \end{enumerate}
