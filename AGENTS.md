@@ -25,6 +25,8 @@ This is a **completed** Master's thesis research project implementing a hybrid k
 | `apps/analysis/` | **Analysis CLI** — post-hoc statistics, cost model, cold-start, plots, hypothesis validation | Typer sub-app (`thesis analysis <cmd>`); thin orchestration over `libs/analysis` |
 | `results/` | **Single source of truth for ALL experiment evidence** | If it's experiment output, it lives here |
 | `thesis/` | **Narrative only** — thesis text, protocol, appendices | Links INTO `results/` for evidence |
+| `thesis-typst/` | **Canonical thesis book (Typst)** — English-first body + dual abstracts + ITS ITS-IF formatting | `typst compile`; see thesis-typst/README.md for preview |
+| `thesis-latex/` | (archived) previous LaTeX version | read-only snapshot under `archived/thesis-latex/` |
 | `data/` | Datasets (ClarkNet, Calgary traces, synthetic) | Large files tracked via `.gitattributes` |
 | `data/trace-replay/` | k6 stage JSONs (ClarkNet + 4 synthetic archetypes) | Workload traces for experiment replay |
 | `infrastructure/` | k3d configs, HAProxy, load testing, cluster setup scripts | Deployment configs and ops tooling |
