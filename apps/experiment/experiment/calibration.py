@@ -85,46 +85,51 @@ def load_test_k6(
         logger.error("k6_failed", returncode=result.returncode, stderr=result.stderr[:500])
         return {"p50_ms": 0.0, "p95_ms": 0.0, "p99_ms": 0.0, "error_rate": 1.0, "actual_rps": 0.0, "total_requests": 0}
 
-    # k6 calibration.js outputs JSON summary to stdout via handleSummary
+    # k6 calibration.js outputs JSON summary to stdout via handleSummary.
+    # Format: {"scenario": "...", "rps": N, "metrics": {"p50_latency_ms": X, ...}}
+    parsed = None
     try:
-        metrics = json.loads(result.stdout.strip())
+        parsed = json.loads(result.stdout.strip())
     except json.JSONDecodeError:
-        # Try to find JSON in the output (k6 might print other lines)
         for line in result.stdout.strip().split("\n"):
             line = line.strip()
             if line.startswith("{"):
                 try:
-                    metrics = json.loads(line)
+                    parsed = json.loads(line)
                     break
                 except json.JSONDecodeError:
                     continue
-        else:
-            logger.error("k6_json_parse_failed", stdout=result.stdout[:500])
-            return {
-                "p50_ms": 0.0,
-                "p95_ms": 0.0,
-                "p99_ms": 0.0,
-                "error_rate": 1.0,
-                "actual_rps": 0.0,
-                "total_requests": 0,
-            }
+
+    if parsed is None:
+        logger.error("k6_json_parse_failed", stdout=result.stdout[:500])
+        return {
+            "p50_ms": 0.0,
+            "p95_ms": 0.0,
+            "p99_ms": 0.0,
+            "error_rate": 1.0,
+            "actual_rps": 0.0,
+            "total_requests": 0,
+        }
+
+    # Handle both flat (calibrate_work.js) and nested (calibration.js) formats
+    m = parsed.get("metrics", parsed)
 
     logger.info(
         "load_test_complete",
         rps=rps,
-        actual_rps=metrics.get("actual_rps", 0),
-        p99_ms=metrics.get("p99_ms", 0),
-        error_rate=metrics.get("error_rate", 0),
-        total_requests=metrics.get("total_requests", 0),
+        actual_rps=m.get("actual_rps", 0),
+        p99_ms=m.get("p99_ms", m.get("p99_latency_ms", 0)),
+        error_rate=m.get("error_rate", 0),
+        total_requests=m.get("total_requests", 0),
     )
 
     return {
-        "p50_ms": metrics.get("p50_ms", 0.0),
-        "p95_ms": metrics.get("p95_ms", 0.0),
-        "p99_ms": metrics.get("p99_ms", 0.0),
-        "error_rate": metrics.get("error_rate", 0.0),
-        "actual_rps": metrics.get("actual_rps", 0.0),
-        "total_requests": metrics.get("total_requests", 0),
+        "p50_ms": m.get("p50_ms", m.get("p50_latency_ms", 0.0)),
+        "p95_ms": m.get("p95_ms", m.get("p95_latency_ms", 0.0)),
+        "p99_ms": m.get("p99_ms", m.get("p99_latency_ms", 0.0)),
+        "error_rate": m.get("error_rate", 0.0),
+        "actual_rps": m.get("actual_rps", 0.0),
+        "total_requests": m.get("total_requests", 0),
     }
 
 
