@@ -64,7 +64,7 @@ class CalibrationConfig(BaseModel):
 
     # Replica bounds
     min_k8s_replicas: int = 3
-    max_k8s_replicas: int = 10
+    max_k8s_replicas: int = 6  # Cap to match schedulable capacity (2 nodes × 3 pods at 300m)
     baseline_replicas_s3_s4: int = 3  # MUST equal min_k8s_replicas
 
     # Algorithm 2 (ClusterController) linear model
@@ -83,7 +83,7 @@ class CalibrationConfig(BaseModel):
     kp_burn: float = 0.5
     ki_burn: float = 0.05
     proactive_trend_threshold: float = 3.0
-    proactive_approach_ratio: float = 0.6
+    proactive_approach_ratio: float = 0.8  # Raise from 0.6: trigger at 80% capacity, not 60%
 
     # GRU model params — tuned via Optuna HPO (30 trials, val RMSE 4.75%)
     # HPO date: 2026-07-09. Prior manual tuning: hidden=64, layers=2, RMSE=6.01%

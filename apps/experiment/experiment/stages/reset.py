@@ -123,13 +123,14 @@ class ResetStage(BaseStage):
         _kubectl(["delete", "hpa", DEPLOYMENT, "--ignore-not-found"])
         _kubectl(["scale", f"deployment/{DEPLOYMENT}", "--replicas=1"])
         time.sleep(5)
+        cal = get_calibration()
         r = _kubectl(
             [
                 "autoscale",
                 f"deployment/{DEPLOYMENT}",
                 "--cpu-percent=50",
                 "--min=1",
-                "--max=10",
+                f"--max={cal.max_k8s_replicas}",
             ]
         )
         if r.returncode != 0:
