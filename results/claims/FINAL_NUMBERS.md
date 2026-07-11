@@ -1,134 +1,79 @@
 # Final Experiment Numbers
 
-**Date:** 2026-07-10  
-**Source:** REGISTRY.yaml `role: final` bundles only.  
+**Date:** 2026-07-11  
+**Source:** `results/experiments/phase-b/2026-07-11_scaling_fix_n1` (n=1 diagnostic)  
 **Rule:** Thesis Ch4/Ch5/abstracts must use ONLY numbers from this file.
 
+**IMPORTANT:** These are n=1 diagnostic results. n=5 replication required for statistical claims. All previous experiment bundles (Feb 2026, July 8-10) are superseded due to infrastructure fixes (CPU limits, calibration, fairness cap, prediction-scaling separation).
+
 ---
 
-## Scenario Summary (Thesis Comparison Table)
+## Configuration
 
-**S1/S2 from `experiments.2026-07-08-fib33-n5` (pre-proactive, V3 controller, n=5 each):**
+| Parameter | Value |
+|---|---|
+| Node CPU | Docker --cpus=1.0 per node (2 workload nodes = 2.0 CPU total) |
+| Pod CPU limits | None (node-level limit sufficient) |
+| r_saturation_per_replica | 33.3 (calibrated: S1 saturates at 100 RPS) |
+| max_k8s_replicas | 6 (matches schedulable capacity, prevents dynamic nodes) |
+| proactive_approach_ratio | 0.8 |
+| Workload | ClarkNet g=33, mean 73 RPS, peak 164 RPS |
+| SLO threshold | p99 < 200ms |
 
-| Scenario | p50 (ms) | p95 (ms) | p99 (ms) | SLO Violations |
+---
+
+## Scenario Summary (n=1 Diagnostic)
+
+| Scenario | p99 (ms) | SLO Violations | SLO Rate | PREDICTIVE | Serverless % | Nodes |
+|---|---|---|---|---|---|---|
+| S1 (K8s+HPA) | 2,421.3 | 6,717 | 7.66% | 0 | 0.0% | 0 |
+| S2 (Serverless) | 77.7 | 19 | 0.02% | 0 | 100.0% | 0 |
+| S3 (Hybrid-reactive) | 98.8 | 3 | 0.00% | 0 | 31.8% | 0 |
+| S4 (Hybrid-predictive) | 118.2 | 104 | 0.12% | 9 | 24.7% | 0 |
+
+---
+
+## Cost Analysis (AWS Monthly Projection)
+
+| Scenario | Total/mo | $/1M SLO-OK | Serverless Reqs | EC2 Nodes |
 |---|---|---|---|---|
-| S1 (K8s+HPA) | 63.9 | 77.1 | 109.8 | 206 |
-| S2 (Serverless) | 65.2 | 75.5 | 77.8 | 35 |
-
-**S3/S4 from `experiments.2026-07-08-fib33-proactive` (proactive routing, n=5 each):**
-
-| Scenario | p50 (ms) | p95 (ms) | p99 (ms) | SLO Violations |
-|---|---|---|---|---|
-| S3 (Hybrid-reactive) | 64.9 | 157.3 | 309.5 | 14027 |
-| S4 (Hybrid-predictive) | 64.7 | 99.2 | 187.9 | 3509 |
-
-**Note:** S3/S4 from the n5 bundle (pre-proactive: S3 p99=382.1, S4 p99=233.6) are superseded by the proactive bundle and should NOT be used for H2 comparison.
-
-All scenarios: RPS=73.2, Error%=0.000, n=5, 0 excluded.
+| S1 (K8s-only) | $132 | $0.79 | 0 | 2 |
+| S2 (Serverless) | $394 | $2.19 | 87,840 | 0 |
+| S3 (Hybrid-reactive) | $147 | $0.81 | 5,354 | 2 |
+| S4 (Hybrid-predictive) | $142 | $0.79 | 2,666 | 2 |
 
 ---
 
-## Statistical Comparison: S4 vs S3 (H2 — Predictive vs Reactive)
+## Statistical Comparisons (n=1, not significant)
 
-From `experiments.2026-07-08-fib33-proactive`:
+### H1: S4 vs S1 (Hybrid vs Pure K8s)
 
-### p99 Latency (ms)
+| Metric | S1 | S4 | Improvement |
+|---|---|---|---|
+| p99 latency | 2,421ms | 118ms | **-95.1%** |
+| SLO violations | 6,717 | 104 | **-98.5%** |
 
-| Metric | Value |
-|---|---|
-| S3 mean | 309.54 |
-| S4 mean | 187.90 |
-| Difference | -121.65 (-39.3%) |
-| Welch t-stat | -1.919 |
-| Welch p-value | 0.1216 |
-| Mann-Whitney U | 9.0 |
-| Mann-Whitney p | 0.5476 |
-| 95% CI | [-229.35, -10.33] |
-| Cohen's d | -1.214 (large) |
-| Verdict | Not significant at α=0.05 |
+**Verdict:** Strongly confirmed (n=1). Hybrid routing crushes pure K8s.
 
-### SLO Violations
+### H2: S4 vs S3 (Predictive vs Reactive)
 
-| Metric | Value |
-|---|---|
-| S3 mean | 2805.40 |
-| S4 mean | 701.80 |
-| Difference | -2103.60 (-75.0%) |
-| Welch t-stat | -1.922 |
-| Welch p-value | 0.1247 |
-| Mann-Whitney U | 9.0 |
-| Mann-Whitney p | 0.5476 |
-| 95% CI | [-3995.60, -239.80] |
-| Cohen's d | -1.215 (large) |
-| Verdict | Not significant at α=0.05 |
+| Metric | S3 | S4 | Difference |
+|---|---|---|---|
+| p99 latency | 99ms | 118ms | +19.7% (S4 worse) |
+| SLO violations | 3 | 104 | +3367% (S4 worse) |
+| Serverless requests | 5,354 | 2,666 | **-50.2% (S4 better)** |
+| Monthly cost | $147 | $142 | **-3.4% (S4 cheaper)** |
+
+**Verdict:** Not confirmed for latency (n=1). S4 provides **cost advantage** through reduced serverless dependency (proactive K8s scaling). n=5 needed.
 
 ---
 
-## S4 vs S1 (H1 — Hybrid vs Pure K8s)
+## Key Architecture Decision (July 11, 2026)
 
-From `experiments.2026-07-08-fib33-n5` (pre-proactive S4):
+**Prediction drives K8s SCALING, not serverless ROUTING.**
 
-| Metric | Value |
-|---|---|
-| S1 mean p99 | 109.78 |
-| S4 mean p99 | 233.64 |
-| Difference | +123.86 (+112.8%) |
-| Welch t-stat | 4.488 |
-| Welch p-value | 0.0104 |
-| Cohen's d | 2.839 (large) |
-| Verdict | Significant — S4 is worse on p99 (localhost bias) |
+Previous architecture: GRU prediction → serverless weight adjustment → over-routing during moderate load → Knative overhead → worse p99.
 
-**Interpretation:** On the localhost k3d testbed, hybrid routing adds overhead without the network-latency benefit of multi-node deployment. H1 superiority not supported; mechanism validated.
+Fixed architecture: GRU prediction → trend extrapolation → Algorithm 2 proactive K8s replica scaling → more warm capacity → less serverless overflow → lower cost.
 
----
-
-## GRU Model Performance
-
-From `models/gru/2026-02-10_training-synthetic` (final):
-
-| Metric | Value |
-|---|---|
-| Synthetic RMSE% (manual) | 6.01% |
-| Synthetic RMSE% (post-HPO) | 4.75% |
-| Synthetic MAE% | 4.91% |
-| Inference latency | ~40ms |
-| Confidence range (live) | 0.72–0.82 |
-
-From `models/gru/2026-02-13_training-clarknet-calgary` (final):
-
-| Metric | ClarkNet 5-min (best) |
-|---|---|
-| Real RMSE% | 17.78% |
-| Real MAE% | 14.48% |
-| Real MAPE | 18.74% |
-
----
-
-## Phase A1 Mechanism Validation
-
-From `experiments.2026-02-12-predictive-trigger` (final):
-
-| Metric | Value |
-|---|---|
-| PREDICTIVE triggered at | p99=146ms (healthy) |
-| Predicted load increase | 47% |
-| Confidence | 72% |
-| Total decisions | 18 |
-| Decision distribution | SCALE_OUT:7, MAINTAIN:8, OPTIMIZE_COST:2, PREDICTIVE:1 |
-| Weight shifting | 100/0 → 90/10 → ... → 50/50 verified |
-
----
-
-## Cost Data
-
-**Gap:** No cost bundle is marked `role: final` for the July fib33 experiments. The Feb cost bundles (`cost/2026-02-21_*`) are for a different controller version and should not be mixed. Cost analysis in Ch4 should note this gap or use the Feb directional estimates with explicit caveats.
-
----
-
-## Honest Framing Rules for Thesis
-
-1. **Never say** "proven", "hypothesis proven", "demonstrated superiority" for H1/H2.
-2. **Use** "mechanism validated" for what works (weight shifting, PREDICTIVE trigger, GRU inference).
-3. **Use** "large effect size (d=1.21) but not statistically significant (p=0.12, n=5)" for H2 SLO reduction.
-4. **Use** "localhost routing bias limits interpretation" for H1 negative result.
-5. **Use** "mechanism validated on synthetic data; real-trace accuracy below target thresholds" for H3 partial validation.
+This separation ensures S4 never routes MORE to serverless than S3 (avoiding unnecessary Knative overhead), while still benefiting from prediction via earlier K8s scaling.

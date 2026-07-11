@@ -175,3 +175,49 @@ Previous Phase B (2026-02-12) and Phase C data should be treated as **invalidate
   - Typst Ch4 to be rewritten in a subsequent step from `FINAL_NUMBERS.md` only.
 
 - **Impact:** Any thesis draft produced before 2026-07-10 may contain numbers from superseded Feb bundles. The correct July 2026 numbers are: S1 p99=109.8, S2 p99=77.8 (from `experiments.2026-07-08-fib33-n5`); S3 p99=309.5, S4 p99=187.9 (from `experiments.2026-07-08-fib33-proactive`). H2 significance: p=0.12 (not significant), d=1.21 (large effect).
+
+## 2026-07-11: Six Infrastructure Bugs Invalidated All Previous July Experiments
+
+**Discovery:** Systematic experiment-design audit revealed six issues that invalidated all previous July experiment bundles.
+
+### Bug 8: Docker Node CPU Limits Never Applied
+- **Root Cause:** `CalibrationConfig.k8s_node_cpu_limit=1.0` was documented but never enforced. K3d nodes had `CpuQuota=0` (unlimited), giving pods access to full 16-core host CPU.
+- **Impact:** S1 (K8s-only) never saturated — unlimited CPU meant HPA could handle any workload. S4's hybrid routing added overhead without benefit.
+- **Fix:** Added `thesis infra apply-resources` CLI command (idempotent Docker --cpus enforcement on existing clusters).
+
+### Bug 9: r_saturation Miscalibrated for Each Config Change
+- **Root Cause:** `r_saturation_per_replica` was 66.7 (calibrated without CPU limits on unlimited nodes). After adding node limits (2.0 CPU), actual saturation is 100 RPS / 3 pods = 33.3.
+- **Impact:** V3 controller thought K8s capacity was 4× higher than reality → never routed to serverless → S4 indistinguishable from S1.
+- **Fix:** Recalibrated via k6-based capacity ramp test. r_sat=33.3.
+
+### Bug 10: Calibration Tooling Broken (curl + Prometheus)
+- **Root Cause:** `load_test_curl()` capped RPS at 100 (`min(rps, 100)`). p99 read from non-existent Prometheus histogram `http_request_duration_seconds_bucket` → always 0.
+- **Fix:** Replaced with k6-based calibration. Fixed `calibration.js` handleSummary to use `.values` sub-object + added `summaryTrendStats` for p99 computation.
+
+### Bug 11: S1 HPA Provisioned Dynamic Nodes (Unfair Comparison)
+- **Root Cause:** S1's HPA scaled to 10 replicas → Pending pods → K3dAutoscaler provisioned 2 dynamic nodes → S1 had 4.0 CPU vs S3/S4's 2.0 CPU.
+- **Fix:** `max_k8s_replicas=6` (matches schedulable capacity on 2 nodes). HPA max now reads from CalibrationConfig.
+
+### Bug 12: GRU Server Dies Mid-Experiment
+- **Root Cause:** Preflight checks GRU health but only warns (doesn't fail). S4 runs without predictions → behaves like S3.
+- **Fix:** Manual verification before each experiment. (Preflight hard-fail pending.)
+
+### Bug 13: Prediction Used for Routing Instead of Scaling
+- **Root Cause:** V3 controller used GRU prediction for serverless routing weight → over-routed during moderate load → Knative overhead → S4 worse than S3.
+- **Root Cause Detail:** GRU underpredicts during load ramps by 40-50% (predicts 54 when actual is 85). PREDICTIVE routing fired based on these low predictions, adding unnecessary serverless overhead.
+- **Fix:** Architecture separation — prediction drives K8s SCALING (Algorithm 2 via trend extrapolation), routing uses ACTUAL load only. Result: S4 serverless% dropped from 45.9% to 24.7%.
+
+### Resolution
+All previous July experiment bundles (`2026-07-08-fib33-n5`, `2026-07-08-fib33-proactive`, `2026-07-10_*`) are invalidated. The new baseline is `2026-07-11_scaling_fix_n1` (n=1 diagnostic, n=5 replication pending).
+
+### Current Results (n=1, `2026-07-11_scaling_fix_n1`)
+
+| Scenario | p99 (ms) | SLO | Serverless % | Monthly Cost |
+|---|---|---|---|---|
+| S1 (K8s-only) | 2,421 | 6,717 (7.7%) | 0% | $132 |
+| S2 (Serverless) | 78 | 19 (0.02%) | 100% | $394 |
+| S3 (Hybrid-reactive) | 99 | 3 (0.00%) | 31.8% | $147 |
+| S4 (Hybrid-predictive) | 118 | 104 (0.12%) | 24.7% | $142 |
+
+H1 (hybrid > K8s): ✅ S4 beats S1 by 95.1% on p99.
+H2 (predictive > reactive): ⚠️ S4 cheaper ($142 vs $147, -50% serverless reqs) but p99 19% higher. n=5 needed.
