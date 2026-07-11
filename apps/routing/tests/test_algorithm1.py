@@ -2,6 +2,7 @@
 
 import pytest
 import time
+from collections import deque
 from unittest.mock import Mock
 
 from routing.algorithm.algorithm1_v1 import Algorithm1Controller, Algorithm1Config, RoutingDecision
@@ -817,3 +818,157 @@ class TestAlgorithm2ScalingForV3:
         # target = ceil(73 * 0.03 * 1.2) = ceil(2.63) = 3
         # 3 < 4 * 0.5 = 2? No → MAINTAIN
         assert decision.action == "MAINTAIN"
+
+
+class TestBurnRateAdjustment:
+    """Tests for one-sided (intervention-only) burn-rate adjustment."""
+
+    @pytest.fixture
+    def controller(self):
+        ctrl = Algorithm1ControllerV3(slo_monitor=MockSLOMonitor())
+        ctrl._prewarm_knative = Mock(return_value=True)
+        return ctrl
+
+    def test_burn_rate_zero_when_healthy(self, controller):
+        """Burn ratio <= 1.0 → adjustment = 0, integral reset."""
+        controller._experiment_start_time = time.time() - 600  # 10 min elapsed
+        controller.cumulative_violations = 200  # actual=0.33 < allowed=0.83
+        controller._burn_integral = 2.0  # Non-zero from prior cycles
+
+        adj = controller._burn_rate_adjustment()
+        assert adj == 0
+        assert controller._burn_integral == 0.0
+
+    def test_burn_rate_positive_when_exceeding(self, controller):
+        """Burn ratio > 1.0 → adjustment > 0."""
+        controller._experiment_start_time = time.time() - 600
+        controller.cumulative_violations = 1000  # actual=1.67 > allowed=0.83
+        controller._burn_integral = 0.0
+
+        adj = controller._burn_rate_adjustment()
+        assert adj > 0
+
+    def test_burn_rate_never_negative(self, controller):
+        """Adjustment is always >= 0 across various burn scenarios."""
+        for violations in [0, 100, 500, 1000, 5000]:
+            ctrl = Algorithm1ControllerV3(slo_monitor=MockSLOMonitor())
+            ctrl._experiment_start_time = time.time() - 600
+            ctrl.cumulative_violations = violations
+            ctrl._burn_integral = -3.0  # Try to force negative
+            adj = ctrl._burn_rate_adjustment()
+            assert adj >= 0, f"violations={violations} produced adj={adj}"
+
+
+class TestProactiveScalingDaemon:
+    """Tests for observed-vs-predictive target comparison and proactive hold."""
+
+    @pytest.fixture
+    def s4_daemon(self):
+        """Create an S4 daemon with mocked K8s scaler."""
+        from routing.daemon.service import RoutingDaemon
+        from infra.cluster.k8s.scaler import DeploymentStatus
+
+        daemon = RoutingDaemon(scenario="s4-hybrid-predictive")
+        daemon.k8s_scaler.get_deployment_status = Mock(
+            return_value=DeploymentStatus(
+                spec_replicas=3,
+                available_replicas=3,
+                updated_replicas=3,
+                ready=True,
+            )
+        )
+        daemon.k8s_scaler.scale = Mock(return_value=True)
+        daemon._last_prediction_ts = time.time()
+        assert daemon.cluster_controller is not None
+        daemon.cluster_controller.evaluate = Mock(wraps=daemon.cluster_controller.evaluate)
+        return daemon
+
+    @staticmethod
+    def _set_load(daemon, rps):
+        daemon._load_history = deque([rps] * 4, maxlen=60)
+
+    def test_proactive_target_strictly_greater(self, s4_daemon):
+        """predictive_target > observed_target → proactive=True."""
+        self._set_load(s4_daemon, 50)  # observed_target = 3
+        s4_daemon.algorithm_controller.last_predicted_upper = 150  # predictive_target = 6
+
+        s4_daemon._execute_algorithm2(None, None, 50)
+
+        assert s4_daemon._proactive_hold_until > time.time()
+        assert s4_daemon._proactive_held_target == 6
+
+    def test_proactive_target_equal_is_noop(self, s4_daemon):
+        """predictive_target == observed_target → proactive=False."""
+        self._set_load(s4_daemon, 50)  # observed_target = 3
+        s4_daemon.algorithm_controller.last_predicted_upper = 50  # same target = 3
+
+        s4_daemon._execute_algorithm2(None, None, 50)
+
+        assert s4_daemon.no_op_predictions == 1
+        assert s4_daemon._proactive_hold_until == 0.0
+
+    def test_proactive_hold_prevents_rollback(self, s4_daemon):
+        """During hold window, observed drop doesn't lower target."""
+        self._set_load(s4_daemon, 50)
+        s4_daemon.algorithm_controller.last_predicted_upper = 150  # predictive_target = 6
+
+        # First call: triggers proactive scale-up
+        s4_daemon._execute_algorithm2(None, None, 50)
+        assert s4_daemon._proactive_held_target == 6
+
+        # Prediction drops to observed level, but we're within hold window
+        s4_daemon.algorithm_controller.last_predicted_upper = 50
+        s4_daemon._execute_algorithm2(None, None, 50)
+
+        # evaluate called with held load (150), not observed (50)
+        last_signal = s4_daemon.cluster_controller.evaluate.call_args[0][0]
+        assert last_signal == 150
+        # no_op_predictions should NOT have been incremented (still proactive via hold)
+        assert s4_daemon.no_op_predictions == 0
+
+    def test_proactive_hold_expires(self, s4_daemon):
+        """After hold_until, observed target is used."""
+        self._set_load(s4_daemon, 50)
+        s4_daemon.algorithm_controller.last_predicted_upper = 150
+
+        # Trigger proactive
+        s4_daemon._execute_algorithm2(None, None, 50)
+        assert s4_daemon._proactive_held_target == 6
+
+        # Expire the hold
+        s4_daemon._proactive_hold_until = time.time() - 1
+
+        # Prediction is low, hold expired → use observed
+        s4_daemon.algorithm_controller.last_predicted_upper = 50
+        s4_daemon._execute_algorithm2(None, None, 50)
+
+        # evaluate called with observed load (50)
+        last_signal = s4_daemon.cluster_controller.evaluate.call_args[0][0]
+        assert last_signal == 50
+        assert s4_daemon.no_op_predictions == 1
+
+    def test_s3_never_uses_prediction(self):
+        """S3 scenario never has proactive=True."""
+        from routing.daemon.service import RoutingDaemon
+        from infra.cluster.k8s.scaler import DeploymentStatus
+
+        daemon = RoutingDaemon(scenario="s3-hybrid-reactive")
+        daemon.k8s_scaler.get_deployment_status = Mock(
+            return_value=DeploymentStatus(
+                spec_replicas=3,
+                available_replicas=3,
+                updated_replicas=3,
+                ready=True,
+            )
+        )
+        daemon.k8s_scaler.scale = Mock(return_value=True)
+        daemon._last_prediction_ts = time.time()
+        self._set_load(daemon, 50)
+        if isinstance(daemon.algorithm_controller, Algorithm1ControllerV3):
+            daemon.algorithm_controller.last_predicted_upper = 150
+
+        daemon._execute_algorithm2(None, None, 50)
+
+        assert daemon._proactive_hold_until == 0.0
+        assert daemon.no_op_predictions == 0
+        assert daemon.useful_proactive_scaleups == 0

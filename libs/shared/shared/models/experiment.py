@@ -173,6 +173,34 @@ class StatisticalComparison(BaseModel):
     mannwhitney_p_corrected: float = 1.0
 
 
+class PairedComparison(BaseModel):
+    """Paired statistical comparison between S3 and S4.
+
+    Unlike StatisticalComparison (unpaired), this model captures the paired
+    design where S3 and S4 are run back-to-back under identical conditions.
+    The primary endpoint is the paired difference (S4 - S3).
+    """
+
+    metric: str
+    label: str = ""
+    n_pairs: int
+    baseline_mean: float
+    comparison_mean: float
+    mean_difference: float
+    paired_ci_lower: float
+    paired_ci_upper: float
+    permutation_p_value: float  # one-sided: H1 = comparison < baseline
+    cohens_d_paired: float
+    effect_size_interpretation: str
+    # Individual pair values for audit
+    baseline_values: list[float] = Field(default_factory=list)
+    comparison_values: list[float] = Field(default_factory=list)
+    pair_ids: list[str] = Field(default_factory=list)
+    # Holm-Bonferroni corrected p-value for secondary endpoints
+    permutation_p_corrected: float = 1.0
+    h2_supported: bool = False
+
+
 class ExperimentConfig(BaseModel):
     """Configuration for an experiment run."""
 

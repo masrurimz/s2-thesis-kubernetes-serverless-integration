@@ -371,6 +371,223 @@ def trace_replay(
         raise typer.Exit(rc)
 
 
+@app.command(name="paired-run")
+def paired_run(
+    pairs: int = typer.Option(5, help="Number of counterbalanced S3/S4 pairs"),
+    duration: int = typer.Option(300, help="Workload duration in seconds per run"),
+    seed: int = typer.Option(42, help="Random seed for pair ordering"),
+    workload: str = typer.Option("clarknet", help="Workload trace"),
+    controller: str = typer.Option("v3", help="Controller version"),
+    calibration: Optional[str] = typer.Option(None, help="Path to CalibrationConfig JSON overrides"),
+    output: Optional[str] = typer.Option(None, help="Output directory"),
+    dry_run: bool = typer.Option(False, help="Print schedule without running"),
+) -> None:
+    """Run paired S3/S4 experiment for H2 decision (counterbalanced design).
+
+    Each pair runs S3 and S4 back-to-back under identical conditions.
+    Pair order alternates (S3→S4, S4→S3) to control for temporal drift.
+    The primary endpoint is paired p99 latency difference (S4 < S3).
+    """
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
+
+    from shared.progress import countdown
+
+    console = Console()
+
+    if calibration:
+        os.environ["CALIBRATION_OVERRIDE"] = calibration
+
+    datestamp = datetime.now().strftime("%Y-%m-%d")
+    output_dir = output or f"results/experiments/phase-b/{datestamp}_paired-h2"
+
+    os.environ["CONTROLLER_VERSION"] = controller
+    os.environ["WORKLOAD"] = workload
+
+    # Build counterbalanced schedule
+    rng = random.Random(seed)
+    pair_order = []
+    for i in range(pairs):
+        if i % 2 == 0:
+            pair_order.append((i + 1, "s3-hybrid-reactive", "s4-hybrid-predictive"))
+        else:
+            pair_order.append((i + 1, "s4-hybrid-predictive", "s3-hybrid-reactive"))
+    rng.shuffle(pair_order)
+
+    console.print(
+        Panel.fit(
+            f"[bold]Paired H2 Experiment[/bold]\n"
+            f"Pairs: {pairs}  |  Workload: {workload}\n"
+            f"Controller: {controller}  |  Seed: {seed}\n"
+            f"Output: {output_dir}",
+            border_style="cyan",
+        )
+    )
+
+    if dry_run:
+        table = Table(show_header=True, header_style="bold")
+        table.add_column("Pair", justify="right")
+        table.add_column("First")
+        table.add_column("Second")
+        for pid, first, second in pair_order:
+            table.add_row(str(pid), first, second)
+        console.print(table)
+        return
+
+    config = ExperimentConfig(
+        phase="experiments",
+        runs=1,
+        duration_sec=duration,
+        seed=seed,
+    )
+
+    # Collect paired results
+    s3_results: list[ExperimentResult] = []
+    s4_results: list[ExperimentResult] = []
+    pair_ids: list[str] = []
+
+    for idx, (pair_id, first_scenario, second_scenario) in enumerate(pair_order):
+        console.print(f"\n[bold cyan]Pair {pair_id}/{pairs}[/bold cyan]")
+        pid = f"pair_{pair_id:03d}"
+
+        # Run first scenario
+        console.print(f"  [dim]Running {first_scenario}...[/dim]")
+        r1 = _run_single(first_scenario, pair_id, idx * 2, config, output_dir, console=console)
+        if r1 is None:
+            console.print(f"  [red]First scenario {first_scenario} failed[/red]")
+            continue
+
+        if idx < len(pair_order) - 1:
+            with countdown(console, INTER_RUN_PAUSE_SEC, "Inter-run pause"):
+                pass
+
+        # Run second scenario
+        console.print(f"  [dim]Running {second_scenario}...[/dim]")
+        r2 = _run_single(second_scenario, pair_id, idx * 2 + 1, config, output_dir, console=console)
+        if r2 is None:
+            console.print(f"  [red]Second scenario {second_scenario} failed[/red]")
+            continue
+
+        # Record pair
+        if first_scenario == "s3-hybrid-reactive":
+            s3_results.append(r1)
+            s4_results.append(r2)
+        else:
+            s3_results.append(r2)
+            s4_results.append(r1)
+        pair_ids.append(pid)
+
+        console.print(
+            f"  [green]Pair {pair_id} complete: "
+            f"S3 p99={s3_results[-1].p99_latency_ms:.0f}ms, "
+            f"S4 p99={s4_results[-1].p99_latency_ms:.0f}ms[/green]"
+        )
+
+        if idx < len(pair_order) - 1:
+            with countdown(console, INTER_RUN_PAUSE_SEC, "Inter-pair pause"):
+                pass
+
+    # Paired statistical analysis
+    n_valid = len(pair_ids)
+    console.print(f"\n[bold green]✅ {n_valid} valid pairs completed[/bold green]")
+
+    if n_valid < 3:
+        console.print("[yellow]Too few valid pairs for statistical analysis (need ≥3)[/yellow]")
+        return
+
+    from analysis.comparison import run_paired_comparison, apply_holm_paired
+
+    # Primary endpoint: paired p99 latency
+    s3_p99 = [r.p99_latency_ms for r in s3_results]
+    s4_p99 = [r.p99_latency_ms for r in s4_results]
+    primary = run_paired_comparison(s3_p99, s4_p99, metric="p99_latency_ms", pair_ids=pair_ids, label="H2-primary")
+
+    # Secondary endpoints
+    secondaries = []
+    for metric_name, attr in [
+        ("p95_latency_ms", "p95_latency_ms"),
+        ("slo_violations_k6", "slo_violations_k6"),
+        ("throughput_rps", "throughput_rps"),
+        ("error_rate", "error_rate"),
+    ]:
+        s3_vals = [getattr(r, attr) for r in s3_results]
+        s4_vals = [getattr(r, attr) for r in s4_results]
+        secondaries.append(
+            run_paired_comparison(
+                s3_vals, s4_vals, metric=metric_name, pair_ids=pair_ids, label=f"H2-secondary-{metric_name}"
+            )
+        )
+
+    apply_holm_paired(secondaries)
+
+    # Report
+    console.print("\n[bold cyan]H2 Paired Analysis[/bold cyan]")
+    console.print("\n  [bold]Primary: p99 latency[/bold]")
+    console.print(f"    S3 mean: {primary.baseline_mean:.1f}ms  |  S4 mean: {primary.comparison_mean:.1f}ms")
+    console.print(f"    Mean diff: {primary.mean_difference:+.1f}ms")
+    console.print(f"    95% CI: [{primary.paired_ci_lower:+.1f}, {primary.paired_ci_upper:+.1f}]")
+    console.print(f"    Permutation p: {primary.permutation_p_value:.4f}")
+    console.print(f"    Cohen's d (paired): {primary.cohens_d_paired:.3f} ({primary.effect_size_interpretation})")
+    verdict = "✅ H2 SUPPORTED" if primary.h2_supported else "⚠️ H2 NOT SUPPORTED"
+    console.print(f"    Verdict: {verdict}")
+
+    console.print("\n  [bold]Secondary endpoints (Holm-corrected)[/bold]")
+    for s in secondaries:
+        sig = "✅" if s.permutation_p_corrected < 0.05 else "⚠️"
+        console.print(f"    {s.metric}: diff={s.mean_difference:+.2f}, p={s.permutation_p_corrected:.4f} {sig}")
+
+    # Save paired analysis
+    import json
+
+    analysis_path = Path(output_dir) / "paired_analysis.json"
+    analysis = {
+        "primary": primary.model_dump(),
+        "secondaries": [s.model_dump() for s in secondaries],
+        "n_pairs": n_valid,
+        "pair_ids": pair_ids,
+        "s3_p99_values": s3_p99,
+        "s4_p99_values": s4_p99,
+        "timestamp": datetime.now().isoformat(),
+    }
+    analysis_path.write_text(json.dumps(analysis, indent=2, default=str))
+    console.print(f"\n[dim]Paired analysis: {analysis_path}[/dim]")
+
+
+@app.command(name="gru-hpo")
+def gru_hpo(
+    data: str = typer.Option("clarknet", help="Dataset: clarknet or calgary"),
+    trials: int = typer.Option(30, help="Number of Optuna trials"),
+    output_dir: str = typer.Option("results/models/gru/hpo", help="Output directory"),
+    seed: int = typer.Option(42, help="Random seed"),
+) -> None:
+    """GRU hyperparameter optimization with temporal cross-validation.
+
+    Expanding-window temporal CV on the first 80% of data, with a promotion
+    gate comparing the best GRU against persistence and linear-trend baselines
+    on the untouched final 20% holdout.
+    """
+    from rich.console import Console
+
+    from experiment.tuning.gru_hpo import run_gru_hpo
+
+    console = Console()
+    console.print(f"[bold cyan]GRU HPO[/bold cyan]  data={data}  trials={trials}  seed={seed}")
+
+    result = run_gru_hpo(
+        data_source=data,
+        n_trials=trials,
+        output_dir=output_dir,
+        seed=seed,
+    )
+
+    console.print("\n[green]✅ HPO complete[/green]")
+    console.print(f"  Best trial:    #{result['best_trial']}")
+    console.print(f"  Best objective: {result['best_objective']:.4f}")
+    console.print(f"  Promoted:       {result['promoted_model'] or 'NONE (gate failed)'}")
+    console.print(f"[dim]Results: {result['output_dir']}[/dim]")
+
+
 def _make_ctx(
     config: ExperimentConfig,
     scenario: str,

@@ -127,6 +127,8 @@ class GRUClient:
                         horizon_values=data.get("horizon_values", []),
                         latency_ms=latency_ms,
                         success=True,
+                        point_forecasts=data.get("point_forecasts"),
+                        upper_forecasts=data.get("upper_forecasts"),
                     )
                 else:
                     last_error = f"HTTP {response.status_code}: {response.text[:100]}"

@@ -102,6 +102,7 @@ class Algorithm1ConfigV3:
     # Daemon compat
     healthy_margin: float = 0.7
     cooldown_sec: int = 15
+    proactive_hold_sec: float = 90.0  # Hold proactive scale-up target for forecast window
 
 
 class Algorithm1ControllerV3:
@@ -400,14 +401,15 @@ class Algorithm1ControllerV3:
         return k8s_weight, knative_weight, False
 
     def _burn_rate_adjustment(self) -> int:
-        """Compute BACC-inspired burn-rate adjustment to Knative weight.
+        """Compute one-sided BACC-inspired burn-rate adjustment to Knative weight.
 
-        Compares actual violation burn-rate against allowed budget burn-rate.
-        If burning too fast, increases Knative weight. If burning slow,
-        prefers K8s.
+        Intervention-only: when burn ratio is at or below budget, returns zero
+        and clears the integral. Only positive excess burn (burn_ratio > 1.0)
+        accumulates in the integral and adds Knative weight. This prevents the
+        persistent negative drag that penalised healthy S4 decisions.
 
         Returns:
-            Weight adjustment (positive = more Knative, negative = more K8s).
+            Non-negative weight adjustment (0 when healthy, positive when over budget).
         """
         elapsed = time.time() - (self._experiment_start_time or time.time())
         if elapsed < 1:
@@ -420,11 +422,15 @@ class Algorithm1ControllerV3:
             return 0
 
         burn_ratio = actual_burn / allowed_burn
-        burn_error = burn_ratio - 1.0  # Positive = overspending budget
 
-        self._burn_integral += burn_error
-        self._burn_integral = max(-5.0, min(5.0, self._burn_integral))  # Anti-windup
+        if burn_ratio <= 1.0:
+            # Healthy: reset integral, no adjustment
+            self._burn_integral = 0.0
+            return 0
 
+        # Excess burn: accumulate positive error only
+        burn_error = burn_ratio - 1.0
+        self._burn_integral = min(5.0, self._burn_integral + burn_error)
         adjustment = int((self.config.kp_burn * burn_error + self.config.ki_burn * self._burn_integral) * 10)
 
         logger.debug(
@@ -437,7 +443,7 @@ class Algorithm1ControllerV3:
             budget_remaining=self.config.total_budget_violations - self.cumulative_violations,
         )
 
-        return adjustment
+        return max(0, adjustment)
 
     def _build_reason(self, action: str, total_load: float, k8s_capacity: float, deficit: bool) -> str:
         """Build human-readable reason string."""

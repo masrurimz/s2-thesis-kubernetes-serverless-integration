@@ -1,0 +1,643 @@
+2026-07-11 02:36:16 [info     ] SLOMonitor initialized         threshold_ms=200.0 violation_window=30
+2026-07-11 02:36:16 [info     ] Algorithm1ControllerV3 initialized max_knative=50 r_saturation=33.3 target_cpu_util=0.5 total_budget=1000
+2026-07-11 02:36:16 [info     ] Using V3 controller (Capacity-Driven) scenario=s4-hybrid-predictive version=v3
+2026-07-11 02:36:16 [info     ] HAProxyWeightAdjuster initialized backend=servers host=localhost port=19999
+2026-07-11 02:36:16 [info     ] GRUClient initialized          base_url=http://localhost:8090
+2026-07-11 02:36:16 [info     ] K8sScaler initialized          deployment=test-app-warm namespace=default
+2026-07-11 02:36:16 [info     ] RoutingDaemon initialized      decision_interval=15 description='Algorithm 1 with GRU predictions (Algorithm 2)' scenario=s4-hybrid-predictive use_algorithm=True use_predictions=True
+2026-07-11 02:36:16 [info     ] Starting routing daemon        interval=15 scenario=s4-hybrid-predictive
+2026-07-11 02:36:16 [info     ] Weights updated                k3s=80 knative=20
+2026-07-11 02:36:16 [info     ] Initial weights applied        k3s=80 knative=20
+2026-07-11 02:36:16 [debug    ] HAProxy fallback primed        total_requests=0
+2026-07-11 02:36:17 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-11 02:36:17 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.14 p99=0.0
+2026-07-11 02:36:32 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-11 02:36:32 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=105.89 p99=0.0
+2026-07-11 02:36:47 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-11 02:36:47 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=112.64 p99=0.0
+2026-07-11 02:37:02 [debug    ] HAProxy fallback latency       delta_requests=640 interval_avg_ms=65.0 max_rtime_ms=132.0 p99_est=130.0
+2026-07-11 02:37:02 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-5 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:37:02 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=1000 burn_adjustment=-5 burst_ratio=0 capacity_deficit=False confidence=0 current_load=42.28429477232026 decision_id=42d9a183 k8s_capacity=49.9 k8s_weight=100 knative_weight=0 p99=130.0 predicted_load=0 r_effective=16.6 serverless_enabled=False total_load=42.3 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-11 02:37:02 [info     ] Weights updated                k3s=100 knative=0
+2026-07-11 02:37:02 [info     ] Weights updated                action=RECOVERY reason='load=42RPS | k8s_cap=50RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-11 02:37:02 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=21.14214738616013 required_resources=0.635 target_replicas=3
+2026-07-11 02:37:02 [debug    ] Decision loop completed        action=RECOVERY latency_ms=139.25 p99=130.0
+2026-07-11 02:37:17 [debug    ] HAProxy fallback latency       delta_requests=666 interval_avg_ms=63.04 max_rtime_ms=132.0 p99_est=126.08
+2026-07-11 02:37:17 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-6 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:37:17 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=43.13804819251504 required_resources=1.295 target_replicas=3
+2026-07-11 02:37:17 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=105.41 p99=126.07807807807808
+2026-07-11 02:37:32 [debug    ] HAProxy fallback latency       delta_requests=716 interval_avg_ms=66.82 max_rtime_ms=132.0 p99_est=132.0
+2026-07-11 02:37:33 [debug    ] GRU prediction received        confidence=0.72 latency_ms=538.74 predicted=59
+2026-07-11 02:37:33 [debug    ] Using GRU prediction           confidence=0.72 predicted=59
+2026-07-11 02:37:33 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-6 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:37:33 [info     ] Knative pre-warm OK            cold_start_ms=2.6
+2026-07-11 02:37:33 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=-6 burst_ratio=0.1534 capacity_deficit=False confidence=0.72 current_load=47.33291891693534 decision_id=74533755 k8s_capacity=49.9 k8s_weight=90 knative_weight=10 p99=132.0 predicted_load=59 r_effective=16.6 serverless_enabled=True total_load=59 weights_after={'k3s': 90, 'knative': 10} weights_before={'k3s': 100, 'knative': 0}
+2026-07-11 02:37:33 [info     ] Weights updated                k3s=90 knative=10
+2026-07-11 02:37:33 [info     ] Weights updated                action=PREDICTIVE reason='load=59RPS | k8s_cap=50RPS | (prediction-driven)' weights={'k3s': 90, 'knative': 10}
+2026-07-11 02:37:33 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=59.0 required_resources=1.772 target_replicas=3
+2026-07-11 02:37:33 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=655.54 p99=132.0
+2026-07-11 02:37:48 [debug    ] HAProxy fallback latency       delta_requests=854 interval_avg_ms=65.0 max_rtime_ms=132.0 p99_est=130.0
+2026-07-11 02:37:48 [debug    ] GRU prediction received        confidence=0.72 latency_ms=15.39 predicted=59
+2026-07-11 02:37:48 [debug    ] Using GRU prediction           confidence=0.72 predicted=59
+2026-07-11 02:37:48 [debug    ] Proactive amplification        amplified=75.0 approach_ratio=1.09 load_trend=4.1 raw_pred=59
+2026-07-11 02:37:48 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:37:48 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.3339 capacity_deficit=False confidence=0.72 current_load=54.54890399428965 decision_id=d5c2c01b k8s_capacity=49.9 k8s_weight=73 knative_weight=27 p99=130.0 predicted_load=59 r_effective=16.6 serverless_enabled=True total_load=75.0 weights_after={'k3s': 73, 'knative': 27} weights_before={'k3s': 90, 'knative': 10}
+2026-07-11 02:37:48 [info     ] Weights updated                k3s=73 knative=27
+2026-07-11 02:37:48 [info     ] Weights updated                action=PREDICTIVE reason='load=75RPS | k8s_cap=50RPS | (prediction-driven)' weights={'k3s': 73, 'knative': 27}
+2026-07-11 02:37:48 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=59.0 required_resources=1.772 target_replicas=3
+2026-07-11 02:37:48 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=129.14 p99=130.0
+2026-07-11 02:38:03 [debug    ] HAProxy fallback latency       delta_requests=761 interval_avg_ms=65.0 max_rtime_ms=132.0 p99_est=130.0
+2026-07-11 02:38:03 [debug    ] GRU prediction received        confidence=0.82 latency_ms=14.83 predicted=58
+2026-07-11 02:38:03 [debug    ] Using GRU prediction           confidence=0.82 predicted=58
+2026-07-11 02:38:03 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:38:03 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.1388 capacity_deficit=False confidence=0.82 current_load=50.30010897240831 decision_id=73846a29 k8s_capacity=49.9 k8s_weight=93 knative_weight=7 p99=130.0 predicted_load=58 r_effective=16.6 serverless_enabled=True total_load=58 weights_after={'k3s': 93, 'knative': 7} weights_before={'k3s': 73, 'knative': 27}
+2026-07-11 02:38:03 [info     ] Weights updated                k3s=93 knative=7
+2026-07-11 02:38:03 [info     ] Weights updated                action=RECOVERY reason='load=58RPS | k8s_cap=50RPS | (reducing-serverless)' weights={'k3s': 93, 'knative': 7}
+2026-07-11 02:38:03 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=58.0 required_resources=1.742 target_replicas=3
+2026-07-11 02:38:03 [debug    ] Decision loop completed        action=RECOVERY latency_ms=165.56 p99=130.0
+2026-07-11 02:38:18 [debug    ] HAProxy fallback latency       delta_requests=540 interval_avg_ms=65.0 max_rtime_ms=132.0 p99_est=130.0
+2026-07-11 02:38:18 [debug    ] GRU prediction received        confidence=0.78 latency_ms=14.37 predicted=57
+2026-07-11 02:38:18 [debug    ] Using GRU prediction           confidence=0.78 predicted=57
+2026-07-11 02:38:18 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:38:18 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.1237 capacity_deficit=False confidence=0.78 current_load=35.671670810144356 decision_id=40e124de k8s_capacity=49.9 k8s_weight=94 knative_weight=6 p99=130.0 predicted_load=57 r_effective=16.6 serverless_enabled=True total_load=57 weights_after={'k3s': 94, 'knative': 6} weights_before={'k3s': 93, 'knative': 7}
+2026-07-11 02:38:18 [info     ] Weights updated                k3s=94 knative=6
+2026-07-11 02:38:18 [info     ] Weights updated                action=RECOVERY reason='load=57RPS | k8s_cap=50RPS | (reducing-serverless)' weights={'k3s': 94, 'knative': 6}
+2026-07-11 02:38:18 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=57.0 required_resources=1.712 target_replicas=3
+2026-07-11 02:38:18 [debug    ] Decision loop completed        action=RECOVERY latency_ms=161.58 p99=130.0
+2026-07-11 02:38:33 [debug    ] HAProxy fallback latency       delta_requests=410 interval_avg_ms=53.81 max_rtime_ms=132.0 p99_est=107.62
+2026-07-11 02:38:33 [debug    ] GRU prediction received        confidence=0.72 latency_ms=15.02 predicted=55
+2026-07-11 02:38:33 [debug    ] Using GRU prediction           confidence=0.72 predicted=55
+2026-07-11 02:38:33 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:38:33 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.0918 capacity_deficit=False confidence=0.72 current_load=27.043491190398065 decision_id=cf24aaac k8s_capacity=49.9 k8s_weight=97 knative_weight=3 p99=107.6 predicted_load=55 r_effective=16.6 serverless_enabled=True total_load=55 weights_after={'k3s': 97, 'knative': 3} weights_before={'k3s': 94, 'knative': 6}
+2026-07-11 02:38:33 [info     ] Weights updated                k3s=97 knative=3
+2026-07-11 02:38:33 [info     ] Weights updated                action=RECOVERY reason='load=55RPS | k8s_cap=50RPS | (reducing-serverless)' weights={'k3s': 97, 'knative': 3}
+2026-07-11 02:38:33 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=55.0 required_resources=1.652 target_replicas=3
+2026-07-11 02:38:33 [debug    ] Decision loop completed        action=RECOVERY latency_ms=166.67 p99=107.62439024390244
+2026-07-11 02:38:48 [debug    ] HAProxy fallback latency       delta_requests=358 interval_avg_ms=77.81 max_rtime_ms=132.0 p99_est=132.0
+2026-07-11 02:38:48 [debug    ] GRU prediction received        confidence=0.72 latency_ms=14.19 predicted=54
+2026-07-11 02:38:48 [debug    ] Using GRU prediction           confidence=0.72 predicted=54
+2026-07-11 02:38:48 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:38:48 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.075 capacity_deficit=False confidence=0.72 current_load=23.603307957229113 decision_id=794ad756 k8s_capacity=49.9 k8s_weight=99 knative_weight=1 p99=132.0 predicted_load=54 r_effective=16.6 serverless_enabled=True total_load=54 weights_after={'k3s': 99, 'knative': 1} weights_before={'k3s': 97, 'knative': 3}
+2026-07-11 02:38:48 [info     ] Weights updated                k3s=99 knative=1
+2026-07-11 02:38:48 [info     ] Weights updated                action=RECOVERY reason='load=54RPS | k8s_cap=50RPS | (reducing-serverless)' weights={'k3s': 99, 'knative': 1}
+2026-07-11 02:38:48 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=54.0 required_resources=1.622 target_replicas=3
+2026-07-11 02:38:48 [debug    ] Decision loop completed        action=RECOVERY latency_ms=158.21 p99=132.0
+2026-07-11 02:39:03 [debug    ] HAProxy fallback latency       delta_requests=499 interval_avg_ms=65.0 max_rtime_ms=132.0 p99_est=130.0
+2026-07-11 02:39:04 [debug    ] GRU prediction received        confidence=0.72 latency_ms=15.6 predicted=53
+2026-07-11 02:39:04 [debug    ] Using GRU prediction           confidence=0.72 predicted=53
+2026-07-11 02:39:04 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:39:04 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.0575 capacity_deficit=False confidence=0.72 current_load=32.91931484288456 decision_id=a246e63f k8s_capacity=49.9 k8s_weight=100 knative_weight=0 p99=130.0 predicted_load=53 r_effective=16.6 serverless_enabled=False total_load=53 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 99, 'knative': 1}
+2026-07-11 02:39:04 [info     ] Weights updated                k3s=100 knative=0
+2026-07-11 02:39:04 [info     ] Weights updated                action=RECOVERY reason='load=53RPS | k8s_cap=50RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-11 02:39:04 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=53.0 required_resources=1.592 target_replicas=3
+2026-07-11 02:39:04 [debug    ] Decision loop completed        action=RECOVERY latency_ms=155.43 p99=130.0
+2026-07-11 02:39:19 [debug    ] HAProxy fallback latency       delta_requests=789 interval_avg_ms=65.0 max_rtime_ms=132.0 p99_est=130.0
+2026-07-11 02:39:19 [debug    ] GRU prediction received        confidence=0.72 latency_ms=14.84 predicted=54
+2026-07-11 02:39:19 [debug    ] Using GRU prediction           confidence=0.72 predicted=54
+2026-07-11 02:39:19 [debug    ] Proactive amplification        amplified=72.4 approach_ratio=1.04 load_trend=4.1 raw_pred=54
+2026-07-11 02:39:19 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:39:19 [info     ] Knative pre-warm OK            cold_start_ms=2.5
+2026-07-11 02:39:19 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.31 capacity_deficit=False confidence=0.72 current_load=51.99351677673477 decision_id=341e38df k8s_capacity=49.9 k8s_weight=75 knative_weight=25 p99=130.0 predicted_load=54 r_effective=16.6 serverless_enabled=True total_load=72.4 weights_after={'k3s': 75, 'knative': 25} weights_before={'k3s': 100, 'knative': 0}
+2026-07-11 02:39:19 [info     ] Weights updated                k3s=75 knative=25
+2026-07-11 02:39:19 [info     ] Weights updated                action=PREDICTIVE reason='load=72RPS | k8s_cap=50RPS | (prediction-driven)' weights={'k3s': 75, 'knative': 25}
+2026-07-11 02:39:19 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=54.0 required_resources=1.622 target_replicas=3
+2026-07-11 02:39:19 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=133.49 p99=130.0
+2026-07-11 02:39:34 [debug    ] HAProxy fallback latency       delta_requests=804 interval_avg_ms=73.75 max_rtime_ms=132.0 p99_est=132.0
+2026-07-11 02:39:34 [debug    ] GRU prediction received        confidence=0.72 latency_ms=14.92 predicted=54
+2026-07-11 02:39:34 [debug    ] Using GRU prediction           confidence=0.72 predicted=54
+2026-07-11 02:39:34 [debug    ] Proactive amplification        amplified=85.7 approach_ratio=1.06 load_trend=6.5 raw_pred=54
+2026-07-11 02:39:34 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:39:34 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.4174 capacity_deficit=False confidence=0.72 current_load=53.12601870005002 decision_id=c7cafdeb k8s_capacity=49.9 k8s_weight=65 knative_weight=35 p99=132.0 predicted_load=54 r_effective=16.6 serverless_enabled=True total_load=85.7 weights_after={'k3s': 65, 'knative': 35} weights_before={'k3s': 75, 'knative': 25}
+2026-07-11 02:39:34 [info     ] Weights updated                k3s=65 knative=35
+2026-07-11 02:39:34 [info     ] Weights updated                action=PREDICTIVE reason='load=86RPS | k8s_cap=50RPS | (prediction-driven)' weights={'k3s': 65, 'knative': 35}
+2026-07-11 02:39:34 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=54.0 required_resources=1.622 target_replicas=3
+2026-07-11 02:39:34 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=127.94 p99=132.0
+2026-07-11 02:39:49 [debug    ] HAProxy fallback latency       delta_requests=630 interval_avg_ms=53.83 max_rtime_ms=132.0 p99_est=107.66
+2026-07-11 02:39:49 [debug    ] GRU prediction received        confidence=0.72 latency_ms=15.04 predicted=53
+2026-07-11 02:39:49 [debug    ] Using GRU prediction           confidence=0.72 predicted=53
+2026-07-11 02:39:49 [debug    ] Proactive amplification        amplified=64.3 approach_ratio=0.84 load_trend=4.5 raw_pred=53
+2026-07-11 02:39:49 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:39:49 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.2237 capacity_deficit=False confidence=0.72 current_load=41.7098955650561 decision_id=bae8f2e4 k8s_capacity=49.9 k8s_weight=84 knative_weight=16 p99=107.7 predicted_load=53 r_effective=16.6 serverless_enabled=True total_load=64.3 weights_after={'k3s': 84, 'knative': 16} weights_before={'k3s': 65, 'knative': 35}
+2026-07-11 02:39:49 [info     ] Weights updated                k3s=84 knative=16
+2026-07-11 02:39:49 [info     ] Weights updated                action=RECOVERY reason='load=64RPS | k8s_cap=50RPS | (reducing-serverless)' weights={'k3s': 84, 'knative': 16}
+2026-07-11 02:39:49 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=53.0 required_resources=1.592 target_replicas=3
+2026-07-11 02:39:49 [debug    ] Decision loop completed        action=RECOVERY latency_ms=165.37 p99=107.66031746031746
+2026-07-11 02:40:04 [debug    ] HAProxy fallback latency       delta_requests=669 interval_avg_ms=77.46 max_rtime_ms=132.0 p99_est=132.0
+2026-07-11 02:40:04 [debug    ] GRU prediction received        confidence=0.75 latency_ms=15.1 predicted=53
+2026-07-11 02:40:04 [debug    ] Using GRU prediction           confidence=0.75 predicted=53
+2026-07-11 02:40:04 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:40:04 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.0575 capacity_deficit=False confidence=0.75 current_load=44.04840541206155 decision_id=e7e01be1 k8s_capacity=49.9 k8s_weight=100 knative_weight=0 p99=132.0 predicted_load=53 r_effective=16.6 serverless_enabled=False total_load=53 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 84, 'knative': 16}
+2026-07-11 02:40:04 [info     ] Weights updated                k3s=100 knative=0
+2026-07-11 02:40:04 [info     ] Weights updated                action=RECOVERY reason='load=53RPS | k8s_cap=50RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-11 02:40:04 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=53.0 required_resources=1.592 target_replicas=3
+2026-07-11 02:40:04 [debug    ] Decision loop completed        action=RECOVERY latency_ms=158.99 p99=132.0
+2026-07-11 02:40:19 [debug    ] HAProxy fallback latency       delta_requests=843 interval_avg_ms=66.0 max_rtime_ms=147.0 p99_est=132.0
+2026-07-11 02:40:19 [debug    ] GRU prediction received        confidence=0.8 latency_ms=14.73 predicted=53
+2026-07-11 02:40:19 [debug    ] Using GRU prediction           confidence=0.8 predicted=53
+2026-07-11 02:40:19 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:40:19 [info     ] Knative pre-warm OK            cold_start_ms=2.6
+2026-07-11 02:40:19 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.1018 capacity_deficit=False confidence=0.8 current_load=55.60989109166007 decision_id=d332d59a k8s_capacity=49.9 k8s_weight=96 knative_weight=4 p99=132.0 predicted_load=53 r_effective=16.6 serverless_enabled=True total_load=55.6 weights_after={'k3s': 96, 'knative': 4} weights_before={'k3s': 100, 'knative': 0}
+2026-07-11 02:40:19 [info     ] Weights updated                k3s=96 knative=4
+2026-07-11 02:40:19 [info     ] Weights updated                action=REACTIVE reason='load=56RPS | k8s_cap=50RPS | (burst-routing)' weights={'k3s': 96, 'knative': 4}
+2026-07-11 02:40:19 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=53.0 required_resources=1.592 target_replicas=3
+2026-07-11 02:40:19 [debug    ] Decision loop completed        action=REACTIVE latency_ms=139.93 p99=132.0
+2026-07-11 02:40:34 [debug    ] HAProxy fallback latency       delta_requests=918 interval_avg_ms=44.0 max_rtime_ms=147.0 p99_est=88.0
+2026-07-11 02:40:34 [debug    ] GRU prediction received        confidence=0.77 latency_ms=14.88 predicted=54
+2026-07-11 02:40:34 [debug    ] Using GRU prediction           confidence=0.77 predicted=54
+2026-07-11 02:40:34 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:40:34 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.1762 capacity_deficit=False confidence=0.77 current_load=60.632956700383374 decision_id=5fba8d29 k8s_capacity=49.9 k8s_weight=89 knative_weight=11 p99=88.0 predicted_load=54 r_effective=16.6 serverless_enabled=True total_load=60.6 weights_after={'k3s': 89, 'knative': 11} weights_before={'k3s': 96, 'knative': 4}
+2026-07-11 02:40:34 [info     ] Weights updated                k3s=89 knative=11
+2026-07-11 02:40:34 [info     ] Weights updated                action=REACTIVE reason='load=61RPS | k8s_cap=50RPS | (burst-routing)' weights={'k3s': 89, 'knative': 11}
+2026-07-11 02:40:34 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=58.121423896021724 required_resources=1.745 target_replicas=3
+2026-07-11 02:40:34 [debug    ] Decision loop completed        action=REACTIVE latency_ms=120.93 p99=88.00435729847494
+2026-07-11 02:40:49 [debug    ] HAProxy fallback latency       delta_requests=933 interval_avg_ms=64.0 max_rtime_ms=147.0 p99_est=128.0
+2026-07-11 02:40:50 [debug    ] GRU prediction received        confidence=0.76 latency_ms=14.39 predicted=54
+2026-07-11 02:40:50 [debug    ] Using GRU prediction           confidence=0.76 predicted=54
+2026-07-11 02:40:50 [debug    ] Proactive amplification        amplified=86.7 approach_ratio=1.24 load_trend=5.0 raw_pred=54
+2026-07-11 02:40:50 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:40:50 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.4238 capacity_deficit=False confidence=0.76 current_load=61.702485112070526 decision_id=073b6379 k8s_capacity=49.9 k8s_weight=64 knative_weight=36 p99=128.0 predicted_load=54 r_effective=16.6 serverless_enabled=True total_load=86.7 weights_after={'k3s': 64, 'knative': 36} weights_before={'k3s': 89, 'knative': 11}
+2026-07-11 02:40:50 [info     ] Weights updated                k3s=64 knative=36
+2026-07-11 02:40:50 [info     ] Weights updated                action=PREDICTIVE reason='load=87RPS | k8s_cap=50RPS | (prediction-driven)' weights={'k3s': 64, 'knative': 36}
+2026-07-11 02:40:50 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=61.16772090622695 required_resources=1.837 target_replicas=3
+2026-07-11 02:40:50 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=128.25 p99=128.0
+2026-07-11 02:41:05 [debug    ] HAProxy fallback latency       delta_requests=1012 interval_avg_ms=75.9 max_rtime_ms=147.0 p99_est=147.0
+2026-07-11 02:41:05 [debug    ] GRU prediction received        confidence=0.78 latency_ms=14.75 predicted=54
+2026-07-11 02:41:05 [debug    ] Using GRU prediction           confidence=0.78 predicted=54
+2026-07-11 02:41:05 [debug    ] Proactive amplification        amplified=95.3 approach_ratio=1.34 load_trend=5.7 raw_pred=54
+2026-07-11 02:41:05 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:41:05 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.4759 capacity_deficit=False confidence=0.78 current_load=66.82777751030187 decision_id=da90a48e k8s_capacity=49.9 k8s_weight=59 knative_weight=41 p99=147.0 predicted_load=54 r_effective=16.6 serverless_enabled=True total_load=95.3 weights_after={'k3s': 59, 'knative': 41} weights_before={'k3s': 64, 'knative': 36}
+2026-07-11 02:41:05 [info     ] Weights updated                k3s=59 knative=41
+2026-07-11 02:41:05 [info     ] Weights updated                action=PREDICTIVE reason='load=95RPS | k8s_cap=50RPS | (prediction-driven)' weights={'k3s': 59, 'knative': 41}
+2026-07-11 02:41:05 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.2651313111862 required_resources=1.93 target_replicas=3
+2026-07-11 02:41:05 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=129.12 p99=147.0
+2026-07-11 02:41:20 [debug    ] HAProxy fallback latency       delta_requests=1127 interval_avg_ms=65.0 max_rtime_ms=147.0 p99_est=130.0
+2026-07-11 02:41:20 [debug    ] GRU prediction received        confidence=0.81 latency_ms=15.33 predicted=55
+2026-07-11 02:41:20 [debug    ] Using GRU prediction           confidence=0.81 predicted=55
+2026-07-11 02:41:20 [debug    ] Proactive amplification        amplified=98.2 approach_ratio=1.49 load_trend=4.7 raw_pred=55
+2026-07-11 02:41:20 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:41:20 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.4916 capacity_deficit=False confidence=0.81 current_load=74.55715674258194 decision_id=5410787a k8s_capacity=49.9 k8s_weight=57 knative_weight=43 p99=130.0 predicted_load=55 r_effective=16.6 serverless_enabled=True total_load=98.2 weights_after={'k3s': 57, 'knative': 43} weights_before={'k3s': 59, 'knative': 41}
+2026-07-11 02:41:20 [info     ] Weights updated                k3s=57 knative=43
+2026-07-11 02:41:20 [info     ] Weights updated                action=PREDICTIVE reason='load=98RPS | k8s_cap=50RPS | (prediction-driven)' weights={'k3s': 57, 'knative': 43}
+2026-07-11 02:41:20 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=70.6924671264419 required_resources=2.123 target_replicas=3
+2026-07-11 02:41:20 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=128.51 p99=130.0
+2026-07-11 02:41:35 [debug    ] HAProxy fallback latency       delta_requests=1287 interval_avg_ms=53.77 max_rtime_ms=147.0 p99_est=107.54
+2026-07-11 02:41:35 [debug    ] GRU prediction received        confidence=0.78 latency_ms=15.04 predicted=56
+2026-07-11 02:41:35 [debug    ] Using GRU prediction           confidence=0.78 predicted=56
+2026-07-11 02:41:35 [debug    ] Proactive amplification        amplified=115.5 approach_ratio=1.7 load_trend=6.1 raw_pred=56
+2026-07-11 02:41:35 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:41:35 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=79.78046664458422 required_resources=2.396 target_replicas=3
+2026-07-11 02:41:35 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=129.31 p99=107.53535353535354
+2026-07-11 02:41:50 [debug    ] HAProxy fallback latency       delta_requests=1471 interval_avg_ms=74.83 max_rtime_ms=147.0 p99_est=147.0
+2026-07-11 02:41:50 [debug    ] GRU prediction received        confidence=0.75 latency_ms=15.06 predicted=58
+2026-07-11 02:41:50 [debug    ] Using GRU prediction           confidence=0.75 predicted=58
+2026-07-11 02:41:50 [debug    ] Proactive amplification        amplified=141.5 approach_ratio=1.95 load_trend=8.9 raw_pred=58
+2026-07-11 02:41:50 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:41:50 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=91.08243021533592 required_resources=2.735 target_replicas=4
+2026-07-11 02:41:50 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=4
+2026-07-11 02:41:50 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=169.26 p99=147.0
+2026-07-11 02:42:05 [debug    ] HAProxy fallback latency       delta_requests=1689 interval_avg_ms=106.72 max_rtime_ms=147.0 p99_est=147.0
+2026-07-11 02:42:05 [debug    ] GRU prediction received        confidence=0.74 latency_ms=15.11 predicted=60
+2026-07-11 02:42:05 [debug    ] Using GRU prediction           confidence=0.74 predicted=60
+2026-07-11 02:42:05 [debug    ] Proactive amplification        amplified=166.8 approach_ratio=1.67 load_trend=11.1 raw_pred=60
+2026-07-11 02:42:05 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:42:05 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=104.21958624860677 required_resources=3.13 target_replicas=4
+2026-07-11 02:42:05 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=128.89 p99=147.0
+2026-07-11 02:42:20 [debug    ] HAProxy fallback latency       delta_requests=1900 interval_avg_ms=58.73 max_rtime_ms=156.0 p99_est=117.46
+2026-07-11 02:42:20 [debug    ] GRU prediction received        confidence=0.73 latency_ms=15.0 predicted=62
+2026-07-11 02:42:20 [debug    ] Using GRU prediction           confidence=0.73 predicted=62
+2026-07-11 02:42:20 [debug    ] Proactive amplification        amplified=189.4 approach_ratio=1.89 load_trend=12.8 raw_pred=62
+2026-07-11 02:42:20 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:42:20 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=118.43132625204612 required_resources=3.556 target_replicas=5
+2026-07-11 02:42:20 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=5
+2026-07-11 02:42:20 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=170.22 p99=117.45684210526316
+2026-07-11 02:42:35 [debug    ] HAProxy fallback latency       delta_requests=1697 interval_avg_ms=43.0 max_rtime_ms=156.0 p99_est=86.0
+2026-07-11 02:42:35 [debug    ] GRU prediction received        confidence=0.78 latency_ms=15.15 predicted=63
+2026-07-11 02:42:35 [debug    ] Using GRU prediction           confidence=0.78 predicted=63
+2026-07-11 02:42:36 [debug    ] Proactive amplification        amplified=145.6 approach_ratio=1.34 load_trend=6.7 raw_pred=63
+2026-07-11 02:42:36 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:42:36 [info     ] controller_decision_v3         action=RECOVERY available_replicas=5 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.4282 capacity_deficit=False confidence=0.78 current_load=111.93247571530358 decision_id=cdd47b1b k8s_capacity=83.2 k8s_weight=64 knative_weight=36 p99=86.0 predicted_load=63 r_effective=16.6 serverless_enabled=True total_load=145.6 weights_after={'k3s': 64, 'knative': 36} weights_before={'k3s': 57, 'knative': 43}
+2026-07-11 02:42:36 [info     ] Weights updated                k3s=64 knative=36
+2026-07-11 02:42:36 [info     ] Weights updated                action=RECOVERY reason='load=146RPS | k8s_cap=83RPS | (reducing-serverless)' weights={'k3s': 64, 'knative': 36}
+2026-07-11 02:42:36 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=118.7585198031338 required_resources=3.566 target_replicas=5
+2026-07-11 02:42:36 [debug    ] Decision loop completed        action=RECOVERY latency_ms=166.55 p99=85.99882144961697
+2026-07-11 02:42:51 [debug    ] HAProxy fallback latency       delta_requests=1292 interval_avg_ms=48.58 max_rtime_ms=176.0 p99_est=97.16
+2026-07-11 02:42:51 [debug    ] GRU prediction received        confidence=0.78 latency_ms=15.01 predicted=63
+2026-07-11 02:42:51 [debug    ] Using GRU prediction           confidence=0.78 predicted=63
+2026-07-11 02:42:51 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:42:51 [info     ] controller_decision_v3         action=RECOVERY available_replicas=5 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.0235 capacity_deficit=False confidence=0.78 current_load=85.2519440546381 decision_id=a4c21276 k8s_capacity=83.2 k8s_weight=100 knative_weight=0 p99=97.2 predicted_load=63 r_effective=16.6 serverless_enabled=False total_load=85.3 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 64, 'knative': 36}
+2026-07-11 02:42:51 [info     ] Weights updated                k3s=100 knative=0
+2026-07-11 02:42:51 [info     ] Weights updated                action=RECOVERY reason='load=85RPS | k8s_cap=83RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-11 02:42:51 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=98.59220988497084 required_resources=2.961 target_replicas=4
+2026-07-11 02:42:51 [debug    ] Decision loop completed        action=RECOVERY latency_ms=163.54 p99=97.1625386996904
+2026-07-11 02:43:06 [debug    ] HAProxy fallback latency       delta_requests=1128 interval_avg_ms=85.95 max_rtime_ms=191.0 p99_est=171.9
+2026-07-11 02:43:06 [debug    ] GRU prediction received        confidence=0.73 latency_ms=15.13 predicted=62
+2026-07-11 02:43:06 [debug    ] Using GRU prediction           confidence=0.73 predicted=62
+2026-07-11 02:43:06 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:43:06 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=79.85250347659223 required_resources=2.398 target_replicas=3
+2026-07-11 02:43:06 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=126.52 p99=171.90248226950354
+2026-07-11 02:43:21 [debug    ] HAProxy fallback latency       delta_requests=1070 interval_avg_ms=66.0 max_rtime_ms=191.0 p99_est=132.0
+2026-07-11 02:43:21 [debug    ] GRU prediction received        confidence=0.72 latency_ms=14.46 predicted=63
+2026-07-11 02:43:21 [debug    ] Using GRU prediction           confidence=0.72 predicted=63
+2026-07-11 02:43:21 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:43:21 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=72.5625470462908 required_resources=2.179 target_replicas=3
+2026-07-11 02:43:21 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=131.19 p99=132.0
+2026-07-11 02:43:36 [debug    ] HAProxy fallback latency       delta_requests=934 interval_avg_ms=38.55 max_rtime_ms=191.0 p99_est=77.1
+2026-07-11 02:43:36 [debug    ] GRU prediction received        confidence=0.72 latency_ms=14.87 predicted=63
+2026-07-11 02:43:36 [debug    ] Using GRU prediction           confidence=0.72 predicted=63
+2026-07-11 02:43:36 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:43:36 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=66.22968130700397 required_resources=1.989 target_replicas=3
+2026-07-11 02:43:36 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=125.55 p99=77.10278372591006
+2026-07-11 02:43:51 [debug    ] HAProxy fallback latency       delta_requests=795 interval_avg_ms=65.0 max_rtime_ms=191.0 p99_est=130.0
+2026-07-11 02:43:51 [debug    ] GRU prediction received        confidence=0.75 latency_ms=14.32 predicted=63
+2026-07-11 02:43:51 [debug    ] Using GRU prediction           confidence=0.75 predicted=63
+2026-07-11 02:43:51 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:43:51 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=63.0 required_resources=1.892 target_replicas=3
+2026-07-11 02:43:51 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=128.73 p99=130.0
+2026-07-11 02:44:06 [debug    ] HAProxy fallback latency       delta_requests=1254 interval_avg_ms=87.08 max_rtime_ms=191.0 p99_est=174.16
+2026-07-11 02:44:06 [debug    ] GRU prediction received        confidence=0.76 latency_ms=15.41 predicted=67
+2026-07-11 02:44:06 [debug    ] Using GRU prediction           confidence=0.76 predicted=67
+2026-07-11 02:44:06 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 02:44:06 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=67.65969464069029 required_resources=2.032 target_replicas=3
+2026-07-11 02:44:06 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=131.35 p99=174.15629984051037
+2026-07-11 02:44:21 [debug    ] HAProxy fallback latency       delta_requests=1906 interval_avg_ms=811.23 max_rtime_ms=439.0 p99_est=439.0
+2026-07-11 02:44:21 [debug    ] GRU prediction received        confidence=0.72 latency_ms=14.66 predicted=71
+2026-07-11 02:44:21 [debug    ] Using GRU prediction           confidence=0.72 predicted=71
+2026-07-11 02:44:22 [debug    ] Proactive amplification        amplified=194.9 approach_ratio=1.51 load_trend=13.8 raw_pred=71
+2026-07-11 02:44:22 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=999 burn_error=-0.998 burn_ratio=0.002
+2026-07-11 02:44:22 [info     ] Knative pre-warm OK            cold_start_ms=2.8
+2026-07-11 02:44:22 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=5 budget_remaining=999 burn_adjustment=-7 burst_ratio=0.5729 capacity_deficit=True confidence=0.72 current_load=125.89202437860644 decision_id=94a09c04 k8s_capacity=83.2 k8s_weight=57 knative_weight=43 p99=439.0 predicted_load=71 r_effective=16.6 serverless_enabled=True total_load=194.9 weights_after={'k3s': 57, 'knative': 43} weights_before={'k3s': 100, 'knative': 0}
+2026-07-11 02:44:22 [info     ] Weights updated                k3s=57 knative=43
+2026-07-11 02:44:22 [info     ] Weights updated                action=PREDICTIVE reason='load=195RPS | k8s_cap=83RPS | CAPACITY-DEFICIT | (prediction-driven)' weights={'k3s': 57, 'knative': 43}
+2026-07-11 02:44:22 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=104.32500756782656 required_resources=3.133 target_replicas=4
+2026-07-11 02:44:22 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=130.01 p99=439.0
+2026-07-11 02:44:37 [debug    ] GRU prediction received        confidence=0.72 latency_ms=14.83 predicted=74
+2026-07-11 02:44:37 [debug    ] Using GRU prediction           confidence=0.72 predicted=74
+2026-07-11 02:44:37 [debug    ] Proactive amplification        amplified=189.0 approach_ratio=1.42 load_trend=14.1 raw_pred=74
+2026-07-11 02:44:37 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=998 burn_error=-0.995 burn_ratio=0.005
+2026-07-11 02:44:37 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=122.0995741775501 required_resources=3.667 target_replicas=5
+2026-07-11 02:44:37 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=128.23 p99=439.0
+2026-07-11 02:44:52 [debug    ] GRU prediction received        confidence=0.72 latency_ms=14.59 predicted=75
+2026-07-11 02:44:52 [debug    ] Using GRU prediction           confidence=0.72 predicted=75
+2026-07-11 02:44:52 [debug    ] Proactive amplification        amplified=142.4 approach_ratio=1.11 load_trend=10.0 raw_pred=75
+2026-07-11 02:44:52 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=997 burn_error=-0.993 burn_ratio=0.007
+2026-07-11 02:44:52 [info     ] controller_decision_v3         action=RECOVERY available_replicas=5 budget_remaining=997 burn_adjustment=-7 burst_ratio=0.4152 capacity_deficit=False confidence=0.72 current_load=92.47396019631708 decision_id=c125c4c2 k8s_capacity=83.2 k8s_weight=65 knative_weight=35 p99=439.0 predicted_load=75 r_effective=16.6 serverless_enabled=True total_load=142.4 weights_after={'k3s': 65, 'knative': 35} weights_before={'k3s': 57, 'knative': 43}
+2026-07-11 02:44:52 [info     ] Weights updated                k3s=65 knative=35
+2026-07-11 02:44:52 [info     ] Weights updated                action=RECOVERY reason='load=142RPS | k8s_cap=83RPS | (reducing-serverless)' weights={'k3s': 65, 'knative': 35}
+2026-07-11 02:44:52 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=105.39054208640542 required_resources=3.165 target_replicas=4
+2026-07-11 02:44:52 [debug    ] Decision loop completed        action=RECOVERY latency_ms=165.39 p99=439.0
+2026-07-11 02:45:07 [debug    ] HAProxy fallback latency       delta_requests=1225 interval_avg_ms=37.24 max_rtime_ms=446.0 p99_est=74.48
+2026-07-11 02:45:07 [debug    ] GRU prediction received        confidence=0.73 latency_ms=14.81 predicted=75
+2026-07-11 02:45:07 [debug    ] Using GRU prediction           confidence=0.73 predicted=75
+2026-07-11 02:45:07 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=997 burn_error=-0.993 burn_ratio=0.007
+2026-07-11 02:45:07 [info     ] controller_decision_v3         action=RECOVERY available_replicas=5 budget_remaining=997 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.73 current_load=80.7764872461746 decision_id=7625ec86 k8s_capacity=83.2 k8s_weight=100 knative_weight=0 p99=74.5 predicted_load=75 r_effective=16.6 serverless_enabled=False total_load=80.8 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 65, 'knative': 35}
+2026-07-11 02:45:07 [info     ] Weights updated                k3s=100 knative=0
+2026-07-11 02:45:07 [info     ] Weights updated                action=RECOVERY reason='load=81RPS | k8s_cap=83RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-11 02:45:07 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=86.62522372124585 required_resources=2.601 target_replicas=4
+2026-07-11 02:45:07 [debug    ] Decision loop completed        action=RECOVERY latency_ms=165.88 p99=74.48326530612245
+2026-07-11 02:45:22 [debug    ] HAProxy fallback latency       delta_requests=1157 interval_avg_ms=94.39 max_rtime_ms=446.0 p99_est=188.78
+2026-07-11 02:45:22 [debug    ] GRU prediction received        confidence=0.72 latency_ms=14.74 predicted=75
+2026-07-11 02:45:22 [debug    ] Using GRU prediction           confidence=0.72 predicted=75
+2026-07-11 02:45:22 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=997 burn_error=-0.993 burn_ratio=0.007
+2026-07-11 02:45:22 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=78.53295462599547 required_resources=2.358 target_replicas=3
+2026-07-11 02:45:22 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=130.97 p99=188.77960242005184
+2026-07-11 02:45:37 [debug    ] HAProxy fallback latency       delta_requests=1534 interval_avg_ms=495.58 max_rtime_ms=446.0 p99_est=446.0
+2026-07-11 02:45:37 [debug    ] GRU prediction received        confidence=0.76 latency_ms=15.27 predicted=78
+2026-07-11 02:45:37 [debug    ] Using GRU prediction           confidence=0.76 predicted=78
+2026-07-11 02:45:37 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=996 burn_error=-0.991 burn_ratio=0.009
+2026-07-11 02:45:37 [info     ] Knative pre-warm OK            cold_start_ms=2.6
+2026-07-11 02:45:37 [info     ] controller_decision_v3         action=REACTIVE available_replicas=5 budget_remaining=996 burn_adjustment=-7 burst_ratio=0.1778 capacity_deficit=False confidence=0.76 current_load=101.25214942077946 decision_id=59c44cc1 k8s_capacity=83.2 k8s_weight=89 knative_weight=11 p99=446.0 predicted_load=78 r_effective=16.6 serverless_enabled=True total_load=101.3 weights_after={'k3s': 89, 'knative': 11} weights_before={'k3s': 100, 'knative': 0}
+2026-07-11 02:45:37 [info     ] Weights updated                k3s=89 knative=11
+2026-07-11 02:45:37 [info     ] Weights updated                action=REACTIVE reason='load=101RPS | k8s_cap=83RPS | (burst-routing)' weights={'k3s': 89, 'knative': 11}
+2026-07-11 02:45:37 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=88.77078571329791 required_resources=2.666 target_replicas=4
+2026-07-11 02:45:37 [debug    ] Decision loop completed        action=REACTIVE latency_ms=131.89 p99=446.0
+2026-07-11 02:45:52 [debug    ] HAProxy fallback latency       delta_requests=2041 interval_avg_ms=709.3 max_rtime_ms=502.0 p99_est=502.0
+2026-07-11 02:45:52 [debug    ] GRU prediction received        confidence=0.72 latency_ms=15.55 predicted=83
+2026-07-11 02:45:52 [debug    ] Using GRU prediction           confidence=0.72 predicted=83
+2026-07-11 02:45:52 [debug    ] Proactive amplification        amplified=187.7 approach_ratio=1.62 load_trend=10.6 raw_pred=83
+2026-07-11 02:45:52 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=995 burn_error=-0.99 burn_ratio=0.01
+2026-07-11 02:45:52 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=5 budget_remaining=995 burn_adjustment=-7 burst_ratio=0.5565 capacity_deficit=True confidence=0.72 current_load=134.80795847759043 decision_id=fc7f3528 k8s_capacity=83.2 k8s_weight=57 knative_weight=43 p99=502.0 predicted_load=83 r_effective=16.6 serverless_enabled=True total_load=187.7 weights_after={'k3s': 57, 'knative': 43} weights_before={'k3s': 89, 'knative': 11}
+2026-07-11 02:45:52 [info     ] Weights updated                k3s=57 knative=43
+2026-07-11 02:45:52 [info     ] Weights updated                action=PREDICTIVE reason='load=188RPS | k8s_cap=83RPS | CAPACITY-DEFICIT | (prediction-driven)' weights={'k3s': 57, 'knative': 43}
+2026-07-11 02:45:52 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=118.03005394918495 required_resources=3.544 target_replicas=5
+2026-07-11 02:45:52 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=139.21 p99=502.0
+2026-07-11 02:46:07 [debug    ] GRU prediction received        confidence=0.72 latency_ms=14.96 predicted=90
+2026-07-11 02:46:07 [debug    ] Using GRU prediction           confidence=0.72 predicted=90
+2026-07-11 02:46:08 [debug    ] Proactive amplification        amplified=239.3 approach_ratio=1.82 load_trend=17.6 raw_pred=90
+2026-07-11 02:46:08 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=994 burn_error=-0.988 burn_ratio=0.012
+2026-07-11 02:46:08 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=143.01647283197494 required_resources=4.295 target_replicas=6
+2026-07-11 02:46:08 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=6
+2026-07-11 02:46:08 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=165.16 p99=502.0
+2026-07-11 02:46:23 [debug    ] GRU prediction received        confidence=0.72 latency_ms=15.37 predicted=99
+2026-07-11 02:46:23 [debug    ] Using GRU prediction           confidence=0.72 predicted=99
+2026-07-11 02:46:23 [debug    ] Proactive amplification        amplified=265.1 approach_ratio=1.6 load_trend=21.0 raw_pred=99
+2026-07-11 02:46:23 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=993 burn_error=-0.986 burn_ratio=0.014
+2026-07-11 02:46:23 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=155.71519347558842 required_resources=4.676 target_replicas=6
+2026-07-11 02:46:23 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=138.23 p99=502.0
+2026-07-11 02:46:38 [debug    ] HAProxy fallback latency       delta_requests=2169 interval_avg_ms=66.0 max_rtime_ms=556.0 p99_est=132.0
+2026-07-11 02:46:38 [debug    ] GRU prediction received        confidence=0.77 latency_ms=14.69 predicted=107
+2026-07-11 02:46:38 [debug    ] Using GRU prediction           confidence=0.77 predicted=107
+2026-07-11 02:46:38 [debug    ] Proactive amplification        amplified=196.0 approach_ratio=1.43 load_trend=10.5 raw_pred=107
+2026-07-11 02:46:38 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=993 burn_error=-0.986 burn_ratio=0.014
+2026-07-11 02:46:38 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=151.77632028895925 required_resources=4.558 target_replicas=6
+2026-07-11 02:46:38 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=122.81 p99=132.0
+2026-07-11 02:46:53 [debug    ] HAProxy fallback latency       delta_requests=1830 interval_avg_ms=143.79 max_rtime_ms=556.0 p99_est=287.59
+2026-07-11 02:46:53 [debug    ] GRU prediction received        confidence=0.81 latency_ms=14.5 predicted=111
+2026-07-11 02:46:53 [debug    ] Using GRU prediction           confidence=0.81 predicted=111
+2026-07-11 02:46:53 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.985 burn_ratio=0.015
+2026-07-11 02:46:53 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=992 burn_adjustment=-7 burst_ratio=0.1744 capacity_deficit=False confidence=0.81 current_load=121.00980531496644 decision_id=587e6f00 k8s_capacity=99.9 k8s_weight=89 knative_weight=11 p99=287.6 predicted_load=111 r_effective=16.6 serverless_enabled=True total_load=121.0 weights_after={'k3s': 89, 'knative': 11} weights_before={'k3s': 57, 'knative': 43}
+2026-07-11 02:46:53 [info     ] Weights updated                k3s=89 knative=11
+2026-07-11 02:46:53 [info     ] Weights updated                action=RECOVERY reason='load=121RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 89, 'knative': 11}
+2026-07-11 02:46:53 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=132.17852306403378 required_resources=3.969 target_replicas=5
+2026-07-11 02:46:53 [debug    ] Decision loop completed        action=RECOVERY latency_ms=168.65 p99=287.5868852459016
+2026-07-11 02:47:08 [debug    ] HAProxy fallback latency       delta_requests=1793 interval_avg_ms=14.07 max_rtime_ms=556.0 p99_est=28.13
+2026-07-11 02:47:08 [debug    ] GRU prediction received        confidence=0.79 latency_ms=14.73 predicted=113
+2026-07-11 02:47:08 [debug    ] Using GRU prediction           confidence=0.79 predicted=113
+2026-07-11 02:47:08 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.985 burn_ratio=0.015
+2026-07-11 02:47:08 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=992 burn_adjustment=-7 burst_ratio=0.1548 capacity_deficit=False confidence=0.79 current_load=118.19982928548046 decision_id=c2e34f56 k8s_capacity=99.9 k8s_weight=91 knative_weight=9 p99=28.1 predicted_load=113 r_effective=16.6 serverless_enabled=True total_load=118.2 weights_after={'k3s': 91, 'knative': 9} weights_before={'k3s': 89, 'knative': 11}
+2026-07-11 02:47:08 [info     ] Weights updated                k3s=91 knative=9
+2026-07-11 02:47:08 [info     ] Weights updated                action=RECOVERY reason='load=118RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 91, 'knative': 9}
+2026-07-11 02:47:08 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=119.60481730022346 required_resources=3.592 target_replicas=5
+2026-07-11 02:47:08 [debug    ] Decision loop completed        action=RECOVERY latency_ms=163.51 p99=28.134969325153374
+2026-07-11 02:47:23 [debug    ] HAProxy fallback latency       delta_requests=1826 interval_avg_ms=67.0 max_rtime_ms=556.0 p99_est=134.0
+2026-07-11 02:47:23 [debug    ] GRU prediction received        confidence=0.79 latency_ms=14.48 predicted=116
+2026-07-11 02:47:23 [debug    ] Using GRU prediction           confidence=0.79 predicted=116
+2026-07-11 02:47:23 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.986 burn_ratio=0.014
+2026-07-11 02:47:23 [info     ] controller_decision_v3         action=REACTIVE available_replicas=6 budget_remaining=992 burn_adjustment=-7 burst_ratio=0.1709 capacity_deficit=False confidence=0.79 current_load=120.48772315051501 decision_id=40edbcc4 k8s_capacity=99.9 k8s_weight=89 knative_weight=11 p99=134.0 predicted_load=116 r_effective=16.6 serverless_enabled=True total_load=120.5 weights_after={'k3s': 89, 'knative': 11} weights_before={'k3s': 91, 'knative': 9}
+2026-07-11 02:47:23 [info     ] Weights updated                k3s=89 knative=11
+2026-07-11 02:47:23 [info     ] Weights updated                action=REACTIVE reason='load=120RPS | k8s_cap=100RPS | (burst-routing)' weights={'k3s': 89, 'knative': 11}
+2026-07-11 02:47:23 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=119.34377621799774 required_resources=3.584 target_replicas=5
+2026-07-11 02:47:23 [debug    ] Decision loop completed        action=REACTIVE latency_ms=127.2 p99=134.0
+2026-07-11 02:47:38 [debug    ] HAProxy fallback latency       delta_requests=1817 interval_avg_ms=67.0 max_rtime_ms=556.0 p99_est=134.0
+2026-07-11 02:47:38 [debug    ] GRU prediction received        confidence=0.83 latency_ms=15.0 predicted=117
+2026-07-11 02:47:38 [debug    ] Using GRU prediction           confidence=0.83 predicted=117
+2026-07-11 02:47:38 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.986 burn_ratio=0.014
+2026-07-11 02:47:38 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=992 burn_adjustment=-7 burst_ratio=0.1678 capacity_deficit=False confidence=0.83 current_load=120.04572421106862 decision_id=0423a063 k8s_capacity=99.9 k8s_weight=90 knative_weight=10 p99=134.0 predicted_load=117 r_effective=16.6 serverless_enabled=True total_load=120.0 weights_after={'k3s': 90, 'knative': 10} weights_before={'k3s': 89, 'knative': 11}
+2026-07-11 02:47:38 [info     ] Weights updated                k3s=90 knative=10
+2026-07-11 02:47:38 [info     ] Weights updated                action=RECOVERY reason='load=120RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 90, 'knative': 10}
+2026-07-11 02:47:38 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=120.26672368079181 required_resources=3.612 target_replicas=5
+2026-07-11 02:47:38 [debug    ] Decision loop completed        action=RECOVERY latency_ms=161.31 p99=134.0
+2026-07-11 02:47:53 [debug    ] HAProxy fallback latency       delta_requests=1781 interval_avg_ms=67.0 max_rtime_ms=556.0 p99_est=134.0
+2026-07-11 02:47:54 [debug    ] GRU prediction received        confidence=0.89 latency_ms=14.76 predicted=118
+2026-07-11 02:47:54 [debug    ] Using GRU prediction           confidence=0.89 predicted=118
+2026-07-11 02:47:54 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.986 burn_ratio=0.014
+2026-07-11 02:47:54 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=992 burn_adjustment=-7 burst_ratio=0.1534 capacity_deficit=False confidence=0.89 current_load=117.53458187769768 decision_id=88fc251c k8s_capacity=99.9 k8s_weight=91 knative_weight=9 p99=134.0 predicted_load=118 r_effective=16.6 serverless_enabled=True total_load=118 weights_after={'k3s': 91, 'knative': 9} weights_before={'k3s': 90, 'knative': 10}
+2026-07-11 02:47:54 [info     ] Weights updated                k3s=91 knative=9
+2026-07-11 02:47:54 [info     ] Weights updated                action=RECOVERY reason='load=118RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 91, 'knative': 9}
+2026-07-11 02:47:54 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=118.79015304438315 required_resources=3.567 target_replicas=5
+2026-07-11 02:47:54 [debug    ] Decision loop completed        action=RECOVERY latency_ms=163.45 p99=134.0
+2026-07-11 02:48:09 [debug    ] HAProxy fallback latency       delta_requests=1525 interval_avg_ms=30.15 max_rtime_ms=556.0 p99_est=60.3
+2026-07-11 02:48:09 [debug    ] GRU prediction received        confidence=0.84 latency_ms=14.77 predicted=116
+2026-07-11 02:48:09 [debug    ] Using GRU prediction           confidence=0.84 predicted=116
+2026-07-11 02:48:09 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.987 burn_ratio=0.013
+2026-07-11 02:48:09 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=992 burn_adjustment=-7 burst_ratio=0.1388 capacity_deficit=False confidence=0.84 current_load=100.63738668716739 decision_id=70790b5e k8s_capacity=99.9 k8s_weight=93 knative_weight=7 p99=60.3 predicted_load=116 r_effective=16.6 serverless_enabled=True total_load=116 weights_after={'k3s': 93, 'knative': 7} weights_before={'k3s': 91, 'knative': 9}
+2026-07-11 02:48:09 [info     ] Weights updated                k3s=93 knative=7
+2026-07-11 02:48:09 [info     ] Weights updated                action=RECOVERY reason='load=116RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 93, 'knative': 7}
+2026-07-11 02:48:09 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=116.0 required_resources=3.483 target_replicas=5
+2026-07-11 02:48:09 [debug    ] Decision loop completed        action=RECOVERY latency_ms=165.43 p99=60.300327868852456
+2026-07-11 02:48:24 [debug    ] HAProxy fallback latency       delta_requests=1239 interval_avg_ms=19.64 max_rtime_ms=556.0 p99_est=39.29
+2026-07-11 02:48:24 [debug    ] GRU prediction received        confidence=0.77 latency_ms=14.88 predicted=108
+2026-07-11 02:48:24 [debug    ] Using GRU prediction           confidence=0.77 predicted=108
+2026-07-11 02:48:24 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.987 burn_ratio=0.013
+2026-07-11 02:48:24 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=992 burn_adjustment=-7 burst_ratio=0.075 capacity_deficit=False confidence=0.77 current_load=81.69597252238329 decision_id=800cf879 k8s_capacity=99.9 k8s_weight=99 knative_weight=1 p99=39.3 predicted_load=108 r_effective=16.6 serverless_enabled=True total_load=108 weights_after={'k3s': 99, 'knative': 1} weights_before={'k3s': 93, 'knative': 7}
+2026-07-11 02:48:24 [info     ] Weights updated                k3s=99 knative=1
+2026-07-11 02:48:24 [info     ] Weights updated                action=RECOVERY reason='load=108RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 99, 'knative': 1}
+2026-07-11 02:48:24 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=108.0 required_resources=3.243 target_replicas=4
+2026-07-11 02:48:24 [debug    ] Decision loop completed        action=RECOVERY latency_ms=161.01 p99=39.28813559322034
+2026-07-11 02:48:39 [debug    ] HAProxy fallback latency       delta_requests=1112 interval_avg_ms=65.0 max_rtime_ms=556.0 p99_est=130.0
+2026-07-11 02:48:39 [debug    ] GRU prediction received        confidence=0.73 latency_ms=14.98 predicted=99
+2026-07-11 02:48:39 [debug    ] Using GRU prediction           confidence=0.73 predicted=99
+2026-07-11 02:48:39 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.987 burn_ratio=0.013
+2026-07-11 02:48:39 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=992 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.73 current_load=73.34598263133856 decision_id=13bad526 k8s_capacity=99.9 k8s_weight=100 knative_weight=0 p99=130.0 predicted_load=99 r_effective=16.6 serverless_enabled=False total_load=99 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 99, 'knative': 1}
+2026-07-11 02:48:39 [info     ] Weights updated                k3s=100 knative=0
+2026-07-11 02:48:39 [info     ] Weights updated                action=RECOVERY reason='load=99RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-11 02:48:39 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=99.0 required_resources=2.973 target_replicas=4
+2026-07-11 02:48:39 [debug    ] Decision loop completed        action=RECOVERY latency_ms=162.82 p99=130.0
+2026-07-11 02:48:54 [debug    ] HAProxy fallback latency       delta_requests=1050 interval_avg_ms=65.0 max_rtime_ms=556.0 p99_est=130.0
+2026-07-11 02:48:54 [debug    ] GRU prediction received        confidence=0.72 latency_ms=15.1 predicted=92
+2026-07-11 02:48:54 [debug    ] Using GRU prediction           confidence=0.72 predicted=92
+2026-07-11 02:48:54 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.987 burn_ratio=0.013
+2026-07-11 02:48:54 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=92.0 required_resources=2.763 target_replicas=4
+2026-07-11 02:48:54 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=129.29 p99=130.0
+2026-07-11 02:49:09 [debug    ] HAProxy fallback latency       delta_requests=1195 interval_avg_ms=65.0 max_rtime_ms=556.0 p99_est=130.0
+2026-07-11 02:49:09 [debug    ] GRU prediction received        confidence=0.78 latency_ms=15.04 predicted=90
+2026-07-11 02:49:09 [debug    ] Using GRU prediction           confidence=0.78 predicted=90
+2026-07-11 02:49:09 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.988 burn_ratio=0.012
+2026-07-11 02:49:09 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=90.0 required_resources=2.703 target_replicas=4
+2026-07-11 02:49:09 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=129.53 p99=130.0
+2026-07-11 02:49:24 [debug    ] HAProxy fallback latency       delta_requests=1327 interval_avg_ms=65.0 max_rtime_ms=556.0 p99_est=130.0
+2026-07-11 02:49:24 [debug    ] GRU prediction received        confidence=0.83 latency_ms=15.11 predicted=89
+2026-07-11 02:49:24 [debug    ] Using GRU prediction           confidence=0.83 predicted=89
+2026-07-11 02:49:24 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.988 burn_ratio=0.012
+2026-07-11 02:49:25 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=89.0 required_resources=2.673 target_replicas=4
+2026-07-11 02:49:25 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=132.54 p99=130.0
+2026-07-11 02:49:40 [debug    ] HAProxy fallback latency       delta_requests=1059 interval_avg_ms=5.34 max_rtime_ms=556.0 p99_est=10.68
+2026-07-11 02:49:40 [debug    ] GRU prediction received        confidence=0.82 latency_ms=15.23 predicted=86
+2026-07-11 02:49:40 [debug    ] Using GRU prediction           confidence=0.82 predicted=86
+2026-07-11 02:49:40 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.988 burn_ratio=0.012
+2026-07-11 02:49:40 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=86.0 required_resources=2.583 target_replicas=4
+2026-07-11 02:49:40 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=127.17 p99=10.683663833805477
+2026-07-11 02:49:55 [debug    ] HAProxy fallback latency       delta_requests=754 interval_avg_ms=64.0 max_rtime_ms=556.0 p99_est=128.0
+2026-07-11 02:49:55 [debug    ] GRU prediction received        confidence=0.74 latency_ms=14.61 predicted=80
+2026-07-11 02:49:55 [debug    ] Using GRU prediction           confidence=0.74 predicted=80
+2026-07-11 02:49:55 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.988 burn_ratio=0.012
+2026-07-11 02:49:55 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=80.0 required_resources=2.402 target_replicas=3
+2026-07-11 02:49:55 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=123.31 p99=128.0
+2026-07-11 02:50:10 [debug    ] HAProxy fallback latency       delta_requests=704 interval_avg_ms=64.0 max_rtime_ms=556.0 p99_est=128.0
+2026-07-11 02:50:10 [debug    ] GRU prediction received        confidence=0.72 latency_ms=15.28 predicted=76
+2026-07-11 02:50:10 [debug    ] Using GRU prediction           confidence=0.72 predicted=76
+2026-07-11 02:50:10 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.988 burn_ratio=0.012
+2026-07-11 02:50:10 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=76.0 required_resources=2.282 target_replicas=3
+2026-07-11 02:50:10 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=129.85 p99=128.0
+2026-07-11 02:50:25 [debug    ] HAProxy fallback latency       delta_requests=691 interval_avg_ms=64.0 max_rtime_ms=556.0 p99_est=128.0
+2026-07-11 02:50:25 [debug    ] GRU prediction received        confidence=0.72 latency_ms=14.57 predicted=73
+2026-07-11 02:50:25 [debug    ] Using GRU prediction           confidence=0.72 predicted=73
+2026-07-11 02:50:25 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.989 burn_ratio=0.011
+2026-07-11 02:50:25 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=73.0 required_resources=2.192 target_replicas=3
+2026-07-11 02:50:25 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=131.68 p99=128.0
+2026-07-11 02:50:40 [debug    ] HAProxy fallback latency       delta_requests=650 interval_avg_ms=64.0 max_rtime_ms=556.0 p99_est=128.0
+2026-07-11 02:50:40 [debug    ] GRU prediction received        confidence=0.73 latency_ms=15.23 predicted=70
+2026-07-11 02:50:40 [debug    ] Using GRU prediction           confidence=0.73 predicted=70
+2026-07-11 02:50:40 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.989 burn_ratio=0.011
+2026-07-11 02:50:40 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=70.0 required_resources=2.102 target_replicas=3
+2026-07-11 02:50:40 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=125.77 p99=128.0
+2026-07-11 02:50:55 [debug    ] GRU prediction received        confidence=0.85 latency_ms=14.5 predicted=68
+2026-07-11 02:50:55 [debug    ] Using GRU prediction           confidence=0.85 predicted=68
+2026-07-11 02:50:55 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.989 burn_ratio=0.011
+2026-07-11 02:50:55 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=68.0 required_resources=2.042 target_replicas=3
+2026-07-11 02:50:55 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=129.39 p99=128.0
+2026-07-11 02:51:10 [debug    ] HAProxy fallback latency       delta_requests=862 interval_avg_ms=141.29 max_rtime_ms=556.0 p99_est=282.58
+2026-07-11 02:51:10 [debug    ] GRU prediction received        confidence=0.8 latency_ms=14.92 predicted=68
+2026-07-11 02:51:10 [debug    ] Using GRU prediction           confidence=0.8 predicted=68
+2026-07-11 02:51:10 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=991 burn_error=-0.988 burn_ratio=0.012
+2026-07-11 02:51:10 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=68.0 required_resources=2.042 target_replicas=3
+2026-07-11 02:51:10 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=124.16 p99=282.5754060324826
+2026-07-11 02:51:25 [debug    ] HAProxy fallback latency       delta_requests=1073 interval_avg_ms=64.0 max_rtime_ms=556.0 p99_est=128.0
+2026-07-11 02:51:25 [debug    ] GRU prediction received        confidence=0.72 latency_ms=14.57 predicted=68
+2026-07-11 02:51:25 [debug    ] Using GRU prediction           confidence=0.72 predicted=68
+2026-07-11 02:51:25 [debug    ] Proactive amplification        amplified=102.5 approach_ratio=0.71 load_trend=6.3 raw_pred=68
+2026-07-11 02:51:25 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=991 burn_error=-0.988 burn_ratio=0.012
+2026-07-11 02:51:26 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=68.0 required_resources=2.042 target_replicas=3
+2026-07-11 02:51:26 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=122.62 p99=128.0
+2026-07-11 02:51:41 [debug    ] HAProxy fallback latency       delta_requests=1072 interval_avg_ms=128.95 max_rtime_ms=556.0 p99_est=257.9
+2026-07-11 02:51:41 [debug    ] GRU prediction received        confidence=0.72 latency_ms=16.79 predicted=69
+2026-07-11 02:51:41 [debug    ] Using GRU prediction           confidence=0.72 predicted=69
+2026-07-11 02:51:41 [debug    ] Proactive amplification        amplified=105.8 approach_ratio=0.71 load_trend=7.0 raw_pred=69
+2026-07-11 02:51:41 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=990 burn_error=-0.987 burn_ratio=0.013
+2026-07-11 02:51:41 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=70.91461811872584 required_resources=2.13 target_replicas=3
+2026-07-11 02:51:41 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=128.08 p99=257.90485074626866
+2026-07-11 02:51:56 [debug    ] HAProxy fallback latency       delta_requests=1052 interval_avg_ms=65.0 max_rtime_ms=556.0 p99_est=130.0
+2026-07-11 02:51:56 [debug    ] GRU prediction received        confidence=0.74 latency_ms=14.81 predicted=69
+2026-07-11 02:51:56 [debug    ] Using GRU prediction           confidence=0.74 predicted=69
+2026-07-11 02:51:56 [debug    ] Proactive amplification        amplified=103.0 approach_ratio=0.7 load_trend=6.7 raw_pred=69
+2026-07-11 02:51:56 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=990 burn_error=-0.987 burn_ratio=0.013
+2026-07-11 02:51:56 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=70.17952314647343 required_resources=2.107 target_replicas=3
+2026-07-11 02:51:56 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=130.56 p99=130.0
+2026-07-11 02:52:11 [debug    ] GRU prediction received        confidence=0.83 latency_ms=15.33 predicted=69
+2026-07-11 02:52:11 [debug    ] Using GRU prediction           confidence=0.83 predicted=69
+2026-07-11 02:52:11 [debug    ] Proactive amplification        amplified=88.9 approach_ratio=0.71 load_trend=3.6 raw_pred=69
+2026-07-11 02:52:11 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=990 burn_error=-0.987 burn_ratio=0.013
+2026-07-11 02:52:11 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=70.3268898935749 required_resources=2.112 target_replicas=3
+2026-07-11 02:52:11 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=131.32 p99=130.0
+2026-07-11 02:52:26 [debug    ] HAProxy fallback latency       delta_requests=1151 interval_avg_ms=190.69 max_rtime_ms=556.0 p99_est=381.38
+2026-07-11 02:52:26 [debug    ] GRU prediction received        confidence=0.87 latency_ms=14.23 predicted=69
+2026-07-11 02:52:26 [debug    ] Using GRU prediction           confidence=0.87 predicted=69
+2026-07-11 02:52:26 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=989 burn_error=-0.986 burn_ratio=0.014
+2026-07-11 02:52:26 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=73.62291795361496 required_resources=2.211 target_replicas=3
+2026-07-11 02:52:26 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=129.71 p99=381.37619461337965
+2026-07-11 02:52:41 [debug    ] HAProxy fallback latency       delta_requests=1432 interval_avg_ms=481.31 max_rtime_ms=556.0 p99_est=556.0
+2026-07-11 02:52:41 [debug    ] GRU prediction received        confidence=0.79 latency_ms=14.89 predicted=71
+2026-07-11 02:52:41 [debug    ] Using GRU prediction           confidence=0.79 predicted=71
+2026-07-11 02:52:41 [debug    ] Proactive amplification        amplified=124.4 approach_ratio=0.95 load_trend=5.9 raw_pred=71
+2026-07-11 02:52:41 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=988 burn_error=-0.985 burn_ratio=0.015
+2026-07-11 02:52:41 [info     ] Knative pre-warm OK            cold_start_ms=2.7
+2026-07-11 02:52:41 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=6 budget_remaining=988 burn_adjustment=-7 burst_ratio=0.1967 capacity_deficit=False confidence=0.79 current_load=94.64965905677572 decision_id=7a0307c3 k8s_capacity=99.9 k8s_weight=87 knative_weight=13 p99=556.0 predicted_load=71 r_effective=16.6 serverless_enabled=True total_load=124.4 weights_after={'k3s': 87, 'knative': 13} weights_before={'k3s': 100, 'knative': 0}
+2026-07-11 02:52:41 [info     ] Weights updated                k3s=87 knative=13
+2026-07-11 02:52:41 [info     ] Weights updated                action=PREDICTIVE reason='load=124RPS | k8s_cap=100RPS | (prediction-driven)' weights={'k3s': 87, 'knative': 13}
+2026-07-11 02:52:41 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=85.35835008847165 required_resources=2.563 target_replicas=4
+2026-07-11 02:52:41 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=129.09 p99=556.0
+2026-07-11 02:52:56 [debug    ] GRU prediction received        confidence=0.74 latency_ms=15.05 predicted=73
+2026-07-11 02:52:56 [debug    ] Using GRU prediction           confidence=0.74 predicted=73
+2026-07-11 02:52:56 [debug    ] Proactive amplification        amplified=156.6 approach_ratio=1.08 load_trend=9.7 raw_pred=73
+2026-07-11 02:52:56 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=987 burn_error=-0.984 burn_ratio=0.016
+2026-07-11 02:52:56 [info     ] controller_decision_v3         action=PREDICTIVE available_replicas=6 budget_remaining=987 burn_adjustment=-7 burst_ratio=0.3621 capacity_deficit=False confidence=0.74 current_load=108.20102318336605 decision_id=471a5e66 k8s_capacity=99.9 k8s_weight=70 knative_weight=30 p99=556.0 predicted_load=73 r_effective=16.6 serverless_enabled=True total_load=156.6 weights_after={'k3s': 70, 'knative': 30} weights_before={'k3s': 87, 'knative': 13}
+2026-07-11 02:52:56 [info     ] Weights updated                k3s=70 knative=30
+2026-07-11 02:52:56 [info     ] Weights updated                action=PREDICTIVE reason='load=157RPS | k8s_cap=100RPS | (prediction-driven)' weights={'k3s': 70, 'knative': 30}
+2026-07-11 02:52:56 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=101.42534112007088 required_resources=3.046 target_replicas=4
+2026-07-11 02:52:56 [debug    ] Decision loop completed        action=PREDICTIVE latency_ms=131.54 p99=556.0
+2026-07-11 02:53:11 [debug    ] GRU prediction received        confidence=0.76 latency_ms=14.84 predicted=74
+2026-07-11 02:53:11 [debug    ] Using GRU prediction           confidence=0.76 predicted=74
+2026-07-11 02:53:11 [debug    ] Proactive amplification        amplified=122.0 approach_ratio=0.94 load_trend=5.6 raw_pred=74
+2026-07-11 02:53:11 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=986 burn_error=-0.983 burn_ratio=0.017
+2026-07-11 02:53:11 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=986 burn_adjustment=-7 burst_ratio=0.1813 capacity_deficit=False confidence=0.76 current_load=93.77592571333513 decision_id=cb5e0f31 k8s_capacity=99.9 k8s_weight=88 knative_weight=12 p99=556.0 predicted_load=74 r_effective=16.6 serverless_enabled=True total_load=122.0 weights_after={'k3s': 88, 'knative': 12} weights_before={'k3s': 70, 'knative': 30}
+2026-07-11 02:53:11 [info     ] Weights updated                k3s=88 knative=12
+2026-07-11 02:53:11 [info     ] Weights updated                action=RECOVERY reason='load=122RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 88, 'knative': 12}
+2026-07-11 02:53:11 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=100.98847444835059 required_resources=3.033 target_replicas=4
+2026-07-11 02:53:11 [debug    ] Decision loop completed        action=RECOVERY latency_ms=159.43 p99=556.0
+2026-07-11 02:53:26 [debug    ] HAProxy fallback latency       delta_requests=1155 interval_avg_ms=65.0 max_rtime_ms=556.0 p99_est=130.0
+2026-07-11 02:53:27 [debug    ] GRU prediction received        confidence=0.78 latency_ms=14.37 predicted=74
+2026-07-11 02:53:27 [debug    ] Using GRU prediction           confidence=0.78 predicted=74
+2026-07-11 02:53:27 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=986 burn_error=-0.984 burn_ratio=0.016
+2026-07-11 02:53:27 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=986 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0.78 current_load=76.25322816651233 decision_id=c60ad281 k8s_capacity=99.9 k8s_weight=100 knative_weight=0 p99=130.0 predicted_load=74 r_effective=16.6 serverless_enabled=False total_load=76.3 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 88, 'knative': 12}
+2026-07-11 02:53:27 [info     ] Weights updated                k3s=100 knative=0
+2026-07-11 02:53:27 [info     ] Weights updated                action=RECOVERY reason='load=76RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-11 02:53:27 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=85.01457693992373 required_resources=2.553 target_replicas=4
+2026-07-11 02:53:27 [debug    ] Decision loop completed        action=RECOVERY latency_ms=161.0 p99=130.0
+2026-07-11 02:53:42 [debug    ] HAProxy fallback latency       delta_requests=894 interval_avg_ms=65.0 max_rtime_ms=556.0 p99_est=130.0
+2026-07-11 02:53:42 [debug    ] GRU prediction received        confidence=0.72 latency_ms=14.93 predicted=72
+2026-07-11 02:53:42 [debug    ] Using GRU prediction           confidence=0.72 predicted=72
+2026-07-11 02:53:42 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=986 burn_error=-0.984 burn_ratio=0.016
+2026-07-11 02:53:42 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=72.0 required_resources=2.162 target_replicas=3
+2026-07-11 02:53:42 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=118.74 p99=130.0
+2026-07-11 02:53:57 [debug    ] GRU prediction received        confidence=0.72 latency_ms=14.4 predicted=70
+2026-07-11 02:53:57 [debug    ] Using GRU prediction           confidence=0.72 predicted=70
+2026-07-11 02:53:57 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=986 burn_error=-0.984 burn_ratio=0.016
+2026-07-11 02:53:57 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=70.0 required_resources=2.102 target_replicas=3
+2026-07-11 02:53:57 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=127.74 p99=130.0
+2026-07-11 02:54:12 [debug    ] HAProxy fallback latency       delta_requests=657 interval_avg_ms=64.0 max_rtime_ms=556.0 p99_est=128.0
+2026-07-11 02:54:12 [debug    ] GRU prediction received        confidence=0.72 latency_ms=15.04 predicted=68
+2026-07-11 02:54:12 [debug    ] Using GRU prediction           confidence=0.72 predicted=68
+2026-07-11 02:54:12 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=986 burn_error=-0.984 burn_ratio=0.016
+2026-07-11 02:54:12 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=68.0 required_resources=2.042 target_replicas=3
+2026-07-11 02:54:12 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=122.71 p99=128.0
+2026-07-11 02:54:27 [debug    ] HAProxy fallback latency       delta_requests=677 interval_avg_ms=64.0 max_rtime_ms=556.0 p99_est=128.0
+2026-07-11 02:54:27 [debug    ] GRU prediction received        confidence=0.72 latency_ms=14.78 predicted=66
+2026-07-11 02:54:27 [debug    ] Using GRU prediction           confidence=0.72 predicted=66
+2026-07-11 02:54:27 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=986 burn_error=-0.985 burn_ratio=0.015
+2026-07-11 02:54:27 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=66.0 required_resources=1.982 target_replicas=3
+2026-07-11 02:54:27 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=127.12 p99=128.0
+2026-07-11 02:54:42 [debug    ] HAProxy fallback latency       delta_requests=790 interval_avg_ms=168.12 max_rtime_ms=556.0 p99_est=336.23
+2026-07-11 02:54:42 [debug    ] GRU prediction received        confidence=0.79 latency_ms=14.81 predicted=66
+2026-07-11 02:54:42 [debug    ] Using GRU prediction           confidence=0.79 predicted=66
+2026-07-11 02:54:42 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=985 burn_error=-0.984 burn_ratio=0.016
+2026-07-11 02:54:42 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=66.0 required_resources=1.982 target_replicas=3
+2026-07-11 02:54:42 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=127.6 p99=336.23037974683547
+2026-07-11 02:54:57 [debug    ] HAProxy fallback latency       delta_requests=849 interval_avg_ms=65.0 max_rtime_ms=556.0 p99_est=130.0
+2026-07-11 02:54:57 [debug    ] GRU prediction received        confidence=0.81 latency_ms=14.63 predicted=65
+2026-07-11 02:54:57 [debug    ] Using GRU prediction           confidence=0.81 predicted=65
+2026-07-11 02:54:57 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=985 burn_error=-0.984 burn_ratio=0.016
+2026-07-11 02:54:57 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=65.0 required_resources=1.952 target_replicas=3
+2026-07-11 02:54:57 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=126.03 p99=130.0
+2026-07-11 02:55:12 [debug    ] HAProxy fallback latency       delta_requests=697 interval_avg_ms=65.0 max_rtime_ms=556.0 p99_est=130.0
+2026-07-11 02:55:12 [debug    ] GRU prediction received        confidence=0.81 latency_ms=15.01 predicted=64
+2026-07-11 02:55:12 [debug    ] Using GRU prediction           confidence=0.81 predicted=64
+2026-07-11 02:55:12 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=985 burn_error=-0.984 burn_ratio=0.016
+2026-07-11 02:55:12 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=64.0 required_resources=1.922 target_replicas=3
+2026-07-11 02:55:12 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=126.09 p99=130.0
+2026-07-11 02:55:28 [debug    ] GRU prediction received        confidence=0.78 latency_ms=14.33 predicted=63
+2026-07-11 02:55:28 [debug    ] Using GRU prediction           confidence=0.78 predicted=63
+2026-07-11 02:55:28 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=985 burn_error=-0.984 burn_ratio=0.016
+2026-07-11 02:55:28 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=63.0 required_resources=1.892 target_replicas=3
+2026-07-11 02:55:28 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=130.2 p99=130.0
+2026-07-11 02:55:43 [debug    ] HAProxy fallback latency       delta_requests=587 interval_avg_ms=208.73 max_rtime_ms=556.0 p99_est=417.47
+2026-07-11 02:55:43 [debug    ] GRU prediction received        confidence=0.76 latency_ms=14.82 predicted=61
+2026-07-11 02:55:43 [debug    ] Using GRU prediction           confidence=0.76 predicted=61
+2026-07-11 02:55:43 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=984 burn_error=-0.984 burn_ratio=0.016
+2026-07-11 02:55:43 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=61.0 required_resources=1.832 target_replicas=3
+2026-07-11 02:55:43 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=124.17 p99=417.4650766609881
+2026-07-11 02:55:58 [debug    ] GRU prediction received        confidence=0.76 latency_ms=14.66 predicted=61
+2026-07-11 02:55:58 [debug    ] Using GRU prediction           confidence=0.76 predicted=61
+2026-07-11 02:55:58 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=983 burn_error=-0.983 burn_ratio=0.017
+2026-07-11 02:55:58 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=61.0 required_resources=1.832 target_replicas=3
+2026-07-11 02:55:58 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=129.63 p99=417.4650766609881
+2026-07-11 02:56:13 [debug    ] HAProxy fallback latency       delta_requests=633 interval_avg_ms=64.0 max_rtime_ms=556.0 p99_est=128.0
+2026-07-11 02:56:13 [debug    ] GRU prediction received        confidence=0.84 latency_ms=14.93 predicted=60
+2026-07-11 02:56:13 [debug    ] Using GRU prediction           confidence=0.84 predicted=60
+2026-07-11 02:56:13 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=983 burn_error=-0.983 burn_ratio=0.017
+2026-07-11 02:56:13 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=60.0 required_resources=1.802 target_replicas=3
+2026-07-11 02:56:13 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=128.72 p99=128.0
+2026-07-11 02:56:28 [debug    ] HAProxy fallback latency       delta_requests=670 interval_avg_ms=64.0 max_rtime_ms=556.0 p99_est=128.0
+2026-07-11 02:56:28 [debug    ] GRU prediction received        confidence=0.85 latency_ms=14.57 predicted=59
+2026-07-11 02:56:28 [debug    ] Using GRU prediction           confidence=0.85 predicted=59
+2026-07-11 02:56:28 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=983 burn_error=-0.983 burn_ratio=0.017
+2026-07-11 02:56:28 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=59.0 required_resources=1.772 target_replicas=3
+2026-07-11 02:56:28 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=127.93 p99=128.0
+2026-07-11 02:56:43 [debug    ] HAProxy fallback latency       delta_requests=753 interval_avg_ms=180.37 max_rtime_ms=556.0 p99_est=360.73
+2026-07-11 02:56:43 [debug    ] GRU prediction received        confidence=0.82 latency_ms=15.14 predicted=59
+2026-07-11 02:56:43 [debug    ] Using GRU prediction           confidence=0.82 predicted=59
+2026-07-11 02:56:43 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=982 burn_error=-0.982 burn_ratio=0.018
+2026-07-11 02:56:43 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=59.0 required_resources=1.772 target_replicas=3
+2026-07-11 02:56:43 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=123.1 p99=360.730411686587
+2026-07-11 02:56:58 [debug    ] HAProxy fallback latency       delta_requests=217 interval_avg_ms=65.0 max_rtime_ms=556.0 p99_est=130.0
+2026-07-11 02:56:58 [debug    ] GRU prediction received        confidence=0.72 latency_ms=14.57 predicted=56
+2026-07-11 02:56:58 [debug    ] Using GRU prediction           confidence=0.72 predicted=56
+2026-07-11 02:56:58 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=982 burn_error=-0.983 burn_ratio=0.017
+2026-07-11 02:56:58 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=56.0 required_resources=1.682 target_replicas=3
+2026-07-11 02:56:58 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=122.74 p99=130.0
+2026-07-11 02:57:13 [debug    ] GRU prediction received        confidence=0.72 latency_ms=14.98 predicted=54
+2026-07-11 02:57:13 [debug    ] Using GRU prediction           confidence=0.72 predicted=54
+2026-07-11 02:57:13 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=982 burn_error=-0.983 burn_ratio=0.017
+2026-07-11 02:57:14 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=54.0 required_resources=1.622 target_replicas=3
+2026-07-11 02:57:14 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=124.37 p99=130.0
+2026-07-11 02:57:29 [debug    ] GRU prediction received        confidence=0.72 latency_ms=14.46 predicted=52
+2026-07-11 02:57:29 [debug    ] Using GRU prediction           confidence=0.72 predicted=52
+2026-07-11 02:57:29 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=982 burn_error=-0.983 burn_ratio=0.017
+2026-07-11 02:57:29 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=52.0 required_resources=1.562 target_replicas=3
+2026-07-11 02:57:29 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=127.58 p99=130.0
+2026-07-11 02:57:44 [debug    ] GRU prediction received        confidence=0.72 latency_ms=14.75 predicted=51
+2026-07-11 02:57:44 [debug    ] Using GRU prediction           confidence=0.72 predicted=51
+2026-07-11 02:57:44 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=982 burn_error=-0.983 burn_ratio=0.017
+2026-07-11 02:57:44 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=51.0 required_resources=1.532 target_replicas=3
+2026-07-11 02:57:44 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=121.83 p99=130.0
+2026-07-11 02:57:48 [info     ] Received shutdown signal
+2026-07-11 02:57:48 [info     ] Stopping routing daemon...
+2026-07-11 02:57:48 [info     ] Routing daemon stopped

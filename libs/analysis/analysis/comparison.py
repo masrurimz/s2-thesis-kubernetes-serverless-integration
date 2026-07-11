@@ -11,8 +11,15 @@ from typing import Sequence
 import numpy as np
 from scipy import stats as scipy_stats
 
-from shared.models.experiment import StatisticalComparison
-from shared.stats import bootstrap_ci_diff, cohens_d, effect_size_label
+from shared.models.experiment import PairedComparison, StatisticalComparison
+from shared.stats import (
+    bootstrap_ci_diff,
+    cohens_d,
+    cohens_d_paired,
+    effect_size_label,
+    paired_bootstrap_ci,
+    paired_permutation_test,
+)
 
 
 def run_pairwise_comparison(
@@ -100,3 +107,63 @@ def apply_holm_bonferroni(comparisons: list[StatisticalComparison]) -> None:
     for i, c in enumerate(comparisons):
         c.welch_p_corrected = welch_corrected[i]
         c.mannwhitney_p_corrected = mw_corrected[i]
+
+
+def run_paired_comparison(
+    baseline_values: Sequence[float],
+    comparison_values: Sequence[float],
+    metric: str,
+    pair_ids: Sequence[str] | None = None,
+    label: str = "",
+) -> PairedComparison:
+    """Build a PairedComparison for paired S3/S4 data.
+
+    Uses paired bootstrap CI and one-sided permutation test
+    (H1: comparison < baseline).
+    """
+    n = len(baseline_values)
+    assert len(comparison_values) == n, "Paired comparison requires equal-length arrays"
+
+    base_arr = np.asarray(baseline_values, dtype=float)
+    comp_arr = np.asarray(comparison_values, dtype=float)
+
+    base_mean = float(np.mean(base_arr))
+    comp_mean = float(np.mean(comp_arr))
+    mean_diff = comp_mean - base_mean
+
+    ci_lo, ci_hi = paired_bootstrap_ci(base_arr.tolist(), comp_arr.tolist(), seed=42)
+    perm_p = paired_permutation_test(base_arr.tolist(), comp_arr.tolist(), seed=42)
+    d_paired = cohens_d_paired(base_arr.tolist(), comp_arr.tolist())
+
+    # H2 supported: comparison mean lower AND CI excludes zero AND p < 0.05
+    h2_supported = comp_mean < base_mean and ci_hi < 0 and perm_p < 0.05
+
+    return PairedComparison(
+        metric=metric,
+        label=label,
+        n_pairs=n,
+        baseline_mean=base_mean,
+        comparison_mean=comp_mean,
+        mean_difference=mean_diff,
+        paired_ci_lower=ci_lo,
+        paired_ci_upper=ci_hi,
+        permutation_p_value=perm_p,
+        cohens_d_paired=d_paired,
+        effect_size_interpretation=effect_size_label(abs(d_paired)),
+        baseline_values=list(base_arr),
+        comparison_values=list(comp_arr),
+        pair_ids=list(pair_ids) if pair_ids else [f"pair_{i}" for i in range(n)],
+        h2_supported=h2_supported,
+    )
+
+
+def apply_holm_paired(comparisons: list[PairedComparison]) -> None:
+    """Apply Holm-Bonferroni correction to paired comparison p-values."""
+    from shared.stats import holm_bonferroni
+
+    ps = [c.permutation_p_value for c in comparisons]
+    corrected = holm_bonferroni(ps)
+    for i, c in enumerate(comparisons):
+        c.permutation_p_corrected = corrected[i]
+        # Re-check h2_supported with corrected p-value
+        c.h2_supported = c.comparison_mean < c.baseline_mean and c.paired_ci_upper < 0 and corrected[i] < 0.05

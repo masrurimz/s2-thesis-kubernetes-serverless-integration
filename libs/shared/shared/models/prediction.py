@@ -27,10 +27,12 @@ class PredictRequest(BaseModel):
 class PredictResponse(BaseModel):
     """Response from the GRU prediction endpoint."""
 
-    predicted_requests: int = Field(description="Primary prediction value")
+    predicted_requests: int = Field(description="Primary prediction value (max of upper forecasts)")
     confidence: float = Field(ge=0, le=1, description="Prediction confidence (0-1)")
-    horizon_values: List[int] = Field(description="Predictions for each horizon step")
+    horizon_values: List[int] = Field(description="Point forecasts for each horizon step")
     latency_ms: float = Field(description="Prediction latency in milliseconds")
+    point_forecasts: Optional[List[float]] = Field(default=None, description="Raw point forecasts per horizon")
+    upper_forecasts: Optional[List[float]] = Field(default=None, description="Upper envelope forecasts per horizon")
 
 
 class PredictionResult(BaseModel):
@@ -42,6 +44,8 @@ class PredictionResult(BaseModel):
     latency_ms: float
     success: bool = True
     error: Optional[str] = None
+    point_forecasts: Optional[List[float]] = None
+    upper_forecasts: Optional[List[float]] = None
 
 
 class HealthResponse(BaseModel):

@@ -124,3 +124,58 @@ def mann_whitney_u(group1: Sequence[float], group2: Sequence[float]) -> tuple[fl
     except ValueError:
         return 0.0, 1.0
     return float(u_stat), float(p_value)
+
+
+def paired_bootstrap_ci(
+    baseline: Sequence[float],
+    comparison: Sequence[float],
+    n_bootstrap: int = 10000,
+    confidence: float = 0.95,
+    seed: int = 42,
+) -> tuple[float, float]:
+    """Bootstrap CI for the mean of paired differences (comparison - baseline).
+
+    Resamples the per-pair differences with replacement. This controls for
+    shared temporal/system effects when S3 and S4 are run back-to-back.
+    """
+    arr = np.asarray(comparison, dtype=float) - np.asarray(baseline, dtype=float)
+    rng = np.random.default_rng(seed=seed)
+    means = np.empty(n_bootstrap)
+    for i in range(n_bootstrap):
+        means[i] = np.mean(rng.choice(arr, size=len(arr), replace=True))
+    alpha = 1 - confidence
+    lo, hi = np.percentile(means, [alpha / 2 * 100, (1 - alpha / 2) * 100])
+    return float(lo), float(hi)
+
+
+def paired_permutation_test(
+    baseline: Sequence[float],
+    comparison: Sequence[float],
+    n_permutations: int = 10000,
+    seed: int = 42,
+) -> float:
+    """One-sided paired permutation test: H0: mean(comparison - baseline) >= 0.
+
+    Under H0, swapping within pairs doesn't change the distribution.
+    Returns the fraction of permutations where the mean difference is <= 0
+    (i.e. p-value for the one-sided alternative that comparison < baseline).
+    """
+    diffs = np.asarray(comparison, dtype=float) - np.asarray(baseline, dtype=float)
+    observed = np.mean(diffs)
+    rng = np.random.default_rng(seed=seed)
+    count = 0
+    n = len(diffs)
+    for _ in range(n_permutations):
+        signs = rng.choice([-1, 1], size=n)
+        if np.mean(diffs * signs) <= observed:
+            count += 1
+    return count / n_permutations
+
+
+def cohens_d_paired(baseline: Sequence[float], comparison: Sequence[float]) -> float:
+    """Cohen's d for paired samples (mean_diff / sd_diff)."""
+    diffs = np.asarray(comparison, dtype=float) - np.asarray(baseline, dtype=float)
+    sd = np.std(diffs, ddof=1)
+    if sd == 0:
+        return 0.0
+    return float(np.mean(diffs) / sd)

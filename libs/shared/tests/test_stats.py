@@ -11,9 +11,12 @@ from shared.stats import (
     bootstrap_ci,
     bootstrap_ci_diff,
     cohens_d,
+    cohens_d_paired,
     effect_size_label,
     holm_bonferroni,
     mann_whitney_u,
+    paired_bootstrap_ci,
+    paired_permutation_test,
     welch_ttest,
 )
 
@@ -108,3 +111,51 @@ class TestWelchAndMannWhitney:
         assert isinstance(u, float)
         assert isinstance(p, float)
         assert 0.0 <= p <= 1.0
+
+
+class TestPairedStatistics:
+    """Tests for paired bootstrap CI, permutation test, and paired Cohen's d."""
+
+    def test_paired_bootstrap_ci_excludes_zero_when_consistent(self):
+        """When comparison is consistently lower, CI should exclude zero."""
+        baseline = [100, 110, 120, 130, 140]
+        comparison = [90, 100, 110, 120, 130]
+        lo, hi = paired_bootstrap_ci(baseline, comparison, n_bootstrap=5000, seed=42)
+        assert hi < 0, f"Expected CI entirely below 0, got [{lo}, {hi}]"
+
+    def test_paired_bootstrap_ci_includes_zero_when_no_diff(self):
+        """When baseline == comparison, CI should include zero."""
+        vals = [100, 110, 120, 130, 140]
+        lo, hi = paired_bootstrap_ci(vals, vals, n_bootstrap=5000, seed=42)
+        assert lo <= 0 <= hi
+
+    def test_paired_permutation_significant(self):
+        """Permutation test should detect consistent difference."""
+        baseline = [100, 110, 120, 130, 140]
+        comparison = [80, 90, 100, 110, 120]
+        p = paired_permutation_test(baseline, comparison, n_permutations=5000, seed=42)
+        assert p < 0.05, f"Expected p < 0.05 for consistent S4 < S3, got {p}"
+
+    def test_paired_permutation_not_significant(self):
+        """Permutation test should not reject when no difference."""
+        baseline = [100, 110, 120]
+        comparison = [110, 100, 120]  # Same values, different pair assignment
+        p = paired_permutation_test(baseline, comparison, n_permutations=5000, seed=42)
+        assert p > 0.1, f"Expected p > 0.1 for no effect, got {p}"
+
+    def test_cohens_d_paired_negative_when_comparison_lower(self):
+        """Paired Cohen's d should be negative when comparison < baseline."""
+        d = cohens_d_paired([100, 110, 120, 130], [95, 102, 112, 125])
+        assert d < 0
+
+    def test_cohens_d_paired_zero_when_identical(self):
+        """Paired Cohen's d should be zero when all diffs are zero."""
+        d = cohens_d_paired([100, 110, 120], [100, 110, 120])
+        assert d == 0.0
+
+    def test_paired_stats_require_equal_length(self):
+        """Paired functions should work with equal-length arrays."""
+        lo, hi = paired_bootstrap_ci([1, 5, 3, 7], [3, 8, 6, 12])
+        assert lo > 0  # comparison is consistently higher
+        d = cohens_d_paired([1, 5, 3, 7], [3, 8, 6, 12])
+        assert d > 0

@@ -1,0 +1,520 @@
+2026-07-10 21:15:43 [info     ] SLOMonitor initialized         threshold_ms=200.0 violation_window=30
+2026-07-10 21:15:43 [info     ] Algorithm1ControllerV3 initialized max_knative=50 r_saturation=16.7 target_cpu_util=0.5 total_budget=1000
+2026-07-10 21:15:43 [info     ] Using V3 controller (Capacity-Driven) scenario=s3-hybrid-reactive version=v3
+2026-07-10 21:15:43 [info     ] HAProxyWeightAdjuster initialized backend=servers host=localhost port=19999
+2026-07-10 21:15:43 [info     ] GRUClient initialized          base_url=http://localhost:8090
+2026-07-10 21:15:43 [info     ] K8sScaler initialized          deployment=test-app-warm namespace=default
+2026-07-10 21:15:43 [info     ] RoutingDaemon initialized      decision_interval=15 description='Algorithm 1 reactive routing without predictions' scenario=s3-hybrid-reactive use_algorithm=True use_predictions=False
+2026-07-10 21:15:43 [info     ] Starting routing daemon        interval=15 scenario=s3-hybrid-reactive
+2026-07-10 21:15:43 [info     ] Weights updated                k3s=80 knative=20
+2026-07-10 21:15:43 [info     ] Initial weights applied        k3s=80 knative=20
+2026-07-10 21:15:43 [debug    ] HAProxy fallback primed        total_requests=0
+2026-07-10 21:15:43 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-10 21:15:43 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.53 p99=0.0
+2026-07-10 21:15:58 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-10 21:15:58 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=104.02 p99=0.0
+2026-07-10 21:16:13 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-10 21:16:13 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=108.99 p99=0.0
+2026-07-10 21:16:28 [debug    ] HAProxy fallback latency       delta_requests=640 interval_avg_ms=69.0 max_rtime_ms=190.0 p99_est=138.0
+2026-07-10 21:16:28 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-5 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-10 21:16:28 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=-5 burst_ratio=0.4068 capacity_deficit=False confidence=0 current_load=42.22752644855987 decision_id=8085d41e k8s_capacity=25.0 k8s_weight=64 knative_weight=36 p99=138.0 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=42.2 weights_after={'k3s': 64, 'knative': 36} weights_before={'k3s': 80, 'knative': 20}
+2026-07-10 21:16:28 [info     ] Weights updated                k3s=64 knative=36
+2026-07-10 21:16:28 [info     ] Weights updated                action=REACTIVE reason='load=42RPS | k8s_cap=25RPS | (burst-routing)' weights={'k3s': 64, 'knative': 36}
+2026-07-10 21:16:28 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=21.113763224279936 required_resources=1.264 target_replicas=3
+2026-07-10 21:16:28 [debug    ] Decision loop completed        action=REACTIVE latency_ms=108.2 p99=138.0
+2026-07-10 21:16:43 [debug    ] HAProxy fallback latency       delta_requests=665 interval_avg_ms=63.11 max_rtime_ms=190.0 p99_est=126.23
+2026-07-10 21:16:43 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-6 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-10 21:16:43 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=-6 burst_ratio=0.4309 capacity_deficit=False confidence=0 current_load=44.01632958940512 decision_id=381511d1 k8s_capacity=25.0 k8s_weight=62 knative_weight=38 p99=126.2 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=44.0 weights_after={'k3s': 62, 'knative': 38} weights_before={'k3s': 64, 'knative': 36}
+2026-07-10 21:16:43 [info     ] Weights updated                k3s=62 knative=38
+2026-07-10 21:16:43 [info     ] Weights updated                action=REACTIVE reason='load=44RPS | k8s_cap=25RPS | (burst-routing)' weights={'k3s': 62, 'knative': 38}
+2026-07-10 21:16:43 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=43.121928018982494 required_resources=2.582 target_replicas=4
+2026-07-10 21:16:43 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=4
+2026-07-10 21:16:43 [debug    ] Decision loop completed        action=REACTIVE latency_ms=148.85 p99=126.22556390977444
+2026-07-10 21:16:58 [debug    ] HAProxy fallback latency       delta_requests=717 interval_avg_ms=66.0 max_rtime_ms=190.0 p99_est=132.0
+2026-07-10 21:16:58 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-6 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-10 21:16:58 [info     ] controller_decision_v3         action=RECOVERY available_replicas=4 budget_remaining=1000 burn_adjustment=-6 burst_ratio=0.2953 capacity_deficit=False confidence=0 current_load=47.39789694446482 decision_id=f81a998e k8s_capacity=33.4 k8s_weight=76 knative_weight=24 p99=132.0 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=47.4 weights_after={'k3s': 76, 'knative': 24} weights_before={'k3s': 62, 'knative': 38}
+2026-07-10 21:16:58 [info     ] Weights updated                k3s=76 knative=24
+2026-07-10 21:16:58 [info     ] Weights updated                action=RECOVERY reason='load=47RPS | k8s_cap=33RPS | (reducing-serverless)' weights={'k3s': 76, 'knative': 24}
+2026-07-10 21:16:58 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=45.70711326693497 required_resources=2.737 target_replicas=4
+2026-07-10 21:16:58 [debug    ] Decision loop completed        action=RECOVERY latency_ms=143.53 p99=132.0
+2026-07-10 21:17:13 [debug    ] HAProxy fallback latency       delta_requests=825 interval_avg_ms=90.16 max_rtime_ms=197.0 p99_est=180.31
+2026-07-10 21:17:13 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-10 21:17:13 [info     ] controller_decision_v3         action=REACTIVE available_replicas=4 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.3861 capacity_deficit=False confidence=0 current_load=54.41000942038721 decision_id=0b216f68 k8s_capacity=33.4 k8s_weight=68 knative_weight=32 p99=180.3 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=54.4 weights_after={'k3s': 68, 'knative': 32} weights_before={'k3s': 76, 'knative': 24}
+2026-07-10 21:17:13 [info     ] Weights updated                k3s=68 knative=32
+2026-07-10 21:17:13 [info     ] Weights updated                action=REACTIVE reason='load=54RPS | k8s_cap=33RPS | (burst-routing)' weights={'k3s': 68, 'knative': 32}
+2026-07-10 21:17:14 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=50.903953182426015 required_resources=3.048 target_replicas=4
+2026-07-10 21:17:14 [debug    ] Decision loop completed        action=REACTIVE latency_ms=114.33 p99=180.31272727272727
+2026-07-10 21:17:29 [debug    ] HAProxy fallback latency       delta_requests=767 interval_avg_ms=77.71 max_rtime_ms=218.0 p99_est=155.42
+2026-07-10 21:17:29 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-10 21:17:29 [info     ] controller_decision_v3         action=RECOVERY available_replicas=4 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.3418 capacity_deficit=False confidence=0 current_load=50.74694645394043 decision_id=23bc97b9 k8s_capacity=33.4 k8s_weight=72 knative_weight=28 p99=155.4 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=50.7 weights_after={'k3s': 72, 'knative': 28} weights_before={'k3s': 68, 'knative': 32}
+2026-07-10 21:17:29 [info     ] Weights updated                k3s=72 knative=28
+2026-07-10 21:17:29 [info     ] Weights updated                action=RECOVERY reason='load=51RPS | k8s_cap=33RPS | (reducing-serverless)' weights={'k3s': 72, 'knative': 28}
+2026-07-10 21:17:29 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=52.578477937163825 required_resources=3.148 target_replicas=4
+2026-07-10 21:17:29 [debug    ] Decision loop completed        action=RECOVERY latency_ms=144.48 p99=155.42372881355934
+2026-07-10 21:17:44 [debug    ] HAProxy fallback latency       delta_requests=547 interval_avg_ms=58.79 max_rtime_ms=218.0 p99_est=117.57
+2026-07-10 21:17:44 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-10 21:17:44 [info     ] controller_decision_v3         action=RECOVERY available_replicas=4 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.077 capacity_deficit=False confidence=0 current_load=36.18455355259903 decision_id=6576b120 k8s_capacity=33.4 k8s_weight=99 knative_weight=1 p99=117.6 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=36.2 weights_after={'k3s': 99, 'knative': 1} weights_before={'k3s': 72, 'knative': 28}
+2026-07-10 21:17:44 [info     ] Weights updated                k3s=99 knative=1
+2026-07-10 21:17:44 [info     ] Weights updated                action=RECOVERY reason='load=36RPS | k8s_cap=33RPS | (reducing-serverless)' weights={'k3s': 99, 'knative': 1}
+2026-07-10 21:17:44 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=43.46575000326973 required_resources=2.603 target_replicas=4
+2026-07-10 21:17:44 [debug    ] Decision loop completed        action=RECOVERY latency_ms=144.78 p99=117.57221206581353
+2026-07-10 21:17:59 [debug    ] HAProxy fallback latency       delta_requests=412 interval_avg_ms=27.6 max_rtime_ms=218.0 p99_est=55.2
+2026-07-10 21:17:59 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-10 21:17:59 [info     ] controller_decision_v3         action=RECOVERY available_replicas=4 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0 current_load=27.202106335235165 decision_id=ce9f9b4b k8s_capacity=33.4 k8s_weight=100 knative_weight=0 p99=55.2 predicted_load=0 r_effective=8.3 serverless_enabled=False total_load=27.2 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 99, 'knative': 1}
+2026-07-10 21:17:59 [info     ] Weights updated                k3s=100 knative=0
+2026-07-10 21:17:59 [info     ] Weights updated                action=RECOVERY reason='load=27RPS | k8s_cap=33RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-10 21:17:59 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=31.693329943917096 required_resources=1.898 target_replicas=3
+2026-07-10 21:17:59 [debug    ] Decision loop completed        action=RECOVERY latency_ms=143.45 p99=55.20388349514563
+2026-07-10 21:18:14 [debug    ] HAProxy fallback latency       delta_requests=358 interval_avg_ms=40.45 max_rtime_ms=218.0 p99_est=80.91
+2026-07-10 21:18:14 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-10 21:18:14 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=25.421832132556375 required_resources=1.522 target_replicas=3
+2026-07-10 21:18:14 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=107.41 p99=80.90502793296089
+2026-07-10 21:18:29 [debug    ] HAProxy fallback latency       delta_requests=487 interval_avg_ms=54.87 max_rtime_ms=218.0 p99_est=109.75
+2026-07-10 21:18:29 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-10 21:18:29 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=27.9053722555553 required_resources=1.671 target_replicas=3
+2026-07-10 21:18:29 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=106.89 p99=109.74948665297741
+2026-07-10 21:18:44 [debug    ] HAProxy fallback latency       delta_requests=774 interval_avg_ms=97.0 max_rtime_ms=218.0 p99_est=194.0
+2026-07-10 21:18:44 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-10 21:18:44 [info     ] Knative pre-warm OK            cold_start_ms=2.9
+2026-07-10 21:18:44 [info     ] controller_decision_v3         action=REACTIVE available_replicas=4 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.3481 capacity_deficit=False confidence=0 current_load=51.234208887656635 decision_id=5595ca5a k8s_capacity=33.4 k8s_weight=72 knative_weight=28 p99=194.0 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=51.2 weights_after={'k3s': 72, 'knative': 28} weights_before={'k3s': 100, 'knative': 0}
+2026-07-10 21:18:44 [info     ] Weights updated                k3s=72 knative=28
+2026-07-10 21:18:44 [info     ] Weights updated                action=REACTIVE reason='load=51RPS | k8s_cap=33RPS | (burst-routing)' weights={'k3s': 72, 'knative': 28}
+2026-07-10 21:18:44 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=41.70169773444482 required_resources=2.497 target_replicas=3
+2026-07-10 21:18:44 [debug    ] Decision loop completed        action=REACTIVE latency_ms=110.29 p99=194.0
+2026-07-10 21:18:59 [debug    ] HAProxy fallback latency       delta_requests=811 interval_avg_ms=43.09 max_rtime_ms=218.0 p99_est=86.19
+2026-07-10 21:18:59 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-10 21:18:59 [info     ] controller_decision_v3         action=REACTIVE available_replicas=4 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.3777 capacity_deficit=False confidence=0 current_load=53.67200681153668 decision_id=3b5d9017 k8s_capacity=33.4 k8s_weight=69 knative_weight=31 p99=86.2 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=53.7 weights_after={'k3s': 69, 'knative': 31} weights_before={'k3s': 72, 'knative': 28}
+2026-07-10 21:18:59 [info     ] Weights updated                k3s=69 knative=31
+2026-07-10 21:18:59 [info     ] Weights updated                action=REACTIVE reason='load=54RPS | k8s_cap=33RPS | (burst-routing)' weights={'k3s': 69, 'knative': 31}
+2026-07-10 21:18:59 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=52.45310784959666 required_resources=3.141 target_replicas=4
+2026-07-10 21:18:59 [debug    ] Decision loop completed        action=REACTIVE latency_ms=113.15 p99=86.18988902589396
+2026-07-10 21:19:14 [debug    ] HAProxy fallback latency       delta_requests=637 interval_avg_ms=54.01 max_rtime_ms=218.0 p99_est=108.01
+2026-07-10 21:19:14 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-10 21:19:14 [info     ] controller_decision_v3         action=RECOVERY available_replicas=4 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.2088 capacity_deficit=False confidence=0 current_load=42.212761016921505 decision_id=23212237 k8s_capacity=33.4 k8s_weight=86 knative_weight=14 p99=108.0 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=42.2 weights_after={'k3s': 86, 'knative': 14} weights_before={'k3s': 69, 'knative': 31}
+2026-07-10 21:19:15 [info     ] Weights updated                k3s=86 knative=14
+2026-07-10 21:19:15 [info     ] Weights updated                action=RECOVERY reason='load=42RPS | k8s_cap=33RPS | (reducing-serverless)' weights={'k3s': 86, 'knative': 14}
+2026-07-10 21:19:15 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=47.9423839142291 required_resources=2.871 target_replicas=4
+2026-07-10 21:19:15 [debug    ] Decision loop completed        action=RECOVERY latency_ms=140.91 p99=108.01255886970172
+2026-07-10 21:19:30 [debug    ] HAProxy fallback latency       delta_requests=659 interval_avg_ms=65.0 max_rtime_ms=218.0 p99_est=130.0
+2026-07-10 21:19:30 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-10 21:19:30 [info     ] controller_decision_v3         action=REACTIVE available_replicas=4 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.2315 capacity_deficit=False confidence=0 current_load=43.45940193948294 decision_id=c8a4cec3 k8s_capacity=33.4 k8s_weight=83 knative_weight=17 p99=130.0 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=43.5 weights_after={'k3s': 83, 'knative': 17} weights_before={'k3s': 86, 'knative': 14}
+2026-07-10 21:19:30 [info     ] Weights updated                k3s=83 knative=17
+2026-07-10 21:19:30 [info     ] Weights updated                action=REACTIVE reason='load=43RPS | k8s_cap=33RPS | (burst-routing)' weights={'k3s': 83, 'knative': 17}
+2026-07-10 21:19:30 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=42.83608147820222 required_resources=2.565 target_replicas=4
+2026-07-10 21:19:30 [debug    ] Decision loop completed        action=REACTIVE latency_ms=105.28 p99=130.0
+2026-07-10 21:19:45 [debug    ] HAProxy fallback latency       delta_requests=832 interval_avg_ms=54.03 max_rtime_ms=218.0 p99_est=108.05
+2026-07-10 21:19:45 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-10 21:19:45 [info     ] controller_decision_v3         action=REACTIVE available_replicas=4 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.3929 capacity_deficit=False confidence=0 current_load=55.01261804723144 decision_id=242ddeab k8s_capacity=33.4 k8s_weight=67 knative_weight=33 p99=108.1 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=55.0 weights_after={'k3s': 67, 'knative': 33} weights_before={'k3s': 83, 'knative': 17}
+2026-07-10 21:19:45 [info     ] Weights updated                k3s=67 knative=33
+2026-07-10 21:19:45 [info     ] Weights updated                action=REACTIVE reason='load=55RPS | k8s_cap=33RPS | (burst-routing)' weights={'k3s': 67, 'knative': 33}
+2026-07-10 21:19:45 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=49.236009993357186 required_resources=2.948 target_replicas=4
+2026-07-10 21:19:45 [debug    ] Decision loop completed        action=REACTIVE latency_ms=113.85 p99=108.05048076923077
+2026-07-10 21:20:00 [debug    ] HAProxy fallback latency       delta_requests=915 interval_avg_ms=74.98 max_rtime_ms=218.0 p99_est=149.96
+2026-07-10 21:20:00 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-10 21:20:00 [info     ] controller_decision_v3         action=REACTIVE available_replicas=4 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.4489 capacity_deficit=False confidence=0 current_load=60.607808927473194 decision_id=cecaeff0 k8s_capacity=33.4 k8s_weight=62 knative_weight=38 p99=150.0 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=60.6 weights_after={'k3s': 62, 'knative': 38} weights_before={'k3s': 67, 'knative': 33}
+2026-07-10 21:20:00 [info     ] Weights updated                k3s=62 knative=38
+2026-07-10 21:20:00 [info     ] Weights updated                action=REACTIVE reason='load=61RPS | k8s_cap=33RPS | (burst-routing)' weights={'k3s': 62, 'knative': 38}
+2026-07-10 21:20:00 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=57.810213487352314 required_resources=3.462 target_replicas=5
+2026-07-10 21:20:00 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=5
+2026-07-10 21:20:00 [debug    ] Decision loop completed        action=REACTIVE latency_ms=145.1 p99=149.9584699453552
+2026-07-10 21:20:15 [debug    ] HAProxy fallback latency       delta_requests=934 interval_avg_ms=53.24 max_rtime_ms=218.0 p99_est=106.49
+2026-07-10 21:20:15 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-10 21:20:15 [info     ] controller_decision_v3         action=RECOVERY available_replicas=5 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.3223 capacity_deficit=False confidence=0 current_load=61.60173395358115 decision_id=d1db5957 k8s_capacity=41.8 k8s_weight=74 knative_weight=26 p99=106.5 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=61.6 weights_after={'k3s': 74, 'knative': 26} weights_before={'k3s': 62, 'knative': 38}
+2026-07-10 21:20:15 [info     ] Weights updated                k3s=74 knative=26
+2026-07-10 21:20:15 [info     ] Weights updated                action=RECOVERY reason='load=62RPS | k8s_cap=42RPS | (reducing-serverless)' weights={'k3s': 74, 'knative': 26}
+2026-07-10 21:20:15 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=61.10477144052717 required_resources=3.659 target_replicas=5
+2026-07-10 21:20:15 [debug    ] Decision loop completed        action=RECOVERY latency_ms=145.28 p99=106.4882226980728
+2026-07-10 21:20:30 [debug    ] HAProxy fallback latency       delta_requests=1007 interval_avg_ms=75.9 max_rtime_ms=218.0 p99_est=151.81
+2026-07-10 21:20:30 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-10 21:20:30 [info     ] controller_decision_v3         action=REACTIVE available_replicas=5 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.3721 capacity_deficit=False confidence=0 current_load=66.48834380343034 decision_id=3cb9e3a3 k8s_capacity=41.8 k8s_weight=69 knative_weight=31 p99=151.8 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=66.5 weights_after={'k3s': 69, 'knative': 31} weights_before={'k3s': 74, 'knative': 26}
+2026-07-10 21:20:30 [info     ] Weights updated                k3s=69 knative=31
+2026-07-10 21:20:30 [info     ] Weights updated                action=REACTIVE reason='load=66RPS | k8s_cap=42RPS | (burst-routing)' weights={'k3s': 69, 'knative': 31}
+2026-07-10 21:20:30 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=64.04503887850575 required_resources=3.835 target_replicas=5
+2026-07-10 21:20:30 [debug    ] Decision loop completed        action=REACTIVE latency_ms=104.4 p99=151.80734856007945
+2026-07-10 21:20:45 [debug    ] HAProxy fallback latency       delta_requests=1119 interval_avg_ms=182.12 max_rtime_ms=218.0 p99_est=218.0
+2026-07-10 21:20:45 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=999 burn_error=-0.996 burn_ratio=0.004
+2026-07-10 21:20:45 [info     ] controller_decision_v3         action=REACTIVE available_replicas=5 budget_remaining=999 burn_adjustment=-7 burst_ratio=0.4365 capacity_deficit=False confidence=0 current_load=74.08756576095094 decision_id=f6afb422 k8s_capacity=41.8 k8s_weight=63 knative_weight=37 p99=218.0 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=74.1 weights_after={'k3s': 63, 'knative': 37} weights_before={'k3s': 69, 'knative': 31}
+2026-07-10 21:20:45 [info     ] Weights updated                k3s=63 knative=37
+2026-07-10 21:20:45 [info     ] Weights updated                action=REACTIVE reason='load=74RPS | k8s_cap=42RPS | (burst-routing)' weights={'k3s': 63, 'knative': 37}
+2026-07-10 21:20:45 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=70.28795478219064 required_resources=4.209 target_replicas=6
+2026-07-10 21:20:45 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=6
+2026-07-10 21:20:45 [debug    ] Decision loop completed        action=REACTIVE latency_ms=154.28 p99=218.0
+2026-07-10 21:21:00 [debug    ] HAProxy fallback latency       delta_requests=1279 interval_avg_ms=97.49 max_rtime_ms=239.0 p99_est=194.99
+2026-07-10 21:21:00 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=999 burn_error=-0.996 burn_ratio=0.004
+2026-07-10 21:21:00 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=999 burn_adjustment=-7 burst_ratio=0.4064 capacity_deficit=False confidence=0 current_load=84.39808670089475 decision_id=2fb131fe k8s_capacity=50.1 k8s_weight=66 knative_weight=34 p99=195.0 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=84.4 weights_after={'k3s': 66, 'knative': 34} weights_before={'k3s': 63, 'knative': 37}
+2026-07-10 21:21:00 [info     ] Weights updated                k3s=66 knative=34
+2026-07-10 21:21:00 [info     ] Weights updated                action=RECOVERY reason='load=84RPS | k8s_cap=50RPS | (reducing-serverless)' weights={'k3s': 66, 'knative': 34}
+2026-07-10 21:21:00 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=79.24282623092284 required_resources=4.745 target_replicas=6
+2026-07-10 21:21:00 [debug    ] Decision loop completed        action=RECOVERY latency_ms=138.92 p99=194.98827208756842
+2026-07-10 21:21:15 [debug    ] HAProxy fallback latency       delta_requests=1461 interval_avg_ms=98.69 max_rtime_ms=283.0 p99_est=197.38
+2026-07-10 21:21:16 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=999 burn_error=-0.996 burn_ratio=0.004
+2026-07-10 21:21:16 [info     ] controller_decision_v3         action=REACTIVE available_replicas=6 budget_remaining=999 burn_adjustment=-7 burst_ratio=0.4808 capacity_deficit=False confidence=0 current_load=96.50168975803169 decision_id=7cc239da k8s_capacity=50.1 k8s_weight=58 knative_weight=42 p99=197.4 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=96.5 weights_after={'k3s': 58, 'knative': 42} weights_before={'k3s': 66, 'knative': 34}
+2026-07-10 21:21:16 [info     ] Weights updated                k3s=58 knative=42
+2026-07-10 21:21:16 [info     ] Weights updated                action=REACTIVE reason='load=97RPS | k8s_cap=50RPS | (burst-routing)' weights={'k3s': 58, 'knative': 42}
+2026-07-10 21:21:16 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=90.44988822946323 required_resources=5.416 target_replicas=7
+2026-07-10 21:21:16 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=7
+2026-07-10 21:21:16 [debug    ] Decision loop completed        action=REACTIVE latency_ms=142.92 p99=197.3839835728953
+2026-07-10 21:21:31 [debug    ] HAProxy fallback latency       delta_requests=1675 interval_avg_ms=89.46 max_rtime_ms=283.0 p99_est=178.92
+2026-07-10 21:21:31 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=999 burn_error=-0.997 burn_ratio=0.003
+2026-07-10 21:21:31 [info     ] controller_decision_v3         action=REACTIVE available_replicas=6 budget_remaining=999 burn_adjustment=-7 burst_ratio=0.5465 capacity_deficit=True confidence=0 current_load=110.48435245082831 decision_id=3148e9e4 k8s_capacity=50.1 k8s_weight=57 knative_weight=43 p99=178.9 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=110.5 weights_after={'k3s': 57, 'knative': 43} weights_before={'k3s': 58, 'knative': 42}
+2026-07-10 21:21:31 [info     ] Weights updated                k3s=57 knative=43
+2026-07-10 21:21:31 [info     ] Weights updated                action=REACTIVE reason='load=110RPS | k8s_cap=50RPS | CAPACITY-DEFICIT | (burst-routing)' weights={'k3s': 57, 'knative': 43}
+2026-07-10 21:21:31 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=7 predicted_load=103.49302110443 required_resources=6.197 target_replicas=8
+2026-07-10 21:21:31 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=8
+2026-07-10 21:21:31 [debug    ] Decision loop completed        action=REACTIVE latency_ms=152.58 p99=178.92059701492536
+2026-07-10 21:21:46 [debug    ] HAProxy fallback latency       delta_requests=1897 interval_avg_ms=8.35 max_rtime_ms=283.0 p99_est=16.69
+2026-07-10 21:21:46 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=999 burn_error=-0.997 burn_ratio=0.003
+2026-07-10 21:21:46 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=8 predicted_load=117.8378973141899 required_resources=7.056 target_replicas=9
+2026-07-10 21:21:46 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=9
+2026-07-10 21:21:46 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=151.65 p99=16.69372693726937
+2026-07-10 21:22:01 [debug    ] HAProxy fallback latency       delta_requests=1716 interval_avg_ms=11.42 max_rtime_ms=283.0 p99_est=22.84
+2026-07-10 21:22:01 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=999 burn_error=-0.997 burn_ratio=0.003
+2026-07-10 21:22:01 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=9 predicted_load=119.28687859957924 required_resources=7.143 target_replicas=9
+2026-07-10 21:22:01 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=107.71 p99=22.84149184149184
+2026-07-10 21:22:16 [debug    ] HAProxy fallback latency       delta_requests=1305 interval_avg_ms=16.42 max_rtime_ms=283.0 p99_est=32.83
+2026-07-10 21:22:16 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=999 burn_error=-0.997 burn_ratio=0.003
+2026-07-10 21:22:16 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=999 burn_adjustment=-7 burst_ratio=0.4205 capacity_deficit=False confidence=0 current_load=86.44695248336491 decision_id=a8516cf3 k8s_capacity=50.1 k8s_weight=64 knative_weight=36 p99=32.8 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=86.4 weights_after={'k3s': 64, 'knative': 36} weights_before={'k3s': 57, 'knative': 43}
+2026-07-10 21:22:16 [info     ] Weights updated                k3s=64 knative=36
+2026-07-10 21:22:16 [info     ] Weights updated                action=RECOVERY reason='load=86RPS | k8s_cap=50RPS | (reducing-serverless)' weights={'k3s': 64, 'knative': 36}
+2026-07-10 21:22:16 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=9 predicted_load=99.91463375248595 required_resources=5.983 target_replicas=8
+2026-07-10 21:22:16 [debug    ] Decision loop completed        action=RECOVERY latency_ms=145.88 p99=32.83218390804598
+2026-07-10 21:22:31 [debug    ] HAProxy fallback latency       delta_requests=1131 interval_avg_ms=44.16 max_rtime_ms=283.0 p99_est=88.32
+2026-07-10 21:22:31 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=999 burn_error=-0.997 burn_ratio=0.003
+2026-07-10 21:22:31 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=999 burn_adjustment=-7 burst_ratio=0.3284 capacity_deficit=False confidence=0 current_load=74.60258807619023 decision_id=4a214ddc k8s_capacity=50.1 k8s_weight=74 knative_weight=26 p99=88.3 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=74.6 weights_after={'k3s': 74, 'knative': 26} weights_before={'k3s': 64, 'knative': 36}
+2026-07-10 21:22:31 [info     ] Weights updated                k3s=74 knative=26
+2026-07-10 21:22:31 [info     ] Weights updated                action=RECOVERY reason='load=75RPS | k8s_cap=50RPS | (reducing-serverless)' weights={'k3s': 74, 'knative': 26}
+2026-07-10 21:22:31 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=9 predicted_load=80.52477027977757 required_resources=4.822 target_replicas=6
+2026-07-10 21:22:31 [debug    ] Decision loop completed        action=RECOVERY latency_ms=149.18 p99=88.32007073386384
+2026-07-10 21:22:46 [debug    ] HAProxy fallback latency       delta_requests=1075 interval_avg_ms=86.93 max_rtime_ms=283.0 p99_est=173.85
+2026-07-10 21:22:46 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=999 burn_error=-0.997 burn_ratio=0.003
+2026-07-10 21:22:46 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=999 burn_adjustment=-7 burst_ratio=0.2946 capacity_deficit=False confidence=0 current_load=71.02782671541893 decision_id=ec5c8ed5 k8s_capacity=50.1 k8s_weight=77 knative_weight=23 p99=173.9 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=71.0 weights_after={'k3s': 77, 'knative': 23} weights_before={'k3s': 74, 'knative': 26}
+2026-07-10 21:22:46 [info     ] Weights updated                k3s=77 knative=23
+2026-07-10 21:22:46 [info     ] Weights updated                action=RECOVERY reason='load=71RPS | k8s_cap=50RPS | (reducing-serverless)' weights={'k3s': 77, 'knative': 23}
+2026-07-10 21:22:46 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=9 predicted_load=72.81520739580458 required_resources=4.36 target_replicas=6
+2026-07-10 21:22:46 [debug    ] Decision loop completed        action=RECOVERY latency_ms=142.66 p99=173.85116279069769
+2026-07-10 21:23:01 [debug    ] HAProxy fallback latency       delta_requests=945 interval_avg_ms=65.0 max_rtime_ms=283.0 p99_est=130.0
+2026-07-10 21:23:02 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=999 burn_error=-0.997 burn_ratio=0.003
+2026-07-10 21:23:02 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=999 burn_adjustment=-7 burst_ratio=0.1972 capacity_deficit=False confidence=0 current_load=62.40359245127645 decision_id=8f88915d k8s_capacity=50.1 k8s_weight=87 knative_weight=13 p99=130.0 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=62.4 weights_after={'k3s': 87, 'knative': 13} weights_before={'k3s': 77, 'knative': 23}
+2026-07-10 21:23:02 [info     ] Weights updated                k3s=87 knative=13
+2026-07-10 21:23:02 [info     ] Weights updated                action=RECOVERY reason='load=62RPS | k8s_cap=50RPS | (reducing-serverless)' weights={'k3s': 87, 'knative': 13}
+2026-07-10 21:23:02 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=9 predicted_load=66.71570958334769 required_resources=3.995 target_replicas=5
+2026-07-10 21:23:02 [debug    ] Decision loop completed        action=RECOVERY latency_ms=139.25 p99=130.0
+2026-07-10 21:23:17 [debug    ] HAProxy fallback latency       delta_requests=794 interval_avg_ms=65.0 max_rtime_ms=283.0 p99_est=130.0
+2026-07-10 21:23:17 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=999 burn_error=-0.997 burn_ratio=0.003
+2026-07-10 21:23:17 [info     ] controller_decision_v3         action=RECOVERY available_replicas=9 budget_remaining=999 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0 current_load=52.447412556263274 decision_id=6f9e7782 k8s_capacity=75.1 k8s_weight=100 knative_weight=0 p99=130.0 predicted_load=0 r_effective=8.3 serverless_enabled=False total_load=52.4 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 87, 'knative': 13}
+2026-07-10 21:23:17 [info     ] Weights updated                k3s=100 knative=0
+2026-07-10 21:23:17 [info     ] Weights updated                action=RECOVERY reason='load=52RPS | k8s_cap=75RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-10 21:23:17 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=9 predicted_load=57.42550250376986 required_resources=3.439 target_replicas=5
+2026-07-10 21:23:17 [debug    ] Decision loop completed        action=RECOVERY latency_ms=140.77 p99=130.0
+2026-07-10 21:23:32 [debug    ] HAProxy fallback latency       delta_requests=1217 interval_avg_ms=110.36 max_rtime_ms=283.0 p99_est=220.72
+2026-07-10 21:23:32 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=998 burn_error=-0.995 burn_ratio=0.005
+2026-07-10 21:23:32 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=9 predicted_load=66.34882793897589 required_resources=3.973 target_replicas=5
+2026-07-10 21:23:32 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=117.0 p99=220.71815940838127
+2026-07-10 21:23:47 [debug    ] HAProxy fallback latency       delta_requests=1882 interval_avg_ms=286.32 max_rtime_ms=283.0 p99_est=283.0
+2026-07-10 21:23:47 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=997 burn_error=-0.993 burn_ratio=0.007
+2026-07-10 21:23:47 [info     ] Knative pre-warm OK            cold_start_ms=2.5
+2026-07-10 21:23:47 [info     ] controller_decision_v3         action=REACTIVE available_replicas=9 budget_remaining=997 burn_adjustment=-7 burst_ratio=0.396 capacity_deficit=False confidence=0 current_load=124.4277009253908 decision_id=f9df2c7e k8s_capacity=75.1 k8s_weight=67 knative_weight=33 p99=283.0 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=124.4 weights_after={'k3s': 67, 'knative': 33} weights_before={'k3s': 100, 'knative': 0}
+2026-07-10 21:23:47 [info     ] Weights updated                k3s=67 knative=33
+2026-07-10 21:23:47 [info     ] Weights updated                action=REACTIVE reason='load=124RPS | k8s_cap=75RPS | (burst-routing)' weights={'k3s': 67, 'knative': 33}
+2026-07-10 21:23:47 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=9 predicted_load=102.33897212353966 required_resources=6.128 target_replicas=8
+2026-07-10 21:23:47 [debug    ] Decision loop completed        action=REACTIVE latency_ms=112.13 p99=283.0
+2026-07-10 21:24:02 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=996 burn_error=-0.99 burn_ratio=0.01
+2026-07-10 21:24:02 [info     ] controller_decision_v3         action=RECOVERY available_replicas=9 budget_remaining=996 burn_adjustment=-7 burst_ratio=0.3725 capacity_deficit=False confidence=0 current_load=119.7648140819131 decision_id=f8a00112 k8s_capacity=75.1 k8s_weight=69 knative_weight=31 p99=283.0 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=119.8 weights_after={'k3s': 69, 'knative': 31} weights_before={'k3s': 67, 'knative': 33}
+2026-07-10 21:24:02 [info     ] Weights updated                k3s=69 knative=31
+2026-07-10 21:24:02 [info     ] Weights updated                action=RECOVERY reason='load=120RPS | k8s_cap=75RPS | (reducing-serverless)' weights={'k3s': 69, 'knative': 31}
+2026-07-10 21:24:02 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=9 predicted_load=122.09625750365194 required_resources=7.311 target_replicas=9
+2026-07-10 21:24:02 [debug    ] Decision loop completed        action=RECOVERY latency_ms=144.85 p99=283.0
+2026-07-10 21:24:17 [debug    ] HAProxy fallback latency       delta_requests=1417 interval_avg_ms=42.92 max_rtime_ms=283.0 p99_est=85.83
+2026-07-10 21:24:17 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=996 burn_error=-0.991 burn_ratio=0.009
+2026-07-10 21:24:17 [info     ] controller_decision_v3         action=RECOVERY available_replicas=9 budget_remaining=996 burn_adjustment=-7 burst_ratio=0.1974 capacity_deficit=False confidence=0 current_load=93.629610411969 decision_id=96ff7eb1 k8s_capacity=75.1 k8s_weight=87 knative_weight=13 p99=85.8 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=93.6 weights_after={'k3s': 87, 'knative': 13} weights_before={'k3s': 69, 'knative': 31}
+2026-07-10 21:24:17 [info     ] Weights updated                k3s=87 knative=13
+2026-07-10 21:24:17 [info     ] Weights updated                action=RECOVERY reason='load=94RPS | k8s_cap=75RPS | (reducing-serverless)' weights={'k3s': 87, 'knative': 13}
+2026-07-10 21:24:17 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=9 predicted_load=106.69721224694105 required_resources=6.389 target_replicas=8
+2026-07-10 21:24:17 [debug    ] Decision loop completed        action=RECOVERY latency_ms=148.3 p99=85.833450952717
+2026-07-10 21:24:32 [debug    ] HAProxy fallback latency       delta_requests=1229 interval_avg_ms=92.61 max_rtime_ms=283.0 p99_est=185.23
+2026-07-10 21:24:32 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=996 burn_error=-0.991 burn_ratio=0.009
+2026-07-10 21:24:32 [info     ] controller_decision_v3         action=RECOVERY available_replicas=9 budget_remaining=996 burn_adjustment=-7 burst_ratio=0.0737 capacity_deficit=False confidence=0 current_load=81.12871116311665 decision_id=bf3f0260 k8s_capacity=75.1 k8s_weight=99 knative_weight=1 p99=185.2 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=81.1 weights_after={'k3s': 99, 'knative': 1} weights_before={'k3s': 87, 'knative': 13}
+2026-07-10 21:24:32 [info     ] Weights updated                k3s=99 knative=1
+2026-07-10 21:24:32 [info     ] Weights updated                action=RECOVERY reason='load=81RPS | k8s_cap=75RPS | (reducing-serverless)' weights={'k3s': 99, 'knative': 1}
+2026-07-10 21:24:32 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=9 predicted_load=87.37916078754282 required_resources=5.232 target_replicas=7
+2026-07-10 21:24:32 [debug    ] Decision loop completed        action=RECOVERY latency_ms=147.6 p99=185.2286411716843
+2026-07-10 21:24:47 [debug    ] HAProxy fallback latency       delta_requests=1151 interval_avg_ms=401.34 max_rtime_ms=283.0 p99_est=283.0
+2026-07-10 21:24:47 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=995 burn_error=-0.989 burn_ratio=0.011
+2026-07-10 21:24:47 [info     ] controller_decision_v3         action=RECOVERY available_replicas=9 budget_remaining=995 burn_adjustment=-7 burst_ratio=0.011 capacity_deficit=False confidence=0 current_load=75.98641480527273 decision_id=1fa16f31 k8s_capacity=75.1 k8s_weight=100 knative_weight=0 p99=283.0 predicted_load=0 r_effective=8.3 serverless_enabled=False total_load=76.0 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 99, 'knative': 1}
+2026-07-10 21:24:48 [info     ] Weights updated                k3s=100 knative=0
+2026-07-10 21:24:48 [info     ] Weights updated                action=RECOVERY reason='load=76RPS | k8s_cap=75RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-10 21:24:48 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=9 predicted_load=78.55756298419469 required_resources=4.704 target_replicas=6
+2026-07-10 21:24:48 [debug    ] Decision loop completed        action=RECOVERY latency_ms=145.65 p99=283.0
+2026-07-10 21:25:03 [debug    ] HAProxy fallback latency       delta_requests=1506 interval_avg_ms=611.59 max_rtime_ms=399.0 p99_est=399.0
+2026-07-10 21:25:03 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=994 burn_error=-0.987 burn_ratio=0.013
+2026-07-10 21:25:03 [info     ] Knative pre-warm OK            cold_start_ms=2.5
+2026-07-10 21:25:03 [info     ] controller_decision_v3         action=REACTIVE available_replicas=9 budget_remaining=994 burn_adjustment=-7 burst_ratio=0.2437 capacity_deficit=False confidence=0 current_load=99.3716854144556 decision_id=db7872b5 k8s_capacity=75.1 k8s_weight=82 knative_weight=18 p99=399.0 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=99.4 weights_after={'k3s': 82, 'knative': 18} weights_before={'k3s': 100, 'knative': 0}
+2026-07-10 21:25:03 [info     ] Weights updated                k3s=82 knative=18
+2026-07-10 21:25:03 [info     ] Weights updated                action=REACTIVE reason='load=99RPS | k8s_cap=75RPS | (burst-routing)' weights={'k3s': 82, 'knative': 18}
+2026-07-10 21:25:03 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=9 predicted_load=87.67905010986416 required_resources=5.25 target_replicas=7
+2026-07-10 21:25:03 [debug    ] Decision loop completed        action=REACTIVE latency_ms=111.96 p99=399.0
+2026-07-10 21:25:18 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=993 burn_error=-0.985 burn_ratio=0.015
+2026-07-10 21:25:18 [info     ] controller_decision_v3         action=REACTIVE available_replicas=9 budget_remaining=993 burn_adjustment=-7 burst_ratio=0.4358 capacity_deficit=False confidence=0 current_load=133.19861001733258 decision_id=430199fd k8s_capacity=75.1 k8s_weight=63 knative_weight=37 p99=399.0 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=133.2 weights_after={'k3s': 63, 'knative': 37} weights_before={'k3s': 82, 'knative': 18}
+2026-07-10 21:25:18 [info     ] Weights updated                k3s=63 knative=37
+2026-07-10 21:25:18 [info     ] Weights updated                action=REACTIVE reason='load=133RPS | k8s_cap=75RPS | (burst-routing)' weights={'k3s': 63, 'knative': 37}
+2026-07-10 21:25:18 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=9 predicted_load=116.28514771589408 required_resources=6.963 target_replicas=9
+2026-07-10 21:25:18 [debug    ] Decision loop completed        action=REACTIVE latency_ms=112.15 p99=399.0
+2026-07-10 21:25:33 [debug    ] HAProxy fallback latency       delta_requests=2275 interval_avg_ms=159.86 max_rtime_ms=399.0 p99_est=319.71
+2026-07-10 21:25:33 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.984 burn_ratio=0.016
+2026-07-10 21:25:33 [info     ] controller_decision_v3         action=REACTIVE available_replicas=9 budget_remaining=992 burn_adjustment=-7 burst_ratio=0.501 capacity_deficit=True confidence=0 current_load=150.61051291567617 decision_id=b104c464 k8s_capacity=75.1 k8s_weight=57 knative_weight=43 p99=319.7 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=150.6 weights_after={'k3s': 57, 'knative': 43} weights_before={'k3s': 63, 'knative': 37}
+2026-07-10 21:25:33 [info     ] Weights updated                k3s=57 knative=43
+2026-07-10 21:25:33 [info     ] Weights updated                action=REACTIVE reason='load=151RPS | k8s_cap=75RPS | CAPACITY-DEFICIT | (burst-routing)' weights={'k3s': 57, 'knative': 43}
+2026-07-10 21:25:33 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=9 predicted_load=141.9045614665044 required_resources=8.497 target_replicas=10
+2026-07-10 21:25:33 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=10
+2026-07-10 21:25:33 [debug    ] Decision loop completed        action=REACTIVE latency_ms=148.13 p99=319.7142857142857
+2026-07-10 21:25:48 [debug    ] HAProxy fallback latency       delta_requests=2427 interval_avg_ms=4732.78 max_rtime_ms=1366.0 p99_est=1366.0
+2026-07-10 21:25:48 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=991 burn_error=-0.982 burn_ratio=0.018
+2026-07-10 21:25:48 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=10 predicted_load=155.38088518337935 required_resources=9.304 target_replicas=10
+2026-07-10 21:25:48 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=114.8 p99=1366.0
+2026-07-10 21:26:03 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=990 burn_error=-0.981 burn_ratio=0.019
+2026-07-10 21:26:03 [info     ] controller_decision_v3         action=RECOVERY available_replicas=9 budget_remaining=990 burn_adjustment=-7 burst_ratio=0.4813 capacity_deficit=False confidence=0 current_load=144.8817167246802 decision_id=a263b3c3 k8s_capacity=75.1 k8s_weight=58 knative_weight=42 p99=1366.0 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=144.9 weights_after={'k3s': 58, 'knative': 42} weights_before={'k3s': 57, 'knative': 43}
+2026-07-10 21:26:03 [info     ] Weights updated                k3s=58 knative=42
+2026-07-10 21:26:03 [info     ] Weights updated                action=RECOVERY reason='load=145RPS | k8s_cap=75RPS | (reducing-serverless)' weights={'k3s': 58, 'knative': 42}
+2026-07-10 21:26:03 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=10 predicted_load=152.51648708788133 required_resources=9.133 target_replicas=10
+2026-07-10 21:26:03 [debug    ] Decision loop completed        action=RECOVERY latency_ms=148.97 p99=1366.0
+2026-07-10 21:26:18 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=989 burn_error=-0.979 burn_ratio=0.021
+2026-07-10 21:26:18 [info     ] controller_decision_v3         action=RECOVERY available_replicas=9 budget_remaining=989 burn_adjustment=-7 burst_ratio=0.3836 capacity_deficit=False confidence=0 current_load=121.92567640135655 decision_id=7538f3db k8s_capacity=75.1 k8s_weight=68 knative_weight=32 p99=1366.0 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=121.9 weights_after={'k3s': 68, 'knative': 32} weights_before={'k3s': 58, 'knative': 42}
+2026-07-10 21:26:18 [info     ] Weights updated                k3s=68 knative=32
+2026-07-10 21:26:18 [info     ] Weights updated                action=RECOVERY reason='load=122RPS | k8s_cap=75RPS | (reducing-serverless)' weights={'k3s': 68, 'knative': 32}
+2026-07-10 21:26:18 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=10 predicted_load=133.40369656301837 required_resources=7.988 target_replicas=10
+2026-07-10 21:26:18 [debug    ] Decision loop completed        action=RECOVERY latency_ms=140.73 p99=1366.0
+2026-07-10 21:26:33 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=988 burn_error=-0.978 burn_ratio=0.022
+2026-07-10 21:26:33 [info     ] controller_decision_v3         action=RECOVERY available_replicas=9 budget_remaining=988 burn_adjustment=-7 burst_ratio=0.3632 capacity_deficit=False confidence=0 current_load=118.01936083923633 decision_id=08d7fca0 k8s_capacity=75.1 k8s_weight=70 knative_weight=30 p99=1366.0 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=118.0 weights_after={'k3s': 70, 'knative': 30} weights_before={'k3s': 68, 'knative': 32}
+2026-07-10 21:26:33 [info     ] Weights updated                k3s=70 knative=30
+2026-07-10 21:26:33 [info     ] Weights updated                action=RECOVERY reason='load=118RPS | k8s_cap=75RPS | (reducing-serverless)' weights={'k3s': 70, 'knative': 30}
+2026-07-10 21:26:33 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=10 predicted_load=119.97251862029644 required_resources=7.184 target_replicas=9
+2026-07-10 21:26:33 [debug    ] Decision loop completed        action=RECOVERY latency_ms=152.51 p99=1366.0
+2026-07-10 21:26:49 [debug    ] HAProxy fallback latency       delta_requests=1824 interval_avg_ms=16.12 max_rtime_ms=1510.0 p99_est=32.25
+2026-07-10 21:26:49 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=988 burn_error=-0.978 burn_ratio=0.022
+2026-07-10 21:26:49 [info     ] controller_decision_v3         action=REACTIVE available_replicas=9 budget_remaining=988 burn_adjustment=-7 burst_ratio=0.3757 capacity_deficit=False confidence=0 current_load=120.37741686001547 decision_id=b7eceaff k8s_capacity=75.1 k8s_weight=69 knative_weight=31 p99=32.2 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=120.4 weights_after={'k3s': 69, 'knative': 31} weights_before={'k3s': 70, 'knative': 30}
+2026-07-10 21:26:49 [info     ] Weights updated                k3s=69 knative=31
+2026-07-10 21:26:49 [info     ] Weights updated                action=REACTIVE reason='load=120RPS | k8s_cap=75RPS | (burst-routing)' weights={'k3s': 69, 'knative': 31}
+2026-07-10 21:26:49 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=10 predicted_load=119.1983888496259 required_resources=7.138 target_replicas=9
+2026-07-10 21:26:49 [debug    ] Decision loop completed        action=REACTIVE latency_ms=112.1 p99=32.24780701754386
+2026-07-10 21:27:04 [debug    ] HAProxy fallback latency       delta_requests=1816 interval_avg_ms=331.55 max_rtime_ms=1510.0 p99_est=663.1
+2026-07-10 21:27:04 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=987 burn_error=-0.977 burn_ratio=0.023
+2026-07-10 21:27:04 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=10 predicted_load=120.2747260966247 required_resources=7.202 target_replicas=9
+2026-07-10 21:27:04 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=112.44 p99=663.1002202643172
+2026-07-10 21:27:19 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=986 burn_error=-0.976 burn_ratio=0.024
+2026-07-10 21:27:19 [info     ] controller_decision_v3         action=RECOVERY available_replicas=9 budget_remaining=986 burn_adjustment=-7 burst_ratio=0.3634 capacity_deficit=False confidence=0 current_load=118.04680994431607 decision_id=c8225689 k8s_capacity=75.1 k8s_weight=70 knative_weight=30 p99=663.1 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=118.0 weights_after={'k3s': 70, 'knative': 30} weights_before={'k3s': 69, 'knative': 31}
+2026-07-10 21:27:19 [info     ] Weights updated                k3s=70 knative=30
+2026-07-10 21:27:19 [info     ] Weights updated                action=RECOVERY reason='load=118RPS | k8s_cap=75RPS | (reducing-serverless)' weights={'k3s': 70, 'knative': 30}
+2026-07-10 21:27:19 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=10 predicted_load=119.10942263877502 required_resources=7.132 target_replicas=9
+2026-07-10 21:27:19 [debug    ] Decision loop completed        action=RECOVERY latency_ms=142.69 p99=663.1002202643172
+2026-07-10 21:27:34 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=985 burn_error=-0.975 burn_ratio=0.025
+2026-07-10 21:27:34 [info     ] controller_decision_v3         action=RECOVERY available_replicas=9 budget_remaining=985 burn_adjustment=-7 burst_ratio=0.2634 capacity_deficit=False confidence=0 current_load=102.02749915349699 decision_id=7f0ed559 k8s_capacity=75.1 k8s_weight=80 knative_weight=20 p99=663.1 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=102.0 weights_after={'k3s': 80, 'knative': 20} weights_before={'k3s': 70, 'knative': 30}
+2026-07-10 21:27:34 [info     ] Weights updated                k3s=80 knative=20
+2026-07-10 21:27:34 [info     ] Weights updated                action=RECOVERY reason='load=102RPS | k8s_cap=75RPS | (reducing-serverless)' weights={'k3s': 80, 'knative': 20}
+2026-07-10 21:27:34 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=10 predicted_load=110.03715454890653 required_resources=6.589 target_replicas=8
+2026-07-10 21:27:34 [debug    ] Decision loop completed        action=RECOVERY latency_ms=149.17 p99=663.1002202643172
+2026-07-10 21:27:49 [debug    ] HAProxy fallback latency       delta_requests=1253 interval_avg_ms=19.23 max_rtime_ms=1510.0 p99_est=38.45
+2026-07-10 21:27:49 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=985 burn_error=-0.975 burn_ratio=0.025
+2026-07-10 21:27:49 [info     ] controller_decision_v3         action=RECOVERY available_replicas=10 budget_remaining=985 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0 current_load=82.71096902340217 decision_id=a9f96245 k8s_capacity=83.5 k8s_weight=100 knative_weight=0 p99=38.5 predicted_load=0 r_effective=8.3 serverless_enabled=False total_load=82.7 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-10 21:27:49 [info     ] Weights updated                k3s=100 knative=0
+2026-07-10 21:27:49 [info     ] Weights updated                action=RECOVERY reason='load=83RPS | k8s_cap=84RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-10 21:27:49 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=10 predicted_load=92.36923408844959 required_resources=5.531 target_replicas=7
+2026-07-10 21:27:49 [debug    ] Decision loop completed        action=RECOVERY latency_ms=143.5 p99=38.45171588188348
+2026-07-10 21:28:04 [debug    ] HAProxy fallback latency       delta_requests=1117 interval_avg_ms=116.35 max_rtime_ms=1510.0 p99_est=232.69
+2026-07-10 21:28:04 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=984 burn_error=-0.974 burn_ratio=0.026
+2026-07-10 21:28:04 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=10 predicted_load=78.23477534932768 required_resources=4.685 target_replicas=6
+2026-07-10 21:28:04 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.26 p99=232.69471799462846
+2026-07-10 21:28:19 [debug    ] HAProxy fallback latency       delta_requests=1044 interval_avg_ms=65.0 max_rtime_ms=1510.0 p99_est=130.0
+2026-07-10 21:28:19 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=984 burn_error=-0.975 burn_ratio=0.025
+2026-07-10 21:28:19 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=10 predicted_load=71.42437036252599 required_resources=4.277 target_replicas=6
+2026-07-10 21:28:19 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=109.89 p99=130.0
+2026-07-10 21:28:34 [debug    ] HAProxy fallback latency       delta_requests=1180 interval_avg_ms=116.44 max_rtime_ms=1510.0 p99_est=232.87
+2026-07-10 21:28:34 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=983 burn_error=-0.974 burn_ratio=0.026
+2026-07-10 21:28:34 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=10 predicted_load=73.55998870944553 required_resources=4.405 target_replicas=6
+2026-07-10 21:28:34 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=109.83 p99=232.87457627118644
+2026-07-10 21:28:50 [debug    ] HAProxy fallback latency       delta_requests=1328 interval_avg_ms=66.0 max_rtime_ms=1510.0 p99_est=132.0
+2026-07-10 21:28:50 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=983 burn_error=-0.974 burn_ratio=0.026
+2026-07-10 21:28:50 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=10 predicted_load=82.99068283077736 required_resources=4.97 target_replicas=6
+2026-07-10 21:28:50 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=108.77 p99=132.0
+2026-07-10 21:29:05 [debug    ] HAProxy fallback latency       delta_requests=1083 interval_avg_ms=7.73 max_rtime_ms=1510.0 p99_est=15.46
+2026-07-10 21:29:05 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=983 burn_error=-0.975 burn_ratio=0.025
+2026-07-10 21:29:05 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=10 predicted_load=79.84871091066599 required_resources=4.781 target_replicas=6
+2026-07-10 21:29:05 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=109.68 p99=15.458910433979685
+2026-07-10 21:29:20 [debug    ] HAProxy fallback latency       delta_requests=769 interval_avg_ms=65.0 max_rtime_ms=1510.0 p99_est=130.0
+2026-07-10 21:29:20 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=983 burn_error=-0.975 burn_ratio=0.025
+2026-07-10 21:29:20 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=10 predicted_load=61.35389318113727 required_resources=3.674 target_replicas=5
+2026-07-10 21:29:20 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=107.62 p99=130.0
+2026-07-10 21:29:35 [debug    ] HAProxy fallback latency       delta_requests=704 interval_avg_ms=65.0 max_rtime_ms=1510.0 p99_est=130.0
+2026-07-10 21:29:35 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=983 burn_error=-0.975 burn_ratio=0.025
+2026-07-10 21:29:35 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=10 predicted_load=48.74723938377232 required_resources=2.919 target_replicas=4
+2026-07-10 21:29:35 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=4
+2026-07-10 21:29:35 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=157.54 p99=130.0
+2026-07-10 21:29:50 [debug    ] HAProxy fallback latency       delta_requests=697 interval_avg_ms=626.93 max_rtime_ms=1510.0 p99_est=1253.85
+2026-07-10 21:29:50 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=982 burn_error=-0.975 burn_ratio=0.025
+2026-07-10 21:29:50 [info     ] Knative pre-warm OK            cold_start_ms=2.7
+2026-07-10 21:29:50 [info     ] controller_decision_v3         action=REACTIVE available_replicas=4 budget_remaining=982 burn_adjustment=-7 burst_ratio=0.2736 capacity_deficit=False confidence=0 current_load=45.98265445804072 decision_id=138beb73 k8s_capacity=33.4 k8s_weight=79 knative_weight=21 p99=1253.9 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=46.0 weights_after={'k3s': 79, 'knative': 21} weights_before={'k3s': 100, 'knative': 0}
+2026-07-10 21:29:50 [info     ] Weights updated                k3s=79 knative=21
+2026-07-10 21:29:50 [info     ] Weights updated                action=REACTIVE reason='load=46RPS | k8s_cap=33RPS | (burst-routing)' weights={'k3s': 79, 'knative': 21}
+2026-07-10 21:29:50 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=46.25761069609017 required_resources=2.77 target_replicas=4
+2026-07-10 21:29:50 [debug    ] Decision loop completed        action=REACTIVE latency_ms=113.65 p99=1253.8507890961262
+2026-07-10 21:30:05 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=981 burn_error=-0.974 burn_ratio=0.026
+2026-07-10 21:30:05 [info     ] controller_decision_v3         action=RECOVERY available_replicas=4 budget_remaining=981 burn_adjustment=-7 burst_ratio=0.2269 capacity_deficit=False confidence=0 current_load=43.20400683142093 decision_id=9ec79780 k8s_capacity=33.4 k8s_weight=84 knative_weight=16 p99=1253.9 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=43.2 weights_after={'k3s': 84, 'knative': 16} weights_before={'k3s': 79, 'knative': 21}
+2026-07-10 21:30:05 [info     ] Weights updated                k3s=84 knative=16
+2026-07-10 21:30:05 [info     ] Weights updated                action=RECOVERY reason='load=43RPS | k8s_cap=33RPS | (reducing-serverless)' weights={'k3s': 84, 'knative': 16}
+2026-07-10 21:30:05 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=44.59333064473083 required_resources=2.67 target_replicas=4
+2026-07-10 21:30:05 [debug    ] Decision loop completed        action=RECOVERY latency_ms=145.87 p99=1253.8507890961262
+2026-07-10 21:30:20 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=980 burn_error=-0.973 burn_ratio=0.027
+2026-07-10 21:30:20 [info     ] controller_decision_v3         action=RECOVERY available_replicas=4 budget_remaining=980 burn_adjustment=-7 burst_ratio=0.2071 capacity_deficit=False confidence=0 current_load=42.12499289840089 decision_id=e051e03f k8s_capacity=33.4 k8s_weight=86 knative_weight=14 p99=1253.9 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=42.1 weights_after={'k3s': 86, 'knative': 14} weights_before={'k3s': 84, 'knative': 16}
+2026-07-10 21:30:20 [info     ] Weights updated                k3s=86 knative=14
+2026-07-10 21:30:20 [info     ] Weights updated                action=RECOVERY reason='load=42RPS | k8s_cap=33RPS | (reducing-serverless)' weights={'k3s': 86, 'knative': 14}
+2026-07-10 21:30:20 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=42.66449986491091 required_resources=2.555 target_replicas=4
+2026-07-10 21:30:20 [debug    ] Decision loop completed        action=RECOVERY latency_ms=146.66 p99=1253.8507890961262
+2026-07-10 21:30:35 [debug    ] HAProxy fallback latency       delta_requests=845 interval_avg_ms=144.78 max_rtime_ms=1510.0 p99_est=289.56
+2026-07-10 21:30:35 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=979 burn_error=-0.972 burn_ratio=0.028
+2026-07-10 21:30:35 [info     ] controller_decision_v3         action=REACTIVE available_replicas=4 budget_remaining=979 burn_adjustment=-7 burst_ratio=0.3999 capacity_deficit=False confidence=0 current_load=55.65610297847972 decision_id=074a4eab k8s_capacity=33.4 k8s_weight=67 knative_weight=33 p99=289.6 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=55.7 weights_after={'k3s': 67, 'knative': 33} weights_before={'k3s': 86, 'knative': 14}
+2026-07-10 21:30:35 [info     ] Weights updated                k3s=67 knative=33
+2026-07-10 21:30:35 [info     ] Weights updated                action=REACTIVE reason='load=56RPS | k8s_cap=33RPS | (burst-routing)' weights={'k3s': 67, 'knative': 33}
+2026-07-10 21:30:35 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=48.89054793844031 required_resources=2.928 target_replicas=4
+2026-07-10 21:30:35 [debug    ] Decision loop completed        action=REACTIVE latency_ms=108.94 p99=289.5550295857988
+2026-07-10 21:30:51 [debug    ] HAProxy fallback latency       delta_requests=1063 interval_avg_ms=1.58 max_rtime_ms=1510.0 p99_est=3.17
+2026-07-10 21:30:51 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=979 burn_error=-0.972 burn_ratio=0.028
+2026-07-10 21:30:51 [info     ] controller_decision_v3         action=REACTIVE available_replicas=4 budget_remaining=979 burn_adjustment=-7 burst_ratio=0.5252 capacity_deficit=True confidence=0 current_load=70.3527008930734 decision_id=2d589889 k8s_capacity=33.4 k8s_weight=57 knative_weight=43 p99=3.2 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=70.4 weights_after={'k3s': 57, 'knative': 43} weights_before={'k3s': 67, 'knative': 33}
+2026-07-10 21:30:51 [info     ] Weights updated                k3s=57 knative=43
+2026-07-10 21:30:51 [info     ] Weights updated                action=REACTIVE reason='load=70RPS | k8s_cap=33RPS | CAPACITY-DEFICIT | (burst-routing)' weights={'k3s': 57, 'knative': 43}
+2026-07-10 21:30:51 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=63.00440193577656 required_resources=3.773 target_replicas=5
+2026-07-10 21:30:51 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=5
+2026-07-10 21:30:51 [debug    ] Decision loop completed        action=REACTIVE latency_ms=155.12 p99=3.1665098777046095
+2026-07-10 21:31:06 [debug    ] HAProxy fallback latency       delta_requests=1077 interval_avg_ms=65.0 max_rtime_ms=1510.0 p99_est=130.0
+2026-07-10 21:31:06 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=979 burn_error=-0.973 burn_ratio=0.027
+2026-07-10 21:31:06 [info     ] controller_decision_v3         action=RECOVERY available_replicas=5 budget_remaining=979 burn_adjustment=-7 burst_ratio=0.4125 capacity_deficit=False confidence=0 current_load=71.0657075798286 decision_id=08985b72 k8s_capacity=41.8 k8s_weight=65 knative_weight=35 p99=130.0 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=71.1 weights_after={'k3s': 65, 'knative': 35} weights_before={'k3s': 57, 'knative': 43}
+2026-07-10 21:31:06 [info     ] Weights updated                k3s=65 knative=35
+2026-07-10 21:31:06 [info     ] Weights updated                action=RECOVERY reason='load=71RPS | k8s_cap=42RPS | (reducing-serverless)' weights={'k3s': 65, 'knative': 35}
+2026-07-10 21:31:06 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=70.709204236451 required_resources=4.234 target_replicas=6
+2026-07-10 21:31:06 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=6
+2026-07-10 21:31:06 [debug    ] Decision loop completed        action=RECOVERY latency_ms=185.58 p99=130.0
+2026-07-10 21:31:21 [debug    ] HAProxy fallback latency       delta_requests=1056 interval_avg_ms=198.73 max_rtime_ms=1510.0 p99_est=397.45
+2026-07-10 21:31:21 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=978 burn_error=-0.972 burn_ratio=0.028
+2026-07-10 21:31:21 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=978 burn_adjustment=-7 burst_ratio=0.2795 capacity_deficit=False confidence=0 current_load=69.53738663732518 decision_id=b3ae3a97 k8s_capacity=50.1 k8s_weight=79 knative_weight=21 p99=397.5 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=69.5 weights_after={'k3s': 79, 'knative': 21} weights_before={'k3s': 65, 'knative': 35}
+2026-07-10 21:31:21 [info     ] Weights updated                k3s=79 knative=21
+2026-07-10 21:31:21 [info     ] Weights updated                action=RECOVERY reason='load=70RPS | k8s_cap=50RPS | (reducing-serverless)' weights={'k3s': 79, 'knative': 21}
+2026-07-10 21:31:21 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=70.3015471085769 required_resources=4.21 target_replicas=6
+2026-07-10 21:31:21 [debug    ] Decision loop completed        action=RECOVERY latency_ms=146.76 p99=397.45454545454544
+2026-07-10 21:31:36 [debug    ] HAProxy fallback latency       delta_requests=1075 interval_avg_ms=333.73 max_rtime_ms=1510.0 p99_est=667.45
+2026-07-10 21:31:36 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=977 burn_error=-0.971 burn_ratio=0.029
+2026-07-10 21:31:36 [info     ] controller_decision_v3         action=REACTIVE available_replicas=6 budget_remaining=977 burn_adjustment=-7 burst_ratio=0.2941 capacity_deficit=False confidence=0 current_load=70.97311857068921 decision_id=18f25abf k8s_capacity=50.1 k8s_weight=77 knative_weight=23 p99=667.5 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=71.0 weights_after={'k3s': 77, 'knative': 23} weights_before={'k3s': 79, 'knative': 21}
+2026-07-10 21:31:36 [info     ] Weights updated                k3s=77 knative=23
+2026-07-10 21:31:36 [info     ] Weights updated                action=REACTIVE reason='load=71RPS | k8s_cap=50RPS | (burst-routing)' weights={'k3s': 77, 'knative': 23}
+2026-07-10 21:31:36 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=70.2552526040072 required_resources=4.207 target_replicas=6
+2026-07-10 21:31:36 [debug    ] Decision loop completed        action=REACTIVE latency_ms=107.28 p99=667.4548837209302
+2026-07-10 21:31:51 [debug    ] HAProxy fallback latency       delta_requests=1137 interval_avg_ms=135.05 max_rtime_ms=1510.0 p99_est=270.09
+2026-07-10 21:31:51 [debug    ] burn_rate_adjustment           actual_burn=0.02 adjustment=-7 allowed_burn=0.83 budget_remaining=976 burn_error=-0.97 burn_ratio=0.03
+2026-07-10 21:31:51 [info     ] controller_decision_v3         action=REACTIVE available_replicas=6 budget_remaining=976 burn_adjustment=-7 burst_ratio=0.3343 capacity_deficit=False confidence=0 current_load=75.25937754116907 decision_id=92aa568d k8s_capacity=50.1 k8s_weight=73 knative_weight=27 p99=270.1 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=75.3 weights_after={'k3s': 73, 'knative': 27} weights_before={'k3s': 77, 'knative': 23}
+2026-07-10 21:31:51 [info     ] Weights updated                k3s=73 knative=27
+2026-07-10 21:31:51 [info     ] Weights updated                action=REACTIVE reason='load=75RPS | k8s_cap=50RPS | (burst-routing)' weights={'k3s': 73, 'knative': 27}
+2026-07-10 21:31:51 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=73.11624805592913 required_resources=4.378 target_replicas=6
+2026-07-10 21:31:51 [debug    ] Decision loop completed        action=REACTIVE latency_ms=106.08 p99=270.09146877748464
+2026-07-10 21:32:06 [debug    ] HAProxy fallback latency       delta_requests=1408 interval_avg_ms=968.22 max_rtime_ms=1510.0 p99_est=1510.0
+2026-07-10 21:32:06 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=975 burn_error=-0.969 burn_ratio=0.031
+2026-07-10 21:32:06 [info     ] controller_decision_v3         action=REACTIVE available_replicas=6 budget_remaining=975 burn_adjustment=-7 burst_ratio=0.4621 capacity_deficit=False confidence=0 current_load=93.13837023524448 decision_id=0b3ecdbd k8s_capacity=50.1 k8s_weight=60 knative_weight=40 p99=1510.0 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=93.1 weights_after={'k3s': 60, 'knative': 40} weights_before={'k3s': 73, 'knative': 27}
+2026-07-10 21:32:06 [info     ] Weights updated                k3s=60 knative=40
+2026-07-10 21:32:06 [info     ] Weights updated                action=REACTIVE reason='load=93RPS | k8s_cap=50RPS | (burst-routing)' weights={'k3s': 60, 'knative': 40}
+2026-07-10 21:32:06 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=84.19887388820678 required_resources=5.042 target_replicas=7
+2026-07-10 21:32:06 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=7
+2026-07-10 21:32:06 [debug    ] Decision loop completed        action=REACTIVE latency_ms=152.23 p99=1510.0
+2026-07-10 21:32:21 [debug    ] HAProxy fallback latency       delta_requests=1641 interval_avg_ms=181.47 max_rtime_ms=1510.0 p99_est=362.93
+2026-07-10 21:32:21 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=974 burn_error=-0.969 burn_ratio=0.031
+2026-07-10 21:32:21 [info     ] controller_decision_v3         action=RECOVERY available_replicas=7 budget_remaining=974 burn_adjustment=-7 burst_ratio=0.46 capacity_deficit=False confidence=0 current_load=108.24060908671753 decision_id=d9f4e2f0 k8s_capacity=58.4 k8s_weight=61 knative_weight=39 p99=362.9 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=108.2 weights_after={'k3s': 61, 'knative': 39} weights_before={'k3s': 60, 'knative': 40}
+2026-07-10 21:32:21 [info     ] Weights updated                k3s=61 knative=39
+2026-07-10 21:32:21 [info     ] Weights updated                action=RECOVERY reason='load=108RPS | k8s_cap=58RPS | (reducing-serverless)' weights={'k3s': 61, 'knative': 39}
+2026-07-10 21:32:21 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=7 predicted_load=100.689489660981 required_resources=6.029 target_replicas=8
+2026-07-10 21:32:22 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=8
+2026-07-10 21:32:22 [debug    ] Decision loop completed        action=RECOVERY latency_ms=188.04 p99=362.933577087142
+2026-07-10 21:32:37 [debug    ] HAProxy fallback latency       delta_requests=1442 interval_avg_ms=627.14 max_rtime_ms=1510.0 p99_est=1254.27
+2026-07-10 21:32:37 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=973 burn_error=-0.968 burn_ratio=0.032
+2026-07-10 21:32:37 [info     ] controller_decision_v3         action=RECOVERY available_replicas=8 budget_remaining=973 burn_adjustment=-7 burst_ratio=0.2973 capacity_deficit=False confidence=0 current_load=95.06676206553996 decision_id=b28c084c k8s_capacity=66.8 k8s_weight=77 knative_weight=23 p99=1254.3 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=95.1 weights_after={'k3s': 77, 'knative': 23} weights_before={'k3s': 61, 'knative': 39}
+2026-07-10 21:32:37 [info     ] Weights updated                k3s=77 knative=23
+2026-07-10 21:32:37 [info     ] Weights updated                action=RECOVERY reason='load=95RPS | k8s_cap=67RPS | (reducing-serverless)' weights={'k3s': 77, 'knative': 23}
+2026-07-10 21:32:37 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=8 predicted_load=101.65368557612874 required_resources=6.087 target_replicas=8
+2026-07-10 21:32:37 [debug    ] Decision loop completed        action=RECOVERY latency_ms=143.31 p99=1254.2746185852982
+2026-07-10 21:32:52 [debug    ] HAProxy fallback latency       delta_requests=1172 interval_avg_ms=636.72 max_rtime_ms=1510.0 p99_est=1273.44
+2026-07-10 21:32:52 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=972 burn_error=-0.967 burn_ratio=0.033
+2026-07-10 21:32:52 [info     ] controller_decision_v3         action=RECOVERY available_replicas=8 budget_remaining=972 burn_adjustment=-7 burst_ratio=0.1369 capacity_deficit=False confidence=0 current_load=77.39484979865189 decision_id=29da5b34 k8s_capacity=66.8 k8s_weight=93 knative_weight=7 p99=1273.4 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=77.4 weights_after={'k3s': 93, 'knative': 7} weights_before={'k3s': 77, 'knative': 23}
+2026-07-10 21:32:52 [info     ] Weights updated                k3s=93 knative=7
+2026-07-10 21:32:52 [info     ] Weights updated                action=RECOVERY reason='load=77RPS | k8s_cap=67RPS | (reducing-serverless)' weights={'k3s': 93, 'knative': 7}
+2026-07-10 21:32:52 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=8 predicted_load=86.23080593209593 required_resources=5.164 target_replicas=7
+2026-07-10 21:32:52 [debug    ] Decision loop completed        action=RECOVERY latency_ms=152.53 p99=1273.4402730375427
+2026-07-10 21:33:07 [debug    ] HAProxy fallback latency       delta_requests=911 interval_avg_ms=196.15 max_rtime_ms=1510.0 p99_est=392.3
+2026-07-10 21:33:07 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=971 burn_error=-0.967 burn_ratio=0.033
+2026-07-10 21:33:07 [info     ] controller_decision_v3         action=RECOVERY available_replicas=8 budget_remaining=971 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0 current_load=60.18883344155728 decision_id=083ac09c k8s_capacity=66.8 k8s_weight=100 knative_weight=0 p99=392.3 predicted_load=0 r_effective=8.3 serverless_enabled=False total_load=60.2 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 93, 'knative': 7}
+2026-07-10 21:33:07 [info     ] Weights updated                k3s=100 knative=0
+2026-07-10 21:33:07 [info     ] Weights updated                action=RECOVERY reason='load=60RPS | k8s_cap=67RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-10 21:33:07 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=8 predicted_load=68.79184162010458 required_resources=4.119 target_replicas=5
+2026-07-10 21:33:07 [debug    ] Decision loop completed        action=RECOVERY latency_ms=137.72 p99=392.3007683863886
+2026-07-10 21:33:22 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=970 burn_error=-0.966 burn_ratio=0.034
+2026-07-10 21:33:22 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=8 predicted_load=52.91767269347349 required_resources=3.169 target_replicas=4
+2026-07-10 21:33:22 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=104.96 p99=392.3007683863886
+2026-07-10 21:33:37 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=969 burn_error=-0.965 burn_ratio=0.035
+2026-07-10 21:33:37 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=8 predicted_load=44.538566402136354 required_resources=2.667 target_replicas=4
+2026-07-10 21:33:37 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=113.1 p99=392.3007683863886
+2026-07-10 21:33:52 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=968 burn_error=-0.965 burn_ratio=0.035
+2026-07-10 21:33:52 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=8 predicted_load=43.91343739261554 required_resources=2.63 target_replicas=4
+2026-07-10 21:33:52 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=106.49 p99=392.3007683863886
+2026-07-10 21:34:07 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=967 burn_error=-0.964 burn_ratio=0.036
+2026-07-10 21:34:07 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=8 predicted_load=48.01487457851051 required_resources=2.875 target_replicas=4
+2026-07-10 21:34:07 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=113.28 p99=392.3007683863886
+2026-07-10 21:34:22 [debug    ] HAProxy fallback latency       delta_requests=853 interval_avg_ms=72.0 max_rtime_ms=1510.0 p99_est=144.0
+2026-07-10 21:34:22 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=967 burn_error=-0.965 burn_ratio=0.035
+2026-07-10 21:34:22 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=8 predicted_load=54.033396736676835 required_resources=3.236 target_replicas=4
+2026-07-10 21:34:22 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.89 p99=144.0
+2026-07-10 21:34:38 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=967 burn_error=-0.965 burn_ratio=0.035
+2026-07-10 21:34:38 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=8 predicted_load=51.67784028425418 required_resources=3.094 target_replicas=4
+2026-07-10 21:34:38 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=112.83 p99=144.0
+2026-07-10 21:34:53 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=967 burn_error=-0.966 burn_ratio=0.034
+2026-07-10 21:34:53 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=8 predicted_load=42.551356208273 required_resources=2.548 target_replicas=4
+2026-07-10 21:34:53 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=106.9 p99=144.0
+2026-07-10 21:35:08 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=967 burn_error=-0.966 burn_ratio=0.034
+2026-07-10 21:35:08 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=8 predicted_load=38.4190562918801 required_resources=2.301 target_replicas=3
+2026-07-10 21:35:08 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=108.9 p99=144.0
+2026-07-10 21:35:23 [debug    ] HAProxy fallback latency       delta_requests=607 interval_avg_ms=65.0 max_rtime_ms=1510.0 p99_est=130.0
+2026-07-10 21:35:23 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=967 burn_error=-0.966 burn_ratio=0.034
+2026-07-10 21:35:23 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=8 predicted_load=39.41647134873824 required_resources=2.36 target_replicas=3
+2026-07-10 21:35:23 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=3
+2026-07-10 21:35:23 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=142.24 p99=130.0
+2026-07-10 21:35:38 [debug    ] HAProxy fallback latency       delta_requests=635 interval_avg_ms=1014.75 max_rtime_ms=1510.0 p99_est=1510.0
+2026-07-10 21:35:38 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=966 burn_error=-0.966 burn_ratio=0.034
+2026-07-10 21:35:38 [info     ] Knative pre-warm OK            cold_start_ms=3.0
+2026-07-10 21:35:38 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=966 burn_adjustment=-7 burst_ratio=0.4017 capacity_deficit=False confidence=0 current_load=41.8681435704275 decision_id=1927d783 k8s_capacity=25.0 k8s_weight=66 knative_weight=34 p99=1510.0 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=41.9 weights_after={'k3s': 66, 'knative': 34} weights_before={'k3s': 100, 'knative': 0}
+2026-07-10 21:35:38 [info     ] Weights updated                k3s=66 knative=34
+2026-07-10 21:35:38 [info     ] Weights updated                action=REACTIVE reason='load=42RPS | k8s_cap=25RPS | (burst-routing)' weights={'k3s': 66, 'knative': 34}
+2026-07-10 21:35:38 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=41.02165188743107 required_resources=2.456 target_replicas=3
+2026-07-10 21:35:38 [debug    ] Decision loop completed        action=REACTIVE latency_ms=111.11 p99=1510.0
+2026-07-10 21:35:53 [debug    ] HAProxy fallback latency       delta_requests=665 interval_avg_ms=463.67 max_rtime_ms=1510.0 p99_est=927.35
+2026-07-10 21:35:53 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=965 burn_error=-0.965 burn_ratio=0.035
+2026-07-10 21:35:53 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=965 burn_adjustment=-7 burst_ratio=0.4308 capacity_deficit=False confidence=0 current_load=44.00647030503126 decision_id=5f030811 k8s_capacity=25.0 k8s_weight=63 knative_weight=37 p99=927.3 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=44.0 weights_after={'k3s': 63, 'knative': 37} weights_before={'k3s': 66, 'knative': 34}
+2026-07-10 21:35:53 [info     ] Weights updated                k3s=63 knative=37
+2026-07-10 21:35:53 [info     ] Weights updated                action=REACTIVE reason='load=44RPS | k8s_cap=25RPS | (burst-routing)' weights={'k3s': 63, 'knative': 37}
+2026-07-10 21:35:53 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=42.937306937729375 required_resources=2.571 target_replicas=4
+2026-07-10 21:35:53 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=4
+2026-07-10 21:35:53 [debug    ] Decision loop completed        action=REACTIVE latency_ms=149.28 p99=927.3473684210526
+2026-07-10 21:36:08 [debug    ] HAProxy fallback latency       delta_requests=747 interval_avg_ms=192.23 max_rtime_ms=1510.0 p99_est=384.45
+2026-07-10 21:36:08 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=964 burn_error=-0.965 burn_ratio=0.035
+2026-07-10 21:36:08 [info     ] controller_decision_v3         action=RECOVERY available_replicas=4 budget_remaining=964 burn_adjustment=-7 burst_ratio=0.3226 capacity_deficit=False confidence=0 current_load=49.30847302554835 decision_id=a743cf30 k8s_capacity=33.4 k8s_weight=74 knative_weight=26 p99=384.5 predicted_load=0 r_effective=8.3 serverless_enabled=True total_load=49.3 weights_after={'k3s': 74, 'knative': 26} weights_before={'k3s': 63, 'knative': 37}
+2026-07-10 21:36:08 [info     ] Weights updated                k3s=74 knative=26
+2026-07-10 21:36:08 [info     ] Weights updated                action=RECOVERY reason='load=49RPS | k8s_cap=33RPS | (reducing-serverless)' weights={'k3s': 74, 'knative': 26}
+2026-07-10 21:36:08 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=46.657471665289805 required_resources=2.794 target_replicas=4
+2026-07-10 21:36:08 [debug    ] Decision loop completed        action=RECOVERY latency_ms=139.75 p99=384.4524765729585
+2026-07-10 21:36:23 [debug    ] HAProxy fallback latency       delta_requests=278 interval_avg_ms=3867.91 max_rtime_ms=1510.0 p99_est=1510.0
+2026-07-10 21:36:23 [debug    ] burn_rate_adjustment           actual_burn=0.03 adjustment=-7 allowed_burn=0.83 budget_remaining=963 burn_error=-0.964 burn_ratio=0.036
+2026-07-10 21:36:23 [info     ] controller_decision_v3         action=RECOVERY available_replicas=4 budget_remaining=963 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0 current_load=18.494771824503335 decision_id=502db0ab k8s_capacity=33.4 k8s_weight=100 knative_weight=0 p99=1510.0 predicted_load=0 r_effective=8.3 serverless_enabled=False total_load=18.5 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 74, 'knative': 26}
+2026-07-10 21:36:23 [info     ] Weights updated                k3s=100 knative=0
+2026-07-10 21:36:23 [info     ] Weights updated                action=RECOVERY reason='load=18RPS | k8s_cap=33RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-10 21:36:24 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=33.90162242502584 required_resources=2.03 target_replicas=3
+2026-07-10 21:36:24 [debug    ] Decision loop completed        action=RECOVERY latency_ms=143.9 p99=1510.0
+2026-07-10 21:36:39 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=9.247385912251668 required_resources=0.554 target_replicas=3
+2026-07-10 21:36:39 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=105.9 p99=1510.0
+2026-07-10 21:36:54 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-10 21:36:54 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=108.86 p99=1510.0
+2026-07-10 21:37:09 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.059880239520958084 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-10 21:37:09 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=111.02 p99=1510.0
+2026-07-10 21:37:15 [info     ] Received shutdown signal
+2026-07-10 21:37:15 [info     ] Stopping routing daemon...
+2026-07-10 21:37:15 [info     ] Routing daemon stopped

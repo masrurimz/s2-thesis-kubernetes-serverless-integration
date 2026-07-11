@@ -127,6 +127,8 @@ async def predict(request: PredictRequest):
             confidence=result["confidence"],
             horizon_values=result["horizon_values"],
             latency_ms=round(latency_ms, 2),
+            point_forecasts=result.get("point_forecasts"),
+            upper_forecasts=result.get("upper_forecasts"),
         )
 
     except Exception as e:

@@ -1,108 +1,43 @@
 #!/usr/bin/env python3
 """
-GRU Model Loader.
+GRU Model Loader — thin wrapper around the canonical GRUPredictor.
 
-Handles loading PyTorch GRU models and making predictions.
-Supports both PyTorch (.pt) and sklearn fallback (.joblib) formats.
+All model architecture (GRUConfig, GRUNetwork) lives in gru_predictor.py.
+This module provides the loader/predict interface consumed by the FastAPI
+server, with auto-discovery of model artifacts from standard paths.
 """
 
 from pathlib import Path
-from typing import Optional, List
-from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import structlog
 
+from prediction.gru_predictor import GRUPredictor, GRUConfig, ARTIFACT_SCHEMA_VERSION
+
 logger = structlog.get_logger(__name__)
-
-try:
-    import torch
-    import torch.nn as nn
-
-    TORCH_AVAILABLE = True
-except ImportError:
-    TORCH_AVAILABLE = False
-    logger.warning("PyTorch not available")
-
-
-@dataclass
-class GRUConfig:
-    """GRU model configuration."""
-
-    input_size: int = 1
-    hidden_size: int = 64
-    num_layers: int = 2
-    dropout: float = 0.2
-    sequence_length: int = 30
-    prediction_horizon: int = 1
-    learning_rate: float = 0.001
-    batch_size: int = 32
-    epochs: int = 100
-    early_stopping_patience: int = 10
-
-
-if TORCH_AVAILABLE:
-
-    class GRUNetwork(nn.Module):
-        """GRU neural network for time series prediction."""
-
-        def __init__(self, config: GRUConfig):
-            super().__init__()
-            self.config = config
-
-            self.gru = nn.GRU(
-                input_size=config.input_size,
-                hidden_size=config.hidden_size,
-                num_layers=config.num_layers,
-                dropout=config.dropout if config.num_layers > 1 else 0,
-                batch_first=True,
-            )
-
-            self.fc = nn.Sequential(
-                nn.Linear(config.hidden_size, config.hidden_size // 2),
-                nn.ReLU(),
-                nn.Dropout(config.dropout),
-                nn.Linear(config.hidden_size // 2, 1),
-            )
-
-        def forward(self, x: torch.Tensor) -> torch.Tensor:
-            # x shape: (batch, seq_len, input_size)
-            gru_out, _ = self.gru(x)
-            # Take last timestep
-            last_hidden = gru_out[:, -1, :]
-            output = self.fc(last_hidden)
-            return output.squeeze(-1)
 
 
 class GRUModelLoader:
     """
     Loads and manages GRU prediction models.
 
-    Supports loading from PyTorch checkpoint or sklearn joblib format.
+    Delegates all architecture and inference to the canonical
+    :class:`~prediction.gru_predictor.GRUPredictor`.
     """
 
     DEFAULT_MODEL_PATHS = [
         Path("data/models/gru_model.pt"),
         Path("controller/data/models/gru_model.pt"),
         Path(__file__).parent.parent / "data/models/gru_model.pt",
+        Path(__file__).parent.parent / "controller/data/models/gru_model.pt",
     ]
 
     def __init__(self, model_path: Optional[Path] = None):
-        self.model = None
-        self.config: Optional[GRUConfig] = None
-        self.scaler_mean: float = 0.0
-        self.scaler_std: float = 1.0
-        self.rmse: Optional[float] = None
-        self.mae: Optional[float] = None
+        self._predictor = GRUPredictor()
         self.is_loaded: bool = False
         self.model_path: Optional[Path] = None
         self.model_type: str = "unknown"
-        self.model_expected_features: Optional[int] = None
-
-        if TORCH_AVAILABLE:
-            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        else:
-            self.device = None
 
         if model_path:
             self.load(model_path)
@@ -119,190 +54,107 @@ class GRUModelLoader:
         return False
 
     def load(self, path: Path) -> bool:
-        """
-        Load model from file.
-
-        Args:
-            path: Path to model file (.pt for PyTorch, .joblib for sklearn)
-
-        Returns:
-            True if loading succeeded
-        """
+        """Load model artifact via the canonical predictor."""
         path = Path(path)
         if not path.exists():
             logger.error("Model file not found", path=str(path))
             return False
 
-        try:
-            if TORCH_AVAILABLE and str(path).endswith(".pt"):
-                return self._load_pytorch(path)
-            else:
-                return self._load_sklearn(path)
-        except Exception as e:
-            logger.error("Failed to load model", path=str(path), error=str(e))
-            return False
+        if self._predictor.load_model(path):
+            self.is_loaded = True
+            self.model_path = path
+            self.model_type = "pytorch" if str(path).endswith(".pt") else "sklearn"
+            logger.info(
+                "Model loaded via canonical predictor",
+                path=str(path),
+                horizon=self._predictor.config.prediction_horizon,
+                sample_interval_sec=self._predictor.config.sample_interval_sec,
+            )
+            return True
 
-    def _load_pytorch(self, path: Path) -> bool:
-        """Load PyTorch model."""
-        import torch
+        logger.error("Failed to load model", path=str(path))
+        return False
 
-        checkpoint = torch.load(path, map_location=self.device, weights_only=False)
-        metadata = checkpoint["metadata"]
+    # ------------------------------------------------------------------
+    # Delegate properties
+    # ------------------------------------------------------------------
 
-        self.config = GRUConfig(**metadata["config"])
-        self.model = GRUNetwork(self.config).to(self.device)
-        self.model.load_state_dict(checkpoint["model_state"])
-        self.model.eval()
+    @property
+    def config(self) -> Optional[GRUConfig]:
+        return self._predictor.config if self.is_loaded else None
 
-        self.scaler_mean = metadata["scaler_mean"]
-        self.scaler_std = metadata["scaler_std"]
-        self.rmse = metadata.get("rmse")
-        self.mae = metadata.get("mae")
-        self.is_loaded = True
-        self.model_path = path
-        self.model_type = "pytorch"
+    @property
+    def scaler_mean(self) -> float:
+        return self._predictor.scaler_mean
 
-        logger.info(
-            "PyTorch model loaded",
-            path=str(path),
-            hidden_size=self.config.hidden_size,
-            sequence_length=self.config.sequence_length,
-        )
-        return True
+    @property
+    def scaler_std(self) -> float:
+        return self._predictor.scaler_std
 
-    def _load_sklearn(self, path: Path) -> bool:
-        """Load sklearn model (fallback)."""
-        import joblib
+    @property
+    def rmse(self) -> Optional[float]:
+        return self._predictor.rmse
 
-        data = joblib.load(path)
-        metadata = data["metadata"]
-        self.config = GRUConfig(**metadata["config"])
-        self.model = data["model"]
-        self.model_expected_features = getattr(self.model, "n_features_in_", None)
-        self.scaler_mean = metadata["scaler_mean"]
-        self.scaler_std = metadata["scaler_std"]
-        self.rmse = metadata.get("rmse")
-        self.mae = metadata.get("mae")
-        self.is_loaded = True
-        self.model_path = path
-        self.model_type = "sklearn"
+    @property
+    def mae(self) -> Optional[float]:
+        return self._predictor.mae
 
-        logger.info("sklearn model loaded", path=str(path))
-        return True
+    @property
+    def upper_offsets(self) -> np.ndarray:
+        return self._predictor.upper_offsets
 
-    def _normalize(self, data: np.ndarray) -> np.ndarray:
-        """Normalize data using stored statistics."""
-        return (data - self.scaler_mean) / (self.scaler_std + 1e-8)
+    @property
+    def val_coverage(self) -> float:
+        return self._predictor.val_coverage
 
-    def _denormalize(self, data: np.ndarray) -> np.ndarray:
-        """Denormalize data using stored statistics."""
-        return data * self.scaler_std + self.scaler_mean
+    # ------------------------------------------------------------------
+    # Inference
+    # ------------------------------------------------------------------
 
-    def predict(self, history: List[float], horizon: int = 1) -> dict:
-        """
-        Predict future request counts.
+    def predict(self, history: List[float], horizon: int = 1) -> Dict[str, Any]:
+        """Predict future request counts using the canonical predictor.
 
-        Args:
-            history: List of recent request counts
-            horizon: Number of steps ahead to predict
-
-        Returns:
-            Dictionary with predictions and confidence
+        The ``horizon`` parameter is accepted for API compatibility but the
+        model always outputs ``config.prediction_horizon`` direct forecasts.
+        If ``horizon`` differs from the model's native horizon, the response
+        still contains all native-horizon values.
         """
         if not self.is_loaded:
             raise RuntimeError("Model not loaded")
 
-        if self.config is None:
-            raise RuntimeError("Model config not loaded")
+        values = np.array(history, dtype=np.float32)
+        result = self._predictor.predict(values)
 
-        if self.model is None:
-            raise RuntimeError("Model not loaded")
-
-        if len(history) < self.config.sequence_length:
-            padding_size = self.config.sequence_length - len(history)
-            padding = [self.scaler_mean] * padding_size
-            history = padding + list(history)
-
-        values = np.array(history[-self.config.sequence_length :], dtype=np.float32)
-        normalized = self._normalize(values)
-
-        predictions = []
-        current_seq = normalized.copy()
-
-        for _ in range(horizon):
-            if TORCH_AVAILABLE and isinstance(self.model, nn.Module):
-                self.model.eval()
-                with torch.no_grad():
-                    X = torch.FloatTensor(current_seq).reshape(1, -1, 1).to(self.device)
-                    pred_norm = self.model(X).cpu().numpy()[0]
-            else:
-                expected_features = self.model_expected_features or len(current_seq)
-
-                if len(current_seq) > expected_features:
-                    adjusted_seq = current_seq[-expected_features:]
-                elif len(current_seq) < expected_features:
-                    pad_len = expected_features - len(current_seq)
-                    pad_value = current_seq[0] if len(current_seq) > 0 else 0.0
-                    adjusted_seq = np.concatenate((np.full(pad_len, pad_value), current_seq))
-                else:
-                    adjusted_seq = current_seq
-
-                X = adjusted_seq.reshape(1, -1)
-                if self.model is None:
-                    raise RuntimeError("No model loaded for prediction")
-                pred_norm = self.model.predict(X)[0]
-
-            pred_denorm = float(self._denormalize(pred_norm))
-            predictions.append(max(0, pred_denorm))
-
-            current_seq = np.roll(current_seq, -1)
-            current_seq[-1] = pred_norm
-
-        avg_prediction = np.mean(predictions)
-        confidence = self._calculate_confidence(history, predictions)
+        # Map to the server-response contract
+        point_forecasts = result.get("point_forecasts", [])
+        upper_forecasts = result.get("upper_forecasts", [])
+        horizon_values = [int(round(p)) for p in point_forecasts]
 
         return {
-            "predicted_requests": predictions[-1] if horizon == 1 else int(avg_prediction),
-            "confidence": confidence,
-            "horizon_values": [int(p) for p in predictions],
-            "model_rmse": self.rmse,
+            "predicted_requests": int(round(result["predicted_requests"])),
+            "confidence": result["confidence"],
+            "horizon_values": horizon_values,
+            "point_forecasts": [float(f) for f in point_forecasts],
+            "upper_forecasts": [float(f) for f in upper_forecasts],
+            "model_rmse": result.get("model_rmse"),
         }
 
-    def _calculate_confidence(self, history: List[float], predictions: List[float]) -> float:
-        """Calculate prediction confidence based on model performance and input stability."""
-        base_confidence = 0.7
-
-        if self.rmse and self.scaler_mean > 0:
-            rmse_ratio = self.rmse / self.scaler_mean
-            if rmse_ratio < 0.1:
-                base_confidence = 0.9
-            elif rmse_ratio < 0.15:
-                base_confidence = 0.8
-            elif rmse_ratio < 0.2:
-                base_confidence = 0.7
-            else:
-                base_confidence = 0.6
-
-        if len(history) >= 5:
-            recent_std = np.std(history[-5:])
-            recent_mean = np.mean(history[-5:])
-            if recent_mean > 0:
-                cv = recent_std / recent_mean
-                stability_factor = max(0.8, 1.0 - cv)
-                base_confidence *= stability_factor
-
-        return round(min(0.95, max(0.5, base_confidence)), 2)
-
-    def get_status(self) -> dict:
+    def get_status(self) -> Dict[str, Any]:
         """Get model status information."""
+        cfg = self.config
         return {
             "loaded": self.is_loaded,
             "model_type": self.model_type,
             "model_path": str(self.model_path) if self.model_path else None,
-            "sequence_length": self.config.sequence_length if self.config else None,
-            "hidden_size": self.config.hidden_size if self.config else None,
+            "schema_version": ARTIFACT_SCHEMA_VERSION,
+            "sequence_length": cfg.sequence_length if cfg else None,
+            "prediction_horizon": cfg.prediction_horizon if cfg else None,
+            "sample_interval_sec": cfg.sample_interval_sec if cfg else None,
+            "hidden_size": cfg.hidden_size if cfg else None,
+            "num_layers": cfg.num_layers if cfg else None,
             "rmse": self.rmse,
             "mae": self.mae,
             "scaler_mean": self.scaler_mean,
             "scaler_std": self.scaler_std,
+            "val_coverage": self.val_coverage,
         }

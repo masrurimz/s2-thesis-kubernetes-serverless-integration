@@ -1,0 +1,435 @@
+2026-07-11 01:30:11 [info     ] SLOMonitor initialized         threshold_ms=200.0 violation_window=30
+2026-07-11 01:30:11 [info     ] Algorithm1ControllerV3 initialized max_knative=50 r_saturation=33.3 target_cpu_util=0.5 total_budget=1000
+2026-07-11 01:30:11 [info     ] Using V3 controller (Capacity-Driven) scenario=s4-hybrid-predictive version=v3
+2026-07-11 01:30:11 [info     ] HAProxyWeightAdjuster initialized backend=servers host=localhost port=19999
+2026-07-11 01:30:11 [info     ] GRUClient initialized          base_url=http://localhost:8090
+2026-07-11 01:30:11 [info     ] K8sScaler initialized          deployment=test-app-warm namespace=default
+2026-07-11 01:30:11 [info     ] RoutingDaemon initialized      decision_interval=15 description='Algorithm 1 with GRU predictions (Algorithm 2)' scenario=s4-hybrid-predictive use_algorithm=True use_predictions=True
+2026-07-11 01:30:11 [info     ] Starting routing daemon        interval=15 scenario=s4-hybrid-predictive
+2026-07-11 01:30:11 [info     ] Weights updated                k3s=80 knative=20
+2026-07-11 01:30:11 [info     ] Initial weights applied        k3s=80 knative=20
+2026-07-11 01:30:11 [debug    ] HAProxy fallback primed        total_requests=0
+2026-07-11 01:30:11 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:30:11 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-11 01:30:11 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=111.42 p99=0.0
+2026-07-11 01:30:26 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-11 01:30:26 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=107.3 p99=0.0
+2026-07-11 01:30:41 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:30:41 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-11 01:30:41 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=111.83 p99=0.0
+2026-07-11 01:30:56 [debug    ] HAProxy fallback latency       delta_requests=641 interval_avg_ms=64.0 max_rtime_ms=108.0 p99_est=108.0
+2026-07-11 01:30:56 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-5 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:30:56 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=1000 burn_adjustment=-5 burst_ratio=0 capacity_deficit=False confidence=0 current_load=42.354317630635 decision_id=53968c21 k8s_capacity=49.9 k8s_weight=100 knative_weight=0 p99=108.0 predicted_load=0 r_effective=16.6 serverless_enabled=False total_load=42.4 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-11 01:30:56 [info     ] Weights updated                k3s=100 knative=0
+2026-07-11 01:30:56 [info     ] Weights updated                action=RECOVERY reason='load=42RPS | k8s_cap=50RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-11 01:30:56 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=21.1771588153175 required_resources=0.636 target_replicas=3
+2026-07-11 01:30:56 [debug    ] Decision loop completed        action=RECOVERY latency_ms=141.4 p99=108.0
+2026-07-11 01:31:11 [debug    ] HAProxy fallback latency       delta_requests=666 interval_avg_ms=64.0 max_rtime_ms=108.0 p99_est=108.0
+2026-07-11 01:31:11 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:31:11 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-6 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:31:12 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=43.169866612740236 required_resources=1.296 target_replicas=3
+2026-07-11 01:31:12 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=112.03 p99=108.0
+2026-07-11 01:31:27 [debug    ] HAProxy fallback latency       delta_requests=717 interval_avg_ms=66.82 max_rtime_ms=118.0 p99_est=118.0
+2026-07-11 01:31:27 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-6 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:31:27 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=45.682990855096385 required_resources=1.372 target_replicas=3
+2026-07-11 01:31:27 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.8 p99=118.0
+2026-07-11 01:31:42 [debug    ] HAProxy fallback latency       delta_requests=822 interval_avg_ms=68.46 max_rtime_ms=132.0 p99_est=132.0
+2026-07-11 01:31:42 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:31:42 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:31:42 [info     ] Knative pre-warm OK            cold_start_ms=2.4
+2026-07-11 01:31:42 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.0817 capacity_deficit=False confidence=0 current_load=54.395070974179 decision_id=d2ac2d96 k8s_capacity=49.9 k8s_weight=98 knative_weight=2 p99=132.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=54.4 weights_after={'k3s': 98, 'knative': 2} weights_before={'k3s': 100, 'knative': 0}
+2026-07-11 01:31:42 [info     ] Weights updated                k3s=98 knative=2
+2026-07-11 01:31:42 [info     ] Weights updated                action=REACTIVE reason='load=54RPS | k8s_cap=50RPS | (burst-routing)' weights={'k3s': 98, 'knative': 2}
+2026-07-11 01:31:42 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=50.88781854476315 required_resources=1.528 target_replicas=3
+2026-07-11 01:31:42 [debug    ] Decision loop completed        action=REACTIVE latency_ms=107.77 p99=132.0
+2026-07-11 01:31:57 [debug    ] HAProxy fallback latency       delta_requests=767 interval_avg_ms=61.29 max_rtime_ms=152.0 p99_est=122.58
+2026-07-11 01:31:57 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:31:57 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.0174 capacity_deficit=False confidence=0 current_load=50.83477405611356 decision_id=e2409ec8 k8s_capacity=49.9 k8s_weight=100 knative_weight=0 p99=122.6 predicted_load=0 r_effective=16.6 serverless_enabled=False total_load=50.8 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 98, 'knative': 2}
+2026-07-11 01:31:57 [info     ] Weights updated                k3s=100 knative=0
+2026-07-11 01:31:57 [info     ] Weights updated                action=RECOVERY reason='load=51RPS | k8s_cap=50RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-11 01:31:57 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=52.614922515146276 required_resources=1.58 target_replicas=3
+2026-07-11 01:31:57 [debug    ] Decision loop completed        action=RECOVERY latency_ms=145.14 p99=122.57887874837027
+2026-07-11 01:32:12 [debug    ] HAProxy fallback latency       delta_requests=548 interval_avg_ms=65.0 max_rtime_ms=152.0 p99_est=130.0
+2026-07-11 01:32:12 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:32:12 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:32:12 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=43.5085385362857 required_resources=1.307 target_replicas=3
+2026-07-11 01:32:12 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=107.8 p99=130.0
+2026-07-11 01:32:27 [debug    ] HAProxy fallback latency       delta_requests=411 interval_avg_ms=53.88 max_rtime_ms=152.0 p99_est=107.75
+2026-07-11 01:32:27 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:32:27 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=31.693558125511125 required_resources=0.952 target_replicas=3
+2026-07-11 01:32:27 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=109.83 p99=107.75182481751825
+2026-07-11 01:32:42 [debug    ] HAProxy fallback latency       delta_requests=357 interval_avg_ms=64.0 max_rtime_ms=152.0 p99_est=128.0
+2026-07-11 01:32:42 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:32:42 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:32:42 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=25.41581745623348 required_resources=0.763 target_replicas=3
+2026-07-11 01:32:42 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.3 p99=128.0
+2026-07-11 01:32:57 [debug    ] HAProxy fallback latency       delta_requests=485 interval_avg_ms=75.16 max_rtime_ms=152.0 p99_est=150.33
+2026-07-11 01:32:57 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:32:57 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=27.828489369784116 required_resources=0.836 target_replicas=3
+2026-07-11 01:32:57 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=109.5 p99=150.32577319587628
+2026-07-11 01:33:12 [debug    ] HAProxy fallback latency       delta_requests=773 interval_avg_ms=65.0 max_rtime_ms=152.0 p99_est=130.0
+2026-07-11 01:33:12 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:33:12 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:33:12 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=41.59469737348775 required_resources=1.249 target_replicas=3
+2026-07-11 01:33:12 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=108.82 p99=130.0
+2026-07-11 01:33:27 [debug    ] HAProxy fallback latency       delta_requests=812 interval_avg_ms=82.24 max_rtime_ms=152.0 p99_est=152.0
+2026-07-11 01:33:28 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:33:28 [info     ] Knative pre-warm OK            cold_start_ms=2.5
+2026-07-11 01:33:28 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.0706 capacity_deficit=False confidence=0 current_load=53.74430521638113 decision_id=b0f69f80 k8s_capacity=49.9 k8s_weight=99 knative_weight=1 p99=152.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=53.7 weights_after={'k3s': 99, 'knative': 1} weights_before={'k3s': 100, 'knative': 0}
+2026-07-11 01:33:28 [info     ] Weights updated                k3s=99 knative=1
+2026-07-11 01:33:28 [info     ] Weights updated                action=REACTIVE reason='load=54RPS | k8s_cap=50RPS | (burst-routing)' weights={'k3s': 99, 'knative': 1}
+2026-07-11 01:33:28 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=52.45177145084547 required_resources=1.575 target_replicas=3
+2026-07-11 01:33:28 [debug    ] Decision loop completed        action=REACTIVE latency_ms=115.61 p99=152.0
+2026-07-11 01:33:43 [debug    ] HAProxy fallback latency       delta_requests=638 interval_avg_ms=43.06 max_rtime_ms=152.0 p99_est=86.12
+2026-07-11 01:33:43 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:33:43 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:33:43 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0 current_load=42.272273533961005 decision_id=d1ec54b7 k8s_capacity=49.9 k8s_weight=100 knative_weight=0 p99=86.1 predicted_load=0 r_effective=16.6 serverless_enabled=False total_load=42.3 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 99, 'knative': 1}
+2026-07-11 01:33:43 [info     ] Weights updated                k3s=100 knative=0
+2026-07-11 01:33:43 [info     ] Weights updated                action=RECOVERY reason='load=42RPS | k8s_cap=50RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-11 01:33:43 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=48.00828937517107 required_resources=1.442 target_replicas=3
+2026-07-11 01:33:43 [debug    ] Decision loop completed        action=RECOVERY latency_ms=142.86 p99=86.11912225705329
+2026-07-11 01:33:58 [debug    ] HAProxy fallback latency       delta_requests=658 interval_avg_ms=65.0 max_rtime_ms=152.0 p99_est=130.0
+2026-07-11 01:33:58 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:33:58 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=42.82963419154176 required_resources=1.286 target_replicas=3
+2026-07-11 01:33:58 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.61 p99=130.0
+2026-07-11 01:34:13 [debug    ] HAProxy fallback latency       delta_requests=831 interval_avg_ms=65.0 max_rtime_ms=152.0 p99_est=130.0
+2026-07-11 01:34:13 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:34:13 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:34:13 [info     ] Knative pre-warm OK            cold_start_ms=2.6
+2026-07-11 01:34:13 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.0917 capacity_deficit=False confidence=0 current_load=54.993946647645465 decision_id=b2d98711 k8s_capacity=49.9 k8s_weight=97 knative_weight=3 p99=130.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=55.0 weights_after={'k3s': 97, 'knative': 3} weights_before={'k3s': 100, 'knative': 0}
+2026-07-11 01:34:13 [info     ] Weights updated                k3s=97 knative=3
+2026-07-11 01:34:13 [info     ] Weights updated                action=REACTIVE reason='load=55RPS | k8s_cap=50RPS | (burst-routing)' weights={'k3s': 97, 'knative': 3}
+2026-07-11 01:34:13 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=49.19047074838399 required_resources=1.477 target_replicas=3
+2026-07-11 01:34:13 [debug    ] Decision loop completed        action=REACTIVE latency_ms=107.55 p99=130.0
+2026-07-11 01:34:28 [debug    ] HAProxy fallback latency       delta_requests=916 interval_avg_ms=54.04 max_rtime_ms=152.0 p99_est=108.07
+2026-07-11 01:34:28 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:34:28 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.1753 capacity_deficit=False confidence=0 current_load=60.564571235663095 decision_id=e88dda8d k8s_capacity=49.9 k8s_weight=89 knative_weight=11 p99=108.1 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=60.6 weights_after={'k3s': 89, 'knative': 11} weights_before={'k3s': 97, 'knative': 3}
+2026-07-11 01:34:28 [info     ] Weights updated                k3s=89 knative=11
+2026-07-11 01:34:28 [info     ] Weights updated                action=REACTIVE reason='load=61RPS | k8s_cap=50RPS | (burst-routing)' weights={'k3s': 89, 'knative': 11}
+2026-07-11 01:34:28 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=57.77925894165428 required_resources=1.735 target_replicas=3
+2026-07-11 01:34:28 [debug    ] Decision loop completed        action=REACTIVE latency_ms=114.88 p99=108.07423580786026
+2026-07-11 01:34:43 [debug    ] HAProxy fallback latency       delta_requests=931 interval_avg_ms=64.0 max_rtime_ms=152.0 p99_est=128.0
+2026-07-11 01:34:43 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:34:43 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:34:43 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.189 capacity_deficit=False confidence=0 current_load=61.59441147763968 decision_id=96213340 k8s_capacity=49.9 k8s_weight=88 knative_weight=12 p99=128.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=61.6 weights_after={'k3s': 88, 'knative': 12} weights_before={'k3s': 89, 'knative': 11}
+2026-07-11 01:34:43 [info     ] Weights updated                k3s=88 knative=12
+2026-07-11 01:34:43 [info     ] Weights updated                action=REACTIVE reason='load=62RPS | k8s_cap=50RPS | (burst-routing)' weights={'k3s': 88, 'knative': 12}
+2026-07-11 01:34:43 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=61.07949135665139 required_resources=1.834 target_replicas=3
+2026-07-11 01:34:43 [debug    ] Decision loop completed        action=REACTIVE latency_ms=119.26 p99=128.0
+2026-07-11 01:34:58 [debug    ] HAProxy fallback latency       delta_requests=1004 interval_avg_ms=87.86 max_rtime_ms=152.0 p99_est=152.0
+2026-07-11 01:34:58 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:34:58 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.2486 capacity_deficit=False confidence=0 current_load=66.47221547600054 decision_id=a4254d56 k8s_capacity=49.9 k8s_weight=82 knative_weight=18 p99=152.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=66.5 weights_after={'k3s': 82, 'knative': 18} weights_before={'k3s': 88, 'knative': 12}
+2026-07-11 01:34:58 [info     ] Weights updated                k3s=82 knative=18
+2026-07-11 01:34:58 [info     ] Weights updated                action=REACTIVE reason='load=66RPS | k8s_cap=50RPS | (burst-routing)' weights={'k3s': 82, 'knative': 18}
+2026-07-11 01:34:58 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=64.03331347682011 required_resources=1.923 target_replicas=3
+2026-07-11 01:34:58 [debug    ] Decision loop completed        action=REACTIVE latency_ms=112.76 p99=152.0
+2026-07-11 01:35:13 [debug    ] HAProxy fallback latency       delta_requests=1119 interval_avg_ms=54.3 max_rtime_ms=152.0 p99_est=108.59
+2026-07-11 01:35:13 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:35:13 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:35:13 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.3248 capacity_deficit=False confidence=0 current_load=73.9753554825956 decision_id=0d9ef708 k8s_capacity=49.9 k8s_weight=74 knative_weight=26 p99=108.6 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=74.0 weights_after={'k3s': 74, 'knative': 26} weights_before={'k3s': 82, 'knative': 18}
+2026-07-11 01:35:13 [info     ] Weights updated                k3s=74 knative=26
+2026-07-11 01:35:13 [info     ] Weights updated                action=REACTIVE reason='load=74RPS | k8s_cap=50RPS | (burst-routing)' weights={'k3s': 74, 'knative': 26}
+2026-07-11 01:35:13 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=70.22378547929807 required_resources=2.109 target_replicas=3
+2026-07-11 01:35:13 [debug    ] Decision loop completed        action=REACTIVE latency_ms=111.33 p99=108.59338695263628
+2026-07-11 01:35:28 [debug    ] HAProxy fallback latency       delta_requests=1274 interval_avg_ms=87.56 max_rtime_ms=152.0 p99_est=152.0
+2026-07-11 01:35:28 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:35:28 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.4071 capacity_deficit=False confidence=0 current_load=84.2408431384512 decision_id=797f2710 k8s_capacity=49.9 k8s_weight=66 knative_weight=34 p99=152.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=84.2 weights_after={'k3s': 66, 'knative': 34} weights_before={'k3s': 74, 'knative': 26}
+2026-07-11 01:35:28 [info     ] Weights updated                k3s=66 knative=34
+2026-07-11 01:35:28 [info     ] Weights updated                action=REACTIVE reason='load=84RPS | k8s_cap=50RPS | (burst-routing)' weights={'k3s': 66, 'knative': 34}
+2026-07-11 01:35:28 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=79.1080993105234 required_resources=2.376 target_replicas=3
+2026-07-11 01:35:28 [debug    ] Decision loop completed        action=REACTIVE latency_ms=112.22 p99=152.0
+2026-07-11 01:35:44 [debug    ] HAProxy fallback latency       delta_requests=1456 interval_avg_ms=67.0 max_rtime_ms=154.0 p99_est=134.0
+2026-07-11 01:35:44 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:35:44 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:35:44 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.4815 capacity_deficit=False confidence=0 current_load=96.34115747396217 decision_id=491c45a0 k8s_capacity=49.9 k8s_weight=58 knative_weight=42 p99=134.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=96.3 weights_after={'k3s': 58, 'knative': 42} weights_before={'k3s': 66, 'knative': 34}
+2026-07-11 01:35:44 [info     ] Weights updated                k3s=58 knative=42
+2026-07-11 01:35:44 [info     ] Weights updated                action=REACTIVE reason='load=96RPS | k8s_cap=50RPS | (burst-routing)' weights={'k3s': 58, 'knative': 42}
+2026-07-11 01:35:44 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=3 predicted_load=90.29100030620668 required_resources=2.711 target_replicas=4
+2026-07-11 01:35:44 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=4
+2026-07-11 01:35:44 [debug    ] Decision loop completed        action=REACTIVE latency_ms=157.44 p99=134.0
+2026-07-11 01:35:59 [debug    ] HAProxy fallback latency       delta_requests=1674 interval_avg_ms=98.36 max_rtime_ms=182.0 p99_est=182.0
+2026-07-11 01:35:59 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:35:59 [info     ] controller_decision_v3         action=RECOVERY available_replicas=4 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.3966 capacity_deficit=False confidence=0 current_load=110.37829269511947 decision_id=2a29fad9 k8s_capacity=66.6 k8s_weight=67 knative_weight=33 p99=182.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=110.4 weights_after={'k3s': 67, 'knative': 33} weights_before={'k3s': 58, 'knative': 42}
+2026-07-11 01:35:59 [info     ] Weights updated                k3s=67 knative=33
+2026-07-11 01:35:59 [info     ] Weights updated                action=RECOVERY reason='load=110RPS | k8s_cap=67RPS | (reducing-serverless)' weights={'k3s': 67, 'knative': 33}
+2026-07-11 01:35:59 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=103.35972508454083 required_resources=3.104 target_replicas=4
+2026-07-11 01:35:59 [debug    ] Decision loop completed        action=RECOVERY latency_ms=157.57 p99=182.0
+2026-07-11 01:36:14 [debug    ] HAProxy fallback latency       delta_requests=1895 interval_avg_ms=49.53 max_rtime_ms=182.0 p99_est=99.06
+2026-07-11 01:36:14 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:36:14 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:36:14 [info     ] controller_decision_v3         action=REACTIVE available_replicas=4 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.4673 capacity_deficit=False confidence=0 current_load=125.02277390909683 decision_id=23ac3352 k8s_capacity=66.6 k8s_weight=60 knative_weight=40 p99=99.1 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=125.0 weights_after={'k3s': 60, 'knative': 40} weights_before={'k3s': 67, 'knative': 33}
+2026-07-11 01:36:14 [info     ] Weights updated                k3s=60 knative=40
+2026-07-11 01:36:14 [info     ] Weights updated                action=REACTIVE reason='load=125RPS | k8s_cap=67RPS | (burst-routing)' weights={'k3s': 60, 'knative': 40}
+2026-07-11 01:36:14 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=4 predicted_load=117.70053330210814 required_resources=3.535 target_replicas=5
+2026-07-11 01:36:14 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=5
+2026-07-11 01:36:14 [debug    ] Decision loop completed        action=REACTIVE latency_ms=157.02 p99=99.06068601583114
+2026-07-11 01:36:29 [debug    ] HAProxy fallback latency       delta_requests=1722 interval_avg_ms=43.47 max_rtime_ms=182.0 p99_est=86.95
+2026-07-11 01:36:29 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:36:29 [info     ] controller_decision_v3         action=RECOVERY available_replicas=5 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.2676 capacity_deficit=False confidence=0 current_load=113.6720797540785 decision_id=6a242569 k8s_capacity=83.2 k8s_weight=80 knative_weight=20 p99=86.9 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=113.7 weights_after={'k3s': 80, 'knative': 20} weights_before={'k3s': 60, 'knative': 40}
+2026-07-11 01:36:29 [info     ] Weights updated                k3s=80 knative=20
+2026-07-11 01:36:29 [info     ] Weights updated                action=RECOVERY reason='load=114RPS | k8s_cap=83RPS | (reducing-serverless)' weights={'k3s': 80, 'knative': 20}
+2026-07-11 01:36:29 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=119.34742683158765 required_resources=3.584 target_replicas=5
+2026-07-11 01:36:29 [debug    ] Decision loop completed        action=RECOVERY latency_ms=149.52 p99=86.94773519163763
+2026-07-11 01:36:44 [debug    ] HAProxy fallback latency       delta_requests=1312 interval_avg_ms=66.0 max_rtime_ms=182.0 p99_est=132.0
+2026-07-11 01:36:44 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:36:44 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:36:44 [info     ] controller_decision_v3         action=RECOVERY available_replicas=5 budget_remaining=1000 burn_adjustment=-7 burst_ratio=0.0395 capacity_deficit=False confidence=0 current_load=86.67089984448054 decision_id=5270bd33 k8s_capacity=83.2 k8s_weight=100 knative_weight=0 p99=132.0 predicted_load=0 r_effective=16.6 serverless_enabled=False total_load=86.7 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-07-11 01:36:44 [info     ] Weights updated                k3s=100 knative=0
+2026-07-11 01:36:44 [info     ] Weights updated                action=RECOVERY reason='load=87RPS | k8s_cap=83RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-11 01:36:44 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=100.17148979927953 required_resources=3.008 target_replicas=4
+2026-07-11 01:36:44 [debug    ] Decision loop completed        action=RECOVERY latency_ms=145.44 p99=132.0
+2026-07-11 01:36:59 [debug    ] HAProxy fallback latency       delta_requests=1131 interval_avg_ms=66.0 max_rtime_ms=182.0 p99_est=132.0
+2026-07-11 01:36:59 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:36:59 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=80.7050550364435 required_resources=2.424 target_replicas=3
+2026-07-11 01:36:59 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.65 p99=132.0
+2026-07-11 01:37:14 [debug    ] HAProxy fallback latency       delta_requests=1074 interval_avg_ms=66.0 max_rtime_ms=182.0 p99_est=132.0
+2026-07-11 01:37:14 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:37:14 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:37:14 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=72.87442647726692 required_resources=2.188 target_replicas=3
+2026-07-11 01:37:14 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=116.68 p99=132.0
+2026-07-11 01:37:30 [debug    ] HAProxy fallback latency       delta_requests=945 interval_avg_ms=38.93 max_rtime_ms=182.0 p99_est=77.86
+2026-07-11 01:37:30 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:37:30 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=66.76085320048483 required_resources=2.005 target_replicas=3
+2026-07-11 01:37:30 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=106.6 p99=77.86455026455026
+2026-07-11 01:37:45 [debug    ] HAProxy fallback latency       delta_requests=792 interval_avg_ms=65.0 max_rtime_ms=182.0 p99_est=130.0
+2026-07-11 01:37:45 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:37:45 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:37:45 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=57.50295791856429 required_resources=1.727 target_replicas=3
+2026-07-11 01:37:45 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=103.62 p99=130.0
+2026-07-11 01:38:00 [debug    ] HAProxy fallback latency       delta_requests=1203 interval_avg_ms=87.92 max_rtime_ms=182.0 p99_est=175.84
+2026-07-11 01:38:00 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=1000 burn_error=-1.0 burn_ratio=0.0
+2026-07-11 01:38:00 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=66.00476721363219 required_resources=1.982 target_replicas=3
+2026-07-11 01:38:00 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.56 p99=175.84206151288444
+2026-07-11 01:38:15 [debug    ] HAProxy fallback latency       delta_requests=1873 interval_avg_ms=364.71 max_rtime_ms=365.0 p99_est=365.0
+2026-07-11 01:38:15 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:38:15 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=999 burn_error=-0.998 burn_ratio=0.002
+2026-07-11 01:38:15 [info     ] Knative pre-warm OK            cold_start_ms=2.9
+2026-07-11 01:38:15 [info     ] controller_decision_v3         action=REACTIVE available_replicas=5 budget_remaining=999 burn_adjustment=-7 burst_ratio=0.328 capacity_deficit=False confidence=0 current_load=123.88375004628836 decision_id=0870e09e k8s_capacity=83.2 k8s_weight=74 knative_weight=26 p99=365.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=123.9 weights_after={'k3s': 74, 'knative': 26} weights_before={'k3s': 100, 'knative': 0}
+2026-07-11 01:38:15 [info     ] Weights updated                k3s=74 knative=26
+2026-07-11 01:38:15 [info     ] Weights updated                action=REACTIVE reason='load=124RPS | k8s_cap=83RPS | (burst-routing)' weights={'k3s': 74, 'knative': 26}
+2026-07-11 01:38:15 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=101.69971615563323 required_resources=3.054 target_replicas=4
+2026-07-11 01:38:15 [debug    ] Decision loop completed        action=REACTIVE latency_ms=113.33 p99=365.0
+2026-07-11 01:38:30 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=998 burn_error=-0.995 burn_ratio=0.005
+2026-07-11 01:38:30 [info     ] controller_decision_v3         action=RECOVERY available_replicas=5 budget_remaining=998 burn_adjustment=-7 burst_ratio=0.3075 capacity_deficit=False confidence=0 current_load=120.22525985269544 decision_id=60f27be0 k8s_capacity=83.2 k8s_weight=76 knative_weight=24 p99=365.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=120.2 weights_after={'k3s': 76, 'knative': 24} weights_before={'k3s': 74, 'knative': 26}
+2026-07-11 01:38:30 [info     ] Weights updated                k3s=76 knative=24
+2026-07-11 01:38:30 [info     ] Weights updated                action=RECOVERY reason='load=120RPS | k8s_cap=83RPS | (reducing-serverless)' weights={'k3s': 76, 'knative': 24}
+2026-07-11 01:38:30 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=122.0545049494919 required_resources=3.665 target_replicas=5
+2026-07-11 01:38:30 [debug    ] Decision loop completed        action=RECOVERY latency_ms=144.6 p99=365.0
+2026-07-11 01:38:45 [debug    ] HAProxy fallback latency       delta_requests=1423 interval_avg_ms=21.06 max_rtime_ms=365.0 p99_est=42.12
+2026-07-11 01:38:45 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:38:45 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=998 burn_error=-0.995 burn_ratio=0.005
+2026-07-11 01:38:45 [info     ] controller_decision_v3         action=RECOVERY available_replicas=5 budget_remaining=998 burn_adjustment=-7 burst_ratio=0.1146 capacity_deficit=False confidence=0 current_load=94.02558517012874 decision_id=7390fa9b k8s_capacity=83.2 k8s_weight=95 knative_weight=5 p99=42.1 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=94.0 weights_after={'k3s': 95, 'knative': 5} weights_before={'k3s': 76, 'knative': 24}
+2026-07-11 01:38:45 [info     ] Weights updated                k3s=95 knative=5
+2026-07-11 01:38:45 [info     ] Weights updated                action=RECOVERY reason='load=94RPS | k8s_cap=83RPS | (reducing-serverless)' weights={'k3s': 95, 'knative': 5}
+2026-07-11 01:38:45 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=107.1254225114121 required_resources=3.217 target_replicas=4
+2026-07-11 01:38:45 [debug    ] Decision loop completed        action=RECOVERY latency_ms=149.58 p99=42.12087139845397
+2026-07-11 01:39:00 [debug    ] HAProxy fallback latency       delta_requests=1231 interval_avg_ms=65.0 max_rtime_ms=365.0 p99_est=130.0
+2026-07-11 01:39:00 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=998 burn_error=-0.995 burn_ratio=0.005
+2026-07-11 01:39:00 [info     ] controller_decision_v3         action=RECOVERY available_replicas=5 budget_remaining=998 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0 current_load=81.25295745340766 decision_id=0a500739 k8s_capacity=83.2 k8s_weight=100 knative_weight=0 p99=130.0 predicted_load=0 r_effective=16.6 serverless_enabled=False total_load=81.3 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 95, 'knative': 5}
+2026-07-11 01:39:00 [info     ] Weights updated                k3s=100 knative=0
+2026-07-11 01:39:00 [info     ] Weights updated                action=RECOVERY reason='load=81RPS | k8s_cap=83RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-11 01:39:00 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=87.6392713117682 required_resources=2.632 target_replicas=4
+2026-07-11 01:39:00 [debug    ] Decision loop completed        action=RECOVERY latency_ms=155.12 p99=130.0
+2026-07-11 01:39:15 [debug    ] HAProxy fallback latency       delta_requests=1150 interval_avg_ms=65.0 max_rtime_ms=365.0 p99_est=130.0
+2026-07-11 01:39:15 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:39:15 [debug    ] burn_rate_adjustment           actual_burn=0.0 adjustment=-7 allowed_burn=0.83 budget_remaining=998 burn_error=-0.996 burn_ratio=0.004
+2026-07-11 01:39:15 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=78.60220544441884 required_resources=2.36 target_replicas=3
+2026-07-11 01:39:15 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=106.5 p99=130.0
+2026-07-11 01:39:31 [debug    ] HAProxy fallback latency       delta_requests=1493 interval_avg_ms=113.98 max_rtime_ms=365.0 p99_est=227.95
+2026-07-11 01:39:31 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=997 burn_error=-0.994 burn_ratio=0.006
+2026-07-11 01:39:31 [info     ] Knative pre-warm OK            cold_start_ms=2.4
+2026-07-11 01:39:31 [info     ] controller_decision_v3         action=REACTIVE available_replicas=5 budget_remaining=997 burn_adjustment=-7 burst_ratio=0.156 capacity_deficit=False confidence=0 current_load=98.63395934846767 decision_id=92c380aa k8s_capacity=83.2 k8s_weight=91 knative_weight=9 p99=228.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=98.6 weights_after={'k3s': 91, 'knative': 9} weights_before={'k3s': 100, 'knative': 0}
+2026-07-11 01:39:31 [info     ] Weights updated                k3s=91 knative=9
+2026-07-11 01:39:31 [info     ] Weights updated                action=REACTIVE reason='load=99RPS | k8s_cap=83RPS | (burst-routing)' weights={'k3s': 91, 'knative': 9}
+2026-07-11 01:39:31 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=87.29270639194885 required_resources=2.621 target_replicas=4
+2026-07-11 01:39:31 [debug    ] Decision loop completed        action=REACTIVE latency_ms=115.28 p99=227.95043536503684
+2026-07-11 01:39:46 [debug    ] HAProxy fallback latency       delta_requests=2006 interval_avg_ms=355.38 max_rtime_ms=371.0 p99_est=371.0
+2026-07-11 01:39:46 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:39:46 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=996 burn_error=-0.992 burn_ratio=0.008
+2026-07-11 01:39:46 [info     ] controller_decision_v3         action=REACTIVE available_replicas=5 budget_remaining=996 burn_adjustment=-7 burst_ratio=0.3727 capacity_deficit=False confidence=0 current_load=132.70255954694562 decision_id=a155a565 k8s_capacity=83.2 k8s_weight=69 knative_weight=31 p99=371.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=132.7 weights_after={'k3s': 69, 'knative': 31} weights_before={'k3s': 91, 'knative': 9}
+2026-07-11 01:39:46 [info     ] Weights updated                k3s=69 knative=31
+2026-07-11 01:39:46 [info     ] Weights updated                action=REACTIVE reason='load=133RPS | k8s_cap=83RPS | (burst-routing)' weights={'k3s': 69, 'knative': 31}
+2026-07-11 01:39:46 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=115.66825944770665 required_resources=3.474 target_replicas=5
+2026-07-11 01:39:46 [debug    ] Decision loop completed        action=REACTIVE latency_ms=112.04 p99=371.0
+2026-07-11 01:40:01 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=995 burn_error=-0.99 burn_ratio=0.01
+2026-07-11 01:40:01 [info     ] controller_decision_v3         action=REACTIVE available_replicas=5 budget_remaining=995 burn_adjustment=-7 burst_ratio=0.4463 capacity_deficit=False confidence=0 current_load=150.35151495644726 decision_id=cf6540a7 k8s_capacity=83.2 k8s_weight=62 knative_weight=38 p99=371.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=150.4 weights_after={'k3s': 62, 'knative': 38} weights_before={'k3s': 69, 'knative': 31}
+2026-07-11 01:40:01 [info     ] Weights updated                k3s=62 knative=38
+2026-07-11 01:40:01 [info     ] Weights updated                action=REACTIVE reason='load=150RPS | k8s_cap=83RPS | (burst-routing)' weights={'k3s': 62, 'knative': 38}
+2026-07-11 01:40:01 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=5 predicted_load=141.52703725169644 required_resources=4.25 target_replicas=6
+2026-07-11 01:40:01 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=6
+2026-07-11 01:40:01 [debug    ] Decision loop completed        action=REACTIVE latency_ms=145.17 p99=371.0
+2026-07-11 01:40:16 [debug    ] HAProxy fallback latency       delta_requests=2427 interval_avg_ms=17.52 max_rtime_ms=371.0 p99_est=35.04
+2026-07-11 01:40:16 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:40:16 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=995 burn_error=-0.99 burn_ratio=0.01
+2026-07-11 01:40:16 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=995 burn_adjustment=-7 burst_ratio=0.3763 capacity_deficit=False confidence=0 current_load=160.17479608151737 decision_id=e9265a3d k8s_capacity=99.9 k8s_weight=69 knative_weight=31 p99=35.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=160.2 weights_after={'k3s': 69, 'knative': 31} weights_before={'k3s': 62, 'knative': 38}
+2026-07-11 01:40:16 [info     ] Weights updated                k3s=69 knative=31
+2026-07-11 01:40:16 [info     ] Weights updated                action=RECOVERY reason='load=160RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 69, 'knative': 31}
+2026-07-11 01:40:16 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=155.26315551898233 required_resources=4.663 target_replicas=6
+2026-07-11 01:40:16 [debug    ] Decision loop completed        action=RECOVERY latency_ms=154.99 p99=35.03831891223733
+2026-07-11 01:40:31 [debug    ] HAProxy fallback latency       delta_requests=2201 interval_avg_ms=68.0 max_rtime_ms=371.0 p99_est=136.0
+2026-07-11 01:40:31 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=995 burn_error=-0.99 burn_ratio=0.01
+2026-07-11 01:40:31 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=995 burn_adjustment=-7 burst_ratio=0.3125 capacity_deficit=False confidence=0 current_load=145.30002397896445 decision_id=df151a60 k8s_capacity=99.9 k8s_weight=75 knative_weight=25 p99=136.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=145.3 weights_after={'k3s': 75, 'knative': 25} weights_before={'k3s': 69, 'knative': 31}
+2026-07-11 01:40:31 [info     ] Weights updated                k3s=75 knative=25
+2026-07-11 01:40:31 [info     ] Weights updated                action=RECOVERY reason='load=145RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 75, 'knative': 25}
+2026-07-11 01:40:31 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=152.7374100302409 required_resources=4.587 target_replicas=6
+2026-07-11 01:40:31 [debug    ] Decision loop completed        action=RECOVERY latency_ms=149.04 p99=136.0
+2026-07-11 01:40:46 [debug    ] HAProxy fallback latency       delta_requests=1850 interval_avg_ms=42.42 max_rtime_ms=371.0 p99_est=84.85
+2026-07-11 01:40:46 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:40:46 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=995 burn_error=-0.991 burn_ratio=0.009
+2026-07-11 01:40:46 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=995 burn_adjustment=-7 burst_ratio=0.1828 capacity_deficit=False confidence=0 current_load=122.24983750594973 decision_id=b8384ed0 k8s_capacity=99.9 k8s_weight=88 knative_weight=12 p99=84.8 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=122.2 weights_after={'k3s': 88, 'knative': 12} weights_before={'k3s': 75, 'knative': 25}
+2026-07-11 01:40:46 [info     ] Weights updated                k3s=88 knative=12
+2026-07-11 01:40:46 [info     ] Weights updated                action=RECOVERY reason='load=122RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 88, 'knative': 12}
+2026-07-11 01:40:46 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=133.7749307424571 required_resources=4.017 target_replicas=5
+2026-07-11 01:40:46 [debug    ] Decision loop completed        action=RECOVERY latency_ms=146.89 p99=84.84648648648648
+2026-07-11 01:41:01 [debug    ] HAProxy fallback latency       delta_requests=1788 interval_avg_ms=121.93 max_rtime_ms=371.0 p99_est=243.85
+2026-07-11 01:41:01 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=994 burn_error=-0.989 burn_ratio=0.011
+2026-07-11 01:41:01 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=994 burn_adjustment=-7 burst_ratio=0.1533 capacity_deficit=False confidence=0 current_load=117.98107686610962 decision_id=2940817c k8s_capacity=99.9 k8s_weight=91 knative_weight=9 p99=243.9 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=118.0 weights_after={'k3s': 91, 'knative': 9} weights_before={'k3s': 88, 'knative': 12}
+2026-07-11 01:41:01 [info     ] Weights updated                k3s=91 knative=9
+2026-07-11 01:41:01 [info     ] Weights updated                action=RECOVERY reason='load=118RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 91, 'knative': 9}
+2026-07-11 01:41:01 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=120.11545718602967 required_resources=3.607 target_replicas=5
+2026-07-11 01:41:01 [debug    ] Decision loop completed        action=RECOVERY latency_ms=147.96 p99=243.85458612975393
+2026-07-11 01:41:16 [debug    ] HAProxy fallback latency       delta_requests=1822 interval_avg_ms=96.95 max_rtime_ms=371.0 p99_est=193.9
+2026-07-11 01:41:16 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:41:17 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=994 burn_error=-0.989 burn_ratio=0.011
+2026-07-11 01:41:17 [info     ] controller_decision_v3         action=REACTIVE available_replicas=6 budget_remaining=994 burn_adjustment=-7 burst_ratio=0.1699 capacity_deficit=False confidence=0 current_load=120.34464737772477 decision_id=b26bde38 k8s_capacity=99.9 k8s_weight=90 knative_weight=10 p99=193.9 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=120.3 weights_after={'k3s': 90, 'knative': 10} weights_before={'k3s': 91, 'knative': 9}
+2026-07-11 01:41:17 [info     ] Weights updated                k3s=90 knative=10
+2026-07-11 01:41:17 [info     ] Weights updated                action=REACTIVE reason='load=120RPS | k8s_cap=100RPS | (burst-routing)' weights={'k3s': 90, 'knative': 10}
+2026-07-11 01:41:17 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=119.16286212191719 required_resources=3.578 target_replicas=5
+2026-07-11 01:41:17 [debug    ] Decision loop completed        action=REACTIVE latency_ms=114.04 p99=193.90230515916576
+2026-07-11 01:41:32 [debug    ] HAProxy fallback latency       delta_requests=1817 interval_avg_ms=40.97 max_rtime_ms=371.0 p99_est=81.94
+2026-07-11 01:41:32 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=994 burn_error=-0.989 burn_ratio=0.011
+2026-07-11 01:41:32 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=120.24565147592233 required_resources=3.611 target_replicas=5
+2026-07-11 01:41:32 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=114.91 p99=81.94386351128233
+2026-07-11 01:41:47 [debug    ] HAProxy fallback latency       delta_requests=1786 interval_avg_ms=69.0 max_rtime_ms=371.0 p99_est=138.0
+2026-07-11 01:41:47 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:41:47 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=994 burn_error=-0.99 burn_ratio=0.01
+2026-07-11 01:41:47 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=994 burn_adjustment=-7 burst_ratio=0.1546 capacity_deficit=False confidence=0 current_load=118.16281202694033 decision_id=055a35c3 k8s_capacity=99.9 k8s_weight=91 knative_weight=9 p99=138.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=118.2 weights_after={'k3s': 91, 'knative': 9} weights_before={'k3s': 90, 'knative': 10}
+2026-07-11 01:41:47 [info     ] Weights updated                k3s=91 knative=9
+2026-07-11 01:41:47 [info     ] Weights updated                action=RECOVERY reason='load=118RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 91, 'knative': 9}
+2026-07-11 01:41:47 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=119.15473380053012 required_resources=3.578 target_replicas=5
+2026-07-11 01:41:47 [debug    ] Decision loop completed        action=RECOVERY latency_ms=149.8 p99=138.0
+2026-07-11 01:42:02 [debug    ] HAProxy fallback latency       delta_requests=1549 interval_avg_ms=32.8 max_rtime_ms=371.0 p99_est=65.59
+2026-07-11 01:42:02 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=994 burn_error=-0.99 burn_ratio=0.01
+2026-07-11 01:42:02 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=994 burn_adjustment=-7 burst_ratio=0.0242 capacity_deficit=False confidence=0 current_load=102.37508504483816 decision_id=bc44db1e k8s_capacity=99.9 k8s_weight=100 knative_weight=0 p99=65.6 predicted_load=0 r_effective=16.6 serverless_enabled=False total_load=102.4 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 91, 'knative': 9}
+2026-07-11 01:42:02 [info     ] Weights updated                k3s=100 knative=0
+2026-07-11 01:42:02 [info     ] Weights updated                action=RECOVERY reason='load=102RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-11 01:42:02 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=110.26894853588925 required_resources=3.311 target_replicas=4
+2026-07-11 01:42:02 [debug    ] Decision loop completed        action=RECOVERY latency_ms=143.18 p99=65.59328599096192
+2026-07-11 01:42:17 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:42:17 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=994 burn_error=-0.99 burn_ratio=0.01
+2026-07-11 01:42:17 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=92.65764636429321 required_resources=2.783 target_replicas=4
+2026-07-11 01:42:17 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=115.13 p99=65.59328599096192
+2026-07-11 01:42:32 [debug    ] HAProxy fallback latency       delta_requests=1117 interval_avg_ms=13.67 max_rtime_ms=371.0 p99_est=27.34
+2026-07-11 01:42:32 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=994 burn_error=-0.99 burn_ratio=0.01
+2026-07-11 01:42:32 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=78.42148526824754 required_resources=2.355 target_replicas=3
+2026-07-11 01:42:32 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=107.4 p99=27.341092211280216
+2026-07-11 01:42:47 [debug    ] HAProxy fallback latency       delta_requests=1043 interval_avg_ms=65.0 max_rtime_ms=371.0 p99_est=130.0
+2026-07-11 01:42:47 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:42:47 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=994 burn_error=-0.99 burn_ratio=0.01
+2026-07-11 01:42:47 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=71.4701084627267 required_resources=2.146 target_replicas=3
+2026-07-11 01:42:47 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=112.25 p99=130.0
+2026-07-11 01:43:02 [debug    ] HAProxy fallback latency       delta_requests=1177 interval_avg_ms=116.55 max_rtime_ms=371.0 p99_est=233.1
+2026-07-11 01:43:02 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=993 burn_error=-0.989 burn_ratio=0.011
+2026-07-11 01:43:02 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=73.45784838534121 required_resources=2.206 target_replicas=3
+2026-07-11 01:43:02 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=114.15 p99=233.09600679694137
+2026-07-11 01:43:17 [debug    ] HAProxy fallback latency       delta_requests=1329 interval_avg_ms=66.0 max_rtime_ms=371.0 p99_est=132.0
+2026-07-11 01:43:17 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:43:17 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=993 burn_error=-0.989 burn_ratio=0.011
+2026-07-11 01:43:18 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=82.9070190091972 required_resources=2.49 target_replicas=3
+2026-07-11 01:43:18 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=108.63 p99=132.0
+2026-07-11 01:43:33 [debug    ] HAProxy fallback latency       delta_requests=1089 interval_avg_ms=8.07 max_rtime_ms=371.0 p99_est=16.13
+2026-07-11 01:43:33 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=993 burn_error=-0.99 burn_ratio=0.01
+2026-07-11 01:43:33 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=80.03920236471697 required_resources=2.404 target_replicas=3
+2026-07-11 01:43:33 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=107.2 p99=16.132231404958677
+2026-07-11 01:43:48 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:43:48 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=993 burn_error=-0.99 burn_ratio=0.01
+2026-07-11 01:43:48 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=61.687279621742405 required_resources=1.852 target_replicas=3
+2026-07-11 01:43:48 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=116.24 p99=16.132231404958677
+2026-07-11 01:44:03 [debug    ] HAProxy fallback latency       delta_requests=704 interval_avg_ms=64.0 max_rtime_ms=371.0 p99_est=128.0
+2026-07-11 01:44:03 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=993 burn_error=-0.99 burn_ratio=0.01
+2026-07-11 01:44:03 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=48.869044786683745 required_resources=1.468 target_replicas=3
+2026-07-11 01:44:03 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.74 p99=128.0
+2026-07-11 01:44:18 [debug    ] HAProxy fallback latency       delta_requests=692 interval_avg_ms=64.0 max_rtime_ms=371.0 p99_est=128.0
+2026-07-11 01:44:18 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:44:18 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=993 burn_error=-0.99 burn_ratio=0.01
+2026-07-11 01:44:18 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=46.183331172499805 required_resources=1.387 target_replicas=3
+2026-07-11 01:44:18 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=105.46 p99=128.0
+2026-07-11 01:44:33 [debug    ] HAProxy fallback latency       delta_requests=654 interval_avg_ms=64.0 max_rtime_ms=371.0 p99_est=128.0
+2026-07-11 01:44:33 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=993 burn_error=-0.99 burn_ratio=0.01
+2026-07-11 01:44:33 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=44.54508240304804 required_resources=1.338 target_replicas=3
+2026-07-11 01:44:33 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=106.73 p99=128.0
+2026-07-11 01:44:48 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:44:48 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=993 burn_error=-0.99 burn_ratio=0.01
+2026-07-11 01:44:48 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=42.599311434740926 required_resources=1.279 target_replicas=3
+2026-07-11 01:44:48 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.63 p99=128.0
+2026-07-11 01:45:03 [debug    ] HAProxy fallback latency       delta_requests=836 interval_avg_ms=143.6 max_rtime_ms=371.0 p99_est=287.2
+2026-07-11 01:45:03 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=992 burn_error=-0.989 burn_ratio=0.011
+2026-07-11 01:45:03 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=48.64550821662725 required_resources=1.461 target_replicas=3
+2026-07-11 01:45:03 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=115.22 p99=287.20334928229664
+2026-07-11 01:45:18 [debug    ] HAProxy fallback latency       delta_requests=1060 interval_avg_ms=128.57 max_rtime_ms=371.0 p99_est=257.14
+2026-07-11 01:45:18 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:45:18 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=991 burn_error=-0.988 burn_ratio=0.012
+2026-07-11 01:45:18 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=62.72514389891159 required_resources=1.884 target_replicas=3
+2026-07-11 01:45:18 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=109.93 p99=257.1377358490566
+2026-07-11 01:45:33 [debug    ] HAProxy fallback latency       delta_requests=1075 interval_avg_ms=65.0 max_rtime_ms=371.0 p99_est=130.0
+2026-07-11 01:45:33 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=991 burn_error=-0.988 burn_ratio=0.012
+2026-07-11 01:45:34 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=70.60390006785704 required_resources=2.12 target_replicas=3
+2026-07-11 01:45:34 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=110.88 p99=130.0
+2026-07-11 01:45:49 [debug    ] HAProxy fallback latency       delta_requests=1050 interval_avg_ms=65.0 max_rtime_ms=371.0 p99_est=130.0
+2026-07-11 01:45:49 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:45:49 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=991 burn_error=-0.988 burn_ratio=0.012
+2026-07-11 01:45:49 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=70.31537369930956 required_resources=2.112 target_replicas=3
+2026-07-11 01:45:49 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=111.67 p99=130.0
+2026-07-11 01:46:04 [debug    ] HAProxy fallback latency       delta_requests=1072 interval_avg_ms=65.0 max_rtime_ms=371.0 p99_est=130.0
+2026-07-11 01:46:04 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=991 burn_error=-0.989 burn_ratio=0.011
+2026-07-11 01:46:04 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=70.21221836948676 required_resources=2.108 target_replicas=3
+2026-07-11 01:46:04 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=111.46 p99=130.0
+2026-07-11 01:46:19 [debug    ] HAProxy fallback latency       delta_requests=1132 interval_avg_ms=65.0 max_rtime_ms=371.0 p99_est=130.0
+2026-07-11 01:46:19 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:46:19 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=991 burn_error=-0.989 burn_ratio=0.011
+2026-07-11 01:46:19 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=72.89048703307654 required_resources=2.189 target_replicas=3
+2026-07-11 01:46:19 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=108.91 p99=130.0
+2026-07-11 01:46:34 [debug    ] HAProxy fallback latency       delta_requests=1397 interval_avg_ms=65.0 max_rtime_ms=371.0 p99_est=130.0
+2026-07-11 01:46:34 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=991 burn_error=-0.989 burn_ratio=0.011
+2026-07-11 01:46:34 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=83.64981067365659 required_resources=2.512 target_replicas=4
+2026-07-11 01:46:34 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=112.69 p99=130.0
+2026-07-11 01:46:49 [debug    ] HAProxy fallback latency       delta_requests=1636 interval_avg_ms=157.67 max_rtime_ms=371.0 p99_est=315.34
+2026-07-11 01:46:49 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:46:49 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=990 burn_error=-0.988 burn_ratio=0.012
+2026-07-11 01:46:49 [info     ] Knative pre-warm OK            cold_start_ms=2.5
+2026-07-11 01:46:49 [info     ] controller_decision_v3         action=REACTIVE available_replicas=6 budget_remaining=990 burn_adjustment=-7 burst_ratio=0.0772 capacity_deficit=False confidence=0 current_load=108.25726352616412 decision_id=a02a3584 k8s_capacity=99.9 k8s_weight=99 knative_weight=1 p99=315.3 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=108.3 weights_after={'k3s': 99, 'knative': 1} weights_before={'k3s': 100, 'knative': 0}
+2026-07-11 01:46:49 [info     ] Weights updated                k3s=99 knative=1
+2026-07-11 01:46:49 [info     ] Weights updated                action=REACTIVE reason='load=108RPS | k8s_cap=100RPS | (burst-routing)' weights={'k3s': 99, 'knative': 1}
+2026-07-11 01:46:49 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=100.32457412466836 required_resources=3.013 target_replicas=4
+2026-07-11 01:46:49 [debug    ] Decision loop completed        action=REACTIVE latency_ms=116.01 p99=315.3422982885086
+2026-07-11 01:47:04 [debug    ] HAProxy fallback latency       delta_requests=1446 interval_avg_ms=67.0 max_rtime_ms=371.0 p99_est=134.0
+2026-07-11 01:47:04 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=990 burn_error=-0.988 burn_ratio=0.012
+2026-07-11 01:47:04 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=990 burn_adjustment=-7 burst_ratio=0 capacity_deficit=False confidence=0 current_load=95.72300410623498 decision_id=f79882a5 k8s_capacity=99.9 k8s_weight=100 knative_weight=0 p99=134.0 predicted_load=0 r_effective=16.6 serverless_enabled=False total_load=95.7 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 99, 'knative': 1}
+2026-07-11 01:47:04 [info     ] Weights updated                k3s=100 knative=0
+2026-07-11 01:47:04 [info     ] Weights updated                action=RECOVERY reason='load=96RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-11 01:47:04 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=101.99013381619955 required_resources=3.063 target_replicas=4
+2026-07-11 01:47:04 [debug    ] Decision loop completed        action=RECOVERY latency_ms=147.36 p99=134.0
+2026-07-11 01:47:19 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:47:19 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=990 burn_error=-0.988 burn_ratio=0.012
+2026-07-11 01:47:19 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=86.94349092398937 required_resources=2.611 target_replicas=4
+2026-07-11 01:47:19 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=111.37 p99=134.0
+2026-07-11 01:47:34 [debug    ] HAProxy fallback latency       delta_requests=920 interval_avg_ms=65.0 max_rtime_ms=371.0 p99_est=130.0
+2026-07-11 01:47:34 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=990 burn_error=-0.988 burn_ratio=0.012
+2026-07-11 01:47:34 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=69.55425149274701 required_resources=2.089 target_replicas=3
+2026-07-11 01:47:34 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=104.21 p99=130.0
+2026-07-11 01:47:49 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:47:50 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=990 burn_error=-0.989 burn_ratio=0.011
+2026-07-11 01:47:50 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=53.479690371998075 required_resources=1.606 target_replicas=3
+2026-07-11 01:47:50 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=106.73 p99=130.0
+2026-07-11 01:48:05 [debug    ] HAProxy fallback latency       delta_requests=657 interval_avg_ms=64.0 max_rtime_ms=371.0 p99_est=128.0
+2026-07-11 01:48:05 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=990 burn_error=-0.989 burn_ratio=0.011
+2026-07-11 01:48:05 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=44.75192765343628 required_resources=1.344 target_replicas=3
+2026-07-11 01:48:05 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=105.35 p99=128.0
+2026-07-11 01:48:20 [debug    ] HAProxy fallback latency       delta_requests=667 interval_avg_ms=64.0 max_rtime_ms=371.0 p99_est=128.0
+2026-07-11 01:48:20 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-07-11 01:48:20 [debug    ] burn_rate_adjustment           actual_burn=0.01 adjustment=-7 allowed_burn=0.83 budget_remaining=990 burn_error=-0.989 burn_ratio=0.011
+2026-07-11 01:48:20 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.030030030030030033 beta=0.0 buffer=1.2 current_replicas=6 predicted_load=43.823675540234554 required_resources=1.316 target_replicas=3
+2026-07-11 01:48:20 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=115.62 p99=128.0
+2026-07-11 01:48:22 [info     ] Received shutdown signal
+2026-07-11 01:48:22 [info     ] Stopping routing daemon...
+2026-07-11 01:48:22 [info     ] Routing daemon stopped

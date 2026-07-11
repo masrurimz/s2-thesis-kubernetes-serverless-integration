@@ -73,25 +73,29 @@ class CalibrationConfig(BaseModel):
     scale_down_threshold: float = 0.5
     alpha_override: Optional[float] = None
 
-    # Controller tuning (V3 burn-rate PI + proactive routing)
-    # NOTE: Three tuning attempts all failed n=5 holdout vs defaults (SLO=702, p99=188ms):
-    #   1. Aggressive HPO (cpu=0.659, kp=1.49): single-run SLO=232 → holdout mean SLO=2886
-    #   2. GP surrogate candidate (cpu=0.45, kp=0.6): single-run SLO=565 → holdout mean SLO=5803
-    #   3. All other screening trials: worse than defaults in single-run
-    # Root cause: shared-resource system variance is too high for any param deviation.
-    # Defaults calibrated from capacity ramp test remain optimal.
+    # Controller tuning (V3 one-sided burn-rate PI + proactive scaling)
+    # Burn-rate is now intervention-only: zero when healthy (burn_ratio <= 1.0),
+    # positive-only when over budget. This removes the persistent negative drag
+    # that penalised healthy S4 decisions.
+    # Proactive hold: S4 scale-up target held for proactive_hold_sec to prevent
+    # premature rollback by lower observations during the forecast window.
     kp_burn: float = 0.5
     ki_burn: float = 0.05
     proactive_trend_threshold: float = 3.0
-    proactive_approach_ratio: float = 0.8  # Raise from 0.6: trigger at 80% capacity, not 60%
+    proactive_approach_ratio: float = 0.8  # Trigger at 80% capacity
+    proactive_hold_sec: float = 90.0  # Hold proactive scale-up (5 steps × 15s = 75s, rounded up)
 
-    # GRU model params — tuned via Optuna HPO (30 trials, val RMSE 4.75%)
-    # HPO date: 2026-07-09. Prior manual tuning: hidden=64, layers=2, RMSE=6.01%
+    # GRU model params — direct multi-horizon architecture (schema v2)
+    # prediction_horizon=5 × sample_interval_sec=15s = 75s forecast window
+    # (covers K8s pod scale-up latency of ~45-60s)
+    sample_interval_sec: int = 15
+    prediction_horizon: int = 5
     gru_hidden_size: int = 128
     gru_num_layers: int = 1
     gru_learning_rate: float = 0.000380
     gru_sequence_length: int = 30
-    gru_dropout: float = 0.104  # Note: nn.GRU ignores dropout when num_layers=1
+    gru_dropout: float = 0.0  # Recurrent dropout (zero for single-layer GRU)
+    gru_head_dropout: float = 0.1  # Output head regularization (always active)
 
     @property
     def pod_cpu_request(self) -> float:
@@ -141,6 +145,7 @@ class CalibrationConfig(BaseModel):
             "ki_burn": self.ki_burn,
             "proactive_trend_threshold": self.proactive_trend_threshold,
             "proactive_approach_ratio": self.proactive_approach_ratio,
+            "proactive_hold_sec": self.proactive_hold_sec,
         }
 
     def to_scaling_config_overrides(self) -> dict:
@@ -155,13 +160,16 @@ class CalibrationConfig(BaseModel):
         }
 
     def to_gru_config_kwargs(self) -> dict:
-        """Kwargs for GRUConfig(...) constructor — HPO-tuned params."""
+        """Kwargs for GRUConfig(...) constructor — multi-horizon v2 params."""
         return {
             "hidden_size": self.gru_hidden_size,
             "num_layers": self.gru_num_layers,
             "learning_rate": self.gru_learning_rate,
             "sequence_length": self.gru_sequence_length,
+            "prediction_horizon": self.prediction_horizon,
+            "sample_interval_sec": self.sample_interval_sec,
             "dropout": self.gru_dropout,
+            "head_dropout": self.gru_head_dropout,
         }
 
     @classmethod

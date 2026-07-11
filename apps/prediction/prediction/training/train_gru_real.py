@@ -26,16 +26,22 @@ RESULTS_DIR = Path(__file__).parent.parent / "results" / "models" / "gru" / "202
 MODEL_DIR = Path(__file__).parent.parent / "controller" / "data" / "models"
 
 
-def load_clarknet(resample: str = "1min") -> pd.DataFrame:
-    """Load ClarkNet trace resampled to given interval."""
+def load_clarknet(resample: str = "15s") -> pd.DataFrame:
+    """Load ClarkNet trace resampled to given interval.
+
+    Default 15s matches the daemon control loop interval (config.sample_interval_sec).
+    """
     df = pd.read_parquet(DATA_DIR / "clarknet_real_rps.parquet")
     df = df.resample(resample).sum().fillna(0)
     df.columns = ["total_requests"]
     return df
 
 
-def load_calgary(resample: str = "1min") -> pd.DataFrame:
-    """Load Calgary trace resampled to given interval."""
+def load_calgary(resample: str = "15s") -> pd.DataFrame:
+    """Load Calgary trace resampled to given interval.
+
+    Default 15s matches the daemon control loop interval.
+    """
     df = pd.read_parquet(DATA_DIR / "calgary_real_rps.parquet")
     df = df.resample(resample).sum().fillna(0)
     df.columns = ["total_requests"]
@@ -78,15 +84,26 @@ def evaluate_on_test(
     test_values: np.ndarray,
     dataset_name: str,
 ) -> dict:
-    """Run GRU predictions on test set and compute metrics."""
-    seq_len = predictor.config.sequence_length
-    preds = []
-    for i in range(seq_len, len(test_values)):
-        result = predictor.predict(test_values[i - seq_len : i])
-        preds.append(result["predicted_requests"])
+    """Run GRU multi-horizon predictions on test set and compute metrics.
 
-    y_true = test_values[seq_len:]
-    y_pred = np.array(preds)
+    For each position i (with enough lookahead), predicts horizons 1..H
+    and compares the upper-envelope forecast against the actual peak across
+    those horizons. This mirrors how the deployed controller consumes the
+    prediction (max of upper forecasts).
+    """
+    seq_len = predictor.config.sequence_length
+    horizon = predictor.config.prediction_horizon
+
+    preds = []
+    actuals = []
+    for i in range(seq_len, len(test_values) - horizon + 1):
+        result = predictor.predict(test_values[i - seq_len : i])
+        # Compare upper-envelope (what controller uses) vs actual peak
+        preds.append(result["predicted_requests"])
+        actuals.append(np.max(test_values[i : i + horizon]))
+
+    y_true = np.array(actuals, dtype=np.float64)
+    y_pred = np.array(preds, dtype=np.float64)
     return compute_metrics(y_true, y_pred, dataset_name)
 
 
@@ -108,11 +125,14 @@ def train_and_evaluate(
     predictor = GRUPredictor(config)
     train_metrics = predictor.train(train_df)
     print(f"  Val RMSE:      {train_metrics['val_rmse']:.4f}")
-    print(f"  Val RMSE%:     {train_metrics['val_rmse_percent']:.2f}%")
     print(f"  Epochs:        {train_metrics['epochs_trained']}")
+    print(f"  Horizons:      {config.prediction_horizon} × {config.sample_interval_sec}s")
+    if "upper_offsets" in train_metrics:
+        print(f"  Upper offsets: {[round(o, 1) for o in train_metrics['upper_offsets']]}")
+        print(f"  Val coverage:  {train_metrics.get('val_upper_coverage', 0):.1%}")
 
     test_metrics = evaluate_on_test(predictor, test_df["total_requests"].values.astype(np.float32), dataset_name)
-    print("\n  Test Results:")
+    print("\n  Test Results (upper-envelope vs actual peak):")
     print(f"    RMSE:   {test_metrics['rmse']:.4f} ({test_metrics['rmse_pct']:.2f}%)")
     print(f"    MAE:    {test_metrics['mae']:.4f} ({test_metrics['mae_pct']:.2f}%)")
     print(f"    MAPE:   {test_metrics['mape']:.2f}%")
@@ -126,95 +146,75 @@ def main():
     print("=" * 70)
     print("GRU Training on Real HTTP Traces (ClarkNet + Calgary)")
     print(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"Resolution: {CALIBRATION.sample_interval_sec}s, Horizon: {CALIBRATION.prediction_horizon}")
     print("=" * 70)
 
     all_results = {}
     best_predictor = None
     best_rmse_pct = float("inf")
+    best_label = ""
 
     # ============================================================
-    # ClarkNet at multiple resolutions
+    # ClarkNet at 15s resolution (matches daemon control loop)
     # ============================================================
-    resolutions = [
-        ("1min", 60, "ClarkNet 1-min"),
-        ("5min", 60, "ClarkNet 5-min"),
-        ("10min", 36, "ClarkNet 10-min"),
-    ]
+    label = f"ClarkNet {CALIBRATION.sample_interval_sec}s"
+    print(f"\n--- {label} ---")
+    df = load_clarknet(f"{CALIBRATION.sample_interval_sec}s")
 
-    for resample, seq_len, label in resolutions:
-        print(f"\n--- {label} ---")
-        df = load_clarknet(resample)
+    n = len(df)
+    val_end = int(n * 0.85)
+    train = df.iloc[:val_end]
+    test = df.iloc[val_end:]
+    config = GRUConfig(
+        **CALIBRATION.to_gru_config_kwargs(),
+        batch_size=32,
+        epochs=200,
+        early_stopping_patience=25,
+    )
 
-        n = len(df)
-        val_end = int(n * 0.85)
-        train = df.iloc[:val_end]
-        test = df.iloc[val_end:]
-        config = GRUConfig(
-            **CALIBRATION.to_gru_config_kwargs(),
-            sequence_length=seq_len,
-            prediction_horizon=1,
-            batch_size=32,
-            epochs=200,
-            early_stopping_patience=25,
-        )
+    predictor, train_m, test_m = train_and_evaluate(train, test, label, config)
+    all_results["clarknet_15s"] = {
+        "train": train_m,
+        "test": test_m,
+        "config": config.__dict__,
+        "resample": f"{CALIBRATION.sample_interval_sec}s",
+        "train_samples": len(train),
+        "test_samples": len(test),
+    }
 
-        predictor, train_m, test_m = train_and_evaluate(train, test, label, config)
-        key = f"clarknet_{resample}"
-        all_results[key] = {
-            "train": train_m,
-            "test": test_m,
-            "config": config.__dict__,
-            "resample": resample,
-            "train_samples": len(train),
-            "test_samples": len(test),
-        }
-
-        if test_m["rmse_pct"] < best_rmse_pct:
-            best_rmse_pct = test_m["rmse_pct"]
-            best_predictor = predictor
-            best_label = label
+    if test_m["rmse_pct"] < best_rmse_pct:
+        best_rmse_pct = test_m["rmse_pct"]
+        best_predictor = predictor
+        best_label = label
 
     # ============================================================
-    # Calgary at multiple resolutions
+    # Calgary at 15s resolution
     # ============================================================
-    cal_resolutions = [
-        ("1min", 60, "Calgary 1-min (14d)"),
-        ("5min", 60, "Calgary 5-min (30d)"),
-    ]
+    label = f"Calgary {CALIBRATION.sample_interval_sec}s"
+    print(f"\n--- {label} ---")
+    df = load_calgary(f"{CALIBRATION.sample_interval_sec}s")
 
-    for resample, seq_len, label in cal_resolutions:
-        print(f"\n--- {label} ---")
-        df = load_calgary(resample)
+    n = len(df)
+    val_end = int(n * 0.85)
+    train = df.iloc[:val_end]
+    test = df.iloc[val_end:]
 
-        if "14d" in label:
-            df = df.iloc[: 14 * 24 * 60]
-        else:
-            df = df.iloc[-30 * 24 * 12 :]
+    config = GRUConfig(
+        **CALIBRATION.to_gru_config_kwargs(),
+        batch_size=32,
+        epochs=200,
+        early_stopping_patience=25,
+    )
 
-        n = len(df)
-        val_end = int(n * 0.85)
-        train = df.iloc[:val_end]
-        test = df.iloc[val_end:]
-
-        config = GRUConfig(
-            **CALIBRATION.to_gru_config_kwargs(),
-            sequence_length=seq_len,
-            prediction_horizon=1,
-            batch_size=32,
-            epochs=200,
-            early_stopping_patience=25,
-        )
-
-        predictor, train_m, test_m = train_and_evaluate(train, test, label, config)
-        key = f"calgary_{resample}"
-        all_results[key] = {
-            "train": train_m,
-            "test": test_m,
-            "config": config.__dict__,
-            "resample": resample,
-            "train_samples": len(train),
-            "test_samples": len(test),
-        }
+    predictor, train_m, test_m = train_and_evaluate(train, test, label, config)
+    all_results["calgary_15s"] = {
+        "train": train_m,
+        "test": test_m,
+        "config": config.__dict__,
+        "resample": f"{CALIBRATION.sample_interval_sec}s",
+        "train_samples": len(train),
+        "test_samples": len(test),
+    }
 
     # ---- Save best model ----
     MODEL_DIR.mkdir(parents=True, exist_ok=True)
@@ -232,6 +232,9 @@ def main():
     results_json = {
         "date": datetime.now().isoformat(),
         "best_model": best_label,
+        "schema_version": 2,
+        "sample_interval_sec": CALIBRATION.sample_interval_sec,
+        "prediction_horizon": CALIBRATION.prediction_horizon,
         "results": all_results,
     }
 
@@ -240,7 +243,7 @@ def main():
 
     # ---- Print summary ----
     print("\n" + "=" * 70)
-    print("SUMMARY — All Configurations")
+    print("SUMMARY — Multi-Horizon Configurations")
     print("=" * 70)
     print()
     fmt = "{:<28} {:>8} {:>8} {:>8} {:>8} {:>8} {:>6}"
@@ -262,7 +265,10 @@ def main():
 
     print()
     print(f"Best model: {best_label} (RMSE% = {best_rmse_pct:.2f}%)")
-    print("Synthetic baseline: RMSE% = 6.01%, MAE% = 4.91%")
+    print(
+        f"Horizon: {CALIBRATION.prediction_horizon} steps × {CALIBRATION.sample_interval_sec}s "
+        f"= {CALIBRATION.prediction_horizon * CALIBRATION.sample_interval_sec}s forecast window"
+    )
     print("Target thresholds: RMSE% < 10%, MAE% < 5%")
 
     return all_results

@@ -161,6 +161,12 @@ class RoutingDaemon:
             self.cluster_controller = None
         self._last_scale_up_ts: Optional[float] = None
         self._last_scale_down_ts: Optional[float] = None
+        self._proactive_hold_until: float = 0.0
+        self._proactive_held_target: int = 0
+        self._proactive_held_load: float = 0.0
+        self._last_prediction_ts: Optional[float] = None
+        self.useful_proactive_scaleups: int = 0
+        self.no_op_predictions: int = 0
 
         logger.info(
             "RoutingDaemon initialized",
@@ -299,7 +305,10 @@ class RoutingDaemon:
                     prediction = {
                         "predicted_requests": pred_result.predicted_requests,
                         "confidence": pred_result.confidence,
+                        "point_forecasts": pred_result.point_forecasts,
+                        "upper_forecasts": pred_result.upper_forecasts,
                     }
+                    self._last_prediction_ts = time.time()
                     daemon_prediction_used.inc()
                     logger.debug(
                         "Using GRU prediction",
@@ -402,7 +411,15 @@ class RoutingDaemon:
         prediction: Optional[Dict],
         current_load: Optional[float],
     ) -> None:
-        """Run Algorithm 2 K8s replica scaling (S3/S4 only)."""
+        """Run Algorithm 2 K8s replica scaling (S3/S4 only).
+
+        For S4 (predictive), computes both observed and predictive replica
+        targets.  A decision is marked ``proactive`` only when the predictive
+        target *strictly* exceeds the observed target.  A configurable hold
+        interval prevents premature rollback of a proactive scale-up while the
+        forecast window is still active.  S3 always uses the observed target
+        only — it never consumes a forecast.
+        """
         if self.k8s_scaler is None or self.cluster_controller is None:
             return
 
@@ -413,30 +430,80 @@ class RoutingDaemon:
         k8s_desired_replicas.set(dep_status.spec_replicas)
         k8s_available_replicas.set(dep_status.available_replicas)
 
-        # Determine scaling signal:
-        # S3: observed load only
-        # S4 with V3: use trend-extrapolated prediction (from V3 controller)
-        #   which amplifies rising trends beyond raw GRU prediction.
-        #   This gives S4 proactive K8s scaling advantage over S3.
+        scaler = self.cluster_controller
+
+        # Observed load: average of recent samples (same window as before)
         n_samples = max(1, min(len(self._load_history), -(-30 // self.decision_interval)))
         recent = list(self._load_history)[-n_samples:]
         x_obs = float(sum(recent) / len(recent)) if recent else 0.0
-        scaling_signal = x_obs
+        observed_target = scaler.compute_target_replicas(x_obs)
 
-        if self.scenario_config.use_predictions and isinstance(self.algorithm_controller, Algorithm1ControllerV3):
-            # V3 stores trend-extrapolated prediction (max of GRU raw + trend amplification)
-            # This is set during make_decision() earlier in the same loop iteration.
-            amplified = getattr(self.algorithm_controller, "last_predicted_upper", 0)
-            if amplified > x_obs:
-                scaling_signal = amplified
-                logger.debug(
-                    "algo2_proactive_scaling",
-                    observed=x_obs,
-                    amplified=amplified,
-                    current_replicas=dep_status.spec_replicas,
-                )
+        use_predictions = self.scenario_config.use_predictions and isinstance(
+            self.algorithm_controller, Algorithm1ControllerV3
+        )
 
-        scaling_decision = self.cluster_controller.evaluate(scaling_signal, dep_status.spec_replicas)
+        proactive = False
+        applied_target = observed_target
+        predictive_target = observed_target
+        predicted_upper = 0.0
+        hold_sec = getattr(self.algorithm_controller.config, "proactive_hold_sec", 90.0)
+
+        if use_predictions:
+            predicted_upper = float(getattr(self.algorithm_controller, "last_predicted_upper", 0.0))
+            predictive_target = scaler.compute_target_replicas(predicted_upper)
+            now_ts = time.time()
+
+            if predictive_target > observed_target:
+                # Proactive scale-up: prediction demands more replicas than observed
+                applied_target = predictive_target
+                proactive = True
+                self._proactive_hold_until = now_ts + hold_sec
+                self._proactive_held_target = predictive_target
+                self._proactive_held_load = predicted_upper
+            elif now_ts < self._proactive_hold_until and self._proactive_held_target > observed_target:
+                # Within hold window: keep the held target if still higher
+                applied_target = self._proactive_held_target
+                proactive = True
+            else:
+                applied_target = observed_target
+                proactive = False
+
+            if not proactive:
+                self.no_op_predictions += 1
+
+        # Select the load signal that produces the applied target
+        if proactive and predictive_target <= observed_target:
+            # Held from a previous cycle — use the stored load, not current prediction
+            scaling_signal = self._proactive_held_load
+        elif proactive:
+            scaling_signal = predicted_upper
+        else:
+            scaling_signal = x_obs
+
+        scaling_decision = scaler.evaluate(scaling_signal, dep_status.spec_replicas)
+
+        # Count useful proactive scale-ups
+        if proactive and scaling_decision.action == "SCALE_UP":
+            self.useful_proactive_scaleups += 1
+
+        # Causal event logging — fields needed to explain Algorithm 2 causality
+        prediction_age = round(time.time() - self._last_prediction_ts, 2) if self._last_prediction_ts else None
+        logger.info(
+            "algorithm2_decision",
+            scenario=self.scenario.value,
+            observed_load=round(x_obs, 2),
+            point_forecasts=prediction.get("point_forecasts") if prediction else None,
+            upper_forecasts=prediction.get("upper_forecasts") if prediction else None,
+            observed_target=observed_target,
+            predictive_target=predictive_target,
+            applied_target=applied_target,
+            proactive=proactive,
+            hold_until=round(self._proactive_hold_until, 1),
+            prediction_age_sec=prediction_age,
+            action=scaling_decision.action,
+            target_replicas=scaling_decision.target_replicas,
+            current_replicas=dep_status.spec_replicas,
+        )
 
         now = time.time()
         healthy_threshold = self.slo_monitor.config.p99_threshold_ms * self.algorithm_controller.config.healthy_margin
@@ -450,7 +517,6 @@ class RoutingDaemon:
                     self._last_scale_up_ts = now
 
         elif scaling_decision.action == "SCALE_DOWN":
-            # V3: min 3 replicas, 300s cooldown (don't scale down frequently)
             is_v3 = isinstance(self.algorithm_controller, Algorithm1ControllerV3)
             min_replicas = 3 if is_v3 else 1
             scale_down_cooldown = 300 if is_v3 else 60
@@ -517,6 +583,8 @@ class RoutingDaemon:
             "uptime_seconds": round(time.time() - self._start_time, 2),
             "gru_available": self.gru_client.check_availability(),
             "last_decision_time": self._last_decision_time,
+            "useful_proactive_scaleups": self.useful_proactive_scaleups,
+            "no_op_predictions": self.no_op_predictions,
         }
 
     def set_scenario(self, scenario: str) -> None:

@@ -10,7 +10,7 @@ from typing import List
 import numpy as np
 import structlog
 
-from shared.models.experiment import ExperimentResult, StatisticalComparison
+from shared.models.experiment import ExperimentResult, PairedComparison, StatisticalComparison
 from shared.models.pipeline import PipelineContext
 
 from experiment.stages.base import BaseStage
@@ -189,5 +189,84 @@ class ReportStage(BaseStage):
                     lines.append(f"- {r.scenario} run {r.run_id}: {reason}")
                 else:
                     lines.append(f"- {r.scenario} run {r.run_id}: invalid/empty metrics")
+
+        return "\n".join(lines)
+
+    def generate_paired_report(
+        self,
+        primary: PairedComparison,
+        secondaries: List[PairedComparison],
+        n_pairs: int,
+    ) -> str:
+        """Generate Markdown report for paired H2 experiment.
+
+        Uses paired statistics (bootstrap CI, permutation test) rather than
+        unpaired comparisons. Reports primary endpoint (p99 latency) and
+        Holm-corrected secondary endpoints.
+        """
+        lines = [
+            "# H2 Paired Experiment: S4 vs S3",
+            "",
+            f"**Date:** {datetime.now().isoformat()}",
+            f"**Git:** {_git_commit_hash()}",
+            f"**Design:** Counterbalanced paired (n={n_pairs})",
+            "**Primary endpoint:** p99 latency (one-sided S4 < S3)",
+            "",
+            "## Primary Endpoint: p99 Latency",
+            "",
+            "| Metric | Value |",
+            "|--------|-------|",
+            f"| S3 mean | {primary.baseline_mean:.2f} ms |",
+            f"| S4 mean | {primary.comparison_mean:.2f} ms |",
+            f"| Mean difference (S4-S3) | {primary.mean_difference:+.2f} ms |",
+            f"| Paired 95% CI | [{primary.paired_ci_lower:+.2f}, {primary.paired_ci_upper:+.2f}] |",
+            f"| Permutation p-value | {primary.permutation_p_value:.4f} |",
+            f"| Cohen's d (paired) | {primary.cohens_d_paired:.3f} ({primary.effect_size_interpretation}) |",
+            f"| H2 verdict | {'✅ SUPPORTED' if primary.h2_supported else '⚠️ NOT SUPPORTED'} |",
+            "",
+            "### Per-Pair Values",
+            "",
+            "| Pair | S3 p99 (ms) | S4 p99 (ms) | Diff (ms) |",
+            "|------|-------------|-------------|-----------|",
+        ]
+
+        for i, pid in enumerate(primary.pair_ids):
+            s3_v = primary.baseline_values[i]
+            s4_v = primary.comparison_values[i]
+            lines.append(f"| {pid} | {s3_v:.1f} | {s4_v:.1f} | {s4_v - s3_v:+.1f} |")
+
+        lines.extend(["", "## Secondary Endpoints (Holm-corrected)", ""])
+        lines.extend(
+            [
+                "| Metric | S3 mean | S4 mean | Diff | Perm p (corrected) | Significant |",
+                "|--------|---------|---------|------|---------------------|-------------|",
+            ]
+        )
+
+        for s in secondaries:
+            sig = "✅" if s.permutation_p_corrected < 0.05 else "⚠️"
+            lines.append(
+                f"| {s.metric} | {s.baseline_mean:.2f} | {s.comparison_mean:.2f} "
+                f"| {s.mean_difference:+.2f} | {s.permutation_p_corrected:.4f} | {sig} |"
+            )
+
+        h2_gate = (
+            primary.h2_supported and primary.comparison_mean < primary.baseline_mean and primary.paired_ci_upper < 0
+        )
+
+        lines.extend(
+            [
+                "",
+                "## H2 Decision Gate",
+                "",
+                "H2 (predictive S4 outperforms reactive S3 on p99 latency) is **SUPPORTED** only if:",
+                f"1. S4 p99 < S3 p99: {'✅' if primary.comparison_mean < primary.baseline_mean else '❌'}",
+                f"2. Paired 95% CI excludes zero: {'✅' if primary.paired_ci_upper < 0 else '❌'}",
+                f"3. Permutation p < 0.05: {'✅' if primary.permutation_p_value < 0.05 else '❌'}",
+                "",
+                f"**Overall verdict: {'H2 SUPPORTED' if h2_gate else 'H2 NOT SUPPORTED — partial/negative result retained'}**",
+                "",
+            ]
+        )
 
         return "\n".join(lines)
