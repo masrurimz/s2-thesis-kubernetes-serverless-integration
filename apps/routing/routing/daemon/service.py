@@ -414,20 +414,27 @@ class RoutingDaemon:
         k8s_available_replicas.set(dep_status.available_replicas)
 
         # Determine scaling signal:
-        # V3: use max(observed, predicted) — ensures we never under-provision
-        # S3: use observed load only
+        # S3: observed load only
+        # S4 with V3: use trend-extrapolated prediction (from V3 controller)
+        #   which amplifies rising trends beyond raw GRU prediction.
+        #   This gives S4 proactive K8s scaling advantage over S3.
         n_samples = max(1, min(len(self._load_history), -(-30 // self.decision_interval)))
         recent = list(self._load_history)[-n_samples:]
         x_obs = float(sum(recent) / len(recent)) if recent else 0.0
         scaling_signal = x_obs
 
-        if self.scenario_config.use_predictions and prediction is not None and prediction.get("confidence", 0) >= 0.5:
-            x_pred = float(prediction["predicted_requests"])
-            if isinstance(self.algorithm_controller, Algorithm1ControllerV3):
-                # V3: use max(observed, predicted) — never under-provision
-                scaling_signal = max(x_obs, x_pred)
-            else:
-                scaling_signal = x_pred
+        if self.scenario_config.use_predictions and isinstance(self.algorithm_controller, Algorithm1ControllerV3):
+            # V3 stores trend-extrapolated prediction (max of GRU raw + trend amplification)
+            # This is set during make_decision() earlier in the same loop iteration.
+            amplified = getattr(self.algorithm_controller, "last_predicted_upper", 0)
+            if amplified > x_obs:
+                scaling_signal = amplified
+                logger.debug(
+                    "algo2_proactive_scaling",
+                    observed=x_obs,
+                    amplified=amplified,
+                    current_replicas=dep_status.spec_replicas,
+                )
 
         scaling_decision = self.cluster_controller.evaluate(scaling_signal, dep_status.spec_replicas)
 

@@ -139,6 +139,7 @@ class Algorithm1ControllerV3:
         self.last_adjustment_time: Optional[int] = int(time.time())
         self.prewarm_in_progress: bool = False
         self.capacity_deficit: bool = False
+        self.last_predicted_upper: float = 0.0
 
         # Budget tracking (BACC-inspired)
         self.cumulative_violations: int = 0
@@ -255,13 +256,18 @@ class Algorithm1ControllerV3:
                     predicted_upper = raw_pred
             else:
                 predicted_upper = raw_pred
+        # Store for Algorithm 2 scaling (daemon reads this for proactive K8s replica scaling)
+        self.last_predicted_upper = predicted_upper
 
-        total_load = max(current_load or 0, predicted_upper)
-
+        # Step 3: Route based on ACTUAL load only (not prediction).
+        # Prediction drives K8s SCALING via Algorithm 2, not serverless routing.
+        # This prevents over-routing to serverless during moderate load when
+        # GRU predictions lag behind actual ramps.
+        total_load = current_load or 0
         if total_load <= 0:
             return self._maintain(p99, decision_id)
 
-        # Step 3: Compute routing split
+        # Compute routing split from actual load
         k8s_weight, knative_weight, capacity_deficit = self._compute_routing_split(total_load, k8s_capacity)
         self.capacity_deficit = capacity_deficit
 

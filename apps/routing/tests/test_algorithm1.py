@@ -590,14 +590,19 @@ class TestAlgorithm1ControllerV3:
         decision = controller.make_decision(slo_status=slo, current_load=1000, available_replicas=1)
         assert controller.capacity_deficit is True
 
-    def test_prediction_drives_higher_load(self, controller, monitor):
-        """Prediction higher than observed should drive routing."""
+    def test_prediction_drives_scaling_not_routing(self, controller, monitor):
+        """Prediction higher than observed should NOT change routing weights
+        (routing uses actual load) but SHOULD store amplified prediction
+        for Algorithm 2 scaling via last_predicted_upper."""
         monitor.set_mock_metrics(p99=100.0)
         slo = monitor.check_slo()
         pred = {"predicted_requests": 200, "confidence": 0.8}
         # 4 replicas * 24 = 96 capacity, predicted=200 > observed=50
         decision = controller.make_decision(slo_status=slo, prediction=pred, current_load=50, available_replicas=4)
-        assert decision.weights["knative"] > 0
+        # Routing uses ACTUAL load (50 < 96 = capacity), so no serverless routing
+        assert decision.weights["knative"] == 0
+        # But prediction should be stored for Algorithm 2 scaling
+        assert controller.last_predicted_upper >= 50
 
     def test_low_confidence_prediction_ignored(self, controller, monitor):
         """Low confidence prediction should not affect routing."""
@@ -724,14 +729,18 @@ class TestV3WithClarkNetTrace:
         assert decision.weights["knative"] > 0
         assert decision.weights["knative"] < 50
 
-    def test_gru_prediction_drives_routing(self, controller, monitor):
-        """GRU prediction above observed load should drive burst routing."""
+    def test_gru_prediction_drives_scaling_not_routing(self, controller, monitor):
+        """GRU prediction above observed load should NOT change routing
+        (routing uses actual load) but should store amplified prediction."""
         monitor.set_mock_metrics(p99=100.0)
         slo = monitor.check_slo()
         pred = {"predicted_requests": 120, "confidence": 0.8}
-        # observed=50, predicted=120 → total=120 > 84 capacity
+        # observed=50, predicted=120 → routing uses 50 (not 120)
         decision = controller.make_decision(slo_status=slo, prediction=pred, current_load=50, available_replicas=3)
-        assert decision.weights["knative"] > 0
+        # 50 < 84 capacity → no serverless routing needed
+        assert decision.weights["knative"] == 0
+        # But amplified prediction stored for Algorithm 2
+        assert controller.last_predicted_upper >= 50
 
     def test_capacity_deficit_at_extreme_load(self, controller, monitor):
         """Extreme load with 1 replica → capacity deficit mode."""
