@@ -21,9 +21,10 @@ from prediction.gru_predictor import GRUPredictor, GRUConfig
 from shared.models.calibration import CALIBRATION
 
 
-DATA_DIR = Path(__file__).parent.parent / "data" / "processed"
-RESULTS_DIR = Path(__file__).parent.parent / "results" / "models" / "gru" / "2026-02-13_training-clarknet-calgary"
-MODEL_DIR = Path(__file__).parent.parent / "controller" / "data" / "models"
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
+DATA_DIR = _PROJECT_ROOT / "data" / "processed"
+RESULTS_DIR = _PROJECT_ROOT / "results" / "models" / "gru" / "training"
+MODEL_DIR = _PROJECT_ROOT / "apps" / "prediction" / "data" / "models"
 
 
 def load_clarknet(resample: str = "15s") -> pd.DataFrame:
