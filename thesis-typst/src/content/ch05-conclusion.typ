@@ -1,6 +1,6 @@
 = CONCLUSION AND SUGGESTIONS
 
-This research designed, implemented, and evaluated a hybrid Kubernetes-serverless architecture with GRU-based workload prediction for intelligent traffic routing. The system addresses elastic scalability management in heterogeneous cloud environments through SLO-aware decision making. Three research questions were posed; each is answered below with direct reference to experimental evidence.
+This research designed, implemented, and evaluated a hybrid Kubernetes-serverless architecture with GRU-based workload prediction for intelligent traffic routing. The system addresses elastic scalability management in heterogeneous cloud environments through SLO-aware decision making. Three research questions were posed; each is answered below with direct reference to experimental evidence. _Caveat:_ the performance results cited in this chapter are drawn from the `2026-07-11_scaling_fix_n1` baseline, an *n = 1 diagnostic* run on infrastructure corrected for six prior bugs (Bugs 8-13). All earlier experiment bundles are superseded. n = 5 replication is required before any hypothesis verdict can be reported as statistically significant; the verdicts below are therefore diagnostic, not confirmatory.
 
 == Conclusion
 
@@ -20,23 +20,23 @@ The predictive pre-warming mechanism was validated in Phase A1: PREDICTIVE trigg
 
 === RQ3: Evaluation of the Modified ElaX Mechanism
 
-A comprehensive evaluation framework was designed spanning mechanism validation (Phase A1), replicated comparison (Phase B, n=5 per scenario), and dynamic burst validation (Phase C). The evaluation compares four scenarios: S1 (K8s+HPA), S2 (Serverless-only), S3 (Hybrid-reactive), and S4 (Hybrid-predictive).
+A comprehensive evaluation framework was designed spanning mechanism validation (Phase A1), comparative evaluation (Phase B), and dynamic burst validation (Phase C). The evaluation compares four scenarios: S1 (K8s+HPA), S2 (Serverless-only), S3 (Hybrid-reactive), and S4 (Hybrid-predictive). The current Phase B baseline is a single *n = 1 diagnostic* run per scenario (`2026-07-11_scaling_fix_n1`); n = 5 replication is pending.
 
-H1 (hybrid architecture outperforms pure approaches): Mechanism validated, but superiority not supported on the localhost testbed. S4 was significantly worse than S1 on p99 latency (233.6 ms vs 109.8 ms, p = 0.01, Cohen's d = 2.84) due to localhost routing bias — the hybrid routing overhead is not offset by multi-node network-latency benefits absent in a single-node k3d cluster.
+H1 (hybrid architecture outperforms pure approaches): *Confirmed at n = 1.* Under the correctly bounded infrastructure (Docker `--cpus=1.0` per node, `max_k8s_replicas = 6`), the hybrid predictive scenario S4 reduced p99 latency by 95.1% (118.2 ms vs 2,421.3 ms for S1) and SLO violations by 98.5% (104 vs 6,717). The earlier negative finding was an artifact of un-enforced CPU limits and S1 dynamic-node over-provisioning (Bugs 8 and 11), not a property of the hybrid mechanism. n = 5 replication is required to establish statistical significance.
 
-H2 (predictive scaling outperforms reactive): Mechanism validated in Phase A1. S4 achieved 75% fewer SLO violations than S3 (per-run mean 702 vs 2805; totals 3509 vs 14027 across n = 5) with large effect size (Cohen's d = 1.21), but the difference was not statistically significant at this sample size (p = 0.12).
+H2 (predictive scaling outperforms reactive): *Partially confirmed at n = 1* — cost efficiency demonstrated, latency superiority requires further validation. S4 does not provide a latency advantage over S3 (p99 118.2 ms vs 98.8 ms, +19.7%; both keep the SLO violation rate near zero), but it provides a cost advantage: 50.2% fewer serverless requests (2,666 vs 5,354) and $5/month lower cost ($142 vs $147). The cost advantage arises because, under the corrected architecture, prediction drives Kubernetes *scaling* rather than serverless *routing* (Bug 13 fix), so S4 provisions warm capacity earlier and spills less to Knative.
 
 H3 (GRU prediction adequacy): Validated on synthetic data — 4.75% RMSE post-HPO with confidence 0.72-0.82. Partial on real traces: ClarkNet RMSE 17.78% falls below original thresholds due to workload non-stationarity.
 
-Cost analysis remains directional: no July cost bundle is marked final. February estimates under a unified AWS model suggest S4 may be cheaper than S1, but these figures are not directly comparable to the July controller version and are treated as indicative only.
+Cost analysis is now grounded in the `2026-07-11_scaling_fix_n1` baseline: S1 = $132/mo (but fails the SLO catastrophically, p99 = 2,421 ms), S2 = $394/mo, S3 = $147/mo, S4 = $142/mo. On a cost-performance Pareto analysis (minimizing monthly cost and p99 latency), S4 is a Pareto-optimal point: no scenario achieves both lower cost *and* lower p99 latency than S4 ($142/mo, 118.2 ms). S1 is cheaper ($132) but its 2,421 ms p99 violates the SLO, so it is not a viable operating point; S2 is faster (77.7 ms) but more than twice as expensive ($394/mo); S3 is close to S4 on both axes, and the two do not dominate each other (S4 is $5 cheaper, S3 is 19 ms faster). Among viable SLO-compliant scenarios, S4 offers the lowest cost while halving serverless dependency, making it the recommended cost-performance operating point. These are n = 1 diagnostic estimates and require replication.
 
-In summary, this research validates the proposed mechanisms — the GRU predictor achieves target accuracy on synthetic data, the routing controller correctly shifts traffic based on SLO status, and proactive routing shows a large effect (d = 1.21) on SLO violations under appropriate conditions. However, statistical significance was not established at n = 5 (p = 0.12); production multi-node deployment with larger sample sizes is needed.
+In summary, this research validates the proposed mechanisms and demonstrates their benefit under corrected infrastructure. The GRU predictor achieves target accuracy on synthetic data, the routing controller correctly shifts traffic based on SLO status, and hybrid predictive routing (S4) reduces p99 latency by 95.1% over pure Kubernetes (H1, confirmed at n = 1) while halving serverless dependency for a lower monthly cost than the reactive hybrid (H2, cost advantage confirmed at n = 1). The predictive mechanism now drives Kubernetes scaling rather than serverless routing. These findings are provisional: they rest on a single *n = 1 diagnostic* run, and n = 5 replication is needed to establish statistical significance.
 
 == Future Work
 
 Based on the limitations identified during evaluation, six directions are recommended:
 
-Multi-node cloud deployment: The single-node k3d testbed introduces localhost routing bias. Deploying on a multi-node cloud cluster (3+ nodes on AWS EKS or GCP GKE with Knative on separate nodes) would provide realistic network conditions necessary to reach statistical significance for the large effects already observed.
+Multi-node cloud deployment: Although the corrected n = 1 baseline already shows hybrid superiority, the single-node k3d testbed still lacks realistic inter-node network latency. Deploying on a multi-node cloud cluster (3+ nodes on AWS EKS or GCP GKE with Knative on separate nodes) would validate the results under production network conditions and is the appropriate setting for the n = 5 confirmatory replication.
 
 Algorithm 2 full integration: The horizontal scaling formula should be fully integrated with Kubernetes HPA coordination, enabling proactive replica scaling based on GRU predictions.
 
@@ -46,4 +46,4 @@ GRU retraining on production HTTP traces: Real-trace performance (17.78% RMSE) f
 
 Knative minScale configuration: Setting minScale=1 would maintain a warm serverless instance, eliminating cold start latency and isolating the routing mechanism's contribution to performance.
 
-Extended statistical validation: Future work should target n = 30+ runs per scenario to satisfy normality assumptions and achieve adequate power for the large effects observed (Cohen's d approximately 1.0). This would provide definitive evidence regarding H1 and H2 superiority claims.
+Extended statistical validation: The current results rest on a single n = 1 diagnostic run per scenario. Future work should run n = 5 (minimum) to n = 30+ replications per scenario to satisfy normality assumptions and achieve adequate power, providing definitive statistical evidence for the H1 and H2 verdicts that are currently only directionally supported.
