@@ -8,13 +8,15 @@ from typing import Any, Dict, List
 
 from pydantic import BaseModel, Field
 
+from shared.models.evidence import TreatmentFidelity
+
 
 class ExperimentResult(BaseModel):
     """Single experiment run result — all fields per methodology Tables 3-4..3-7."""
 
     scenario: str
     run_id: int
-    timestamp: str
+    timestamp: str = ""
 
     # k6 primary metrics (Table 3-4)
     p50_latency_ms: float = 0.0
@@ -108,6 +110,7 @@ class ExperimentResult(BaseModel):
     run_validity_notes: List[str] = Field(default_factory=list)
     stress_validity_passed: bool = True
     stress_validity_notes: List[str] = Field(default_factory=list)
+    treatment_fidelity: TreatmentFidelity | None = None
 
 
 class RunManifest(BaseModel):

@@ -221,3 +221,12 @@ All previous July experiment bundles (`2026-07-08-fib33-n5`, `2026-07-08-fib33-p
 
 H1 (hybrid > K8s): ✅ S4 beats S1 by 95.1% on p99.
 H2 (predictive > reactive): ⚠️ S4 cheaper ($142 vs $147, -50% serverless reqs) but p99 19% higher. n=5 needed.
+
+## Treatment Fidelity
+
+### 2026-07-11: Paired-H2 S4 Prediction Delivery Failure
+
+- **Issue:** In the `2026-07-11_paired-h2` bundle, S4's GRU prediction service was absent in run 1 (health endpoint timeouts) and partially delivered in run 5. Despite this, all five runs retained default-validity flags (`run_validity_passed=true`). The paired analysis therefore compared reactive S3 against an S4 fallback that never received predictions — not against the intended predictive treatment.
+- **Root Cause:** The preflight check only warned on GRU health failure (did not hard-fail the run), and no delivery-rate gate existed. A prediction-required scenario could complete and be marked valid even when zero predictions were delivered.
+- **Resolution:** A hard preflight + per-eligible-cycle delivery gate was added (`TreatmentFidelity` DTO on `ExperimentResult`). For S4 scenarios, `require_prediction_service()` hard-fails the run when the health endpoint is unreachable or the model is not loaded. `evaluate_run_validity()` sets `delivered=False`, `run_validity_passed=False` with explicit reasons when any eligible cycle lacks a successful prediction. Paired runs now exclude any pair whose S4 result has `treatment_fidelity.delivered=False`.
+- **Impact on historical data:** The `2026-07-11_paired-h2` bundle is retained as **treatment-confounded**. Its raw result files are NOT rewritten — the historical record is immutable. The registry marks it with derived treatment fidelity showing partial delivery (3/5 runs). A clean rerun is tracked as EVID-003 in `results/evidence/BACKLOG.md`, blocked on a real 15-second ClarkNet-trained GRU artifact and the new full-delivery gate.

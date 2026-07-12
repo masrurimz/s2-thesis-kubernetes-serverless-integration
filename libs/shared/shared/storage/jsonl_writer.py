@@ -1,9 +1,13 @@
 """JSONL writer for append-only structured event streams.
 
 Each line is a self-contained JSON object. Git shows one-line-per-event diffs.
+All writes are protected by an exclusive ``fcntl.flock`` and ``os.fsync`` so
+concurrent processes cannot interleave or lose events.
 """
 
+import fcntl
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -35,17 +39,29 @@ class JSONLWriter:
             data = event
 
         with open(self.path, "a") as f:
-            f.write(json.dumps(data, default=str) + "\n")
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+            try:
+                f.write(json.dumps(data, default=str) + "\n")
+                f.flush()
+                os.fsync(f.fileno())
+            finally:
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
     def append_batch(self, events: list[BaseModel | dict[str, Any]]) -> None:
         """Append multiple events at once."""
         with open(self.path, "a") as f:
-            for event in events:
-                if isinstance(event, BaseModel):
-                    data = event.model_dump(mode="json")
-                else:
-                    data = event
-                f.write(json.dumps(data, default=str) + "\n")
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+            try:
+                for event in events:
+                    if isinstance(event, BaseModel):
+                        data = event.model_dump(mode="json")
+                    else:
+                        data = event
+                    f.write(json.dumps(data, default=str) + "\n")
+                f.flush()
+                os.fsync(f.fileno())
+            finally:
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
     def read_all(self) -> list[dict[str, Any]]:
         """Read all events from the JSONL file."""

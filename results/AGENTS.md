@@ -4,30 +4,67 @@
 
 **Single source of truth for ALL experiment evidence.** Raw data, processed outputs, figures, claims, reports. Every thesis claim must trace to raw data here.
 
-## Bundle Convention
+## Mandatory Discovery Sequence (for agents)
 
-Every experiment is a self-contained folder:
+Before creating a new experiment or analysis, read these in order:
+
+1. **[`evidence/README.md`](evidence/README.md)** — canonical storage tiers (Git text / LFS / ignored) and query rules.
+2. **[`evidence/BACKLOG.md`](evidence/BACKLOG.md)** — deferred-evidence queue (`EVID-NNN`); check whether your task is already tracked or blocked.
+3. **Query the registry/catalog** — run `uv run thesis experiment evidence audit` and `uv run thesis experiment evidence catalog refresh` to see what bundles exist and their treatment-fidelity status.
+4. Only then create a new experiment or analysis.
+
+Canonical evidence sources:
+- **[`evidence/registry.yaml`](evidence/registry.yaml)** — typed registry of all bundles (scanner-owned facts merged; human fields preserved).
+- **[`evidence/registry-events.jsonl`](evidence/registry-events.jsonl)** — immutable governance event log (canonical for governance).
+- Per-run **`events.jsonl`** — immutable execution record (canonical for execution).
+- **[`EXPERIMENT_JOURNAL.md`](EXPERIMENT_JOURNAL.md)** — generated Markdown summary of the registry and recent governance events (read-only; never hand-edited).
+- **`catalog.duckdb`** — local DuckDB query cache; never a source of truth.
+
+## Bundle Schema v2
+
+New experiments use schema v2 (`meta.yaml` sets `bundle_schema_version: 2`):
 
 ```
 results/experiments/<phase>/<YYYY-MM-DD_slug>/
-  meta.yaml                       # YAML — experiment metadata
-  report.md                       # Markdown — interpretation
-  raw/<scenario>_run<N>/
-    k6_summary.csv                # CSV — k6 metrics
-    prometheus.csv                # CSV — time-series exports
-    daemon_events.jsonl           # JSONL — structured decision log
-    resource.csv                  # CSV — CPU/memory samples
-  processed/
-    aggregate.csv                 # CSV — per-scenario summary
-    comparisons.csv               # CSV — statistical comparisons
-  figures/*.png
+  meta.yaml                          # Immutable planned configuration
+  report.md                          # Sole human interpretation
+  events.jsonl                       # Immutable bundle-level execution record
+  derived/
+    paired_analysis.json             # Computed analysis
+    legacy-parquet/<artifact>.parquet  # Derived copies of legacy measurements
+  raw/
+    <scenario>_run<N>/
+      manifest.json                  # Per-run reproducibility snapshot
+      events.jsonl                   # Immutable per-run execution record
+      result.json                    # Typed ExperimentResult
+      daemon.log                     # Raw diagnostic text log
+      k6-summary.json                # k6 summary
+      metrics.parquet                # Queried high-volume metrics (LFS)
+      prediction-actual.parquet      # Prediction vs actual (LFS)
+      system-events.parquet          # Normalized system event projection (LFS)
 ```
+
+**Immutability rules:**
+- `meta.yaml` is immutable planned configuration.
+- Root and per-run `events.jsonl` are immutable execution records — append only, never edited or deleted.
+- `raw/` contains raw text logs plus Parquet tables; raw artifacts are never edited.
+- `derived/` contains computed analysis; it may be regenerated from raw data.
+- `report.md` is the sole interpretation.
+
+**Git handling:**
+- `.parquet` files are Git LFS (`results/experiments/**/*.parquet`).
+- JSON, YAML, JSONL, CSV, and Markdown are normal Git text.
+- `catalog.duckdb` is ignored (rebuilt locally).
+
+Legacy bundles (schema v1, direct-child `<scenario>_run<N>/` layout) remain in place. The registry/catalog adapters read them; no raw file is moved or rewritten.
 
 ## Storage Formats
 
-- **CSV** for tabular results — git-friendly, line-per-record, pandas-native
+- **YAML** for metadata (`meta.yaml`) — human-authored
 - **JSONL** for event logs — append-only, one-line-per-event diffs
-- **YAML** for metadata (meta.yaml) — human-authored
+- **JSON** for structured results and manifests
+- **CSV** for legacy tabular results — git-friendly, pandas-native
+- **Parquet** for high-volume time-series (Git LFS)
 - **Markdown** for reports — embeddable in thesis
 - **PNG** for figures — small, git-trackable
 
@@ -37,9 +74,15 @@ results/experiments/<phase>/<YYYY-MM-DD_slug>/
 2. One report per experiment — no duplicate summaries
 3. Every claim traces to raw data via `claims/CLAIMS_TO_EVIDENCE.md`
 4. If evidence conflicts, log in `claims/INCONSISTENCIES.md`
+5. `.parquet` is Git LFS; `catalog.duckdb` is ignored and rebuilt
 
 ## Key Documents
 
 - `README.md` — Evidence registry and experiment index
+- `evidence/README.md` — Canonical storage and query rules
+- `evidence/BACKLOG.md` — Deferred-evidence work queue
+- `evidence/registry.yaml` — Typed registry of all bundles
+- `evidence/registry-events.jsonl` — Immutable governance log
+- `EXPERIMENT_JOURNAL.md` — Generated registry summary (read-only)
 - `claims/CLAIMS_TO_EVIDENCE.md` — Every claim mapped to raw data
 - `claims/INCONSISTENCIES.md` — Tracked inconsistencies

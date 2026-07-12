@@ -55,20 +55,47 @@ Rules:
 - **Known issues:** [`claims/INCONSISTENCIES.md`](claims/INCONSISTENCIES.md)
 - **Experiment protocol:** [`../thesis/protocol/EXPERIMENT_PROTOCOL.md`](../thesis/protocol/EXPERIMENT_PROTOCOL.md)
 - **Threats to validity:** [`../thesis/protocol/THREATS_TO_VALIDITY.md`](../thesis/protocol/THREATS_TO_VALIDITY.md)
-- **Experiment registry (SSOT):** [`experiments/REGISTRY.yaml`](experiments/REGISTRY.yaml) — machine-readable classification of all experiment bundles
-- **Scanner:** `uv run python scripts/audit_experiment_registry.py --write` (run after every experiment)
+- **Evidence registry (SSOT):** [`evidence/registry.yaml`](evidence/registry.yaml) — typed classification of all experiment bundles
+- **Governance log:** [`evidence/registry-events.jsonl`](evidence/registry-events.jsonl) — immutable audit trail
+- **Generated journal:** [`EXPERIMENT_JOURNAL.md`](EXPERIMENT_JOURNAL.md) — registry summary (read-only)
+- **Evidence catalog:** `uv run thesis experiment evidence catalog refresh` then `uv run thesis experiment evidence query "SELECT ..."`
+- **Deferred evidence:** [`evidence/BACKLOG.md`](evidence/BACKLOG.md) — `EVID-NNN` work queue
 - **Citation inventory:** [`claims/DOCX_CITATION_INVENTORY.md`](claims/DOCX_CITATION_INVENTORY.md) — DOCX-first citation audit
 
 ---
 
-## How to Add a New Experiment
+## Experiment Lifecycle
 
-1. Create folder: `experiments/<phase>/<YYYY-MM-DD_slug>/`
-2. Add `meta.yaml` (see any existing bundle for template)
-3. Put raw outputs in `raw/`
-4. Write `report.md` (raw artifacts first, then interpretation)
-5. Add a row to the registry table above
-6. Update `claims/CLAIMS_TO_EVIDENCE.md` if it supports a hypothesis
+Every experiment follows this enforced workflow:
+
+```bash
+# 1. Run the experiment (writes raw/ + events.jsonl + result.json)
+uv run thesis experiment run ...
+
+# 2. Audit bundles (read-only scan summary)
+uv run thesis experiment evidence audit
+
+# 3. Reconcile the typed registry (merge-safe: preserves human fields)
+uv run thesis experiment evidence reconcile --apply
+
+# 4. Rebuild the local DuckDB catalog (ignored, noncanonical)
+uv run thesis experiment evidence catalog refresh
+
+# 5. Review the generated journal
+uv run thesis experiment evidence journal --limit 20
+```
+
+**Requirements:**
+- `meta.yaml` must exist before running an experiment.
+- One `report.md` after analysis — raw artifacts first, then interpretation.
+- Reconciliation must be run before a claims document cites a bundle.
+
+**Canonical evidence links:**
+- [`evidence/registry.yaml`](evidence/registry.yaml) — typed registry of all bundles
+- [`evidence/registry-events.jsonl`](evidence/registry-events.jsonl) — immutable governance log
+- [`EXPERIMENT_JOURNAL.md`](EXPERIMENT_JOURNAL.md) — generated registry summary
+- `uv run thesis experiment evidence query "SELECT ..."` — read-only SQL catalog query
+- [`evidence/BACKLOG.md`](evidence/BACKLOG.md) — deferred-evidence work queue
 
 ---
 

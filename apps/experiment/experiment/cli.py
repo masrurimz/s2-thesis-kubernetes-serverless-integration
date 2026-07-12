@@ -442,49 +442,95 @@ def paired_run(
         seed=seed,
     )
 
-    # Collect paired results
+    # Bundle-level lifecycle journal for governance events (pair exclusion).
+    from shared.storage.journal import ExperimentJournal
+
+    bundle_journal = ExperimentJournal(
+        Path(output_dir) / "events.jsonl",
+        experiment_id=Path(output_dir).name,
+        bundle_path=str(output_dir),
+        git_commit=_git_commit_hash(),
+    )
+
+    # Collect paired results. A pair is accepted only when BOTH runs pass
+    # validity AND the S4 treatment was fully delivered; otherwise the pair is
+    # excluded (raw run directories retained) and we retry. The attempt cap
+    # bounds cost so an unhealthy prediction service surfaces as a nonzero exit
+    # instead of silent reactive runs.
     s3_results: list[ExperimentResult] = []
     s4_results: list[ExperimentResult] = []
     pair_ids: list[str] = []
+    max_attempts = pairs * 2
+    attempt = 0
 
-    for idx, (pair_id, first_scenario, second_scenario) in enumerate(pair_order):
-        console.print(f"\n[bold cyan]Pair {pair_id}/{pairs}[/bold cyan]")
+    while len(pair_ids) < pairs and attempt < max_attempts:
+        attempt += 1
+        pair_id = attempt
+        # Counterbalanced order: alternate which scenario runs first.
+        if attempt % 2 == 1:
+            first_scenario, second_scenario = "s3-hybrid-reactive", "s4-hybrid-predictive"
+        else:
+            first_scenario, second_scenario = "s4-hybrid-predictive", "s3-hybrid-reactive"
         pid = f"pair_{pair_id:03d}"
+        console.print(
+            f"\n[bold cyan]Attempt {attempt}/{max_attempts} (valid pairs: {len(pair_ids)}/{pairs})[/bold cyan]"
+        )
 
         # Run first scenario
         console.print(f"  [dim]Running {first_scenario}...[/dim]")
-        r1 = _run_single(first_scenario, pair_id, idx * 2, config, output_dir, console=console)
+        r1 = _run_single(first_scenario, pair_id, (attempt - 1) * 2, config, output_dir, console=console)
         if r1 is None:
             console.print(f"  [red]First scenario {first_scenario} failed[/red]")
             continue
 
-        if idx < len(pair_order) - 1:
-            with countdown(console, INTER_RUN_PAUSE_SEC, "Inter-run pause"):
-                pass
+        with countdown(console, INTER_RUN_PAUSE_SEC, "Inter-run pause"):
+            pass
 
         # Run second scenario
         console.print(f"  [dim]Running {second_scenario}...[/dim]")
-        r2 = _run_single(second_scenario, pair_id, idx * 2 + 1, config, output_dir, console=console)
+        r2 = _run_single(second_scenario, pair_id, (attempt - 1) * 2 + 1, config, output_dir, console=console)
         if r2 is None:
             console.print(f"  [red]Second scenario {second_scenario} failed[/red]")
             continue
 
-        # Record pair
+        # Normalize: s3 = reactive, s4 = predictive
         if first_scenario == "s3-hybrid-reactive":
-            s3_results.append(r1)
-            s4_results.append(r2)
+            s3r, s4r = r1, r2
         else:
-            s3_results.append(r2)
-            s4_results.append(r1)
-        pair_ids.append(pid)
+            s3r, s4r = r2, r1
 
+        # Validity gate: both valid AND S4 treatment fully delivered
+        s4_delivered = s4r.treatment_fidelity is not None and s4r.treatment_fidelity.delivered
+        reasons = s4r.treatment_fidelity.reasons if s4r.treatment_fidelity else []
+        if not (s3r.run_validity_passed and s4r.run_validity_passed and s4_delivered):
+            console.print(
+                f"  [yellow]Pair {pair_id} excluded: S4 treatment not fully delivered "
+                f"({'; '.join(reasons) or 'invalid run'})[/yellow]"
+            )
+            bundle_journal.record(
+                bundle_journal.new_event(
+                    "pair_excluded",
+                    pair_id=pid,
+                    payload={
+                        "s3_valid": s3r.run_validity_passed,
+                        "s4_valid": s4r.run_validity_passed,
+                        "s4_delivered": s4_delivered,
+                        "reasons": reasons,
+                    },
+                )
+            )
+            continue
+
+        s3_results.append(s3r)
+        s4_results.append(s4r)
+        pair_ids.append(pid)
         console.print(
             f"  [green]Pair {pair_id} complete: "
-            f"S3 p99={s3_results[-1].p99_latency_ms:.0f}ms, "
-            f"S4 p99={s4_results[-1].p99_latency_ms:.0f}ms[/green]"
+            f"S3 p99={s3r.p99_latency_ms:.0f}ms, "
+            f"S4 p99={s4r.p99_latency_ms:.0f}ms[/green]"
         )
 
-        if idx < len(pair_order) - 1:
+        if len(pair_ids) < pairs:
             with countdown(console, INTER_RUN_PAUSE_SEC, "Inter-pair pause"):
                 pass
 
@@ -492,9 +538,23 @@ def paired_run(
     n_valid = len(pair_ids)
     console.print(f"\n[bold green]✅ {n_valid} valid pairs completed[/bold green]")
 
-    if n_valid < 3:
-        console.print("[yellow]Too few valid pairs for statistical analysis (need ≥3)[/yellow]")
-        return
+    if n_valid < pairs:
+        # Could not collect enough fully-valid treatment pairs within the
+        # attempt cap: do not report inferential statistics from confounded runs.
+        analysis_path = Path(output_dir) / "paired_analysis.json"
+        analysis = {
+            "status": "insufficient_valid_pairs",
+            "n_valid_pairs": n_valid,
+            "pairs_requested": pairs,
+            "attempts": attempt,
+            "timestamp": datetime.now().isoformat(),
+        }
+        analysis_path.write_text(json.dumps(analysis, indent=2))
+        console.print(
+            f"[red]Insufficient valid pairs: {n_valid}/{pairs} after {attempt} attempts. "
+            f"S4 treatment delivery gate blocked confounded runs.[/red]"
+        )
+        raise typer.Exit(code=1)
 
     from analysis.comparison import run_paired_comparison, apply_holm_paired
 
@@ -538,7 +598,6 @@ def paired_run(
         console.print(f"    {s.metric}: diff={s.mean_difference:+.2f}, p={s.permutation_p_corrected:.4f} {sig}")
 
     # Save paired analysis
-    import json
 
     analysis_path = Path(output_dir) / "paired_analysis.json"
     analysis = {
@@ -719,6 +778,24 @@ def _run_single(
     run_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info("run_start", scenario=scenario, run_id=run_id, order=run_order_idx)
+    from shared.models.evidence import TreatmentFidelity
+    from shared.storage.journal import ExperimentJournal
+    from experiment.stages.validate import evaluate_run_validity
+
+    journal = ExperimentJournal(
+        run_dir / "events.jsonl",
+        experiment_id=Path(output_dir).name,
+        bundle_path=str(output_dir),
+        git_commit=_git_commit_hash(),
+    )
+    journal.record(
+        journal.new_event(
+            "run_started",
+            scenario=scenario,
+            run_id=run_id,
+            payload={"order": run_order_idx, "seed": config.seed},
+        )
+    )
     import shutil
 
     _k3d_path = shutil.which("k3d") or os.environ.get("K3D_PATH", "")
@@ -745,16 +822,80 @@ def _run_single(
     reset_result = resetter.execute(reset_ctx)
     if not reset_result.success:
         logger.error("reset_failed", scenario=scenario, error=reset_result.error)
+        journal.record(
+            journal.new_event(
+                "run_failed",
+                scenario=scenario,
+                run_id=run_id,
+                payload={"stage": "reset", "error": reset_result.error},
+            )
+        )
         return None
+
+    journal.record(journal.new_event("reset_completed", scenario=scenario, run_id=run_id))
 
     # Start daemon
     daemon_ctx = _make_ctx(config, scenario, run_id, output_dir)
     daemon_result = daemon_stage.execute(daemon_ctx)
     if not daemon_result.success:
         logger.error("daemon_failed", scenario=scenario, error=daemon_result.error)
+        journal.record(
+            journal.new_event(
+                "run_failed",
+                scenario=scenario,
+                run_id=run_id,
+                payload={"stage": "daemon", "error": daemon_result.error},
+            )
+        )
         return None
 
+    journal.record(journal.new_event("daemon_started", scenario=scenario, run_id=run_id))
+
     try:
+        # S4 hard prediction-delivery gate: verify the GRU service is healthy
+        # and model-loaded before warmup so a dead prediction service produces a
+        # durable invalid run instead of a silent reactive fallback.
+        if "s4" in scenario or "predictive" in scenario:
+            ok, preflight_reason = daemon_stage.require_prediction_service()
+            if not ok:
+                journal.record(
+                    journal.new_event(
+                        "prediction_preflight_failed",
+                        scenario=scenario,
+                        run_id=run_id,
+                        payload={"reason": preflight_reason},
+                    )
+                )
+                preflight_fidelity = TreatmentFidelity(
+                    required=True,
+                    preflight_passed=False,
+                    delivered=False,
+                    reasons=[preflight_reason],
+                )
+                preflight_result = ExperimentResult(
+                    scenario=scenario,
+                    run_id=run_id,
+                    timestamp=datetime.now().isoformat(),
+                    run_validity_passed=False,
+                    validity_gate_passed=False,
+                    treatment_fidelity=preflight_fidelity,
+                )
+                (run_dir / "result.json").write_text(preflight_result.model_dump_json(indent=2))
+                journal.record(
+                    journal.new_event(
+                        "run_failed",
+                        scenario=scenario,
+                        run_id=run_id,
+                        payload={
+                            "stage": "prediction_preflight",
+                            "reason": preflight_reason,
+                            "treatment_fidelity": preflight_fidelity.model_dump(),
+                        },
+                    )
+                )
+                console.print(f"[red]S4 prediction preflight failed: {preflight_reason}[/red]")
+                return preflight_result
+            journal.record(journal.new_event("prediction_preflight_passed", scenario=scenario, run_id=run_id))
         # Save manifest
         manifest = RunManifest(
             scenario=scenario,
@@ -776,6 +917,7 @@ def _run_single(
         logger.info("warmup_start", seconds=WARMUP_SEC)
         with countdown(console, WARMUP_SEC, "Warmup"):
             pass
+        journal.record(journal.new_event("warmup_completed", scenario=scenario, run_id=run_id))
 
         # Record t_start and begin resource polling
         t_start = time.time()
@@ -794,6 +936,7 @@ def _run_single(
                     phase.update(phase_task, description=f"[cyan]k6: {line}[/cyan]")
 
             workload_stage._run(workload_ctx, on_progress=_on_k6_progress)
+        journal.record(journal.new_event("workload_completed", scenario=scenario, run_id=run_id))
 
         # (C.3) Post-k6 cooldown
         logger.info("cooldown_start", seconds=COOLDOWN_SEC)
@@ -854,13 +997,51 @@ def _run_single(
             result.provision_log_path = str(run_dir / "provision_events.json")
         result.predictive_count = daemon_status.get("predictive_count", 0)
         result.optimize_cost_count = daemon_status.get("optimize_cost_count", 0)
+        journal.record(journal.new_event("collection_completed", scenario=scenario, run_id=run_id))
+
+        # Hard S4 prediction-delivery gate
+        result = evaluate_run_validity(
+            result,
+            scenario=scenario,
+            preflight_passed=True,
+            daemon_status=daemon_status,
+        )
+        journal.record(
+            journal.new_event(
+                "validity_evaluated",
+                scenario=scenario,
+                run_id=run_id,
+                payload={
+                    "run_validity_passed": result.run_validity_passed,
+                    "treatment_fidelity": (
+                        result.treatment_fidelity.model_dump() if result.treatment_fidelity else None
+                    ),
+                },
+            )
+        )
 
         # Save result
         with open(run_dir / "result.json", "w") as f:
             json.dump(result.model_dump(), f, indent=2)
 
         logger.info("run_complete", scenario=scenario, run_id=run_id, p99=result.p99_latency_ms)
+        journal.record(journal.new_event("run_completed", scenario=scenario, run_id=run_id))
         return result
+
+    except Exception as exc:
+        logger.error("run_exception", scenario=scenario, run_id=run_id, error=str(exc))
+        try:
+            journal.record(
+                journal.new_event(
+                    "run_failed",
+                    scenario=scenario,
+                    run_id=run_id,
+                    payload={"stage": "runtime", "error": str(exc)},
+                )
+            )
+        except Exception:
+            logger.error("journal_record_failed", scenario=scenario, run_id=run_id)
+        raise
 
     finally:
         collect_stage.stop_resource_polling()
@@ -881,6 +1062,13 @@ def _git_commit_hash() -> str:
         return result.stdout.strip()
     except Exception:
         return "unknown"
+
+
+# Evidence sub-app — registry, catalog, and lifecycle governance.
+# Thin handlers delegate to experiment.evidence.* modules; no business logic here.
+from experiment.evidence.cli_adapter import evidence_app
+
+app.add_typer(evidence_app, name="evidence", help="Evidence registry, catalog, and lifecycle governance")
 
 
 if __name__ == "__main__":

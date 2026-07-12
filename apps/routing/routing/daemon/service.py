@@ -168,6 +168,11 @@ class RoutingDaemon:
         self.useful_proactive_scaleups: int = 0
         self.no_op_predictions: int = 0
 
+        # Prediction delivery tracking (S4 hard validity gate).
+        # An eligible cycle = use_predictions scenario with >=5 history samples.
+        self._prediction_eligible_cycles: int = 0
+        self._prediction_delivery_failures: int = 0
+
         logger.info(
             "RoutingDaemon initialized",
             scenario=self.scenario.value,
@@ -297,27 +302,34 @@ class RoutingDaemon:
         prediction = None
         current_load = self._get_current_load()
 
-        if self.scenario_config.use_predictions and self.gru_client.check_availability():
+        if self.scenario_config.use_predictions:
             history = list(self._load_history)
             if len(history) >= 5:
-                pred_result = self.gru_client.predict(history, horizon=5)
-                if pred_result.success:
-                    prediction = {
-                        "predicted_requests": pred_result.predicted_requests,
-                        "confidence": pred_result.confidence,
-                        "point_forecasts": pred_result.point_forecasts,
-                        "upper_forecasts": pred_result.upper_forecasts,
-                    }
-                    self._last_prediction_ts = time.time()
-                    daemon_prediction_used.inc()
-                    logger.debug(
-                        "Using GRU prediction",
-                        predicted=pred_result.predicted_requests,
-                        confidence=pred_result.confidence,
-                    )
+                # Prediction-eligible cycle: enough history to request a forecast.
+                self._prediction_eligible_cycles += 1
+                if not self.gru_client.check_availability():
+                    self._prediction_delivery_failures += 1
+                    logger.debug("GRU unavailable for eligible cycle")
                 else:
-                    daemon_prediction_failed.inc()
-                    logger.debug("GRU prediction failed", error=pred_result.error)
+                    pred_result = self.gru_client.predict(history, horizon=5)
+                    if pred_result.success:
+                        prediction = {
+                            "predicted_requests": pred_result.predicted_requests,
+                            "confidence": pred_result.confidence,
+                            "point_forecasts": pred_result.point_forecasts,
+                            "upper_forecasts": pred_result.upper_forecasts,
+                        }
+                        self._last_prediction_ts = time.time()
+                        daemon_prediction_used.inc()
+                        logger.debug(
+                            "Using GRU prediction",
+                            predicted=pred_result.predicted_requests,
+                            confidence=pred_result.confidence,
+                        )
+                    else:
+                        self._prediction_delivery_failures += 1
+                        daemon_prediction_failed.inc()
+                        logger.debug("GRU prediction failed", error=pred_result.error)
         # Get available replicas for V3 capacity-driven routing
         available_replicas = 1
         if self.k8s_scaler is not None:
@@ -585,6 +597,8 @@ class RoutingDaemon:
             "last_decision_time": self._last_decision_time,
             "useful_proactive_scaleups": self.useful_proactive_scaleups,
             "no_op_predictions": self.no_op_predictions,
+            "prediction_eligible_cycles": self._prediction_eligible_cycles,
+            "prediction_delivery_failures": self._prediction_delivery_failures,
         }
 
     def set_scenario(self, scenario: str) -> None:

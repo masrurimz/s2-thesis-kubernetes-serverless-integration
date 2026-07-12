@@ -76,6 +76,30 @@ class DaemonStage(BaseStage):
             pass
         return None
 
+    def require_prediction_service(self) -> tuple[bool, str]:
+        """For S4: verify the GRU prediction service is healthy and model is loaded.
+
+        Performs up to three attempts against ``GET {GRU_URL}/health`` with a
+        3-second timeout and 1-second gap. Succeeds only on HTTP 200 with
+        ``model_loaded`` truthy. Does not restart or substitute a model.
+        """
+        last_error = ""
+        for attempt in range(3):
+            try:
+                r = requests.get(f"{GRU_URL}/health", timeout=3)
+                if r.status_code == 200:
+                    health = r.json()
+                    if health.get("model_loaded"):
+                        return True, ""
+                    last_error = f"model_loaded={health.get('model_loaded')}"
+                else:
+                    last_error = f"HTTP {r.status_code}"
+            except Exception as e:
+                last_error = str(e)
+            if attempt < 2:
+                time.sleep(1)
+        return False, f"prediction health preflight failed: {last_error}"
+
     @staticmethod
     def _kill_stale_daemon() -> None:
         """Kill any process listening on DAEMON_API_PORT before starting fresh."""
