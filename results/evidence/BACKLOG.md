@@ -26,3 +26,17 @@ This is a work queue — not an interpretation or duplicate experiment report. U
   - Scope: `results/experiments/phase-b/<new-date>_paired-h2-clean/`
   - Prerequisite: real 15-second ClarkNet-trained GRU artifact loaded and passing health preflight; hard prediction-delivery gate (preflight + per-eligible-cycle delivery) active in the experiment runner
   - Done when: 5 valid S3/S4 pairs complete with `treatment_fidelity.delivery_rate == 1.0` for every S4 run; `paired_analysis.json` reports inferential statistics; the bundle is promoted toward `role: final` by a human evidence decision.
+
+- [ ] EVID-004 — Apply treatment-fidelity gate to DynamicExperimentRunner (Phase C)
+  - Priority: medium
+  - State: ready
+  - Scope: `apps/experiment/experiment/dynamic.py::DynamicExperimentRunner.run_single_experiment`
+  - Prerequisite: none
+  - Done when: S4 dynamic experiments use the same preflight + per-cycle delivery gate as Phase B; lifecycle events written to per-run `events.jsonl`; `evaluate_run_validity()` called after collection.
+
+- [ ] EVID-005 — Migrate new experiment runs to v2 raw/ bundle layout
+  - Priority: medium
+  - State: ready
+  - Scope: `apps/experiment/experiment/cli.py::_run_single` run_dir builder + path consumers
+  - Prerequisite: none (legacy bundles remain v1; only new runs change)
+  - Done when: new runs write under `raw/<scenario>_run<N>/` with Parquet metrics; v1 adapter still reads historical bundles; `meta.yaml` sets `bundle_schema_version: 2`.

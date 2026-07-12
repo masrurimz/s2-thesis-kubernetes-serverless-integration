@@ -23,7 +23,7 @@ This is a **completed** Master's thesis research project implementing a hybrid k
 | `apps/routing/` | **Routing daemon** — V1/V2/V3 controllers (Algorithm 1), Algorithm 2 (ClusterController), daemon, SLO monitor, weight adjuster | Deployable service (port 9104) |
 | `apps/experiment/` | **Experiment orchestration** — pipeline stages, CLI, calibration, dynamic, trace-replay, realtime validation | CLI tool for running experiments |
 | `apps/analysis/` | **Analysis CLI** — post-hoc statistics, cost model, cold-start, plots, hypothesis validation | Typer sub-app (`thesis analysis <cmd>`); thin orchestration over `libs/analysis` |
-| `results/` | **Single source of truth for ALL experiment evidence** | If it's experiment output, it lives here |
+| `results/` | **Single source of truth for ALL experiment evidence** | Evidence system: typed registry, journals, claims. See `results/AGENTS.md` and `results/evidence/README.md` before adding experiments. |
 | `thesis/` | **Narrative only** — thesis text, protocol, appendices | Links INTO `results/` for evidence |
 | `thesis-typst/` | **Canonical thesis book (Typst)** — English-first body + dual abstracts + ITS ITS-IF formatting | `typst compile`; see thesis-typst/README.md for preview |
 | `thesis-latex/` | (archived) previous LaTeX version | read-only snapshot under `archived/thesis-latex/` |
@@ -143,25 +143,29 @@ uv run ty check              # type-check — do not add NEW errors
 
 ## Results Bundle Convention
 
-Every experiment is a self-contained folder under `results/experiments/`:
+Every experiment is a self-contained folder under `results/experiments/`. New experiments use schema v2 (see `results/AGENTS.md` for the full specification); existing bundles remain in the legacy direct-child layout and are read by registry/catalog adapters.
 
 ```
 results/experiments/<phase>/<YYYY-MM-DD_slug>/
-  meta.yaml                       # YAML — experiment metadata
-  report.md                       # Markdown — interpretation
+  meta.yaml                       # YAML — experiment metadata (bundle_schema_version: 2)
+  report.md                       # Markdown — sole interpretation
+  events.jsonl                    # JSONL — immutable bundle-level lifecycle events
+  derived/
+    paired_analysis.json           # Computed statistical analysis
   raw/<scenario>_run<N>/
-    k6_summary.csv                # CSV — k6 metrics
-    prometheus.csv                # CSV — time-series
-    daemon_events.jsonl           # JSONL — decision log
-    resource.csv                  # CSV — CPU/memory
-  processed/
-    aggregate.csv                 # CSV — per-scenario summary
-    comparisons.csv               # CSV — statistical comparisons
-  figures/*.png
+    manifest.json                  # Per-run reproducibility snapshot
+    events.jsonl                   # JSONL — immutable per-run lifecycle events
+    result.json                    # Typed ExperimentResult with TreatmentFidelity
+    daemon.log                     # Raw diagnostic text log
+    k6-summary.json                # k6 summary
+    metrics.parquet                # Parquet — time-series (Git LFS)
+    prediction-actual.parquet      # Parquet — GRU forecast vs actual (Git LFS)
+    system-events.parquet          # Parquet — normalized daemon events (Git LFS)
 ```
 
----
+**Evidence workflow:** `uv run thesis experiment evidence audit` → `reconcile --apply` → `catalog refresh` → `journal --limit 20`. See `results/evidence/README.md` and `results/evidence/BACKLOG.md` for deferred evidence work.
 
+**S4 treatment-fidelity gate:** S4 runs require GRU preflight + 100% prediction delivery on all eligible cycles. A run with `treatment_fidelity.delivered=False` is invalid and excluded from paired analysis.
 ## Repository Invariants
 
 ### 1. Single Source of Truth

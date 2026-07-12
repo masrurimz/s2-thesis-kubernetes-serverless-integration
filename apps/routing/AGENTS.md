@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Deployable routing control-plane. Runs the SLO-aware routing controller (Algorithm 1 V1/V2) and prediction-based cluster scaling (Algorithm 2). Exposes a FastAPI API on port 9104.
+Deployable routing control-plane. Runs the SLO-aware routing controller (Algorithm 1 V1/V2/V3) and prediction-based cluster scaling (Algorithm 2). V3 is the current controller: capacity-driven routing from observed load, with GRU-confidence-gated upper forecast for proactive Algorithm 2 scaling. S4 treatment delivery is tracked via `_prediction_eligible_cycles` and `_prediction_delivery_failures` counters. Exposes a FastAPI API on port 9104.
 
 ## Module Map
 
@@ -14,6 +14,7 @@ Deployable routing control-plane. Runs the SLO-aware routing controller (Algorit
 | `daemon/metrics.py` | Prometheus metric registration (daemon_decision_total, etc.) |
 | `algorithm/algorithm1_v1.py` | Algorithm 1 V1 (S3 reactive) — bang-bang priority cascade |
 | `algorithm/algorithm1_v2.py` | Algorithm 1 V2 (S4 predictive) — PID + feedforward controller |
+| `algorithm/algorithm1_v3.py` | Algorithm 1 V3 (current) — capacity-driven routing, one-sided burn-rate PI, proactive hold, `last_predicted_upper` for Algorithm 2 |
 | `algorithm/weight_adjuster.py` | `HAProxyWeightAdjuster` — HAProxy socket weight management |
 | `algorithm/fallback_handler.py` | `FallbackHandler` — tiered fallback routing |
 | `algorithm/decision_logger.py` | `DecisionLogger` — SQLite audit trail |
@@ -38,5 +39,7 @@ uv run thesis routing daemon --scenario s4-hybrid-predictive
 ## Boundaries
 
 - `GRUClient` implements `PredictionClient` Protocol from `shared.protocols.prediction`
-- Algorithm 1 V1 is for S3 (reactive), V2 is for S4 (predictive with PID)
+- V3 is the current controller (V1/V2 are legacy). V3 routes by observed load capacity; stores `last_predicted_upper` for Algorithm 2 scaling.
+- V3 burn-rate is one-sided: zero when healthy, positive-only intervention. `proactive_hold_sec` prevents premature rollback.
+- S4 treatment delivery: daemon counts `_prediction_eligible_cycles` and `_prediction_delivery_failures`; `get_status()` exposes them for the experiment validity gate.
 - Routing decisions logged to SQLite via `DecisionLogger`
