@@ -53,7 +53,19 @@ def evaluate_run_validity(
     successful = max(0, eligible - failed)
     delivery_rate = successful / eligible if eligible > 0 else 0.0
 
-    delivered = preflight_passed and eligible > 0 and failed == 0 and delivery_rate >= 1.0
+    model_history_ready = bool(daemon_status.get("model_history_ready", False))
+    forecast_horizon_sufficient = bool(daemon_status.get("forecast_horizon_sufficient", False))
+    forecast_actionable = int(daemon_status.get("forecast_actionable_cycles", 0))
+    proactive_scaleups = int(daemon_status.get("proactive_scaleups", 0))
+
+    delivered = (
+        preflight_passed
+        and eligible > 0
+        and failed == 0
+        and delivery_rate >= 1.0
+        and model_history_ready
+        and forecast_horizon_sufficient
+    )
 
     reasons: list[str] = []
     if not preflight_passed:
@@ -64,6 +76,10 @@ def evaluate_run_validity(
         reasons.append(f"{failed} prediction delivery failures")
     if eligible > 0 and delivery_rate < 1.0:
         reasons.append(f"delivery rate {delivery_rate:.2%} < 100%")
+    if not model_history_ready:
+        reasons.append("model history never reached true input window (mean-value padding excluded)")
+    if not forecast_horizon_sufficient:
+        reasons.append("forecast horizon shorter than measured provisioning delay")
 
     result.treatment_fidelity = TreatmentFidelity(
         required=True,
@@ -73,6 +89,10 @@ def evaluate_run_validity(
         failed_predictions=failed,
         delivery_rate=delivery_rate,
         delivered=delivered,
+        model_history_ready=model_history_ready,
+        forecast_horizon_sufficient=forecast_horizon_sufficient,
+        forecast_actionable_cycles=forecast_actionable,
+        proactive_scaleups=proactive_scaleups,
         reasons=reasons,
     )
 

@@ -76,12 +76,16 @@ class DaemonStage(BaseStage):
             pass
         return None
 
-    def require_prediction_service(self) -> tuple[bool, str]:
-        """For S4: verify the GRU prediction service is healthy and model is loaded.
+    def require_prediction_service(self) -> tuple[bool, str, dict[str, Any]]:
+        """For S4: verify the GRU prediction service is healthy, model loaded, and schema valid.
 
-        Performs up to three attempts against ``GET {GRU_URL}/health`` with a
-        3-second timeout and 1-second gap. Succeeds only on HTTP 200 with
-        ``model_loaded`` truthy. Does not restart or substitute a model.
+        Performs up to three attempts against ``GET {GRU_URL}/health`` and
+        ``GET {GRU_URL}/model/status`` with a 3-second timeout and 1-second gap.
+        Succeeds only on HTTP 200 with ``model_loaded`` truthy and a valid
+        schema-v2 model status (sequence_length, prediction_horizon, sample_interval_sec).
+
+        Returns:
+            (True, "", status_dict) on success; (False, reason, {}) on failure.
         """
         last_error = ""
         for attempt in range(3):
@@ -89,16 +93,28 @@ class DaemonStage(BaseStage):
                 r = requests.get(f"{GRU_URL}/health", timeout=3)
                 if r.status_code == 200:
                     health = r.json()
-                    if health.get("model_loaded"):
-                        return True, ""
-                    last_error = f"model_loaded={health.get('model_loaded')}"
+                    if not health.get("model_loaded"):
+                        last_error = f"model_loaded={health.get('model_loaded')}"
+                    else:
+                        # Validate model status schema.
+                        sr = requests.get(f"{GRU_URL}/model/status", timeout=3)
+                        if sr.status_code == 200:
+                            status = sr.json()
+                            seq = status.get("sequence_length")
+                            horizon = status.get("prediction_horizon")
+                            interval = status.get("sample_interval_sec")
+                            if seq and horizon and interval:
+                                return True, "", status
+                            last_error = f"model status incomplete: seq={seq}, horizon={horizon}, interval={interval}"
+                        else:
+                            last_error = f"model/status HTTP {sr.status_code}"
                 else:
-                    last_error = f"HTTP {r.status_code}"
+                    last_error = f"/health HTTP {r.status_code}"
             except Exception as e:
                 last_error = str(e)
             if attempt < 2:
                 time.sleep(1)
-        return False, f"prediction health preflight failed: {last_error}"
+        return False, f"prediction health preflight failed: {last_error}", {}
 
     @staticmethod
     def _kill_stale_daemon() -> None:

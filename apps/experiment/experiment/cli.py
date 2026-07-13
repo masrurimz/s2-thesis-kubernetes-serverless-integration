@@ -856,7 +856,7 @@ def _run_single(
         # and model-loaded before warmup so a dead prediction service produces a
         # durable invalid run instead of a silent reactive fallback.
         if "s4" in scenario or "predictive" in scenario:
-            ok, preflight_reason = daemon_stage.require_prediction_service()
+            ok, preflight_reason, model_status = daemon_stage.require_prediction_service()
             if not ok:
                 journal.record(
                     journal.new_event(
@@ -895,7 +895,14 @@ def _run_single(
                 )
                 console.print(f"[red]S4 prediction preflight failed: {preflight_reason}[/red]")
                 return preflight_result
-            journal.record(journal.new_event("prediction_preflight_passed", scenario=scenario, run_id=run_id))
+            journal.record(
+                journal.new_event(
+                    "prediction_preflight_passed",
+                    scenario=scenario,
+                    run_id=run_id,
+                    payload={"model_status": model_status},
+                )
+            )
         # Save manifest
         manifest = RunManifest(
             scenario=scenario,
