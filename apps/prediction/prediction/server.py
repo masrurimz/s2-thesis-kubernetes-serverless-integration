@@ -33,14 +33,21 @@ async def lifespan(app: FastAPI):
 
     server_start_time = time.time()
 
-    model_paths = [
-        Path("data/models/gru_model.pt"),
-        Path(__file__).parent.parent / "data/models/gru_model.pt",
-        Path("/app/models/gru_model.pt"),
-        Path("data/models/gru_model.joblib"),
-        Path(__file__).parent.parent / "data/models/gru_model.joblib",
-        Path("/app/models/gru_model.joblib"),
-    ]
+    model_paths = []
+    # If a specific model path was set on app state (via create_app), try it first.
+    explicit_path = getattr(app.state, "model_path", None)
+    if explicit_path:
+        model_paths.append(Path(explicit_path))
+    model_paths.extend(
+        [
+            Path("data/models/gru_model.pt"),
+            Path(__file__).parent.parent / "data/models/gru_model.pt",
+            Path("/app/models/gru_model.pt"),
+            Path("data/models/gru_model.joblib"),
+            Path(__file__).parent.parent / "data/models/gru_model.joblib",
+            Path("/app/models/gru_model.joblib"),
+        ]
+    )
 
     model_loader = None
     for path in model_paths:
@@ -207,9 +214,13 @@ def serve(host: str = "0.0.0.0", port: int = 8090, model_path: str | None = None
 
 
 def create_app(model_path: str | None = None) -> FastAPI:
-    """Create and return the FastAPI app, optionally pre-loading a model."""
-    # The app module-level `app` already has the lifespan wired in.
-    # If a specific model_path was given, we override the global after startup.
+    """Create and return the FastAPI app, optionally pre-loading a model.
+
+    If model_path is given, it is stored on app.state so that the lifespan
+    handler loads it first (before falling back to default paths).
+    """
+    if model_path:
+        app.state.model_path = model_path
     return app
 
 
