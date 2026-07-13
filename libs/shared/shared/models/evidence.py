@@ -25,6 +25,12 @@ class TreatmentFidelity(BaseModel):
     failed_predictions: int = 0
     delivery_rate: float = 1.0
     delivered: bool = True
+    # Actuator-fidelity fields (S4 only): ensure the forecast actually reached
+    # the scale actuator with sufficient history and horizon.
+    model_history_ready: bool = False
+    forecast_horizon_sufficient: bool = False
+    forecast_actionable_cycles: int = 0
+    proactive_scaleups: int = 0
     reasons: list[str] = Field(default_factory=list)
 
 

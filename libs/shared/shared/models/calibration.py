@@ -68,10 +68,24 @@ class CalibrationConfig(BaseModel):
     baseline_replicas_s3_s4: int = 3  # MUST equal min_k8s_replicas
 
     # Algorithm 2 (ClusterController) linear model
+    # alpha = 1/r_effective (NOT 1/r_saturation) so that the scaling model shares
+    # V3's effective-capacity semantics. buffer=1.0 because target_cpu_util
+    # already supplies the safety margin — a second margin would double-count it.
+    # With r_sat=33.3, target_cpu_util=0.5: r_effective=16.65, alpha=0.060.
+    # 45 RPS → ceil(45 × 0.060 × 1.0) = 3 replicas (at minimum).
+    # 62 RPS → ceil(62 × 0.060 × 1.0) = 4 replicas (forecast differentiates).
     beta: float = 0.0
-    buffer: float = 1.2
+    buffer: float = 1.0
     scale_down_threshold: float = 0.5
     alpha_override: Optional[float] = None
+
+    # Provisioning delay estimation (ADAPT-inspired)
+    # The daemon measures scale-command-to-readiness and maintains an EWMA.
+    # The required forecast horizon = ceil((delay_estimate + safety) / sample_interval).
+    # With delay=60s, safety=15s, interval=15s → ceil(75/15) = 5 steps (matches model).
+    provisioning_delay_default_sec: float = 60.0
+    provisioning_delay_ewma_alpha: float = 0.3
+    provisioning_delay_safety_sec: float = 15.0
 
     # Controller tuning (V3 one-sided burn-rate PI + proactive scaling)
     # Burn-rate is now intervention-only: zero when healthy (burn_ratio <= 1.0),
@@ -115,8 +129,13 @@ class CalibrationConfig(BaseModel):
 
     @property
     def alpha(self) -> float:
-        """Linear coefficient: replicas per RPS. Derived from r_saturation."""
-        return self.alpha_override or (1.0 / self.r_saturation_per_replica)
+        """Linear coefficient: replicas per RPS. Derived from EFFECTIVE capacity.
+
+        alpha = 1/r_effective = 1/(r_saturation × target_cpu_util).
+        This shares V3's effective-capacity semantics so the scaling model
+        and the routing model agree on how many RPS one replica can handle.
+        """
+        return self.alpha_override or (1.0 / self.r_effective)
 
     @property
     def r_effective(self) -> float:
