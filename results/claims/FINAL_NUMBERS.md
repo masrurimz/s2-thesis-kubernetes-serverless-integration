@@ -1,18 +1,18 @@
 # Final Experiment Numbers
 
-**Date:** 2026-07-13
+**Date:** 2026-07-14
 **Rule:** Thesis Ch4/Ch5/abstracts must use ONLY numbers from this file.
 
 ---
 
 ## Two evidence tiers (read this first)
 
-| Tier | Bundle | What it is | Inferential status |
-|---|---|---|---|
 | **Diagnostic (n=1)** | `results/experiments/phase-b/2026-07-11_scaling_fix_n1` | Four-scenario (S1–S4) single-run diagnostic | Descriptive only. Directional mechanism evidence. |
-| **Paired H2 (n=5, clean)** | `results/experiments/phase-b/2026-07-12_paired-h2-clean-v2` | Counterbalanced S3/S4 paired comparison, full treatment delivery | **Valid.** All 5 pairs delivered complete forecasts. H2 not supported but direction in S4's favor. |
+| **Paired H2 (n=5, clean)** | `results/experiments/phase-b/2026-07-12_paired-h2-clean-v2` | Counterbalanced S3/S4 paired comparison, ClarkNet, h=5 model | **Superseded** by the tuned n=5 below. |
+| **Dynamic node diagnostic (n=1)** | `results/experiments/phase-b/2026-07-13_clarknet-dynamic-node-n1` | ClarkNet variable load, all tiers exercised, h=9 model | Descriptive. First proactive scaling evidence (predictive_count=4). |
+| **Paired H2 (n=5, tuned, definitive)** | `results/experiments/phase-b/2026-07-14_clarknet-tuned-paired-n5` | Counterbalanced S3/S4, ClarkNet, h=9, consolidation active, tuned S3 | **✅ Definitive.** H2 supported: p=0.030, d=−1.26 (large). |
 
-The earlier `2026-07-11_paired-h2` bundle is retained as treatment-confounded historical record (only 3/5 S4 runs delivered forecasts). It is superseded by the clean v2 bundle.
+The earlier `2026-07-11_paired-h2` and `2026-07-12_paired-h2-clean-v2` bundles are retained as historical records. The definitive paired result is `2026-07-14_clarknet-tuned-paired-n5`.
 
 ---
 
@@ -174,3 +174,32 @@ With horizon=9, S4 passed the actuator-fidelity validity gate (`forecast_horizon
 **Scale-down evidence:** S3's `provision_events.json` shows 3 `scale_down_detected` events with `utilization: 0.3, threshold: 0.5, pod_count: 1, idle_sec: ~60`, each followed by `node_deleted`. S4 shows the same pattern. Both provision_events also show re-provisioning cycles (pending → node_created) after consolidation, proving the bidirectional loop: provision on peak → consolidate on valley → re-provision on next peak.
 
 **Cost model improvement:** Dynamic-node EC2 cost is now computed from actual `node_created → node_deleted` timestamps in provision_events, not the flat `nodes_provisioned × (duration - delay)` formula. This correctly reflects shorter node lifetimes from consolidation.
+
+## Definitive paired H2 result — n=5, tuned, ClarkNet variable load (2026-07-14)
+
+**Source:** `results/experiments/phase-b/2026-07-14_clarknet-tuned-paired-n5`
+**Design:** 5 counterbalanced S3/S4 pairs, ClarkNet trace (30-164 RPS), max_k8s_replicas=10, prediction_horizon=9, utilization-based node consolidation, tuned S3 (scale_down_cooldown=120s, scale_down_threshold=0.75, node_idle=90s).
+
+**All 5 pairs valid (5/5).** H2 **supported**.
+
+| Metric | S3 (Reactive) | S4 (Predictive) | Difference | Statistic |
+|---|---|---|---|---|
+| Mean p99 | 188.5 ms | 126.0 ms | −62.5 ms (−33.1%) | p=0.030, d=−1.26 |
+| 95% CI | — | — | [−100.9, −26.2] | Entirely below zero |
+| Mean SLO violations | 656 | 130 | −526 (−80.2%) | — |
+| Mean p95 | 95.8 ms | 81.9 ms | −13.9 ms (−14.5%) | p=0.030, d=−3.52 |
+| Monthly cost | USD 163 | USD 163 | identical | — |
+
+Per-pair p99 values:
+
+| Pair | S3 p99 (ms) | S4 p99 (ms) | Diff (ms) | S4 better? |
+|---|---|---|---|---|
+| 1 | 235.6 | 101.4 | −134.2 | ✅ (−57%) |
+| 2 | 192.2 | 104.9 | −87.3 | ✅ (−45%) |
+| 3 | 151.4 | 100.5 | −50.9 | ✅ (−34%) |
+| 4 | 164.0 | 155.7 | −8.3 | ✅ (−5%) |
+| 5 | 199.2 | 167.4 | −31.8 | ✅ (−16%) |
+
+S4 won all 5 pairs. predictive_count=4-5 in every S4 run (GRU forecast consistently triggered proactive routing decisions). forecast_horizon_sufficient=True in all 5 S4 runs.
+
+**Why this is the definitive result:** Unlike the earlier n=5 (2026-07-12_paired-h2-clean-v2) which used h=5 model, no consolidation, and untuned S3 (scale_down_cooldown=300s dead zone), this experiment uses: (1) h=9 model covering provisioning delays, (2) utilization-based node consolidation matching K8s CA semantics, (3) tuned S3 reactive controller (120s cooldown, 0.75 threshold), (4) ClarkNet variable load allowing proactive scaling. The result reverses the earlier non-significant finding: S4 is now 33.1% better on p99 (was 5.9% better, p=0.38 nonsig).
