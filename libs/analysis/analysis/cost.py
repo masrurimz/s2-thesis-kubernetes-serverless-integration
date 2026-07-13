@@ -72,7 +72,7 @@ class CostBreakdown:
     vs_s2_percent: float | None = None
 
 
-def analyze_from_experiment(metrics: ScenarioMetrics) -> dict[str, Any]:
+def analyze_from_experiment(metrics: ScenarioMetrics, provision_events: list[dict] | None = None) -> dict[str, Any]:
     """Unified AWS cost model mapping experiment architecture to AWS services.
 
     Architecture mapping:
@@ -157,7 +157,34 @@ def analyze_from_experiment(metrics: ScenarioMetrics) -> dict[str, Any]:
     ec2_compute = production_nodes * duration_hours * cloud_node["rate"] if production_nodes > 0 else 0.0
     # Dynamic nodes provisioned by K3dAutoscaler during experiment
     if metrics.nodes_provisioned > 0:
-        dynamic_hours = metrics.nodes_provisioned * (metrics.duration_sec - metrics.first_provision_delay_sec) / 3600
+        if provision_events:
+            # Compute actual per-node lifetime from provision event timestamps.
+            node_created_ts: dict[str, float] = {}
+            node_deleted_ts: dict[str, float] = {}
+            for ev in provision_events:
+                ev_type = ev.get("event", ev.get("et", ""))
+                ev_data = ev.get("data", ev.get("d", {}))
+                node_name = ev_data.get("node", "")
+                ev_ts = ev.get("ts", 0.0)
+                if ev_type == "node_created" and node_name:
+                    node_created_ts[node_name] = ev_ts
+                elif ev_type == "node_deleted" and node_name:
+                    node_deleted_ts[node_name] = ev_ts
+
+            if node_created_ts:
+                # Nodes alive at run end use the last event timestamp as their end.
+                last_ts = max(ev.get("ts", 0.0) for ev in provision_events)
+                dynamic_hours = sum(
+                    (node_deleted_ts.get(name, last_ts) - created) / 3600 for name, created in node_created_ts.items()
+                )
+            else:
+                dynamic_hours = (
+                    metrics.nodes_provisioned * (metrics.duration_sec - metrics.first_provision_delay_sec) / 3600
+                )
+        else:
+            dynamic_hours = (
+                metrics.nodes_provisioned * (metrics.duration_sec - metrics.first_provision_delay_sec) / 3600
+            )
         ec2_compute += dynamic_hours * cloud_node["rate"]
 
     # === LAMBDA PROVISIONED CONCURRENCY ===

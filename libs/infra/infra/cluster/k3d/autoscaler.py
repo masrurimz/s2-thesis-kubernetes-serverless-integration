@@ -37,7 +37,9 @@ class K3dAutoscaler:
         namespace: str = "default",
         scale_down_cooldown_sec: int = 120,
         scale_down_idle_sec: int = 60,
+        scale_down_utilization_threshold: float = 0.5,
         workload_pod_label: str = "app=test-app-warm",
+        node_allocatable_cpu: float = 1.0,
     ) -> None:
         self.cluster_name = cluster_name
         self.k3d_path = k3d_path
@@ -51,7 +53,9 @@ class K3dAutoscaler:
         self.namespace = namespace
         self.scale_down_cooldown_sec = scale_down_cooldown_sec
         self.scale_down_idle_sec = scale_down_idle_sec
+        self.scale_down_utilization_threshold = scale_down_utilization_threshold
         self.workload_pod_label = workload_pod_label
+        self.node_allocatable_cpu = node_allocatable_cpu
 
         self._poll_interval_sec = 2
         self._stop_event = threading.Event()
@@ -291,8 +295,15 @@ class K3dAutoscaler:
 
         return unschedulable_pods
 
-    def _count_workload_pods_on_node(self, k8s_node_name: str) -> int:
-        """Count workload pods (by label) running on a specific node."""
+    @staticmethod
+    def _parse_cpu_request(cpu_str: str) -> float:
+        """Parse a Kubernetes CPU request string (e.g. '300m', '1', '0.5') to cores."""
+        if cpu_str.endswith("m"):
+            return int(cpu_str[:-1]) / 1000.0
+        return float(cpu_str)
+
+    def _get_workload_pods_on_node(self, k8s_node_name: str) -> List[Dict]:
+        """Return raw pod dicts for workload pods on a specific node."""
         r = self._kubectl(
             [
                 "get",
@@ -309,11 +320,86 @@ class K3dAutoscaler:
             timeout=15,
         )
         if r.returncode != 0:
-            return -1  # unknown; do not scale down on error
+            return []
         try:
-            return len(json.loads(r.stdout).get("items", []))
+            return json.loads(r.stdout).get("items", [])
         except json.JSONDecodeError:
-            return -1
+            return []
+
+    def _get_node_cpu_utilization(self, k8s_node_name: str) -> float:
+        """Compute CPU request utilization (0.0–1.0) for workload pods on a node.
+
+        Returns -1.0 on error (safe: node stays).
+        """
+        pods = self._get_workload_pods_on_node(k8s_node_name)
+        if not pods:
+            return (
+                0.0
+                if self._kubectl(
+                    [
+                        "get",
+                        "pods",
+                        "-n",
+                        self.namespace,
+                        "-l",
+                        self.workload_pod_label,
+                        "--field-selector",
+                        f"spec.nodeName={k8s_node_name}",
+                        "-o",
+                        "name",
+                    ],
+                    timeout=10,
+                ).returncode
+                == 0
+                else -1.0
+            )
+
+        total_cpu = 0.0
+        for pod in pods:
+            for container in pod.get("spec", {}).get("containers", []):
+                cpu_req = container.get("resources", {}).get("requests", {}).get("cpu", "0")
+                total_cpu += self._parse_cpu_request(cpu_req)
+
+        return total_cpu / self.node_allocatable_cpu if self.node_allocatable_cpu > 0 else -1.0
+
+    def _can_pods_be_rescheduled(self, source_node: str, source_pods: List[Dict]) -> bool:
+        """Check if workload pods on source_node can fit on other workload nodes.
+
+        Mirrors Kubernetes CA reschedulability check: sum of free CPU on all
+        other workload nodes must be >= sum of CPU requests on source node.
+        """
+        source_cpu = sum(
+            self._parse_cpu_request(c.get("resources", {}).get("requests", {}).get("cpu", "0"))
+            for p in source_pods
+            for c in p.get("spec", {}).get("containers", [])
+        )
+
+        # Discover all workload nodes (static + dynamic) excluding source
+        r = self._kubectl(
+            ["get", "nodes", "-l", "node-type=workload", "-o", "json"],
+            timeout=15,
+        )
+        if r.returncode != 0:
+            return False
+        try:
+            all_nodes = json.loads(r.stdout).get("items", [])
+        except json.JSONDecodeError:
+            return False
+
+        free_cpu = 0.0
+        for node in all_nodes:
+            node_name = node.get("metadata", {}).get("name", "")
+            if node_name == source_node:
+                continue
+            # Skip cordoned/unready nodes
+            if node.get("spec", {}).get("unschedulable", False):
+                continue
+            util = self._get_node_cpu_utilization(node_name)
+            if util < 0:
+                return False  # can't determine capacity; safe default
+            free_cpu += max(0.0, self.node_allocatable_cpu * (1.0 - util))
+
+        return free_cpu >= source_cpu
 
     def _scaling_loop(self) -> None:
         logger.info(
@@ -353,7 +439,9 @@ class K3dAutoscaler:
                     )
 
             else:
-                # Scale-down: remove underutilized dynamic nodes when no pending pods.
+                # Scale-down: consolidate underutilized dynamic nodes (CA semantics).
+                # A node is a candidate when its CPU request utilization is below the
+                # threshold AND its pods can be rescheduled onto other workload nodes.
                 now = time.time()
                 cooldown_passed = (now - self._last_scale_down_ts) >= self.scale_down_cooldown_sec
 
@@ -361,34 +449,43 @@ class K3dAutoscaler:
                     # Check newest dynamic node (reverse sorted = highest index = newest).
                     newest = sorted(current_nodes)[-1]
                     k8s_name = self._k8s_node_name_from_short(newest)
-                    pod_count = self._count_workload_pods_on_node(k8s_name)
+                    utilization = self._get_node_cpu_utilization(k8s_name)
 
-                    if pod_count == 0:
-                        if newest not in self._node_idle_since:
-                            self._node_idle_since[newest] = now
+                    if 0 <= utilization < self.scale_down_utilization_threshold:
+                        # Underutilized — check if pods can move to other nodes.
+                        source_pods = self._get_workload_pods_on_node(k8s_name)
+                        can_move = self._can_pods_be_rescheduled(k8s_name, source_pods) if source_pods else True
 
-                        idle_duration = now - self._node_idle_since[newest]
-                        if idle_duration >= self.scale_down_idle_sec:
-                            self._record_event(
-                                "scale_down_detected",
-                                {
-                                    "node": newest,
-                                    "pod_count": pod_count,
-                                    "idle_sec": round(idle_duration, 1),
-                                },
-                            )
-                            logger.info(
-                                "scale_down_node",
-                                node=newest,
-                                idle_sec=round(idle_duration, 1),
-                            )
-                            self.delete_node(newest)
-                            self._last_scale_down_ts = now
+                        if can_move:
+                            if newest not in self._node_idle_since:
+                                self._node_idle_since[newest] = now
+
+                            idle_duration = now - self._node_idle_since[newest]
+                            if idle_duration >= self.scale_down_idle_sec:
+                                self._record_event(
+                                    "scale_down_detected",
+                                    {
+                                        "node": newest,
+                                        "utilization": round(utilization, 3),
+                                        "threshold": self.scale_down_utilization_threshold,
+                                        "pod_count": len(source_pods),
+                                        "idle_sec": round(idle_duration, 1),
+                                    },
+                                )
+                                logger.info(
+                                    "scale_down_node",
+                                    node=newest,
+                                    utilization=round(utilization, 3),
+                                    idle_sec=round(idle_duration, 1),
+                                )
+                                self.delete_node(newest)
+                                self._last_scale_down_ts = now
+                                self._node_idle_since.pop(newest, None)
+                        else:
                             self._node_idle_since.pop(newest, None)
                     else:
-                        # Node has workload pods; reset idle tracking.
+                        # Node above threshold or error; reset idle tracking.
                         self._node_idle_since.pop(newest, None)
-
             time.sleep(self._poll_interval_sec)
 
         logger.info("k3d_autoscaler_loop_stopped")
@@ -505,7 +602,9 @@ class K3dAutoscalerAdapter:
         namespace: str = "default",
         scale_down_cooldown_sec: int = 120,
         scale_down_idle_sec: int = 60,
+        scale_down_utilization_threshold: float = 0.5,
         workload_pod_label: str = "app=test-app-warm",
+        node_allocatable_cpu: float = 1.0,
     ) -> None:
         """Initialize adapter with sensible defaults for thesis experiments."""
         # Auto-discover paths from mise shims if not provided
@@ -527,7 +626,9 @@ class K3dAutoscalerAdapter:
             namespace=namespace,
             scale_down_cooldown_sec=scale_down_cooldown_sec,
             scale_down_idle_sec=scale_down_idle_sec,
+            scale_down_utilization_threshold=scale_down_utilization_threshold,
             workload_pod_label=workload_pod_label,
+            node_allocatable_cpu=node_allocatable_cpu,
         )
 
     def reset(self) -> bool:

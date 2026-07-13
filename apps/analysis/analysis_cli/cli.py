@@ -350,7 +350,15 @@ def cost(
     for rf in result_files:
         logger.info("loading_scenario", path=str(rf))
         metrics = load_experiment_metrics(rf)
-        analysis = analyze_from_experiment(metrics)
+
+        # Load provision events for per-node lifetime computation (scale-down aware)
+        provision_events_path = rf.parent / "provision_events.json"
+        provision_events = None
+        if provision_events_path.exists():
+            with open(provision_events_path) as pf:
+                provision_events = json.load(pf)
+
+        analysis = analyze_from_experiment(metrics, provision_events=provision_events)
         # Attach cluster utilization from result.json (not in ScenarioMetrics)
         with open(rf) as f:
             raw_result = json.load(f)
