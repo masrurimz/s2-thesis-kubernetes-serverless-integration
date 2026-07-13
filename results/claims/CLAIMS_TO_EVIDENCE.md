@@ -2,9 +2,9 @@
 
 **Every thesis claim must trace to raw data and a reproduction command.**
 
-**Performance numbers are drawn exclusively from `results/claims/FINAL_NUMBERS.md`, which cites the current baseline `results/experiments/phase-b/2026-07-11_scaling_fix_n1` (n=1 diagnostic).** See that file for exact figures and framing rules.
+**Performance numbers are drawn exclusively from `results/claims/FINAL_NUMBERS.md`.** That file now defines two evidence tiers: (1) the `2026-07-11_scaling_fix_n1` four-scenario n=1 *diagnostic* bundle (descriptive, directional), and (2) the `2026-07-11_paired-h2` n=5 S3/S4 *paired* bundle, which is **treatment-confounded and non-confirmatory** (only 3/5 S4 runs delivered complete forecasts). No inferential H2 superiority verdict may be drawn from the paired bundle. See that file for exact figures and framing rules.
 
-> **Infrastructure reset (2026-07-11):** Six infrastructure bugs (Bugs 8–13) invalidated ALL previous experiment bundles (Feb 2026 phase-b, July 2026 `2026-07-08-*` and `2026-07-10_*`). Every evidence reference below that predates the 2026-07-11 baseline is marked **⚠️ Superseded by Bugs 8-13. See INCONSISTENCIES.md 2026-07-11 entry.** The only current performance baseline is `2026-07-11_scaling_fix_n1` (n=1 diagnostic; n=5 replication pending for statistical significance). Registry ID (pending audit): `experiments.2026-07-11-scaling-fix-n1`.
+> **Infrastructure reset (2026-07-11):** Six infrastructure bugs (Bugs 8–13) invalidated ALL previous experiment bundles (Feb 2026 phase-b, July 2026 `2026-07-08-*` and `2026-07-10_*`). Every evidence reference below that predates the 2026-07-11 baseline is marked **⚠️ Superseded by Bugs 8-13. See INCONSISTENCIES.md 2026-07-11 entry.** The current evidence artifacts are the `2026-07-11_scaling_fix_n1` diagnostic (n=1) and the `2026-07-11_paired-h2` paired comparison (n=5, treatment-confounded). Registry IDs: `experiments.2026-07-11-scaling-fix-n1`, `experiments.2026-07-11-paired-h2`.
 
 ---
 
@@ -31,7 +31,7 @@
 - **Result (p99 latency):** S4 p99 = 118 ms vs S1 p99 = 2,421 ms → **−95.1%** improvement.
 - **Result (SLO violations):** S4 = 104 vs S1 = 6,717 → **−98.5%** reduction (0.12% vs 7.66% SLO rate).
 - **Why this differs from the old "localhost bias" negative result:** the previous H1 finding (S4 worse than S1) was an artifact of Bugs 8 and 11 — node CPU limits were never enforced (pods got the full 16-core host) and S1's HPA provisioned dynamic nodes (4.0 CPU vs S3/S4's 2.0 CPU), so S1 never saturated. With `--cpus=1.0` per node enforced and `max_k8s_replicas=6` capped to schedulable capacity, S1 saturates as designed and hybrid routing (S4) provides a clear performance benefit.
-- **Status:** ✅ CONFIRMED (n=1). S4 beats S1 by 95.1% on p99 and 98.5% on SLO violations. n=5 replication pending for statistical significance.
+- **Status:** ✅ Directional (n=1 diagnostic). S4 beats S1 by 95.1% on p99 (118 vs 2,421 ms). Not statistically established; n=5 replication pending.
 
 > **Superseded evidence:** Previous H1 performance claims cited `phase-b/2026-07-08_fib33_n5` (reported S4 p99=233.6 ms vs S1 p99=109.8 ms, "localhost bias" negative result) and the Feb 2026 bundles (`phase-b/2026-02-12_replicated-20runs` Bugs 1–3, `phase-b/2026-02-14_clarknet-replay` Bugs 4–7, `phase-b/2026-02-15_clarknet-replay`, `phase-b/2026-02-16_*`, `phase-b/2026-02-18_*`, `phase-b/2026-02-19_*`, `phase-b/2026-02-21_*`). All are **⚠️ Superseded by Bugs 8-13. See INCONSISTENCIES.md 2026-07-11 entry.**
 
@@ -46,27 +46,22 @@
 - **Raw Data:** Decision log — action=PREDICTIVE at p99=146 ms, predicted 47% load increase, confidence 72%
 - **Status:** ✅ Mechanism validated (Phase A1 ramp test, pre-fix infra). Note: the 2026-07-11 baseline confirms 9 PREDICTIVE actions fired in S4 during the n=1 run.
 
-### Claim 5 (Superiority): S4 reduces SLO violations vs S3
-- **Evidence:** `results/experiments/phase-b/2026-07-11_scaling_fix_n1/report.md` (n=1 diagnostic, current baseline)
-- **Registry ID:** `experiments.2026-07-11-scaling-fix-n1` (current baseline; n=5 replication pending)
-- **Raw Data:** Per-run p99 latency, SLO violation counts, serverless request counts, and monthly cost projection in report tables
-- **Result (p99 latency):** S4 p99 = 118 ms vs S3 p99 = 99 ms → +19.7% (S4 worse).
-- **Result (SLO violations):** S4 = 104 vs S3 = 3 (S4 worse; both near-zero SLO rate: 0.12% vs 0.00%).
-- **Result (serverless dependency):** S4 = 2,666 serverless requests vs S3 = 5,354 → **−50.2%** (S4 better).
-- **Result (monthly cost):** S4 = $142/mo vs S3 = $147/mo → **−3.4%** (~$5/mo cheaper; S4 better).
-- **Reproduce:** See the canonical reproduction command in "Reproduction Commands" below.
-- **Status:** ⚠️ PARTIAL (n=1). S4 provides a **cost advantage** (50% less serverless dependency, ~$5/mo cheaper) but **not a latency advantage** (p99 19% higher than S3). Both scenarios keep the SLO violation rate near zero. n=5 replication pending.
-- **Architecture change (Bug 13 fix):** Prediction now drives **K8s SCALING** (Algorithm 2 proactive replicas via trend extrapolation), **not serverless ROUTING**. Routing weight uses ACTUAL load only. This separation ensures S4 never routes more to serverless than S3 (eliminating unnecessary Knative overhead), while still benefiting from prediction via earlier K8s scaling — which is why S4's serverless share (24.7%) is lower than S3's (31.8%).
-
-> **Superseded evidence:** Previous H2 claims cited `phase-b/2026-07-08_fib33_proactive` (reported d=−1.21, p=0.12; prediction-for-routing architecture) and `phase-b/2026-02-15_clarknet-replay` (reported p=0.0037, d=−2.96; different controller/workload, metric contamination). All are **⚠️ Superseded by Bugs 8-13. See INCONSISTENCIES.md 2026-07-11 entry.**
-
+### Claim 5 (Superiority): S4 vs S3 paired comparison — H2
+- **Evidence:** `results/experiments/phase-b/2026-07-11_paired-h2/paired_analysis.json` (n=5 counterbalanced S3/S4 pairs)
+- **Registry ID:** `experiments.2026-07-11-paired-h2` (treatment-confounded; non-confirmatory)
+- **Raw Data:** Per-run `result.json` files for all 10 runs (5×S3, 5×S4); per-run `daemon.log` files
+- **Primary result (p99 latency, paired):** S3 mean 111.24 ms, S4 mean 121.26 ms, mean diff +10.02 ms, 95% CI [−19.49, +31.63] ms, one-sided permutation p=0.7525, paired Cohen's d=+0.301 (small, S4 worse).
+- **Treatment delivery:** S4 run 1 = 0 predictions (service absent); runs 2–4 = 80 each (complete); run 5 = 16 with 1 failure (partial). Only **3 of 5** S4 runs delivered the complete predictive treatment. Historical `run_validity_passed=true` flags retained because they predate the treatment-fidelity gate.
+- **Descriptive proxies (NOT causal or cost claims):** S4 serverless weight-time product −29.3% vs S3 mean; S4 Knative-active seconds −13.0%. These reflect routing-time allocation under a confounded treatment, not a demonstrated predictive advantage or dollar savings.
+- **Status:** ⚠️ **NOT ESTABLISHED / NOT CLEANLY EVALUABLE.** H2 latency superiority is not supported (mean diff in S4's unfavorable direction; CI includes both improvement and deterioration; p=0.7525). Even this result cannot be attributed to the predictive treatment because 2/5 S4 runs did not deliver complete forecasts. The historical bundle is retained as treatment-confounded; raw files are immutable. A clean full-delivery rerun is tracked as EVID-003 in `results/evidence/BACKLOG.md`.
+- **Root cause of weak causal signal:** The forecast-to-actuator path maps both observed and forecast load to the same minimum replica target under the active calibration (alpha=1/r_saturation, buffer=1.2, min=3): a 62-RPS upper forecast still maps to 3 replicas, identical to the observed target. See `INCONSISTENCIES.md` § Treatment Fidelity and the controller-limitations analysis in the thesis results chapter.
 ---
 
 ## H3: GRU Prediction Adequacy
 
 ### Claim 6: RMSE below 10% target
 - **Evidence (synthetic):** `results/models/gru/2026-02-10_training-synthetic/report.md`
-- **⚠️ Superseded by Bugs 8-13. See INCONSISTENCIES.md 2026-07-11 entry.** (Model training itself is infra-independent; flagged because live prediction behavior was not re-validated on the fixed experiment stack.)
+- **⚠️ Superseded by Bugs 8-13. See INCONSISTENCIES.md 2026-07-11 entry.** (Model training is infra-independent; flagged because live prediction was not re-validated on the fixed stack.)
 - **Registry ID:** `models.2026-02-10-training-synthetic` (superseded)
 - **Evidence (real traces):** `results/models/gru/2026-02-13_training-clarknet-calgary/report.md`
 - **⚠️ Superseded by Bugs 8-13. See INCONSISTENCIES.md 2026-07-11 entry.**
@@ -148,8 +143,8 @@
 | Mechanism | PREDICTIVE trigger | `experiments.2026-02-12-predictive-trigger` | ✅ Mechanism validated (superseded — pre-fix infra) |
 | Mechanism | GRU inference (synthetic) | `models.2026-02-10-training-synthetic` | ⚠️ Mechanism works, real-trace targets not met (superseded) |
 | Mechanism | GRU inference (real traces) | `models.2026-02-13-training-clarknet-calgary` | ⚠️ Mechanism works, targets not met (superseded) |
-| Performance (H1) | S4 vs S1 latency | `experiments.2026-07-11-scaling-fix-n1` | ✅ CONFIRMED (n=1): S4 beats S1 by 95.1% on p99 (118 vs 2,421 ms); n=5 pending |
-| Performance (H2) | S4 vs S3 (cost/serverless) | `experiments.2026-07-11-scaling-fix-n1` | ⚠️ PARTIAL (n=1): S4 cheaper ($142 vs $147, −50% serverless) but p99 +19.7% vs S3; n=5 pending |
+| Performance (H1) | S4 vs S1 latency | `experiments.2026-07-11-scaling-fix-n1` | ✅ Directional (n=1): S4 beats S1 by 95.1% on p99 (118 vs 2,421 ms); not inferential |
+| Performance (H2) | S4 vs S3 paired p99 | `experiments.2026-07-11-paired-h2` | ⚠️ NOT ESTABLISHED (n=5, treatment-confounded): mean diff +10.02 ms, p=0.7525; only 3/5 S4 runs delivered forecasts |
 | Testbed | HPA works on k3d | validation/infrastructure-validation | ⚠️ Superseded (scale range now capped at 6) |
 | Design Decision | HPA vs kubectl scale exclusive | validation/infrastructure-validation | ✅ (superseded — pre-fix infra) |
 | Testbed | Knative KPA works on k3d | validation/infrastructure-validation | ✅ (superseded — pre-fix infra) |
@@ -229,7 +224,7 @@ This single command reproduces H1 (S4 vs S1), H2 (S4 vs S3), and the live-predic
 ## Framing Rules for Thesis
 
 1. **H1 (hybrid vs pure K8s):** "Confirmed (n=1): S4 beats S1 by 95.1% on p99 (118 ms vs 2,421 ms) and 98.5% on SLO violations. n=5 replication pending for statistical significance." Do NOT say "proven" (n=1).
-2. **H2 (predictive vs reactive):** "Partial (n=1): S4 provides a cost advantage (~50% fewer serverless requests, $142 vs $147/mo) but not a latency advantage (p99 +19.7% vs S3). Both keep SLO rate near zero. Architecture change: prediction drives K8s scaling, not serverless routing."
+2. **H2 (predictive vs reactive):** "Not established and not cleanly evaluable from the paired bundle (n=5). Mean p99 diff +10.02 ms (S4 worse), 95% CI [−19.49, +31.63] ms, p=0.7525. Only 3/5 S4 runs delivered complete forecasts, so even this null result cannot be attributed to the predictive treatment. The bundle is retained as treatment-confounded."
 3. **Use** "mechanism validated" for what works (weight shifting, PREDICTIVE trigger, GRU inference).
 4. **Use** "mechanism validated on synthetic data; real-trace accuracy below target thresholds" for H3 partial validation.
 5. **All pre-2026-07-11 experiment numbers are superseded (Bugs 8-13).** Cite ONLY `results/claims/FINAL_NUMBERS.md`.

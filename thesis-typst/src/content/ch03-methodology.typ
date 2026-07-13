@@ -41,17 +41,13 @@ The system uses Prometheus for metrics collection and an SLO monitor component f
 
 === Workload Predictor (GRU Architecture)
 
-The workload prediction model uses a Gated Recurrent Unit (GRU) neural network with a two-layer architecture (128 and 64 hidden units after hyperparameter optimization), each followed by dropout regularization. The model accepts a 60-step input window of RPS data and outputs predicted RPS for the next 30 seconds. Training uses the Adam optimizer with Mean Squared Error loss, batch size 32, and early stopping with patience of 25 epochs (maximum 200).
+The workload prediction model uses a Gated Recurrent Unit (GRU) neural network with a single recurrent layer of 128 hidden units followed by head dropout regularization. The model accepts a 30-sample input window of per-interval request counts (sampled at 15-second resolution) and outputs direct multi-horizon forecasts for five 15-second steps ahead (75 seconds total), eliminating autoregressive error compounding. Training uses the Adam optimizer with Mean Squared Error loss, batch size 32, and early stopping with patience of 15 epochs (maximum 100). Per-horizon upper offsets, derived as the 90th percentile of positive validation residuals, are added to the point forecasts to form a conservative upper envelope (`upper_forecasts`) that directly addresses ramp underprediction.
 
-The trained model is served via a FastAPI prediction server that accepts recent RPS history as input and returns both the predicted load value and a confidence score. The confidence score is computed from prediction variance and serves as a gating mechanism—the routing controller only acts on predictions exceeding a configurable confidence threshold (default: 0.5).
+The trained model is served via a FastAPI prediction server that accepts recent request-rate history as input and returns point forecasts, upper-envelope forecasts, and a scalar confidence score. The confidence score is derived from the model's normalized validation error (RMSE relative to the training-set mean) rather than prediction variance: a score of 0.8 indicates the model's error is below 15% of the mean. The routing controller gates proactive actions on this confidence exceeding a configurable threshold (default: 0.5).
 
 === Resource Allocation Model
 
-A linear resource allocation model translates predicted workload into required Kubernetes resources:
-
-$R = alpha dot.op x + beta $
-
-where R is the target replica count, x is predicted traffic intensity (requests per second), alpha is the resource-per-request coefficient (replicas per RPS), and beta is base replica overhead (minimum replicas at near-zero traffic). At each control interval, the daemon computes a target replica count with a safety buffer gamma (typically 1.2 for +20% headroom), clamped to fixed bounds [1, 10]. The coefficients alpha and beta are derived using Ordinary Least Squares (OLS) regression on calibration data collected from the same application and testbed.
+where R is the target replica count, x is predicted or observed traffic intensity (requests per second), alpha is the resource-per-request coefficient (replicas per RPS), and beta is base replica overhead (minimum replicas at near-zero traffic). The coefficient alpha is derived from a calibrated saturation measurement: alpha = 1/r_saturation_per_replica, where r_saturation_per_replica is the RPS at which a single pod's p99 crosses the SLO threshold. At each control interval, the daemon computes a target replica count with a safety buffer gamma (typically 1.2 for +20% headroom), clamped to fixed bounds [3, 6] on the current testbed (two workload nodes at 300 millicores each).
 
 === Algorithm 1: Routing Controller
 
@@ -69,11 +65,9 @@ Traffic weights shift gradually in increments of 10% to avoid oscillation, from 
 
 === Algorithm 2: Cluster Controller
 
-Algorithm 2 is integrated into the live routing daemon and executes real Kubernetes scaling actions. The hybrid design uses two coordinated control actions: Algorithm 1 performs immediate traffic shedding to serverless when a surge is detected, while Algorithm 2 performs capacity restoration by scaling Kubernetes replicas. Once Kubernetes is scaled, ready, and healthy, Algorithm 1 gradually returns traffic from serverless back to Kubernetes.
+Algorithm 2 operates in two modes that share the same capacity model. In reactive mode (S3), the scaling signal is the mean observed RPS over the last 30 seconds. In predictive mode (S4), the daemon computes a predictive target from the GRU confidence-gated upper forecast and selects it only when it *strictly exceeds* the observed target; otherwise the observed target is used. A proactive hold interval (90 seconds) prevents premature rollback of a proactive scale-up while the forecast window is still active. In both scenarios, the V3 routing controller routes by *observed* ready-replica capacity; the forecast influences only Kubernetes replica planning, not the HAProxy weight split. This separation prevents over-routing to serverless during moderate load — a problem observed when the forecast directly drove routing weights.
 
-Algorithm 2 operates in two modes. In reactive mode (S3), the scaling signal is the mean observed RPS over the last 30 seconds. In predictive mode (S4), the signal is the GRU 30-second-ahead forecast. Both modes use the identical resource model and identical parameters, ensuring that any performance difference between S3 and S4 is attributable solely to the prediction signal.
-
-Scaling is performed by invoking kubectl scale deployment, chosen for its determinism and explicit audit trail. Safety checks include cooldown periods (30 seconds for scale-up, 60 seconds for scale-down), replica bounds clamping, scale-down hysteresis (only if target is below 80% of current capacity), and readiness verification before traffic returns to Kubernetes.
+Scaling is performed by invoking kubectl scale deployment, chosen for its determinism and explicit audit trail. Safety checks include cooldown periods (15 seconds for scale-up, 300 seconds for scale-down in V3 mode), replica bounds clamping, scale-down hysteresis (target below 50% of current capacity), and readiness verification before traffic returns to Kubernetes.
 
 == Evaluation Plan
 
@@ -89,7 +83,7 @@ S3 (Hybrid Reactive): Dynamic K8s to Knative routing via Algorithm 1, Algorithm 
 
 S4 (Hybrid Predictive): Dynamic K8s to Knative routing via Algorithm 1, Algorithm 2 scaling using GRU forecast (predicted), GRU on.
 
-The S1 vs S2 comparison evaluates platform-native baselines. The S3 vs S1/S2 comparison evaluates whether the hybrid reactive control plane improves over either baseline alone. The S3 vs S4 comparison isolates the value of GRU prediction—both use hybrid routing and Algorithm 2 scaling; the only difference is the scaling signal.
+The S1 vs S2 comparison evaluates platform-native baselines. The S3 vs S1/S2 comparison evaluates whether the hybrid reactive control plane improves over either baseline alone. The S3 vs S4 comparison is designed to isolate the value of GRU prediction—both use hybrid routing and Algorithm 2 scaling, and both route by observed load. S4 additionally consumes the confidence-gated upper forecast for Kubernetes replica planning. A practical caveat applies: because the scaling model maps load to replicas via ceil(alpha dot.op x dot.op gamma) clamped to a minimum of three replicas, moderate-load forecasts (e.g., 62 RPS) can map to the same replica target as the observed signal, making the predictive and reactive paths operationally identical for that cycle. The comparison is therefore only discriminative when the forecast produces a *different* replica target than the observed signal—a condition that depends on the calibration margin and is analyzed in Chapter 4.
 
 === Evaluation Phases
 

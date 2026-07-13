@@ -1,79 +1,88 @@
 # Final Experiment Numbers
 
-**Date:** 2026-07-11  
-**Source:** `results/experiments/phase-b/2026-07-11_scaling_fix_n1` (n=1 diagnostic)  
+**Date:** 2026-07-13
 **Rule:** Thesis Ch4/Ch5/abstracts must use ONLY numbers from this file.
 
-**IMPORTANT:** These are n=1 diagnostic results. n=5 replication required for statistical claims. All previous experiment bundles (Feb 2026, July 8-10) are superseded due to infrastructure fixes (CPU limits, calibration, fairness cap, prediction-scaling separation).
+---
+
+## Two evidence tiers (read this first)
+
+| Tier | Bundle | What it is | Inferential status |
+|---|---|---|---|
+| **Diagnostic (n=1)** | `results/experiments/phase-b/2026-07-11_scaling_fix_n1` | Four-scenario (S1–S4) single-run diagnostic | Descriptive only. Directional mechanism evidence. |
+| **Paired H2 (n=5, clean)** | `results/experiments/phase-b/2026-07-12_paired-h2-clean-v2` | Counterbalanced S3/S4 paired comparison, full treatment delivery | **Valid.** All 5 pairs delivered complete forecasts. H2 not supported but direction in S4's favor. |
+
+The earlier `2026-07-11_paired-h2` bundle is retained as treatment-confounded historical record (only 3/5 S4 runs delivered forecasts). It is superseded by the clean v2 bundle.
 
 ---
 
-## Configuration
+## Tier 1 — Diagnostic four-scenario summary (n=1)
 
-| Parameter | Value |
-|---|---|
-| Node CPU | Docker --cpus=1.0 per node (2 workload nodes = 2.0 CPU total) |
-| Pod CPU limits | None (node-level limit sufficient) |
-| r_saturation_per_replica | 33.3 (calibrated: S1 saturates at 100 RPS) |
-| max_k8s_replicas | 6 (matches schedulable capacity, prevents dynamic nodes) |
-| proactive_approach_ratio | 0.8 |
-| Workload | ClarkNet g=33, mean 73 RPS, peak 164 RPS |
-| SLO threshold | p99 < 200ms |
-
----
-
-## Scenario Summary (n=1 Diagnostic)
-
-| Scenario | p99 (ms) | SLO Violations | SLO Rate | PREDICTIVE | Serverless % | Nodes |
-|---|---|---|---|---|---|---|
-| S1 (K8s+HPA) | 2,421.3 | 6,717 | 7.66% | 0 | 0.0% | 0 |
-| S2 (Serverless) | 77.7 | 19 | 0.02% | 0 | 100.0% | 0 |
-| S3 (Hybrid-reactive) | 98.8 | 3 | 0.00% | 0 | 31.8% | 0 |
-| S4 (Hybrid-predictive) | 118.2 | 104 | 0.12% | 9 | 24.7% | 0 |
-
----
-
-## Cost Analysis (AWS Monthly Projection)
-
-| Scenario | Total/mo | $/1M SLO-OK | Serverless Reqs | EC2 Nodes |
+| Scenario | p99 (ms) | SLO Violations | SLO Rate | Serverless % |
 |---|---|---|---|---|
-| S1 (K8s-only) | $132 | $0.79 | 0 | 2 |
-| S2 (Serverless) | $394 | $2.19 | 87,840 | 0 |
-| S3 (Hybrid-reactive) | $147 | $0.81 | 5,354 | 2 |
-| S4 (Hybrid-predictive) | $142 | $0.79 | 2,666 | 2 |
+| S1 (K8s+HPA) | 2,421.3 | 6,717 | 7.66% | 0.0% |
+| S2 (Serverless) | 77.7 | 19 | 0.02% | 100.0% |
+| S3 (Hybrid-reactive) | 98.8 | 3 | 0.00% | 31.8% |
+| S4 (Hybrid-predictive) | 118.2 | 104 | 0.12% | 24.7% |
+
+**H1 (hybrid > pure K8s):** Directional only (n=1). S4 p99 118.2 ms vs S1 2,421.3 ms (−95.1%).
 
 ---
 
-## Statistical Comparisons (n=1, not significant)
+## Tier 2 — Clean paired H2 result (n=5, full treatment delivery)
 
-### H1: S4 vs S1 (Hybrid vs Pure K8s)
+**Source:** `results/experiments/phase-b/2026-07-12_paired-h2-clean-v2/paired_analysis.json`
 
-| Metric | S1 | S4 | Improvement |
+### Primary: p99 latency
+
+| Metric | S3 (Reactive) | S4 (Predictive) | Difference |
 |---|---|---|---|
-| p99 latency | 2,421ms | 118ms | **-95.1%** |
-| SLO violations | 6,717 | 104 | **-98.5%** |
+| Mean p99 (ms) | 136.62 | 128.54 | −8.08 |
+| 95% paired CI (ms) | — | — | [−36.70, +14.53] |
+| Permutation p (two-sided) | — | — | 0.3784 |
+| Cohen's d (paired) | — | — | −0.241 (small, S4 better) |
 
-**Verdict:** Strongly confirmed (n=1). Hybrid routing crushes pure K8s.
+**Per-pair p99 (ms):**
 
-### H2: S4 vs S3 (Predictive vs Reactive)
+| Pair | S3 | S4 | Diff | S4 better? |
+|---|---|---|---|---|
+| 1 | 112.7 | 134.1 | +21.3 | No |
+| 2 | 157.6 | 137.5 | −20.1 | Yes |
+| 3 | 119.1 | 129.3 | +10.2 | No |
+| 4 | 173.0 | 111.7 | −61.4 | Yes |
+| 5 | 120.6 | 130.2 | +9.6 | No |
 
-| Metric | S3 | S4 | Difference |
-|---|---|---|---|
-| p99 latency | 99ms | 118ms | +19.7% (S4 worse) |
-| SLO violations | 3 | 104 | +3367% (S4 worse) |
-| Serverless requests | 5,354 | 2,666 | **-50.2% (S4 better)** |
-| Monthly cost | $147 | $142 | **-3.4% (S4 cheaper)** |
+**Verdict:** H2 (predictive latency superiority) is **not supported**. The mean difference is in S4's favorable direction (−8.1 ms), but the 95% CI includes zero and the permutation test is not significant (p=0.38). S4 wins 2 of 5 pairs.
 
-**Verdict:** Not confirmed for latency (n=1). S4 provides **cost advantage** through reduced serverless dependency (proactive K8s scaling). n=5 needed.
+### Secondary: SLO violations (notable)
+
+| Metric | S3 mean | S4 mean | Difference | Cohen's d |
+|---|---|---|---|---|
+| SLO violations | 228.2 | 100.8 | −127.4 (−56%) | −0.535 (medium) |
+
+S4 shows a **medium effect size** reduction in SLO violations (d=−0.535), though not statistically significant at n=5 (p=0.19). This suggests the proactive scaling keeps p99 below the SLO threshold more consistently, even when the mean p99 difference is small.
+
+### Treatment fidelity (all 5 S4 runs)
+
+| Field | Value |
+|---|---|
+| Eligible cycles per run | 56 |
+| Model history ready | True (all runs) |
+| Forecast horizon sufficient | True (all runs) |
+| Delivery rate | 100% (0 failures) |
+| Total predictions delivered | 280 (56 × 5 runs) |
+
+### Comparison with previous (confounded) bundle
+
+| Bundle | S3 mean | S4 mean | Diff | Direction |
+|---|---|---|---|---|
+| `2026-07-11_paired-h2` (confounded) | 111.2 ms | 121.3 ms | +10.0 ms | S4 worse |
+| `2026-07-12_paired-h2-clean-v2` (clean) | 136.6 ms | 128.5 ms | −8.1 ms | S4 better |
+
+The mechanism repair (alpha=1/r_effective, buffer=1.0) reversed the effect direction from S4-worse to S4-better. The difference is not statistically significant, but the reversal demonstrates that the calibration fix changed S4's operational behavior.
 
 ---
 
-## Key Architecture Decision (July 11, 2026)
+## Diagnostic cost model (n=1, directional only)
 
-**Prediction drives K8s SCALING, not serverless ROUTING.**
-
-Previous architecture: GRU prediction → serverless weight adjustment → over-routing during moderate load → Knative overhead → worse p99.
-
-Fixed architecture: GRU prediction → trend extrapolation → Algorithm 2 proactive K8s replica scaling → more warm capacity → less serverless overflow → lower cost.
-
-This separation ensures S4 never routes MORE to serverless than S3 (avoiding unnecessary Knative overhead), while still benefiting from prediction via earlier K8s scaling.
+The n=1 AWS monthly projection (S1=USD 132, S2=USD 394, S3=USD 147, S4=USD 142/mo) is a directional diagnostic cost model only. It must not be used to rank S3 and S4 or claim monthly savings.

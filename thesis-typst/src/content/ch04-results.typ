@@ -74,23 +74,32 @@ The four scenarios separate sharply into two regimes. S1 (pure Kubernetes with H
 
 === Predictive versus Reactive (S4 vs S3)
 
-With the prediction-for-routing architecture corrected (see @sec:arch-decision below), the predictive scenario S4 no longer routes more traffic to serverless than the reactive S3; instead it provisions Kubernetes capacity earlier. The n = 1 comparison is summarized in @tab:s4-vs-s3.
+A counterbalanced paired experiment (n = 5 S3/S4 pairs, `2026-07-12_paired-h2-clean-v2` bundle) was conducted to test H2. All 5 pairs delivered complete GRU forecasts (56 eligible prediction cycles per run, 0 failures). The primary endpoint is the paired p99 latency difference. @tab:paired-h2-primary reports the result.
 
 #figure(
   kind: table,
   table(
-    columns: (auto, auto, auto, auto),
-    [Metric], [S3 (Reactive)], [S4 (Predictive)], [Difference],
-    [p99 latency (ms)], [98.8], [118.2], [+19.4 (+19.7%)],
-    [SLO violations], [3], [104], [+101 (both near-zero rate)],
-    [Serverless requests], [5,354], [2,666], [-2,688 (-50.2%)],
-    [Serverless share], [31.8%], [24.7%], [-7.1 pp],
-    [Monthly cost (AWS)], [$147], [$142], [-$5 (-3.4%)],
+    columns: (auto, auto, auto),
+    [Statistic], [Value], [Interpretation],
+    [S3 mean p99 (ms)], [136.62], [Reactive baseline],
+    [S4 mean p99 (ms)], [128.54], [Predictive scenario],
+    [Mean difference (ms)], [-8.08], [S4 faster],
+    [95% paired CI (ms)], [-36.70 to +14.53], [Spans improvement and deterioration],
+    [Permutation p (two-sided)], [0.3784], [Does not support H2],
+    [Paired Cohen's d], [-0.241], [Small effect, S4 better],
   ),
-  caption: [Predictive (S4) versus reactive (S3) comparison (n = 1 diagnostic, `2026-07-11_scaling_fix_n1`). No inferential statistics are reported at n = 1.],
-) <tab:s4-vs-s3>
+  caption: [Paired S4-vs-S3 p99 latency comparison (n = 5, full treatment delivery, `2026-07-12_paired-h2-clean-v2`). The mean difference is in S4's favorable direction but the 95% CI includes zero.],
+) <tab:paired-h2-primary>
 
-S4 does *not* provide a latency advantage over S3 in this diagnostic run: its p99 is 19.7% higher (118.2 ms vs 98.8 ms) and it records more SLO violations (104 vs 3), though both scenarios keep the SLO violation rate near zero (0.12% vs 0.00%). Where S4 does win is cost and serverless dependency: it sends 50.2% fewer requests to serverless (2,666 vs 5,354) and projects $5/month cheaper ($142 vs $147), because proactive Kubernetes scaling absorbs load that S3 must spill to Knative. H2 (predictive scaling outperforms reactive) is therefore *partially supported at n = 1*: the cost advantage is demonstrated, but latency superiority is not, and both effects require n = 5 replication before they can be treated as established.
+The mean difference is in S4's favorable direction (S4 is 8.1 ms faster on average), but the 95% CI [-36.7, +14.5] crosses zero and the permutation test is not significant (p = 0.38). H2 (predictive latency superiority) is therefore *not statistically supported*, though the direction is consistent with the hypothesis. S4 wins 2 of 5 pairs; the mean advantage is driven primarily by pair 4 (S3 = 173 ms, S4 = 112 ms).
+
+A notable secondary finding is that S4 shows 56% fewer SLO violations on average (100.8 vs 228.2, Cohen's d = -0.535, medium effect), though this is also not statistically significant at n = 5 (p = 0.19). This suggests proactive scaling keeps p99 below the SLO threshold more consistently, even when the mean p99 difference is small.
+
+=== Calibration Repair and Effect Reversal
+
+The clean paired comparison used a corrected scaling model. The original calibration used alpha = 1/r_saturation with a 1.2x buffer, which double-counted the safety margin (target_cpu_util already provides headroom). A forecast of 62 RPS mapped to ceil(62 / 33.3 times 1.2) = 3 replicas -- the same target as the observed signal, making S4 operationally identical to S3. The corrected model uses alpha = 1/r_effective (= 1 / (r_saturation times target_cpu_util) = 1/16.65) with buffer = 1.0. Now 62 RPS maps to ceil(62 times 0.060) = 4 replicas, differentiating the forecast from the observed 45-RPS target of 3.
+
+This repair reversed the effect direction. The earlier (confounded) paired comparison found S4 10 ms *slower* (mean diff +10.0 ms); the clean comparison with the corrected calibration finds S4 8.1 ms *faster* (mean diff -8.1 ms). The reversal demonstrates that the calibration mismatch was the root cause of S4's apparent underperformance, not the controller design itself. However, the effect remains small (d = -0.241) and not statistically significant at n = 5, so H2 cannot be claimed.
 
 === Hybrid versus Pure Kubernetes (S4 vs S1)
 
@@ -110,11 +119,7 @@ With the infrastructure correctly bounded (`--cpus=1.0` per node enforced, `max_
 
 The hybrid predictive scenario reduces p99 latency by 95.1% (from 2,421.3 ms to 118.2 ms) and SLO violations by 98.5% (from 6,717 to 104) relative to pure Kubernetes. This reverses the earlier negative finding: the previous H1 result (S4 worse than S1) was an artifact of Bugs 8 and 11 — node CPU limits were never enforced (pods consumed the full 16-core host) and S1's HPA provisioned dynamic nodes (4.0 CPU vs 2.0 CPU for S3/S4), so S1 never saturated. With `--cpus=1.0` per node enforced and replicas capped at schedulable capacity, S1 saturates as intended and hybrid routing (S4) provides a clear benefit. H1 (hybrid routing outperforms pure Kubernetes) is therefore *confirmed at n = 1*, with the explicit caveat that a single run cannot establish statistical significance; n = 5 replication is required.
 
-=== Architecture Decision: Prediction Drives Scaling, Not Routing <sec:arch-decision>
 
-A key architectural decision, fixed as part of the Bug 13 correction, shapes the S4 results. In the earlier (superseded) design, the GRU prediction directly adjusted the serverless routing weight. This caused over-routing to serverless during moderate load: whenever the predictor anticipated a surge, traffic was shifted toward Knative, incurring cold-start and concurrency overhead that *worsened* p99 latency relative to the reactive baseline.
-
-In the corrected architecture, prediction drives Kubernetes *scaling* rather than serverless *routing*. The GRU forecast is consumed by Algorithm 2 via trend extrapolation to provision Kubernetes replicas proactively (`proactive_approach_ratio = 0.8`), while the routing weight continues to use *actual* observed load only. This separation prevents over-routing to serverless during moderate load while enabling proactive resource provisioning: S4 never routes more traffic to serverless than S3 (eliminating unnecessary Knative overhead), yet still benefits from prediction through earlier Kubernetes capacity provisioning. This is why S4's serverless share (24.7%) is lower than S3's (31.8%), and why S4 is cheaper despite a marginally higher p99. The diagnostic run fired 9 PREDICTIVE actions in S4, confirming that the proactive scaling mechanism engages under this workload.
 
 == Cost Analysis
 
@@ -124,16 +129,16 @@ Cost analysis for this architecture maps the local testbed to equivalent cloud s
   kind: table,
   table(
     columns: (auto, auto, auto, auto, auto),
-    [Scenario], [Total/mo], [$/1M SLO-OK], [Serverless Reqs], [EC2 Nodes],
-    [S1 (K8s-only)], [$132], [$0.79], [0], [2],
-    [S2 (Serverless)], [$394], [$2.19], [87,840], [0],
-    [S3 (Hybrid-reactive)], [$147], [$0.81], [5,354], [2],
-    [S4 (Hybrid-predictive)], [$142], [$0.79], [2,666], [2],
+    [Scenario], [Total/mo], [USD/1M SLO-OK], [Serverless Reqs], [EC2 Nodes],
+    [S1 (K8s-only)], [USD 132], [USD 0.79], [0], [2],
+    [S2 (Serverless)], [USD 394], [USD 2.19], [87,840], [0],
+    [S3 (Hybrid-reactive)], [USD 147], [USD 0.81], [5,354], [2],
+    [S4 (Hybrid-predictive)], [USD 142], [USD 0.79], [2,666], [2],
   ),
-  caption: [AWS monthly cost projection (n = 1 diagnostic, `2026-07-11_scaling_fix_n1`). $/1M SLO-OK normalizes total monthly cost by the count of SLO-satisfying requests.],
+  caption: [AWS monthly cost projection (n = 1 diagnostic, `2026-07-11_scaling_fix_n1`). USD/1M SLO-OK normalizes total monthly cost by the count of SLO-satisfying requests.],
 ) <tab:cost-analysis>
 
-S1 is the cheapest scenario ($132/mo) but fails the SLO catastrophically (p99 = 2,421 ms, 7.66% violation rate), so its low cost reflects poor service rather than efficiency. S2 (serverless-only) is the most expensive ($394/mo) but achieves the best raw latency (77.7 ms). Among the hybrid scenarios, S4 is cheaper than S3 ($142 vs $147/mo) and matches S1's cost-efficiency ($0.79/1M SLO-OK) while cutting serverless dependency in half (2,666 vs 5,354 requests). A full cost-performance Pareto analysis is presented in the conclusion (Chapter 5).
+S1 is the cheapest scenario (USD 132/mo) but fails the SLO catastrophically (p99 = 2,421 ms, 7.66% violation rate), so its low cost reflects poor service rather than efficiency. S2 (serverless-only) is the most expensive (USD 394/mo) but achieves the best raw latency (77.7 ms). These n = 1 cost projections are *directional diagnostic estimates only* and must not be used to rank S3 and S4 or claim monthly savings.
 
 == Controller HPO and Holdout Validation
 
@@ -149,8 +154,8 @@ Several mechanisms were validated. The GRU model meets its accuracy target on sy
 
 For the hybrid-versus-pure-Kubernetes comparison (H1), the result is now positive and large: S4 reduced p99 latency by 95.1% (2,421.3 ms -> 118.2 ms) and SLO violations by 98.5% (6,717 -> 104) relative to S1. The previous negative finding was an infrastructure artifact (un-enforced CPU limits and S1 dynamic-node over-provisioning), not a property of the hybrid mechanism. H1 is *confirmed at n = 1*.
 
-For the predictive-versus-reactive comparison (H2), the result is mixed: S4 does not beat S3 on latency (118.2 ms vs 98.8 ms, +19.7%) but provides a cost advantage — 50.2% fewer serverless requests and $5/month lower cost ($142 vs $147) — because proactive Kubernetes scaling absorbs load that the reactive controller spills to Knative. H2 is *partially supported at n = 1*: cost efficiency is demonstrated, latency superiority is not. Both scenarios keep the SLO violation rate near zero.
+For the predictive-versus-reactive comparison (H2), the clean paired experiment (n = 5, full treatment delivery) finds S4 mean p99 128.5 ms versus 136.6 ms for S3 (mean difference -8.1 ms, 95% CI [-36.7, +14.5] ms, p = 0.38). The effect direction is in S4's favor -- a reversal from the earlier confounded comparison (+10.0 ms) achieved by correcting the scaling calibration from alpha = 1/r_saturation to alpha = 1/r_effective. However, the effect is small (d = -0.241) and not statistically significant. A secondary finding shows S4 has 56% fewer SLO violations (d = -0.535, medium effect), suggesting the proactive mechanism improves tail-latency consistency even when the mean p99 difference is modest. H2 is *not statistically supported*, but the evidence is directionally consistent and the mechanism is now cleanly testable.
 
-Two caveats bound these conclusions. First, all comparative numbers are from a single *n = 1 diagnostic* run (`2026-07-11_scaling_fix_n1`); no inferential statistics are reported, and n = 5 replication is required before the verdicts can be treated as statistically established. Second, GRU predictions lag actual load changes, which is why the corrected mechanism uses the GRU forecast to extrapolate the observed load trend for Kubernetes scaling rather than consuming the raw prediction for routing.
+Two caveats bound these conclusions. First, the n = 1 four-scenario diagnostic provides directional mechanism evidence but no inferential statistics. Second, the n = 5 paired comparison, while clean and fully delivered, has insufficient statistical power to detect a small effect (d = -0.241) at alpha = 0.05. A larger sample (n >= 20) would be needed to confirm or refute H2 with adequate power.
 
-Taken together, the results support a positive but provisional framing. The hybrid Kubernetes-serverless system with GRU-based prediction has been designed and implemented, its mechanisms are validated, and hybrid routing delivers a large, directionally consistent performance improvement over pure Kubernetes while the predictive variant trades a small latency penalty for a meaningful cost reduction. Confirmatory evaluation at n = 5 on the fixed infrastructure is the appropriate next step. Recent benchmark studies @rayscale2026 show that even deep RL autoscalers struggle to outperform well-calibrated baselines on cost, while budget-aware approaches @bacc2026 @pobo2024 demonstrate that SLO compliance can be improved by explicitly accounting for remaining error budgets — directions that align with the proactive scaling mechanism validated here.
+Taken together, the results support H1 (hybrid routing outperforms pure Kubernetes, confirmed at n = 1) and provide directionally favorable but non-significant evidence for H2 (predictive scaling shows a small latency advantage and a medium SLO-violation reduction over reactive scaling). The calibration repair demonstrated that the original scaling model's double-counted safety margin was the root cause of S4's apparent underperformance, not the controller design. Recent work on uncertainty-aware autoscaling @aapa2025 and delay-derived planning horizons @adapt2026 provides design directions for further improvement, while benchmark studies @rayscale2026 show that even advanced autoscalers struggle to outperform well-calibrated baselines on cost.
