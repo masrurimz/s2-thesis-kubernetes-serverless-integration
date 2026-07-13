@@ -86,3 +86,27 @@ The mechanism repair (alpha=1/r_effective, buffer=1.0) reversed the effect direc
 ## Diagnostic cost model (n=1, directional only)
 
 The n=1 AWS monthly projection (S1=USD 132, S2=USD 394, S3=USD 147, S4=USD 142/mo) is a directional diagnostic cost model only. It must not be used to rank S3 and S4 or claim monthly savings.
+
+## Dynamic node + serverless offload diagnostic (n=1, 2026-07-13)
+
+**Source:** `results/experiments/phase-b/2026-07-13_dynamic-node-offload`
+
+**Topology:** 2 static workload agents (Docker `--cpus=1.0` each, 6-pod static capacity), `max_k8s_replicas=10` calibration override (experiment-local, not the default cap of 6), up to 2 dynamic nodes via K3dAutoscaler.
+
+**Workload:** `archetype_high_load_k6_stages.json` — 200 RPS constant for 1,200 seconds (40 stages × 30s). At r_effective=16.65, 200 RPS requests 10 replicas, exceeding the 6-pod static envelope and leaving K8s effective capacity (166.5 RPS) below offered load.
+
+| Scenario | p99 (ms) | SLO Violations | Success Rate | RPS | Nodes Provisioned | First Delay (s) | Serverless % | Knative Active (s) | Monthly USD | Dynamic Node USD |
+|---|---|---|---|---|---|---|---|---|---|---|
+| S1 (K8s+HPA) | 6,665.1 | 78,257 | 65.6% | 189.6 | 2 | 54.8 | 0.0% | 0 | 219 | 0.0279 |
+| S2 (Serverless) | 1,401.9 | 12,859 | 94.6% | 199.9 | 0 | 0.0 | 100.0% | 1,260 | 1,110 | 0.0000 |
+| S3 (Hybrid-reactive) | 874.4 | 23,913 | 90.0% | 199.9 | 2 | 51.8 | 96.5% | 1,230 | 387 | 0.0280 |
+| S4 (Hybrid-predictive) | 1,393.3 | 46,245 | 80.7% | 199.9 | 2 | 70.5 | 96.5% | 1,230 | 387 | 0.0275 |
+
+**Three-tier evidence:**
+- Tier 1 (routing): All hybrid scenarios shift HAProxy weights between K8s and Knative backends (S3/S4 serverless weight-time > 24,000).
+- Tier 2 (pod scaling): Algorithm 2 / HPA scales replicas from 3 to 10 (the override cap) in S1, S3, and S4.
+- Tier 3 (node autoscaling): K3dAutoscaler provisions 2 dynamic workload nodes in S1, S3, and S4 after Pending pods are detected. Each `provision_events.json` records `pending_detected → provision_delay_started → node_created → node_resource_applied` for both nodes.
+
+**Trade-off finding:** Dynamic nodes alone are not sufficient. S1 (K8s-only with 2 dynamic nodes but no serverless offload) has the worst p99 (6,665 ms) and success rate (65.6%). S3 (hybrid-reactive with 2 dynamic nodes + serverless offload) achieves the best p99 (874 ms). The 51–70-second provisioning delay was absorbed by Knative offload in S3/S4 but caused severe latency degradation in S1, where no serverless fallback existed. S3 and S4 have identical monthly cost (USD 387/mo) despite different p99, confirming that the cost difference between reactive and predictive modes is negligible at this load; the latency difference is a controller-effectiveness question, not a cost trade-off.
+
+**Cost note:** Dynamic-node EC2 cost (stress-harness reference: USD 0.027–0.028 per run) is separate from the serverless Lambda cost. These are directional diagnostic estimates from n=1 runs and must not be used to claim universal cost superiority.

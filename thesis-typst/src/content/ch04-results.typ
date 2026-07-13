@@ -140,6 +140,29 @@ Cost analysis for this architecture maps the local testbed to equivalent cloud s
 
 S1 is the cheapest scenario (USD 132/mo) but fails the SLO catastrophically (p99 = 2,421 ms, 7.66% violation rate), so its low cost reflects poor service rather than efficiency. S2 (serverless-only) is the most expensive (USD 394/mo) but achieves the best raw latency (77.7 ms). These n = 1 cost projections are *directional diagnostic estimates only* and must not be used to rank S3 and S4 or claim monthly savings.
 
+== Dynamic Node Provisioning and Serverless Offload
+
+The baseline diagnostic (`2026-07-11_scaling_fix_n1`) caps `max_k8s_replicas = 6` to match the two-node schedulable capacity, so the K3dAutoscaler never fires and the third tier -- node-level autoscaling -- is not exercised. A separate high-load diagnostic (`2026-07-13_dynamic-node-offload`, n = 1) raises the cap to 10 replicas and applies a constant 200 RPS workload for 1,200 seconds, deliberately exceeding the six-pod static envelope to trigger Pending pods, dynamic node provisioning, and sustained serverless offload simultaneously.
+
+#figure(
+  kind: table,
+  table(
+    columns: (auto, auto, auto, auto, auto, auto, auto),
+    [Scenario], [p99 (ms)], [Nodes], [Delay (s)], [Serverless %], [Monthly USD], [SLO Violations],
+    [S1 (K8s+HPA)], [6,665.1], [2], [54.8], [0.0%], [219], [78,257],
+    [S2 (Serverless)], [1,401.9], [0], [---], [100.0%], [1,110], [12,859],
+    [S3 (Reactive)], [874.4], [2], [51.8], [96.5%], [387], [23,913],
+    [S4 (Predictive)], [1,393.3], [2], [70.5], [96.5%], [387], [46,245],
+  ),
+  caption: [Three-tier architecture diagnostic (n = 1, `2026-07-13_dynamic-node-offload`). 200 RPS constant load for 1,200 seconds. Nodes = dynamic nodes provisioned by K3dAutoscaler; Delay = first provisioning delay; Serverless % = share of experiment time with Knative weight > 0. Monthly USD is a directional diagnostic estimate.],
+) <tab:dynamic-node-offload>
+
+All three tiers are exercised in this diagnostic. Tier 1 (routing): the hybrid scenarios shift HAProxy weights between K8s and Knative, with S3 and S4 each accumulating over 24,000 serverless weight-time product. Tier 2 (pod scaling): HPA and Algorithm 2 scale replicas from 3 to 10 (the override cap). Tier 3 (node autoscaling): the K3dAutoscaler detects Unschedulable Pending pods and provisions two dynamic workload nodes per run, each recording `pending_detected -> provision_delay_started -> node_created` in the provision event log.
+
+The trade-off between adding nodes and offloading to serverless is visible in the data. S1 (pure Kubernetes with two dynamic nodes but no serverless offload) has the worst p99 (6,665 ms) and success rate (65.6%). S3 (hybrid-reactive with the same two dynamic nodes plus 96.5% serverless time) achieves the best p99 (874 ms). The 51--70-second provisioning delay was absorbed by Knative in S3 and S4 but caused severe latency degradation in S1, where no serverless fallback existed. This demonstrates that dynamic node provisioning alone is not a substitute for serverless offload; the two mechanisms are complementary, and the hybrid architecture's value lies in using both concurrently.
+
+S3 and S4 have identical monthly cost (USD 387/mo) despite different p99 latency, confirming that the cost difference between reactive and predictive modes is negligible at this load. The dynamic-node EC2 cost (USD 0.028 per run, tracked separately from serverless Lambda cost) is the same for all K8s scenarios because all provision the same two nodes. These n = 1 cost projections are *directional diagnostic estimates* and must not be used to claim universal cost superiority.
+
 == Controller HPO and Holdout Validation
 
 A separate hyperparameter optimization study explored four controller parameters via Optuna TPE screening: `target_cpu_util`, `kp_burn`, `proactive_trend_threshold`, and `proactive_approach_ratio`. The methodological finding from this study — conducted on the pre-fix infrastructure that predates the `2026-07-11_scaling_fix_n1` baseline — is reported here for completeness, but its specific quantitative results are *directional* and are superseded by Bugs 8-13; they are not part of the current baseline and are not used in the comparative evaluation above.

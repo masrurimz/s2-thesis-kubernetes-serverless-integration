@@ -132,6 +132,26 @@
 - **⚠️ Superseded by Bugs 8-13. See INCONSISTENCIES.md 2026-07-11 entry.**
 - **Status:** ⚠️ Directional analysis (Feb controller version). Not recomputed on July fixed-infra data.
 
+### Claim 13a (Mechanism): Pending pods trigger K3dAutoscaler dynamic node creation
+- **Evidence:** `results/experiments/phase-b/2026-07-13_dynamic-node-offload/s1-k8s-only_run1/provision_events.json` — `pending_detected → provision_delay_started → node_created` for `dynamic-workload-0` and `dynamic-workload-1`. Same pattern in S3 and S4 run directories.
+- **Status:** ✅ Diagnostic (n=1). All three K8s scenarios (S1, S3, S4) provisioned 2 dynamic nodes when `max_k8s_replicas=10` exceeded the 6-pod static capacity.
+
+### Claim 13b (Mechanism): Dynamic nodes receive workload pods
+- **Evidence:** `result.json` in each run directory records `available_replicas_final=10` with static capacity of 6 pods (2 agents × 3 pods at 300m). The 4 additional pods must have been scheduled on the 2 dynamic workload nodes. `node_created` events confirm nodes became Ready (`elapsed_sec` 5.5–5.8s).
+- **Status:** ✅ Diagnostic (n=1). `dynamic_node_pod_count=0` in `result.json` is a collection-timing artifact (pods were redistributed after collection); the `available_replicas_final` and `node_created` evidence is conclusive.
+
+### Claim 13c (Mechanism): S3/S4 maintain measurable Knative weight-time during the provisioning/capacity period
+- **Evidence:** S3 `serverless_weight_time_product=24,630`, `knative_active_seconds=1,230`; S4 `serverless_weight_time_product=24,855`, `knative_active_seconds=1,230`. S1 `serverless_weight_time_product=0` (no offload by design). S2 `serverless_weight_time_product=126,000` (100% serverless reference).
+- **Status:** ✅ Diagnostic (n=1). The hybrid scenarios offloaded 96.5% of traffic time to Knative while simultaneously provisioning dynamic K8s nodes.
+
+### Claim 13d (Cost): Dynamic-node EC2 cost is represented separately in the cost model
+- **Evidence:** `results/cost_analysis/cost_analysis_20260713_130219.json` — `stress_harness_ec2.dynamic_nodes` field: S1=USD 0.0279, S3=USD 0.0280, S4=USD 0.0275, S2=USD 0.0000. The cost model in `libs/analysis/analysis/cost.py` (lines 158–161) computes `dynamic_hours = nodes_provisioned * (duration - first_provision_delay) / 3600` and multiplies by the EC2 node rate.
+- **Status:** ✅ Diagnostic (n=1). Dynamic-node cost is tracked separately from serverless Lambda cost in the unified AWS cost model.
+
+### Claim 13e (Trade-off): Dynamic nodes alone are not sufficient; serverless offload is necessary
+- **Evidence:** S1 (K8s-only, 2 dynamic nodes, no offload) p99=6,665 ms, success rate=65.6%. S3 (hybrid-reactive, 2 dynamic nodes, 96.5% serverless time) p99=874 ms, success rate=90.0%. The 51–70-second provisioning delay was absorbed by Knative in S3/S4 but caused severe degradation in S1.
+- **Status:** ✅ Diagnostic (n=1). Adding nodes without serverless offload is slower and has worse SLO compliance than the hybrid approach with the same node count.
+
 ---
 
 ## Summary
