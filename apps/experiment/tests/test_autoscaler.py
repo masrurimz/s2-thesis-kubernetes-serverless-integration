@@ -144,6 +144,6 @@ class TestCreateNodeCpuLimits:
             cmd for cmd in captured_run_cmds if len(cmd) > 1 and cmd[0] == "docker" and cmd[1] == "update"
         ]
         assert len(docker_updates) > 0
-        # Container name should be k3d-{cluster_name}-{node_name}-0
+        # Container name follows k3d convention: k3d-{node_name}-0
         container_name = docker_updates[0][-1]
-        assert container_name == "k3d-test-cluster-test-node-0"
+        assert container_name == "k3d-test-node-0"

@@ -35,6 +35,9 @@ class K3dAutoscaler:
         provision_delay_max_sec: int = 120,
         node_memory: str = "1g",
         namespace: str = "default",
+        scale_down_cooldown_sec: int = 120,
+        scale_down_idle_sec: int = 60,
+        workload_pod_label: str = "app=test-app-warm",
     ) -> None:
         self.cluster_name = cluster_name
         self.k3d_path = k3d_path
@@ -46,6 +49,9 @@ class K3dAutoscaler:
         self.provision_delay_max_sec = provision_delay_max_sec
         self.node_memory = node_memory
         self.namespace = namespace
+        self.scale_down_cooldown_sec = scale_down_cooldown_sec
+        self.scale_down_idle_sec = scale_down_idle_sec
+        self.workload_pod_label = workload_pod_label
 
         self._poll_interval_sec = 2
         self._stop_event = threading.Event()
@@ -54,6 +60,8 @@ class K3dAutoscaler:
         self._dynamic_nodes: List[str] = []
         self._events: List[Tuple[float, str, Dict]] = []
         self._next_index = 0
+        self._last_scale_down_ts: float = 0.0
+        self._node_idle_since: Dict[str, float] = {}
 
         self._lock = threading.Lock()
 
@@ -283,6 +291,30 @@ class K3dAutoscaler:
 
         return unschedulable_pods
 
+    def _count_workload_pods_on_node(self, k8s_node_name: str) -> int:
+        """Count workload pods (by label) running on a specific node."""
+        r = self._kubectl(
+            [
+                "get",
+                "pods",
+                "-n",
+                self.namespace,
+                "-l",
+                self.workload_pod_label,
+                "--field-selector",
+                f"spec.nodeName={k8s_node_name}",
+                "-o",
+                "json",
+            ],
+            timeout=15,
+        )
+        if r.returncode != 0:
+            return -1  # unknown; do not scale down on error
+        try:
+            return len(json.loads(r.stdout).get("items", []))
+        except json.JSONDecodeError:
+            return -1
+
     def _scaling_loop(self) -> None:
         logger.info(
             "k3d_autoscaler_loop_started",
@@ -319,6 +351,43 @@ class K3dAutoscaler:
                         "max_nodes_reached",
                         {"max_nodes": self.max_nodes, "pending_count": len(pending_pods)},
                     )
+
+            else:
+                # Scale-down: remove underutilized dynamic nodes when no pending pods.
+                now = time.time()
+                cooldown_passed = (now - self._last_scale_down_ts) >= self.scale_down_cooldown_sec
+
+                if cooldown_passed and current_nodes:
+                    # Check newest dynamic node (reverse sorted = highest index = newest).
+                    newest = sorted(current_nodes)[-1]
+                    k8s_name = self._k8s_node_name_from_short(newest)
+                    pod_count = self._count_workload_pods_on_node(k8s_name)
+
+                    if pod_count == 0:
+                        if newest not in self._node_idle_since:
+                            self._node_idle_since[newest] = now
+
+                        idle_duration = now - self._node_idle_since[newest]
+                        if idle_duration >= self.scale_down_idle_sec:
+                            self._record_event(
+                                "scale_down_detected",
+                                {
+                                    "node": newest,
+                                    "pod_count": pod_count,
+                                    "idle_sec": round(idle_duration, 1),
+                                },
+                            )
+                            logger.info(
+                                "scale_down_node",
+                                node=newest,
+                                idle_sec=round(idle_duration, 1),
+                            )
+                            self.delete_node(newest)
+                            self._last_scale_down_ts = now
+                            self._node_idle_since.pop(newest, None)
+                    else:
+                        # Node has workload pods; reset idle tracking.
+                        self._node_idle_since.pop(newest, None)
 
             time.sleep(self._poll_interval_sec)
 
@@ -434,6 +503,9 @@ class K3dAutoscalerAdapter:
         provision_delay_max_sec: int = 120,
         node_memory: str = "1g",
         namespace: str = "default",
+        scale_down_cooldown_sec: int = 120,
+        scale_down_idle_sec: int = 60,
+        workload_pod_label: str = "app=test-app-warm",
     ) -> None:
         """Initialize adapter with sensible defaults for thesis experiments."""
         # Auto-discover paths from mise shims if not provided
@@ -453,6 +525,9 @@ class K3dAutoscalerAdapter:
             provision_delay_max_sec=provision_delay_max_sec,
             node_memory=node_memory,
             namespace=namespace,
+            scale_down_cooldown_sec=scale_down_cooldown_sec,
+            scale_down_idle_sec=scale_down_idle_sec,
+            workload_pod_label=workload_pod_label,
         )
 
     def reset(self) -> bool:
