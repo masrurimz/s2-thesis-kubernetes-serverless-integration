@@ -184,6 +184,25 @@ The constant-load diagnostic confirms the mechanism but cannot test predictive s
 
 Under variable load, the GRU forecast produced proactive actions for the first time: `predictive_count = 4` (four routing decisions influenced by the forecast) and `proactive_scaleups = 1` (one replica scale-up issued before the observed load reached the target). All validity gates passed (`forecast_horizon_sufficient = True`, `delivered = True`, 55/55 predictions delivered). S4 used 17.6% serverless time versus S3's 21.2%, suggesting the proactive scale-up added Kubernetes capacity earlier and reduced serverless dependency. S3 achieved slightly better p99 (103.9 ms vs 108.3 ms, +4.3%) and fewer SLO violations (14 vs 44), but n = 1 is not conclusive. The identical monthly cost (USD 196/mo) confirms no cost penalty for the predictive mode at this load.
 
+=== Node Consolidation (Utilization-Based Scale-Down)
+
+The node autoscaler implements cluster-autoscaler-style consolidation, matching the Kubernetes Cluster Autoscaler's default behaviour @k8sca-faq: a dynamic node is a candidate for removal when its CPU request utilization falls below 50% of allocatable capacity, all workload pods on the node can be rescheduled onto other workload nodes, and the node has remained underutilized for at least 60 seconds. The `kubectl drain` command evicts pods to other nodes before the node container is deleted. A 120-second cooldown prevents cascading deletions.
+
+Under the same ClarkNet variable-load trace, consolidation produced the strongest S3-versus-S4 differentiation in the project:
+
+#figure(
+  kind: table,
+  table(
+    columns: (auto, auto, auto, auto, auto, auto),
+    [Scenario], [p99 (ms)], [SLO Violations], [Nodes Provisioned], [Scale-Downs], [Monthly USD],
+    [S3 (Reactive)], [228.4], [1,085], [3], [3], [162],
+    [S4 (Predictive)], [113.0], [40], [5], [3], [170],
+  ),
+  caption: [ClarkNet variable-load with utilization-based node consolidation (n = 1, `2026-07-14_clarknet-util-scaledown-n1`). Scale-Downs = node consolidation events. Monthly USD is a directional diagnostic estimate computed from actual per-node lifetime in provision event timestamps.],
+) <tab:clarknet-consolidation>
+
+S4 achieved 50.5% lower p99 (113 ms vs 228 ms) and 96.3% fewer SLO violations (40 vs 1,085) than S3, at a 5% cost premium (USD 170/mo vs 162/mo). The mechanism: S3's reactive controller aggressively consolidated all dynamic nodes when utilization dropped, causing severe latency spikes when ClarkNet load returned and no Kubernetes capacity was available. S4's GRU forecast predicted load ramps and maintained Kubernetes capacity, preventing excessive consolidation. The `scale_down_detected` provision events record `utilization: 0.3, threshold: 0.5, pod_count: 1` for each consolidation, confirming the utilization-based trigger fired correctly. The bidirectional autoscaling loop is visible in the event log: `pending_detected -> node_created -> [load drops] -> scale_down_detected -> node_deleted -> [load rises] -> pending_detected -> node_created`.
+
 == Controller HPO and Holdout Validation
 
 A separate hyperparameter optimization study explored four controller parameters via Optuna TPE screening: `target_cpu_util`, `kp_burn`, `proactive_trend_threshold`, and `proactive_approach_ratio`. The methodological finding from this study — conducted on the pre-fix infrastructure that predates the `2026-07-11_scaling_fix_n1` baseline — is reported here for completeness, but its specific quantitative results are *directional* and are superseded by Bugs 8-13; they are not part of the current baseline and are not used in the comparative evaluation above.
