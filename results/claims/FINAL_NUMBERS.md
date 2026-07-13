@@ -109,4 +109,18 @@ The n=1 AWS monthly projection (S1=USD 132, S2=USD 394, S3=USD 147, S4=USD 142/m
 
 **Trade-off finding:** Dynamic nodes alone are not sufficient. S1 (K8s-only with 2 dynamic nodes but no serverless offload) has the worst p99 (6,665 ms) and success rate (65.6%). S3 (hybrid-reactive with 2 dynamic nodes + serverless offload) achieves the best p99 (874 ms). The 51–70-second provisioning delay was absorbed by Knative offload in S3/S4 but caused severe latency degradation in S1, where no serverless fallback existed. S3 and S4 have identical monthly cost (USD 387/mo) despite different p99, confirming that the cost difference between reactive and predictive modes is negligible at this load; the latency difference is a controller-effectiveness question, not a cost trade-off.
 
+**S4 validity failure — forecast horizon insufficient:** S4 failed the actuator-fidelity validity gate (`run_validity_passed=False`). The measured provisioning delay was 70.5s; with the 15s safety margin, the required forecast horizon is `ceil((70.5 + 15) / 15) = 6` steps. The deployed GRU model outputs only 5 steps (75s forecast window), so `forecast_horizon_sufficient=False`. S4 delivered 55 GRU predictions (100% delivery rate, 56 eligible cycles) but `predictive_count=0` and `proactive_scaleups=0` — none of the forecasts produced a proactive scale-up action. S4's p99 (1,393 ms) was 59% worse than S3's (874 ms) and its SLO violations (46,245) were 93% higher. The longer provisioning delay (70.5s vs S3's 51.8s) suggests the predictive decision path added latency before triggering the scale command.
+
+**Root cause:** Under high load (200 RPS), the K3dAutoscaler's random provisioning delay (45–120s) can exceed the 75s forecast window. The 5-step horizon is adequate for the default 60s delay estimate but not for the observed 70s+ delays at this load level. This validates the ADAPT-inspired design direction: the forecast horizon must adapt to the measured provisioning delay, not remain static.
+
+**Horizon fix — GRU retrained with prediction_horizon=9 (135s window):** The GRU model was retrained on CPU (18s, synthetic data, same architecture) with `prediction_horizon=9` to cover the maximum 120s provisioning delay plus 15s safety margin. Three S4 high-load tests were run:
+
+| Horizon | Window | Forecast horizon sufficient | Run valid | SLO violations | Provisioning delay |
+|---|---|---|---|---|---|
+| 5 (original) | 75s | ❌ False | ❌ False | 46,245 | 70.5s |
+| 7 (test 1) | 105s | ❌ False | ❌ False | 25,466 | 93.5s |
+| 9 (test 2) | 135s | ✅ True | ✅ True | 5,836 | 103.6s |
+
+With horizon=9, S4 passed the actuator-fidelity validity gate (`forecast_horizon_sufficient=True`, `run_validity_passed=True`, `delivered=True`). SLO violations dropped 87% from the original horizon=5 run (46,245 → 5,836). The 56 GRU predictions were delivered at 100% delivery rate. However, `predictive_count=0` and `proactive_scaleups=0` in all three tests — at 200 RPS constant load with `max_k8s_replicas=10`, both the observed and forecast replica targets are clamped at 10, so the forecast cannot produce a proactive scale-up beyond what the observed load already demands. This is a fundamental limitation of testing at constant high load with a tight cap; the forecast would be more actionable under variable load (e.g., ClarkNet) where it can predict surges before the observed load reaches the cap.
+
 **Cost note:** Dynamic-node EC2 cost (stress-harness reference: USD 0.027–0.028 per run) is separate from the serverless Lambda cost. These are directional diagnostic estimates from n=1 runs and must not be used to claim universal cost superiority.

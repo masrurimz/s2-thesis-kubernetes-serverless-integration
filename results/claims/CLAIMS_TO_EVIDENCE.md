@@ -152,6 +152,10 @@
 - **Evidence:** S1 (K8s-only, 2 dynamic nodes, no offload) p99=6,665 ms, success rate=65.6%. S3 (hybrid-reactive, 2 dynamic nodes, 96.5% serverless time) p99=874 ms, success rate=90.0%. The 51–70-second provisioning delay was absorbed by Knative in S3/S4 but caused severe degradation in S1.
 - **Status:** ✅ Diagnostic (n=1). Adding nodes without serverless offload is slower and has worse SLO compliance than the hybrid approach with the same node count.
 
+### Claim 13f (Limitation): S4 forecast horizon insufficient under high load
+- **Evidence:** `results/experiments/phase-b/2026-07-13_dynamic-node-offload/s4-hybrid-predictive_run1/result.json` — `run_validity_passed=False`, `treatment_fidelity.forecast_horizon_sufficient=False`. Measured provisioning delay=70.5s; required horizon = `ceil((70.5+15)/15) = 6` steps; model outputs 5 steps (75s). S4 delivered 55 predictions (100% delivery) but `predictive_count=0`, `proactive_scaleups=0`. S4 p99=1,393 ms vs S3 p99=874 ms (+59%).
+- **Status:** ⚠️ Diagnostic (n=1). The static 5-step forecast horizon is inadequate when provisioning delays exceed 70s. Validates the need for an adaptive horizon that tracks the live EWMA of measured provisioning delays. Retraining with `prediction_horizon=7` (105s window) or making the horizon adaptive is required.
+
 ---
 
 ## Summary
