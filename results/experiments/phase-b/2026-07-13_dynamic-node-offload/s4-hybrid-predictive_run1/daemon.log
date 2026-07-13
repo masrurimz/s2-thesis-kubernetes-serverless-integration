@@ -1,0 +1,508 @@
+2026-07-13 12:16:30 [info     ] SLOMonitor initialized         threshold_ms=200.0 violation_window=30
+2026-07-13 12:16:30 [info     ] Algorithm1ControllerV3 initialized max_knative=50 r_saturation=33.3 target_cpu_util=0.5 total_budget=1000
+2026-07-13 12:16:30 [info     ] Using V3 controller (Capacity-Driven) scenario=s4-hybrid-predictive version=v3
+2026-07-13 12:16:30 [info     ] HAProxyWeightAdjuster initialized backend=servers host=localhost port=19999
+2026-07-13 12:16:30 [info     ] GRUClient initialized          base_url=http://localhost:8090
+2026-07-13 12:16:30 [info     ] K8sScaler initialized          deployment=test-app-warm namespace=default
+2026-07-13 12:16:30 [info     ] RoutingDaemon initialized      decision_interval=15 description='Algorithm 1 with GRU predictions (Algorithm 2)' scenario=s4-hybrid-predictive use_algorithm=True use_predictions=True
+2026-07-13 12:16:30 [info     ] Starting routing daemon        interval=15 scenario=s4-hybrid-predictive
+2026-07-13 12:16:30 [info     ] Weights updated                k3s=80 knative=20
+2026-07-13 12:16:30 [info     ] Initial weights applied        k3s=80 knative=20
+2026-07-13 12:16:30 [debug    ] HAProxy fallback primed        total_requests=0
+2026-07-13 12:16:30 [info     ] Model status validated         prediction_horizon=5 sample_interval_sec=15 sequence_length=30
+2026-07-13 12:16:30 [info     ] Model status validated on first eligible cycle prediction_horizon=5 sequence_length=30
+2026-07-13 12:16:30 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-13 12:16:30 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=3 hold_until=0.0 observed_load=0.0 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-07-13 12:16:30 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=116.82 p99=0.0
+2026-07-13 12:16:45 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-13 12:16:45 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=3 hold_until=0.0 observed_load=0.0 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-07-13 12:16:45 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=113.92 p99=0.0
+2026-07-13 12:17:00 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-07-13 12:17:00 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=3 hold_until=0.0 observed_load=0.0 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-07-13 12:17:00 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=107.72 p99=0.0
+2026-07-13 12:17:15 [debug    ] HAProxy fallback latency       delta_requests=2778 interval_avg_ms=1380.0 max_rtime_ms=5941.0 p99_est=2760.0
+2026-07-13 12:17:15 [info     ] controller_decision_v3         action=REACTIVE available_replicas=2 budget_remaining=999 burn_adjustment=0 burst_ratio=0.8184 capacity_deficit=True confidence=0 current_load=183.36029520916705 decision_id=c5c01b11 k8s_capacity=33.3 k8s_weight=50 knative_weight=50 p99=2760.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=183.4 weights_after={'k3s': 50, 'knative': 50} weights_before={'k3s': 80, 'knative': 20}
+2026-07-13 12:17:15 [info     ] Weights updated                k3s=50 knative=50
+2026-07-13 12:17:15 [info     ] Weights updated                action=REACTIVE reason='load=183RPS | k8s_cap=33RPS | CAPACITY-DEFICIT | (burst-routing)' weights={'k3s': 50, 'knative': 50}
+2026-07-13 12:17:15 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=3 predicted_load=91.68014760458352 required_resources=5.506 target_replicas=6
+2026-07-13 12:17:15 [info     ] algorithm2_decision            action=SCALE_UP applied_target=6 current_replicas=3 hold_until=0.0 observed_load=91.68 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-07-13 12:17:15 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=6
+2026-07-13 12:17:15 [debug    ] Decision loop completed        action=REACTIVE latency_ms=164.0 p99=2760.0
+2026-07-13 12:17:31 [info     ] Scale readiness observed       elapsed_sec=15.1 ewma_delay=46.5 samples=1 target=6
+2026-07-13 12:17:31 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=191.31732495723182 required_resources=11.491 target_replicas=10
+2026-07-13 12:17:31 [info     ] algorithm2_decision            action=SCALE_UP applied_target=10 current_replicas=6 hold_until=0.0 observed_load=191.32 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:17:31 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=10
+2026-07-13 12:17:31 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=188.35 p99=2760.0
+2026-07-13 12:17:46 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.649991065718 required_resources=11.991 target_replicas=10
+2026-07-13 12:17:46 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.65 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:17:46 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=119.17 p99=2760.0
+2026-07-13 12:18:01 [debug    ] HAProxy fallback latency       delta_requests=3024 interval_avg_ms=265.07 max_rtime_ms=7683.0 p99_est=530.14
+2026-07-13 12:18:01 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.98669616929942 required_resources=12.011 target_replicas=10
+2026-07-13 12:18:01 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.99 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:18:01 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=118.51 p99=530.1428571428571
+2026-07-13 12:18:16 [debug    ] HAProxy fallback latency       delta_requests=3023 interval_avg_ms=87.21 max_rtime_ms=7683.0 p99_est=174.41
+2026-07-13 12:18:16 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.98452803284349 required_resources=12.011 target_replicas=10
+2026-07-13 12:18:16 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.98 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:18:16 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=115.01 p99=174.41283493218657
+2026-07-13 12:18:31 [debug    ] HAProxy fallback latency       delta_requests=3023 interval_avg_ms=283.93 max_rtime_ms=7683.0 p99_est=567.87
+2026-07-13 12:18:31 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.00937890621617 required_resources=12.013 target_replicas=10
+2026-07-13 12:18:31 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.01 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:18:31 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=119.32 p99=567.8696658948065
+2026-07-13 12:18:46 [debug    ] HAProxy fallback latency       delta_requests=3024 interval_avg_ms=221.92 max_rtime_ms=7683.0 p99_est=443.84
+2026-07-13 12:18:46 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.99935536628305 required_resources=12.012 target_replicas=10
+2026-07-13 12:18:46 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.0 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:18:46 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=121.45 p99=443.84391534391534
+2026-07-13 12:19:01 [debug    ] HAProxy fallback latency       delta_requests=3024 interval_avg_ms=73.4 max_rtime_ms=7683.0 p99_est=146.81
+2026-07-13 12:19:01 [info     ] controller_decision_v3         action=RECOVERY available_replicas=9 budget_remaining=994 burn_adjustment=0 burst_ratio=0.2507 capacity_deficit=False confidence=0 current_load=199.98076903883745 decision_id=894b20df k8s_capacity=149.8 k8s_weight=74 knative_weight=26 p99=146.8 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=200.0 weights_after={'k3s': 74, 'knative': 26} weights_before={'k3s': 50, 'knative': 50}
+2026-07-13 12:19:01 [info     ] Weights updated                k3s=74 knative=26
+2026-07-13 12:19:01 [info     ] Weights updated                action=RECOVERY reason='load=200RPS | k8s_cap=150RPS | (reducing-serverless)' weights={'k3s': 74, 'knative': 26}
+2026-07-13 12:19:01 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.9910065560994 required_resources=12.011 target_replicas=10
+2026-07-13 12:19:01 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.99 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:19:01 [debug    ] Decision loop completed        action=RECOVERY latency_ms=157.47 p99=146.8095238095238
+2026-07-13 12:19:16 [debug    ] HAProxy fallback latency       delta_requests=3032 interval_avg_ms=589.65 max_rtime_ms=7683.0 p99_est=1179.29
+2026-07-13 12:19:17 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.00814897805932 required_resources=12.013 target_replicas=10
+2026-07-13 12:19:17 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.01 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:19:17 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=115.26 p99=1179.292875989446
+2026-07-13 12:19:32 [debug    ] HAProxy fallback latency       delta_requests=3023 interval_avg_ms=132.8 max_rtime_ms=7683.0 p99_est=265.59
+2026-07-13 12:19:32 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.01617759247398 required_resources=12.013 target_replicas=10
+2026-07-13 12:19:32 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.02 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:19:32 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=118.26 p99=265.5937810122395
+2026-07-13 12:19:47 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.00791526932537 required_resources=12.012 target_replicas=10
+2026-07-13 12:19:47 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.01 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:19:47 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=115.1 p99=265.5937810122395
+2026-07-13 12:20:02 [debug    ] HAProxy fallback latency       delta_requests=3024 interval_avg_ms=436.48 max_rtime_ms=7683.0 p99_est=872.96
+2026-07-13 12:20:02 [info     ] controller_decision_v3         action=RECOVERY available_replicas=10 budget_remaining=990 burn_adjustment=0 burst_ratio=0.1675 capacity_deficit=False confidence=0 current_load=199.99295876850815 decision_id=5665925a k8s_capacity=166.5 k8s_weight=83 knative_weight=17 p99=873.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=200.0 weights_after={'k3s': 83, 'knative': 17} weights_before={'k3s': 74, 'knative': 26}
+2026-07-13 12:20:02 [info     ] Weights updated                k3s=83 knative=17
+2026-07-13 12:20:02 [info     ] Weights updated                action=RECOVERY reason='load=200RPS | k8s_cap=166RPS | (reducing-serverless)' weights={'k3s': 83, 'knative': 17}
+2026-07-13 12:20:02 [info     ] Scale readiness observed       elapsed_sec=151.3 ewma_delay=78.0 samples=2 target=10
+2026-07-13 12:20:02 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.00598151974606 required_resources=12.012 target_replicas=10
+2026-07-13 12:20:02 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.01 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:20:02 [debug    ] Decision loop completed        action=RECOVERY latency_ms=153.37 p99=872.957671957672
+2026-07-13 12:20:17 [debug    ] HAProxy fallback latency       delta_requests=3031 interval_avg_ms=127.73 max_rtime_ms=7683.0 p99_est=255.45
+2026-07-13 12:20:17 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.9754000723163 required_resources=12.011 target_replicas=10
+2026-07-13 12:20:17 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.98 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:20:17 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=119.97 p99=255.4503464203233
+2026-07-13 12:20:32 [debug    ] HAProxy fallback latency       delta_requests=3025 interval_avg_ms=127.47 max_rtime_ms=7683.0 p99_est=254.94
+2026-07-13 12:20:32 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.97280367042555 required_resources=12.01 target_replicas=10
+2026-07-13 12:20:32 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.97 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:20:32 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=126.42 p99=254.93619834710745
+2026-07-13 12:20:47 [debug    ] HAProxy fallback latency       delta_requests=3023 interval_avg_ms=190.07 max_rtime_ms=7683.0 p99_est=380.14
+2026-07-13 12:20:47 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.0238108996087 required_resources=12.013 target_replicas=10
+2026-07-13 12:20:47 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.02 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:20:47 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=114.69 p99=380.1376116440622
+2026-07-13 12:21:02 [debug    ] HAProxy fallback latency       delta_requests=3024 interval_avg_ms=331.41 max_rtime_ms=7683.0 p99_est=662.82
+2026-07-13 12:21:02 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.0279498787348 required_resources=12.014 target_replicas=10
+2026-07-13 12:21:02 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.03 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:21:02 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=115.97 p99=662.8201058201058
+2026-07-13 12:21:17 [debug    ] HAProxy fallback latency       delta_requests=3023 interval_avg_ms=347.45 max_rtime_ms=7683.0 p99_est=694.9
+2026-07-13 12:21:17 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.99453289081362 required_resources=12.012 target_replicas=10
+2026-07-13 12:21:17 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.99 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:21:17 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=115.45 p99=694.9043996030433
+2026-07-13 12:21:33 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.9896450718675 required_resources=12.011 target_replicas=10
+2026-07-13 12:21:33 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.99 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:21:33 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=125.08 p99=694.9043996030433
+2026-07-13 12:21:48 [debug    ] HAProxy fallback latency       delta_requests=3024 interval_avg_ms=581.52 max_rtime_ms=7683.0 p99_est=1163.04
+2026-07-13 12:21:48 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.9924279556399 required_resources=12.012 target_replicas=10
+2026-07-13 12:21:48 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.99 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:21:48 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=119.57 p99=1163.037037037037
+2026-07-13 12:22:03 [debug    ] HAProxy fallback latency       delta_requests=3024 interval_avg_ms=83.52 max_rtime_ms=7683.0 p99_est=167.04
+2026-07-13 12:22:03 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.00237423818157 required_resources=12.012 target_replicas=10
+2026-07-13 12:22:03 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.0 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:22:03 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=121.22 p99=167.03703703703704
+2026-07-13 12:22:18 [debug    ] HAProxy fallback latency       delta_requests=3024 interval_avg_ms=90.44 max_rtime_ms=7683.0 p99_est=180.89
+2026-07-13 12:22:18 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.99211544513892 required_resources=12.012 target_replicas=10
+2026-07-13 12:22:18 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.99 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:22:18 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=115.73 p99=180.88888888888889
+2026-07-13 12:22:33 [debug    ] HAProxy fallback latency       delta_requests=3024 interval_avg_ms=144.22 max_rtime_ms=7683.0 p99_est=288.44
+2026-07-13 12:22:33 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.01148559158415 required_resources=12.013 target_replicas=10
+2026-07-13 12:22:33 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.01 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:22:33 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=118.26 p99=288.44444444444446
+2026-07-13 12:22:48 [debug    ] HAProxy fallback latency       delta_requests=3023 interval_avg_ms=92.33 max_rtime_ms=7683.0 p99_est=184.67
+2026-07-13 12:22:48 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.00394987392812 required_resources=12.012 target_replicas=10
+2026-07-13 12:22:48 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.0 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:22:48 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=114.36 p99=184.66821038703276
+2026-07-13 12:23:03 [debug    ] HAProxy fallback latency       delta_requests=3024 interval_avg_ms=273.78 max_rtime_ms=7683.0 p99_est=547.55
+2026-07-13 12:23:03 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.98533711336663 required_resources=12.011 target_replicas=10
+2026-07-13 12:23:03 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.99 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:23:03 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=132.13 p99=547.5535714285714
+2026-07-13 12:23:18 [debug    ] HAProxy fallback latency       delta_requests=3026 interval_avg_ms=180.09 max_rtime_ms=7683.0 p99_est=360.18
+2026-07-13 12:23:18 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.02146836137982 required_resources=12.013 target_replicas=10
+2026-07-13 12:23:18 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.02 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:23:18 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=116.26 p99=360.1804362194316
+2026-07-13 12:23:33 [debug    ] HAProxy fallback latency       delta_requests=3023 interval_avg_ms=670.82 max_rtime_ms=7683.0 p99_est=1341.64
+2026-07-13 12:23:34 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.01042718453337 required_resources=12.013 target_replicas=10
+2026-07-13 12:23:34 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.01 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:23:34 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=113.98 p99=1341.6420774065498
+2026-07-13 12:23:49 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.96656869822573 required_resources=12.01 target_replicas=10
+2026-07-13 12:23:49 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.97 observed_target=10 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=None
+2026-07-13 12:23:49 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=121.9 p99=1341.6420774065498
+2026-07-13 12:24:04 [debug    ] HAProxy fallback latency       delta_requests=3023 interval_avg_ms=348.67 max_rtime_ms=7683.0 p99_est=697.35
+2026-07-13 12:24:04 [debug    ] GRU prediction received        confidence=0.8 latency_ms=112.04 predicted=200
+2026-07-13 12:24:04 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:24:04 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:24:04 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.9916586266566 required_resources=12.012 target_replicas=10
+2026-07-13 12:24:04 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.99 observed_target=10 point_forecasts=[186.38357543945312, 183.73138427734375, 184.46923828125, 182.5458984375, 180.03121948242188] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.4512481689453, 197.3568878173828, 198.62188720703125, 196.91403198242188, 194.7103271484375]
+2026-07-13 12:24:04 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=230.42 p99=697.3483294740324
+2026-07-13 12:24:19 [debug    ] HAProxy fallback latency       delta_requests=3047 interval_avg_ms=357.57 max_rtime_ms=7683.0 p99_est=715.15
+2026-07-13 12:24:19 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.23 predicted=200
+2026-07-13 12:24:19 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:24:19 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:24:19 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.0123199942969 required_resources=12.013 target_replicas=10
+2026-07-13 12:24:19 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.01 observed_target=10 point_forecasts=[186.3455352783203, 183.69869995117188, 184.4297637939453, 182.50296020507812, 180.00193786621094] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.4132080078125, 197.32420349121094, 198.58241271972656, 196.87109375, 194.68104553222656]
+2026-07-13 12:24:19 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=132.98 p99=715.1480144404333
+2026-07-13 12:24:34 [debug    ] HAProxy fallback latency       delta_requests=3026 interval_avg_ms=398.48 max_rtime_ms=7683.0 p99_est=796.97
+2026-07-13 12:24:34 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.15 predicted=200
+2026-07-13 12:24:34 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:24:34 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:24:34 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.00707040977386 required_resources=12.012 target_replicas=10
+2026-07-13 12:24:34 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.01 observed_target=10 point_forecasts=[186.32485961914062, 183.68087768554688, 184.40768432617188, 182.47689819335938, 179.98727416992188] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3925323486328, 197.30638122558594, 198.56033325195312, 196.84503173828125, 194.6663818359375]
+2026-07-13 12:24:34 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=130.44 p99=796.9689358889623
+2026-07-13 12:24:49 [debug    ] HAProxy fallback latency       delta_requests=3026 interval_avg_ms=781.45 max_rtime_ms=7683.0 p99_est=1562.91
+2026-07-13 12:24:49 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.53 predicted=200
+2026-07-13 12:24:49 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:24:49 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:24:49 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.01049790645254 required_resources=12.013 target_replicas=10
+2026-07-13 12:24:49 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.01 observed_target=10 point_forecasts=[186.31980895996094, 183.676513671875, 184.40252685546875, 182.47207641601562, 179.98287963867188] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.38748168945312, 197.30201721191406, 198.55517578125, 196.8402099609375, 194.6619873046875]
+2026-07-13 12:24:49 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=124.73 p99=1562.906807666887
+2026-07-13 12:25:04 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.01 predicted=200
+2026-07-13 12:25:04 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:25:04 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:25:04 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.99571087255566 required_resources=12.012 target_replicas=10
+2026-07-13 12:25:04 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.0 observed_target=10 point_forecasts=[186.31707763671875, 183.673828125, 184.39974975585938, 182.46939086914062, 179.9802703857422] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.38475036621094, 197.29933166503906, 198.55239868164062, 196.8375244140625, 194.6593780517578]
+2026-07-13 12:25:04 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=120.62 p99=1562.906807666887
+2026-07-13 12:25:19 [debug    ] HAProxy fallback latency       delta_requests=3024 interval_avg_ms=691.09 max_rtime_ms=7683.0 p99_est=1382.18
+2026-07-13 12:25:19 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.91 predicted=200
+2026-07-13 12:25:19 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:25:19 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:25:20 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.99384410481494 required_resources=12.012 target_replicas=10
+2026-07-13 12:25:20 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.99 observed_target=10 point_forecasts=[186.31442260742188, 183.67129516601562, 184.3970947265625, 182.46685791015625, 179.97784423828125] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.38209533691406, 197.2967987060547, 198.54974365234375, 196.83499145507812, 194.65695190429688]
+2026-07-13 12:25:20 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=121.42 p99=1382.1759259259259
+2026-07-13 12:25:35 [debug    ] HAProxy fallback latency       delta_requests=3024 interval_avg_ms=108.26 max_rtime_ms=7683.0 p99_est=216.52
+2026-07-13 12:25:35 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.79 predicted=200
+2026-07-13 12:25:35 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:25:35 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:25:35 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.9873388017088 required_resources=12.011 target_replicas=10
+2026-07-13 12:25:35 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.99 observed_target=10 point_forecasts=[186.3101348876953, 183.66725158691406, 184.3927764892578, 182.46273803710938, 179.97384643554688] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3778076171875, 197.29275512695312, 198.54542541503906, 196.83087158203125, 194.6529541015625]
+2026-07-13 12:25:35 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=123.92 p99=216.52116402116403
+2026-07-13 12:25:50 [debug    ] HAProxy fallback latency       delta_requests=3025 interval_avg_ms=2056.03 max_rtime_ms=7683.0 p99_est=4112.06
+2026-07-13 12:25:50 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.1 predicted=200
+2026-07-13 12:25:50 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:25:50 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:25:50 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.99885952880487 required_resources=12.012 target_replicas=10
+2026-07-13 12:25:50 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.0 observed_target=10 point_forecasts=[186.31756591796875, 183.67398071289062, 184.4002685546875, 182.46957397460938, 179.98062133789062] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.38523864746094, 197.2994842529297, 198.55291748046875, 196.83770751953125, 194.65972900390625]
+2026-07-13 12:25:50 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=121.47 p99=4112.058181818182
+2026-07-13 12:26:05 [debug    ] HAProxy fallback latency       delta_requests=3025 interval_avg_ms=687.16 max_rtime_ms=7683.0 p99_est=1374.32
+2026-07-13 12:26:05 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.92 predicted=200
+2026-07-13 12:26:05 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:26:05 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:26:05 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.02854112718754 required_resources=12.014 target_replicas=10
+2026-07-13 12:26:05 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.03 observed_target=10 point_forecasts=[186.33042907714844, 183.68612670898438, 184.4132537841797, 182.48184204101562, 179.9925537109375] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.39810180664062, 197.31163024902344, 198.56590270996094, 196.8499755859375, 194.67166137695312]
+2026-07-13 12:26:05 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=126.04 p99=1374.32
+2026-07-13 12:26:20 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.23 predicted=200
+2026-07-13 12:26:20 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:26:20 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:26:20 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.01079223341713 required_resources=12.013 target_replicas=10
+2026-07-13 12:26:20 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.01 observed_target=10 point_forecasts=[186.31884765625, 183.67587280273438, 184.40158081054688, 182.47134399414062, 179.98208618164062] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3865203857422, 197.30137634277344, 198.55422973632812, 196.8394775390625, 194.66119384765625]
+2026-07-13 12:26:20 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=121.69 p99=1374.32
+2026-07-13 12:26:35 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.16 predicted=200
+2026-07-13 12:26:35 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:26:35 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:26:35 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.97924716461023 required_resources=12.011 target_replicas=10
+2026-07-13 12:26:35 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.98 observed_target=10 point_forecasts=[186.3111572265625, 183.66827392578125, 184.3937225341797, 182.46380615234375, 179.97476196289062] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3788299560547, 197.2937774658203, 198.54637145996094, 196.83193969726562, 194.65386962890625]
+2026-07-13 12:26:35 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=121.23 p99=1374.32
+2026-07-13 12:26:50 [debug    ] HAProxy fallback latency       delta_requests=3024 interval_avg_ms=940.91 max_rtime_ms=7683.0 p99_est=1881.82
+2026-07-13 12:26:50 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.94 predicted=200
+2026-07-13 12:26:50 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:26:50 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:26:50 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.9808352710479 required_resources=12.011 target_replicas=10
+2026-07-13 12:26:50 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.98 observed_target=10 point_forecasts=[186.30801391601562, 183.66519165039062, 184.390625, 182.4606475830078, 179.97186279296875] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3756866455078, 197.2906951904297, 198.54327392578125, 196.82879638671875, 194.65097045898438]
+2026-07-13 12:26:50 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=120.97 p99=1881.818783068783
+2026-07-13 12:27:05 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.1 predicted=200
+2026-07-13 12:27:05 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:27:05 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:27:05 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.01552652216674 required_resources=12.013 target_replicas=10
+2026-07-13 12:27:05 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.02 observed_target=10 point_forecasts=[186.3264923095703, 183.68215942382812, 184.40927124023438, 182.4779052734375, 179.98880004882812] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3941650390625, 197.3076629638672, 198.56192016601562, 196.84603881835938, 194.66790771484375]
+2026-07-13 12:27:05 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=127.25 p99=1881.818783068783
+2026-07-13 12:27:20 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.12 predicted=200
+2026-07-13 12:27:20 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:27:20 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:27:21 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.01115843156413 required_resources=12.013 target_replicas=10
+2026-07-13 12:27:21 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.01 observed_target=10 point_forecasts=[186.315185546875, 183.67239379882812, 184.39794921875, 182.46780395507812, 179.97872924804688] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3828582763672, 197.2978973388672, 198.55059814453125, 196.8359375, 194.6578369140625]
+2026-07-13 12:27:21 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=137.55 p99=1881.818783068783
+2026-07-13 12:27:36 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.01 predicted=200
+2026-07-13 12:27:36 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:27:36 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:27:36 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.9984745067615 required_resources=12.012 target_replicas=10
+2026-07-13 12:27:36 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.0 observed_target=10 point_forecasts=[186.32260131835938, 183.67874145507812, 184.4052734375, 182.4744415283203, 179.98526000976562] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.39027404785156, 197.3042449951172, 198.55792236328125, 196.84259033203125, 194.66436767578125]
+2026-07-13 12:27:36 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=125.07 p99=1881.818783068783
+2026-07-13 12:27:51 [debug    ] HAProxy fallback latency       delta_requests=3025 interval_avg_ms=248.85 max_rtime_ms=7683.0 p99_est=497.7
+2026-07-13 12:27:51 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.0 predicted=200
+2026-07-13 12:27:51 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:27:51 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:27:51 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.01212060570955 required_resources=12.013 target_replicas=10
+2026-07-13 12:27:51 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.01 observed_target=10 point_forecasts=[186.32070922851562, 183.67733764648438, 184.4034423828125, 182.47286987304688, 179.98370361328125] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3883819580078, 197.30284118652344, 198.55609130859375, 196.84100341796875, 194.66281127929688]
+2026-07-13 12:27:51 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=126.31 p99=497.69586776859506
+2026-07-13 12:28:06 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.72 predicted=200
+2026-07-13 12:28:06 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:28:06 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:28:06 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.9922562396285 required_resources=12.012 target_replicas=10
+2026-07-13 12:28:06 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.99 observed_target=10 point_forecasts=[186.31387329101562, 183.67092895507812, 184.39654541015625, 182.46641540527344, 179.97735595703125] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3815460205078, 197.2964324951172, 198.5491943359375, 196.83456420898438, 194.65646362304688]
+2026-07-13 12:28:06 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=125.19 p99=497.69586776859506
+2026-07-13 12:28:21 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.05 predicted=200
+2026-07-13 12:28:21 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:28:21 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:28:21 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.9888924408493 required_resources=12.011 target_replicas=10
+2026-07-13 12:28:21 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.99 observed_target=10 point_forecasts=[186.31326293945312, 183.6700897216797, 184.3958740234375, 182.46563720703125, 179.9766845703125] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3809356689453, 197.29559326171875, 198.54852294921875, 196.83377075195312, 194.65579223632812]
+2026-07-13 12:28:21 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=126.17 p99=497.69586776859506
+2026-07-13 12:28:36 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.81 predicted=200
+2026-07-13 12:28:36 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:28:36 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:28:36 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.9869444721814 required_resources=12.011 target_replicas=10
+2026-07-13 12:28:36 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.99 observed_target=10 point_forecasts=[186.30853271484375, 183.66575622558594, 184.39120483398438, 182.46121215820312, 179.972412109375] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.37620544433594, 197.291259765625, 198.54385375976562, 196.829345703125, 194.65151977539062]
+2026-07-13 12:28:36 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=126.75 p99=497.69586776859506
+2026-07-13 12:28:51 [debug    ] HAProxy fallback latency       delta_requests=3026 interval_avg_ms=5.18 max_rtime_ms=7683.0 p99_est=10.36
+2026-07-13 12:28:51 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.18 predicted=200
+2026-07-13 12:28:51 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:28:51 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:28:51 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.97790242929574 required_resources=12.011 target_replicas=10
+2026-07-13 12:28:51 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.98 observed_target=10 point_forecasts=[186.30494689941406, 183.66229248046875, 184.3875732421875, 182.45773315429688, 179.9690399169922] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.37261962890625, 197.2877960205078, 198.54022216796875, 196.82586669921875, 194.6481475830078]
+2026-07-13 12:28:51 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=121.63 p99=10.364838070059484
+2026-07-13 12:29:06 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.77 predicted=200
+2026-07-13 12:29:06 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:29:06 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:29:06 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.00892607188456 required_resources=12.013 target_replicas=10
+2026-07-13 12:29:06 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.01 observed_target=10 point_forecasts=[186.32278442382812, 183.67864990234375, 184.405517578125, 182.47433471679688, 179.9853515625] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3904571533203, 197.3041534423828, 198.55816650390625, 196.84246826171875, 194.66445922851562]
+2026-07-13 12:29:06 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=125.13 p99=10.364838070059484
+2026-07-13 12:29:21 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.0 predicted=200
+2026-07-13 12:29:21 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:29:21 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:29:22 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.02037193102774 required_resources=12.013 target_replicas=10
+2026-07-13 12:29:22 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.02 observed_target=10 point_forecasts=[186.32086181640625, 183.67752075195312, 184.40365600585938, 182.4730224609375, 179.98388671875] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.38853454589844, 197.3030242919922, 198.55630493164062, 196.84115600585938, 194.66299438476562]
+2026-07-13 12:29:22 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=125.4 p99=10.364838070059484
+2026-07-13 12:29:37 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.69 predicted=200
+2026-07-13 12:29:37 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:29:37 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:29:37 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.99655583640333 required_resources=12.012 target_replicas=10
+2026-07-13 12:29:37 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.0 observed_target=10 point_forecasts=[186.3173065185547, 183.67410278320312, 184.39999389648438, 182.46966552734375, 179.98049926757812] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.38497924804688, 197.2996063232422, 198.55264282226562, 196.83779907226562, 194.65960693359375]
+2026-07-13 12:29:37 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=127.3 p99=10.364838070059484
+2026-07-13 12:29:52 [debug    ] HAProxy fallback latency       delta_requests=3025 interval_avg_ms=478.39 max_rtime_ms=7683.0 p99_est=956.78
+2026-07-13 12:29:52 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.13 predicted=200
+2026-07-13 12:29:52 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:29:52 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:29:52 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.0135955320742 required_resources=12.013 target_replicas=10
+2026-07-13 12:29:52 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.01 observed_target=10 point_forecasts=[186.32713317871094, 183.68304443359375, 184.4098663330078, 182.478759765625, 179.98947143554688] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.39480590820312, 197.3085479736328, 198.56251525878906, 196.84689331054688, 194.6685791015625]
+2026-07-13 12:29:52 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=122.93 p99=956.7834710743801
+2026-07-13 12:30:07 [debug    ] HAProxy fallback latency       delta_requests=3025 interval_avg_ms=546.32 max_rtime_ms=7683.0 p99_est=1092.63
+2026-07-13 12:30:07 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.69 predicted=200
+2026-07-13 12:30:07 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:30:07 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:30:07 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.99418930445898 required_resources=12.012 target_replicas=10
+2026-07-13 12:30:07 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.99 observed_target=10 point_forecasts=[186.30929565429688, 183.66696166992188, 184.3919677734375, 182.46231079101562, 179.97329711914062] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.37696838378906, 197.29246520996094, 198.54461669921875, 196.8304443359375, 194.65240478515625]
+2026-07-13 12:30:07 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=127.7 p99=1092.6314049586776
+2026-07-13 12:30:22 [debug    ] HAProxy fallback latency       delta_requests=3026 interval_avg_ms=88.0 max_rtime_ms=7683.0 p99_est=176.0
+2026-07-13 12:30:22 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.18 predicted=200
+2026-07-13 12:30:22 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:30:22 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:30:22 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.99362498257983 required_resources=12.012 target_replicas=10
+2026-07-13 12:30:22 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.99 observed_target=10 point_forecasts=[186.32176208496094, 183.67776489257812, 184.40443420410156, 182.4735107421875, 179.98440551757812] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.38943481445312, 197.3032684326172, 198.5570831298828, 196.84164428710938, 194.66351318359375]
+2026-07-13 12:30:22 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=121.98 p99=176.0
+2026-07-13 12:30:37 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.11 predicted=200
+2026-07-13 12:30:37 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:30:37 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:30:37 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.00053049488122 required_resources=12.012 target_replicas=10
+2026-07-13 12:30:37 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.0 observed_target=10 point_forecasts=[186.310546875, 183.66793823242188, 184.3932647705078, 182.46334838867188, 179.97442626953125] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3782196044922, 197.29344177246094, 198.54591369628906, 196.83148193359375, 194.65353393554688]
+2026-07-13 12:30:37 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=120.14 p99=176.0
+2026-07-13 12:30:52 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.98 predicted=200
+2026-07-13 12:30:52 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:30:52 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:30:52 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.9874287272466 required_resources=12.011 target_replicas=10
+2026-07-13 12:30:52 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.99 observed_target=10 point_forecasts=[186.31484985351562, 183.67144775390625, 184.39749145507812, 182.46702575683594, 179.9781036376953] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3825225830078, 197.2969512939453, 198.55014038085938, 196.83517456054688, 194.65721130371094]
+2026-07-13 12:30:52 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=122.34 p99=176.0
+2026-07-13 12:31:07 [debug    ] HAProxy fallback latency       delta_requests=3025 interval_avg_ms=19.08 max_rtime_ms=7683.0 p99_est=38.15
+2026-07-13 12:31:07 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.82 predicted=200
+2026-07-13 12:31:07 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:31:07 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:31:07 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.01693032064483 required_resources=12.013 target_replicas=10
+2026-07-13 12:31:07 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.02 observed_target=10 point_forecasts=[186.32437133789062, 183.68045043945312, 184.40716552734375, 182.47610473632812, 179.9869842529297] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3920440673828, 197.3059539794922, 198.559814453125, 196.84423828125, 194.6660919189453]
+2026-07-13 12:31:07 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=123.86 p99=38.152727272727276
+2026-07-13 12:31:22 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.72 predicted=200
+2026-07-13 12:31:22 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:31:22 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:31:23 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.01096217415113 required_resources=12.013 target_replicas=10
+2026-07-13 12:31:23 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.01 observed_target=10 point_forecasts=[186.3197784423828, 183.676513671875, 184.40249633789062, 182.4720458984375, 179.9828643798828] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.387451171875, 197.30201721191406, 198.55514526367188, 196.84017944335938, 194.66197204589844]
+2026-07-13 12:31:23 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=125.55 p99=38.152727272727276
+2026-07-13 12:31:38 [debug    ] HAProxy fallback latency       delta_requests=3024 interval_avg_ms=186.88 max_rtime_ms=7683.0 p99_est=373.77
+2026-07-13 12:31:38 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.72 predicted=200
+2026-07-13 12:31:38 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:31:38 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:31:38 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.00285828986046 required_resources=12.012 target_replicas=10
+2026-07-13 12:31:38 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.0 observed_target=10 point_forecasts=[186.32186889648438, 183.67825317382812, 184.40457153320312, 182.47390747070312, 179.98471069335938] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.38954162597656, 197.3037567138672, 198.55722045898438, 196.842041015625, 194.663818359375]
+2026-07-13 12:31:38 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=121.63 p99=373.76984126984127
+2026-07-13 12:31:53 [debug    ] HAProxy fallback latency       delta_requests=3025 interval_avg_ms=897.93 max_rtime_ms=7683.0 p99_est=1795.85
+2026-07-13 12:31:53 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.84 predicted=200
+2026-07-13 12:31:53 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:31:53 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:31:53 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.99425291783803 required_resources=12.012 target_replicas=10
+2026-07-13 12:31:53 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.99 observed_target=10 point_forecasts=[186.31271362304688, 183.66989135742188, 184.3953857421875, 182.46533203125, 179.97634887695312] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.38038635253906, 197.29539489746094, 198.54803466796875, 196.83346557617188, 194.65545654296875]
+2026-07-13 12:31:53 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=120.36 p99=1795.852561983471
+2026-07-13 12:32:08 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.7 predicted=200
+2026-07-13 12:32:08 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:32:08 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:32:08 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.98793527040027 required_resources=12.011 target_replicas=10
+2026-07-13 12:32:08 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.99 observed_target=10 point_forecasts=[186.31387329101562, 183.6706085205078, 184.396484375, 182.46615600585938, 179.97720336914062] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3815460205078, 197.29611206054688, 198.54913330078125, 196.83428955078125, 194.65631103515625]
+2026-07-13 12:32:08 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=134.03 p99=1795.852561983471
+2026-07-13 12:32:23 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.02 predicted=200
+2026-07-13 12:32:23 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:32:23 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:32:23 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.99948832398294 required_resources=12.012 target_replicas=10
+2026-07-13 12:32:23 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.0 observed_target=10 point_forecasts=[186.31524658203125, 183.67196655273438, 184.39794921875, 182.46749877929688, 179.9785614013672] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.38291931152344, 197.29747009277344, 198.55059814453125, 196.83563232421875, 194.6576690673828]
+2026-07-13 12:32:23 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=131.97 p99=1795.852561983471
+2026-07-13 12:32:38 [debug    ] HAProxy fallback latency       delta_requests=3025 interval_avg_ms=634.32 max_rtime_ms=7683.0 p99_est=1268.63
+2026-07-13 12:32:38 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.89 predicted=200
+2026-07-13 12:32:38 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:32:38 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:32:38 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.98638309381369 required_resources=12.011 target_replicas=10
+2026-07-13 12:32:38 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.99 observed_target=10 point_forecasts=[186.30780029296875, 183.66513061523438, 184.39047241210938, 182.4605712890625, 179.97177124023438] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.37547302246094, 197.29063415527344, 198.54312133789062, 196.82870483398438, 194.65087890625]
+2026-07-13 12:32:38 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=125.93 p99=1268.6314049586776
+2026-07-13 12:32:53 [debug    ] HAProxy fallback latency       delta_requests=3025 interval_avg_ms=2477.11 max_rtime_ms=7683.0 p99_est=4954.22
+2026-07-13 12:32:53 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.04 predicted=200
+2026-07-13 12:32:53 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:32:53 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:32:53 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.014527705342 required_resources=12.013 target_replicas=10
+2026-07-13 12:32:53 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.01 observed_target=10 point_forecasts=[186.3287353515625, 183.6842041015625, 184.4114990234375, 182.47998046875, 179.99081420898438] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3964080810547, 197.30970764160156, 198.56414794921875, 196.84811401367188, 194.669921875]
+2026-07-13 12:32:53 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=124.99 p99=4954.221487603306
+2026-07-13 12:33:08 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.18 predicted=200
+2026-07-13 12:33:08 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:33:08 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:33:08 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.02833066404003 required_resources=12.014 target_replicas=10
+2026-07-13 12:33:08 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.03 observed_target=10 point_forecasts=[186.32449340820312, 183.68106079101562, 184.4073486328125, 182.47659301757812, 179.9873046875] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3921661376953, 197.3065643310547, 198.55999755859375, 196.8447265625, 194.66641235351562]
+2026-07-13 12:33:08 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=125.24 p99=4954.221487603306
+2026-07-13 12:33:23 [debug    ] HAProxy fallback latency       delta_requests=3024 interval_avg_ms=292.84 max_rtime_ms=7683.0 p99_est=585.67
+2026-07-13 12:33:23 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.97 predicted=200
+2026-07-13 12:33:23 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:33:23 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:33:24 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.99508213610386 required_resources=12.012 target_replicas=10
+2026-07-13 12:33:24 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.0 observed_target=10 point_forecasts=[186.31800842285156, 183.67483520507812, 184.400634765625, 182.4703826904297, 179.98114013671875] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.38568115234375, 197.3003387451172, 198.55328369140625, 196.83853149414062, 194.66024780273438]
+2026-07-13 12:33:24 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=129.16 p99=585.672619047619
+2026-07-13 12:33:39 [debug    ] HAProxy fallback latency       delta_requests=3026 interval_avg_ms=298.71 max_rtime_ms=7683.0 p99_est=597.42
+2026-07-13 12:33:39 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.9 predicted=200
+2026-07-13 12:33:39 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:33:39 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:33:39 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.96852809177295 required_resources=12.01 target_replicas=10
+2026-07-13 12:33:39 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.97 observed_target=10 point_forecasts=[186.3011474609375, 183.65902709960938, 184.38368225097656, 182.45440673828125, 179.96560668945312] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3688201904297, 197.28453063964844, 198.5363311767578, 196.82254028320312, 194.64471435546875]
+2026-07-13 12:33:39 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=124.04 p99=597.4150693985459
+2026-07-13 12:33:54 [debug    ] HAProxy fallback latency       delta_requests=3026 interval_avg_ms=104.0 max_rtime_ms=7683.0 p99_est=208.0
+2026-07-13 12:33:54 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.09 predicted=200
+2026-07-13 12:33:54 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:33:54 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:33:54 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.97642055317527 required_resources=12.011 target_replicas=10
+2026-07-13 12:33:54 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.98 observed_target=10 point_forecasts=[186.30908203125, 183.66580200195312, 184.39166259765625, 182.46136474609375, 179.97268676757812] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3767547607422, 197.2913055419922, 198.5443115234375, 196.82949829101562, 194.65179443359375]
+2026-07-13 12:33:54 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=127.61 p99=208.0
+2026-07-13 12:34:09 [debug    ] HAProxy fallback latency       delta_requests=3026 interval_avg_ms=986.73 max_rtime_ms=7683.0 p99_est=1973.47
+2026-07-13 12:34:09 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.97 predicted=200
+2026-07-13 12:34:09 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:34:09 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:34:09 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.0199197177273 required_resources=12.013 target_replicas=10
+2026-07-13 12:34:09 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.02 observed_target=10 point_forecasts=[186.32327270507812, 183.67929077148438, 184.40609741210938, 182.47491455078125, 179.98593139648438] prediction_age_sec=0.1 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3909454345703, 197.30479431152344, 198.55874633789062, 196.84304809570312, 194.6650390625]
+2026-07-13 12:34:09 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=155.47 p99=1973.4653007270324
+2026-07-13 12:34:24 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.12 predicted=200
+2026-07-13 12:34:24 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:34:24 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:34:24 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.01322201213628 required_resources=12.013 target_replicas=10
+2026-07-13 12:34:24 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.01 observed_target=10 point_forecasts=[186.31887817382812, 183.67568969726562, 184.4016571044922, 182.47117614746094, 179.98207092285156] prediction_age_sec=0.09 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3865509033203, 197.3011932373047, 198.55430603027344, 196.83932495117188, 194.6611785888672]
+2026-07-13 12:34:24 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=143.14 p99=1973.4653007270324
+2026-07-13 12:34:39 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.57 predicted=200
+2026-07-13 12:34:39 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:34:39 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:34:39 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.0082503692335 required_resources=12.013 target_replicas=10
+2026-07-13 12:34:39 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.01 observed_target=10 point_forecasts=[186.32534790039062, 183.6814422607422, 184.40805053710938, 182.47711181640625, 179.98782348632812] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3930206298828, 197.30694580078125, 198.56069946289062, 196.84524536132812, 194.66693115234375]
+2026-07-13 12:34:39 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=130.09 p99=1973.4653007270324
+2026-07-13 12:34:54 [debug    ] HAProxy fallback latency       delta_requests=3028 interval_avg_ms=457.29 max_rtime_ms=7683.0 p99_est=914.59
+2026-07-13 12:34:54 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.75 predicted=200
+2026-07-13 12:34:54 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:34:54 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:34:54 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.99663791215266 required_resources=12.012 target_replicas=10
+2026-07-13 12:34:54 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.0 observed_target=10 point_forecasts=[186.31243896484375, 183.66976928710938, 184.3950958251953, 182.4652099609375, 179.9761199951172] prediction_age_sec=0.11 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.38011169433594, 197.29527282714844, 198.54774475097656, 196.83334350585938, 194.6552276611328]
+2026-07-13 12:34:54 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=167.88 p99=914.5865257595773
+2026-07-13 12:35:09 [debug    ] HAProxy fallback latency       delta_requests=3031 interval_avg_ms=825.89 max_rtime_ms=7683.0 p99_est=1651.77
+2026-07-13 12:35:09 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.46 predicted=200
+2026-07-13 12:35:09 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:35:09 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:35:10 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.97837284000556 required_resources=12.011 target_replicas=10
+2026-07-13 12:35:10 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.98 observed_target=10 point_forecasts=[186.31016540527344, 183.6671905517578, 184.39276123046875, 182.46270751953125, 179.9738006591797] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.37783813476562, 197.29269409179688, 198.54541015625, 196.83084106445312, 194.6529083251953]
+2026-07-13 12:35:10 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=126.08 p99=1651.7703728142528
+2026-07-13 12:35:25 [debug    ] HAProxy fallback latency       delta_requests=3026 interval_avg_ms=555.44 max_rtime_ms=7683.0 p99_est=1110.89
+2026-07-13 12:35:25 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.06 predicted=200
+2026-07-13 12:35:25 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:35:25 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:35:25 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.01667231058303 required_resources=12.013 target_replicas=10
+2026-07-13 12:35:25 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.02 observed_target=10 point_forecasts=[186.3268585205078, 183.68255615234375, 184.40960693359375, 182.478271484375, 179.98916625976562] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.39453125, 197.3080596923828, 198.562255859375, 196.84640502929688, 194.66827392578125]
+2026-07-13 12:35:25 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=128.38 p99=1110.88565763384
+2026-07-13 12:35:40 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.82 predicted=200
+2026-07-13 12:35:40 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:35:40 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:35:40 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.00242386514736 required_resources=12.012 target_replicas=10
+2026-07-13 12:35:40 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.0 observed_target=10 point_forecasts=[186.310791015625, 183.66836547851562, 184.39353942871094, 182.46371459960938, 179.97471618652344] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3784637451172, 197.2938690185547, 198.5461883544922, 196.83184814453125, 194.65382385253906]
+2026-07-13 12:35:40 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=129.62 p99=1110.88565763384
+2026-07-13 12:35:55 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.97 predicted=200
+2026-07-13 12:35:55 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:35:55 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:35:55 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.97923707038 required_resources=12.011 target_replicas=10
+2026-07-13 12:35:55 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=199.98 observed_target=10 point_forecasts=[186.31272888183594, 183.66946411132812, 184.3953399658203, 182.46507263183594, 179.97610473632812] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.38040161132812, 197.2949676513672, 198.54798889160156, 196.83322143554688, 194.65521240234375]
+2026-07-13 12:35:55 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=125.25 p99=1110.88565763384
+2026-07-13 12:36:10 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.98 predicted=200
+2026-07-13 12:36:10 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:36:10 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:36:10 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.99954223858435 required_resources=12.012 target_replicas=10
+2026-07-13 12:36:10 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.0 observed_target=10 point_forecasts=[186.3145751953125, 183.67132568359375, 184.39727783203125, 182.46685791015625, 179.97793579101562] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.3822479248047, 197.2968292236328, 198.5499267578125, 196.83499145507812, 194.65704345703125]
+2026-07-13 12:36:10 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=134.69 p99=1110.88565763384
+2026-07-13 12:36:25 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.36 predicted=200
+2026-07-13 12:36:25 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:36:25 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:36:25 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=199.99794431340501 required_resources=12.012 target_replicas=10
+2026-07-13 12:36:25 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.0 observed_target=10 point_forecasts=[186.31454467773438, 183.67138671875, 184.39724731445312, 182.46688842773438, 179.97796630859375] prediction_age_sec=0.08 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.38221740722656, 197.29689025878906, 198.54989624023438, 196.83502197265625, 194.65707397460938]
+2026-07-13 12:36:25 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=128.58 p99=1110.88565763384
+2026-07-13 12:36:40 [debug    ] HAProxy fallback latency       delta_requests=3026 interval_avg_ms=467.53 max_rtime_ms=7683.0 p99_est=935.07
+2026-07-13 12:36:40 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.55 predicted=200
+2026-07-13 12:36:40 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:36:40 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:36:40 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.00877048517395 required_resources=12.013 target_replicas=10
+2026-07-13 12:36:40 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.01 observed_target=10 point_forecasts=[186.32223510742188, 183.67843627929688, 184.40496826171875, 182.47409057617188, 179.98497009277344] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.38990783691406, 197.30393981933594, 198.5576171875, 196.84222412109375, 194.66407775878906]
+2026-07-13 12:36:40 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=119.4 p99=935.0680766688698
+2026-07-13 12:36:55 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.24 predicted=200
+2026-07-13 12:36:55 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:36:55 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=200.0 predicted=200 required_steps=7
+2026-07-13 12:36:55 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=200.0097499798538 required_resources=12.013 target_replicas=10
+2026-07-13 12:36:55 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=0.0 observed_load=200.01 observed_target=10 point_forecasts=[186.31964111328125, 183.67633056640625, 184.40240478515625, 182.47186279296875, 179.98272705078125] prediction_age_sec=0.07 predictive_target=10 proactive=False scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[200.38731384277344, 197.3018341064453, 198.5550537109375, 196.83999633789062, 194.66183471679688]
+2026-07-13 12:36:55 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=128.17 p99=935.0680766688698
+2026-07-13 12:37:10 [debug    ] HAProxy fallback latency       delta_requests=1086 interval_avg_ms=517.73 max_rtime_ms=7683.0 p99_est=1035.45
+2026-07-13 12:37:10 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.6 predicted=157
+2026-07-13 12:37:10 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:37:10 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=157.0 predicted=157 required_steps=7
+2026-07-13 12:37:11 [info     ] controller_decision_v3         action=RECOVERY available_replicas=10 budget_remaining=934 burn_adjustment=0 burst_ratio=0 capacity_deficit=False confidence=0.8 current_load=72.3828506292125 decision_id=8e8f745a k8s_capacity=166.5 k8s_weight=100 knative_weight=0 p99=1035.5 predicted_load=157 r_effective=16.6 serverless_enabled=False total_load=72.4 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 83, 'knative': 17}
+2026-07-13 12:37:11 [info     ] Weights updated                k3s=100 knative=0
+2026-07-13 12:37:11 [info     ] Weights updated                action=RECOVERY reason='load=72RPS | k8s_cap=166RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-07-13 12:37:11 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=157.0 required_resources=9.429 target_replicas=10
+2026-07-13 12:37:11 [info     ] algorithm2_decision            action=MAINTAIN applied_target=10 current_replicas=10 hold_until=1783921121.1 observed_load=136.19 observed_target=9 point_forecasts=[142.69873046875, 142.92318725585938, 140.5547637939453, 141.41741943359375, 139.76339721679688] prediction_age_sec=0.1 predictive_target=10 proactive=True scenario=s4-hybrid-predictive target_replicas=10 upper_forecasts=[156.7664031982422, 156.54869079589844, 154.70741271972656, 155.78555297851562, 154.4425048828125]
+2026-07-13 12:37:11 [debug    ] Decision loop completed        action=RECOVERY latency_ms=145.33 p99=1035.451197053407
+2026-07-13 12:37:26 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.87 predicted=105
+2026-07-13 12:37:26 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:37:26 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=105.0 predicted=105 required_steps=7
+2026-07-13 12:37:26 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=105.0 required_resources=6.306 target_replicas=7
+2026-07-13 12:37:26 [info     ] algorithm2_decision            action=MAINTAIN applied_target=7 current_replicas=10 hold_until=1783921136.2 observed_load=36.19 observed_target=3 point_forecasts=[90.8189697265625, 89.30406188964844, 87.20040893554688, 89.8298568725586, 88.09343719482422] prediction_age_sec=0.07 predictive_target=7 proactive=True scenario=s4-hybrid-predictive target_replicas=7 upper_forecasts=[104.88663482666016, 102.9295654296875, 101.35305786132812, 104.197998046875, 102.77255249023438]
+2026-07-13 12:37:26 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=116.56 p99=1035.451197053407
+2026-07-13 12:37:41 [debug    ] GRU prediction received        confidence=0.8 latency_ms=5.44 predicted=83
+2026-07-13 12:37:41 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:37:41 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=83.0 predicted=83 required_steps=7
+2026-07-13 12:37:41 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=83.0 required_resources=4.985 target_replicas=5
+2026-07-13 12:37:41 [info     ] algorithm2_decision            action=MAINTAIN applied_target=5 current_replicas=10 hold_until=1783921151.3 observed_load=0.0 observed_target=3 point_forecasts=[69.00010681152344, 63.39561462402344, 64.81120300292969, 65.9548568725586, 62.89185333251953] prediction_age_sec=0.07 predictive_target=5 proactive=True scenario=s4-hybrid-predictive target_replicas=5 upper_forecasts=[83.0677719116211, 77.0211181640625, 78.96385192871094, 80.322998046875, 77.57096862792969]
+2026-07-13 12:37:41 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=118.9 p99=1035.451197053407
+2026-07-13 12:37:56 [debug    ] GRU prediction received        confidence=0.8 latency_ms=6.23 predicted=70
+2026-07-13 12:37:56 [warning  ] Forecast horizon shorter than required steps available=5 required=7
+2026-07-13 12:37:56 [debug    ] Using GRU prediction           confidence=0.8 forecast_capacity_signal=70.0 predicted=70 required_steps=7
+2026-07-13 12:37:56 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=10 predicted_load=70.0 required_resources=4.204 target_replicas=5
+2026-07-13 12:37:56 [info     ] algorithm2_decision            action=MAINTAIN applied_target=5 current_replicas=10 hold_until=1783921166.4 observed_load=0.0 observed_target=3 point_forecasts=[55.85042190551758, 51.372947692871094, 52.20693588256836, 53.543609619140625, 50.84646987915039] prediction_age_sec=0.07 predictive_target=5 proactive=True scenario=s4-hybrid-predictive target_replicas=5 upper_forecasts=[69.9180908203125, 64.99845123291016, 66.35958099365234, 67.91175079345703, 65.52558135986328]
+2026-07-13 12:37:56 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=117.97 p99=1035.451197053407
+2026-07-13 12:38:02 [info     ] Received shutdown signal
+2026-07-13 12:38:02 [info     ] Stopping routing daemon...
+2026-07-13 12:38:02 [info     ] Routing daemon stopped
