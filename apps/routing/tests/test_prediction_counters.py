@@ -35,9 +35,14 @@ def _maintain_decision(daemon):
     )
 
 
-def _wire_loop(daemon, *, history_len: int):
+def _wire_loop(daemon, *, history_len: int, model_seq_len: int = 5):
     daemon._load_history = deque([100.0] * history_len, maxlen=60)
     daemon.algorithm_controller.make_decision = Mock(return_value=_maintain_decision(daemon))
+    # Bypass real model-status fetch; simulate a validated model.
+    daemon._model_status_validated = True
+    daemon._model_sequence_length = model_seq_len
+    daemon._model_prediction_horizon = 5
+    daemon._model_sample_interval_sec = 15
 
 
 class TestPredictionDeliveryCounters:
@@ -86,7 +91,7 @@ class TestPredictionDeliveryCounters:
 
     def test_s4_short_history_not_eligible(self):
         daemon = _make_daemon("s4-hybrid-predictive")
-        _wire_loop(daemon, history_len=3)  # < 5 → not eligible
+        _wire_loop(daemon, history_len=3)  # < model_seq_len (5) → not eligible
         daemon.gru_client.check_availability = Mock(return_value=True)
 
         daemon._execute_decision_loop()
@@ -106,3 +111,34 @@ class TestPredictionDeliveryCounters:
         status = daemon.get_status()
         assert status["prediction_eligible_cycles"] == 0
         assert status["prediction_delivery_failures"] == 0
+
+    def test_s4_below_model_sequence_length_not_eligible(self):
+        """With a model requiring 30 input samples, 29 samples must not be eligible."""
+        daemon = _make_daemon("s4-hybrid-predictive")
+        _wire_loop(daemon, history_len=29, model_seq_len=30)
+        daemon.gru_client.check_availability = Mock(return_value=True)
+
+        daemon._execute_decision_loop()
+
+        assert daemon._prediction_eligible_cycles == 0
+        assert daemon._prediction_delivery_failures == 0
+
+    def test_s4_at_model_sequence_length_eligible(self):
+        """With 30 samples matching model sequence_length, prediction IS eligible."""
+        daemon = _make_daemon("s4-hybrid-predictive")
+        _wire_loop(daemon, history_len=30, model_seq_len=30)
+        daemon.gru_client.check_availability = Mock(return_value=True)
+        daemon.gru_client.predict = Mock(
+            return_value=Mock(
+                success=True,
+                predicted_requests=100,
+                confidence=0.9,
+                point_forecasts=[1],
+                upper_forecasts=[2],
+            )
+        )
+
+        daemon._execute_decision_loop()
+
+        assert daemon._prediction_eligible_cycles == 1
+        assert daemon._prediction_delivery_failures == 0

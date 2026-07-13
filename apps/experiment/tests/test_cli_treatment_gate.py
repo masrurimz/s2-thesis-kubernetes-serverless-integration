@@ -65,8 +65,17 @@ def _install_stages(
 
         def require_prediction_service(self):
             if preflight_ok:
-                return True, ""
-            return False, "prediction health preflight failed: Connection refused"
+                return (
+                    True,
+                    "",
+                    {
+                        "loaded": True,
+                        "sequence_length": 30,
+                        "prediction_horizon": 5,
+                        "sample_interval_sec": 15,
+                    },
+                )
+            return False, "prediction health preflight failed: Connection refused", {}
 
         def get_status(self):
             return daemon_status or {}
@@ -173,6 +182,10 @@ class TestS4HealthyCompletes:
                 "predictive_count": 2,
                 "prediction_eligible_cycles": 5,
                 "prediction_delivery_failures": 0,
+                "model_history_ready": True,
+                "forecast_horizon_sufficient": True,
+                "forecast_actionable_cycles": 2,
+                "proactive_scaleups": 1,
             },
         )
         out_dir = tmp_path / "bundle"

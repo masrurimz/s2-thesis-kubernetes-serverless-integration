@@ -30,6 +30,10 @@ class TestS4FullDelivery:
             daemon_status={
                 "prediction_eligible_cycles": 10,
                 "prediction_delivery_failures": 0,
+                "model_history_ready": True,
+                "forecast_horizon_sufficient": True,
+                "forecast_actionable_cycles": 3,
+                "proactive_scaleups": 2,
             },
         )
         tf = out.treatment_fidelity
@@ -40,6 +44,8 @@ class TestS4FullDelivery:
         assert tf.successful_predictions == 10
         assert tf.failed_predictions == 0
         assert tf.delivery_rate == 1.0
+        assert tf.model_history_ready is True
+        assert tf.forecast_horizon_sufficient is True
         assert out.run_validity_passed is True
         assert out.validity_gate_passed is True
 
@@ -124,3 +130,45 @@ class TestS3Unaffected:
         assert out.treatment_fidelity == TreatmentFidelity()
         assert out.run_validity_passed is True
         assert out.validity_gate_passed is True
+
+
+class TestS4ActuatorFidelity:
+    """S4 with complete delivery but insufficient actuator fidelity fails the gate."""
+
+    def test_horizon_insufficient_fails(self):
+        """Complete delivery but forecast horizon shorter than provisioning delay."""
+        out = evaluate_run_validity(
+            _make_result(),
+            scenario="s4-hybrid-predictive",
+            preflight_passed=True,
+            daemon_status={
+                "prediction_eligible_cycles": 10,
+                "prediction_delivery_failures": 0,
+                "model_history_ready": True,
+                "forecast_horizon_sufficient": False,
+            },
+        )
+        tf = out.treatment_fidelity
+        assert tf is not None
+        assert tf.delivered is False
+        assert any("horizon" in r for r in tf.reasons)
+        assert out.run_validity_passed is False
+
+    def test_model_history_not_ready_fails(self):
+        """Complete delivery but model never accumulated true input window."""
+        out = evaluate_run_validity(
+            _make_result(),
+            scenario="s4-hybrid-predictive",
+            preflight_passed=True,
+            daemon_status={
+                "prediction_eligible_cycles": 10,
+                "prediction_delivery_failures": 0,
+                "model_history_ready": False,
+                "forecast_horizon_sufficient": True,
+            },
+        )
+        tf = out.treatment_fidelity
+        assert tf is not None
+        assert tf.delivered is False
+        assert any("history" in r for r in tf.reasons)
+        assert out.run_validity_passed is False
