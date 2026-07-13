@@ -76,7 +76,7 @@ class CalibrationConfig(BaseModel):
     # 62 RPS → ceil(62 × 0.060 × 1.0) = 4 replicas (forecast differentiates).
     beta: float = 0.0
     buffer: float = 1.0
-    scale_down_threshold: float = 0.5
+    scale_down_threshold: float = 0.75
     alpha_override: Optional[float] = None
 
     # Provisioning delay estimation (ADAPT-inspired)

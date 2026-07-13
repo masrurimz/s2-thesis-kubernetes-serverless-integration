@@ -671,7 +671,7 @@ class RoutingDaemon:
         elif scaling_decision.action == "SCALE_DOWN":
             is_v3 = isinstance(self.algorithm_controller, Algorithm1ControllerV3)
             min_replicas = 3 if is_v3 else 1
-            scale_down_cooldown = 300 if is_v3 else 60
+            scale_down_cooldown = 120 if is_v3 else 60
             target = max(min_replicas, scaling_decision.target_replicas)
             if (
                 (self._last_scale_down_ts is None or (now - self._last_scale_down_ts) >= scale_down_cooldown)
