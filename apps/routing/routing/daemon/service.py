@@ -169,9 +169,28 @@ class RoutingDaemon:
         self.no_op_predictions: int = 0
 
         # Prediction delivery tracking (S4 hard validity gate).
-        # An eligible cycle = use_predictions scenario with >=5 history samples.
+        # An eligible cycle = use_predictions scenario with >= model_sequence_length history samples.
         self._prediction_eligible_cycles: int = 0
         self._prediction_delivery_failures: int = 0
+
+        # Model-aware forecast readiness (S4 only).
+        # Populated from /model/status on first prediction-eligible cycle.
+        self._model_sequence_length: int = 5  # default; overridden by model status
+        self._model_prediction_horizon: int = 5
+        self._model_sample_interval_sec: int = 15
+        self._model_status_validated: bool = False
+        self._forecast_capacity_signal: float = 0.0
+        self._forecast_actionable_cycles: int = 0
+
+        # Scale-readiness EWMA (ADAPT-inspired).
+        # After scale-up, track time until available_replicas >= target.
+        _cal = get_calibration()
+        self._provisioning_delay_ewma: float = _cal.provisioning_delay_default_sec
+        self._provisioning_delay_alpha: float = _cal.provisioning_delay_ewma_alpha
+        self._provisioning_delay_safety_sec: float = _cal.provisioning_delay_safety_sec
+        self._provisioning_delay_samples: int = 0
+        self._pending_scale_target: Optional[int] = None
+        self._pending_scale_issue_time: Optional[float] = None
 
         logger.info(
             "RoutingDaemon initialized",
@@ -275,6 +294,81 @@ class RoutingDaemon:
         except Exception:
             pass
 
+    def _validate_model_status(self) -> tuple[bool, str]:
+        """Fetch /model/status from the GRU server and validate schema compatibility.
+
+        Returns (True, "") if valid; (False, reason) otherwise.
+        Stores validated sequence_length, prediction_horizon, sample_interval_sec.
+        """
+        try:
+            status = self.gru_client.get_model_status()
+        except Exception as e:
+            return False, f"model status fetch failed: {e}"
+
+        if not status.get("loaded"):
+            return False, "model not loaded"
+
+        seq_len = status.get("sequence_length")
+        horizon = status.get("prediction_horizon")
+        interval = status.get("sample_interval_sec")
+
+        if seq_len is None or horizon is None or interval is None:
+            return False, f"model status missing required fields: seq={seq_len}, horizon={horizon}, interval={interval}"
+
+        _cal = get_calibration()
+        if interval != _cal.sample_interval_sec:
+            return False, f"model interval {interval}s != calibration {_cal.sample_interval_sec}s"
+
+        if seq_len > self._load_history.maxlen:
+            return False, f"model sequence_length {seq_len} > load_history maxlen {self._load_history.maxlen}"
+
+        self._model_sequence_length = seq_len
+        self._model_prediction_horizon = horizon
+        self._model_sample_interval_sec = interval
+        self._model_status_validated = True
+        logger.info(
+            "Model status validated",
+            sequence_length=seq_len,
+            prediction_horizon=horizon,
+            sample_interval_sec=interval,
+        )
+        return True, ""
+
+    def _required_prediction_horizon_steps(self, estimated_delay_sec: Optional[float] = None) -> int:
+        """Compute how many forecast steps are needed to cover provisioning delay.
+
+        h* = ceil((delay_estimate + safety_margin) / sample_interval)
+        With delay=60s, safety=15s, interval=15s → ceil(75/15) = 5 steps.
+        """
+        import math
+
+        delay = estimated_delay_sec if estimated_delay_sec is not None else self._provisioning_delay_ewma
+        total_sec = delay + self._provisioning_delay_safety_sec
+        return max(1, math.ceil(total_sec / self._model_sample_interval_sec))
+
+    def _check_scale_readiness(self, dep_status) -> None:
+        """Check if a pending scale-up has reached readiness; update EWMA if so."""
+        if self._pending_scale_target is None or self._pending_scale_issue_time is None:
+            return
+        if dep_status is None:
+            return
+        if dep_status.available_replicas >= self._pending_scale_target:
+            elapsed = time.monotonic() - self._pending_scale_issue_time
+            self._provisioning_delay_ewma = (
+                self._provisioning_delay_alpha * elapsed
+                + (1 - self._provisioning_delay_alpha) * self._provisioning_delay_ewma
+            )
+            self._provisioning_delay_samples += 1
+            logger.info(
+                "Scale readiness observed",
+                target=self._pending_scale_target,
+                elapsed_sec=round(elapsed, 1),
+                ewma_delay=round(self._provisioning_delay_ewma, 1),
+                samples=self._provisioning_delay_samples,
+            )
+            self._pending_scale_target = None
+            self._pending_scale_issue_time = None
+
     def _execute_decision_loop(self) -> None:
         """Execute single decision loop iteration."""
         start_time = time.perf_counter()
@@ -304,14 +398,30 @@ class RoutingDaemon:
 
         if self.scenario_config.use_predictions:
             history = list(self._load_history)
-            if len(history) >= 5:
-                # Prediction-eligible cycle: enough history to request a forecast.
+            # Validate model status on first eligible cycle.
+            if not self._model_status_validated:
+                ok, reason = self._validate_model_status()
+                if not ok:
+                    self._prediction_delivery_failures += 1
+                    logger.warning("Model status validation failed", reason=reason)
+                    # Fall through without prediction this cycle.
+                    history = []
+                else:
+                    logger.info(
+                        "Model status validated on first eligible cycle",
+                        sequence_length=self._model_sequence_length,
+                        prediction_horizon=self._model_prediction_horizon,
+                    )
+
+            # Only request a forecast when we have the model's true input window.
+            # This prevents mean-value padding from entering predictive decisions.
+            if self._model_status_validated and len(history) >= self._model_sequence_length:
                 self._prediction_eligible_cycles += 1
                 if not self.gru_client.check_availability():
                     self._prediction_delivery_failures += 1
                     logger.debug("GRU unavailable for eligible cycle")
                 else:
-                    pred_result = self.gru_client.predict(history, horizon=5)
+                    pred_result = self.gru_client.predict(history, horizon=self._model_prediction_horizon)
                     if pred_result.success:
                         prediction = {
                             "predicted_requests": pred_result.predicted_requests,
@@ -321,10 +431,29 @@ class RoutingDaemon:
                         }
                         self._last_prediction_ts = time.time()
                         daemon_prediction_used.inc()
+
+                        # Select horizon-aligned forecast element for capacity planning.
+                        required_steps = self._required_prediction_horizon_steps()
+                        upper_fc = pred_result.upper_forecasts or []
+                        if len(upper_fc) >= required_steps:
+                            self._forecast_capacity_signal = float(
+                                max(upper_fc[required_steps - 1], pred_result.predicted_requests)
+                            )
+                        else:
+                            # Horizon insufficient: use conservative max but flag it.
+                            self._forecast_capacity_signal = float(pred_result.predicted_requests)
+                            logger.warning(
+                                "Forecast horizon shorter than required steps",
+                                available=len(upper_fc),
+                                required=required_steps,
+                            )
+
                         logger.debug(
                             "Using GRU prediction",
                             predicted=pred_result.predicted_requests,
                             confidence=pred_result.confidence,
+                            forecast_capacity_signal=round(self._forecast_capacity_signal, 1),
+                            required_steps=required_steps,
                         )
                     else:
                         self._prediction_delivery_failures += 1
@@ -442,6 +571,9 @@ class RoutingDaemon:
         k8s_desired_replicas.set(dep_status.spec_replicas)
         k8s_available_replicas.set(dep_status.available_replicas)
 
+        # Check if a previous scale-up reached readiness; update delay EWMA.
+        self._check_scale_readiness(dep_status)
+
         scaler = self.cluster_controller
 
         # Observed load: average of recent samples (same window as before)
@@ -461,7 +593,11 @@ class RoutingDaemon:
         hold_sec = getattr(self.algorithm_controller.config, "proactive_hold_sec", 90.0)
 
         if use_predictions:
-            predicted_upper = float(getattr(self.algorithm_controller, "last_predicted_upper", 0.0))
+            predicted_upper = (
+                self._forecast_capacity_signal
+                if self._forecast_capacity_signal > 0
+                else float(getattr(self.algorithm_controller, "last_predicted_upper", 0.0))
+            )
             predictive_target = scaler.compute_target_replicas(predicted_upper)
             now_ts = time.time()
 
@@ -497,6 +633,7 @@ class RoutingDaemon:
         # Count useful proactive scale-ups
         if proactive and scaling_decision.action == "SCALE_UP":
             self.useful_proactive_scaleups += 1
+            self._forecast_actionable_cycles += 1
 
         # Causal event logging — fields needed to explain Algorithm 2 causality
         prediction_age = round(time.time() - self._last_prediction_ts, 2) if self._last_prediction_ts else None
@@ -527,6 +664,9 @@ class RoutingDaemon:
                 k8s_scaling_events_total.labels(direction="up", result="success" if success else "fail").inc()
                 if success:
                     self._last_scale_up_ts = now
+                    # Track pending scale-up for readiness measurement.
+                    self._pending_scale_target = scaling_decision.target_replicas
+                    self._pending_scale_issue_time = time.monotonic()
 
         elif scaling_decision.action == "SCALE_DOWN":
             is_v3 = isinstance(self.algorithm_controller, Algorithm1ControllerV3)
@@ -599,6 +739,21 @@ class RoutingDaemon:
             "no_op_predictions": self.no_op_predictions,
             "prediction_eligible_cycles": self._prediction_eligible_cycles,
             "prediction_delivery_failures": self._prediction_delivery_failures,
+            "model_history_ready": self._model_status_validated,
+            "model_sequence_length": self._model_sequence_length,
+            "forecast_horizon_sufficient": (
+                self._model_prediction_horizon >= self._required_prediction_horizon_steps()
+                if self._model_status_validated
+                else False
+            ),
+            "forecast_actionable_cycles": self._forecast_actionable_cycles,
+            "forecast_capacity_signal": round(self._forecast_capacity_signal, 1),
+            "provisioning_delay_estimate_sec": round(self._provisioning_delay_ewma, 1),
+            "provisioning_delay_samples": self._provisioning_delay_samples,
+            "forecast_horizon_steps": (
+                self._required_prediction_horizon_steps() if self._model_status_validated else 0
+            ),
+            "proactive_scaleups": self.useful_proactive_scaleups,
         }
 
     def set_scenario(self, scenario: str) -> None:

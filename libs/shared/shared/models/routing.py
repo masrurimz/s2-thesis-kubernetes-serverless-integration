@@ -22,6 +22,21 @@ class StatusResponse(BaseModel):
     uptime_seconds: float
     gru_available: bool
     last_decision_time: Optional[float] = None
+    # Actuator-fidelity fields (S4 treatment gate)
+    prediction_eligible_cycles: int = 0
+    prediction_delivery_failures: int = 0
+    model_history_ready: bool = False
+    model_sequence_length: int = 0
+    forecast_horizon_sufficient: bool = False
+    forecast_actionable_cycles: int = 0
+    forecast_capacity_signal: float = 0.0
+    provisioning_delay_estimate_sec: float = 0.0
+    provisioning_delay_samples: int = 0
+    forecast_horizon_steps: int = 0
+    proactive_scaleups: int = 0
+    no_op_predictions: int = 0
+    useful_proactive_scaleups: int = 0
+    model_config = {"extra": "allow"}
 
 
 class SetScenarioRequest(BaseModel):
