@@ -165,6 +165,25 @@ S3 and S4 have identical monthly cost (USD 387/mo) despite different p99 latency
 
 S4 underperformed S3 in this diagnostic: p99 was 1,393 ms versus 874 ms (+59%), and SLO violations were 46,245 versus 23,913 (+93%). S4 failed the actuator-fidelity validity gate because the measured provisioning delay (70.5 s) plus the 15-second safety margin requires `ceil(85.5 / 15) = 6` forecast steps, but the deployed GRU model outputs only 5 steps (75-second forecast window). Despite delivering 55 predictions at 100% delivery rate, S4 recorded zero proactive scale-up actions (`predictive_count = 0`), meaning the forecasts did not change the actuator behaviour. The 5-step horizon is adequate for the default 60-second provisioning delay estimate but not for the longer delays observed under high load. This finding validates the ADAPT-inspired design direction @adapt2026: the forecast horizon must adapt to the measured provisioning delay rather than remaining static.
 
+=== Variable-Load Validation (ClarkNet, All Tiers Exercised)
+
+The constant-load diagnostic confirms the mechanism but cannot test predictive scaling, because constant traffic gives the forecast nothing to anticipate. A ClarkNet variable-load experiment (`2026-07-13_clarknet-dynamic-node-n1`, n = 1) uses the real ClarkNet trace (30--164 RPS ramps, mean 73 RPS) with `max_k8s_replicas = 10` and the extended 9-step GRU horizon (135 s window). ClarkNet peaks naturally exceed the six-pod static envelope, triggering dynamic nodes without artificial load inflation.
+
+#figure(
+  kind: table,
+  table(
+    columns: (auto, auto, auto, auto, auto, auto, auto, auto),
+    [Scenario], [p99 (ms)], [Nodes], [Serverless], [Predictions], [Pred], [Pro. SU], [Monthly USD],
+    [S1 (K8s+HPA)], [118.4], [2], [0.0%], [---], [---], [---], [187],
+    [S2 (Serverless)], [79.0], [0], [100.0%], [---], [---], [---], [403],
+    [S3 (Reactive)], [103.9], [2], [21.2%], [---], [---], [---], [196],
+    [S4 (Predictive)], [108.3], [2], [17.6%], [55], [4], [1], [196],
+  ),
+  caption: [ClarkNet variable-load experiment (n = 1). Pred = predictive routing decisions; Pro. SU = proactive scale-ups. All four scenarios passed all validity gates. Monthly USD is a directional diagnostic estimate.],
+) <tab:clarknet-dynamic-node>
+
+Under variable load, the GRU forecast produced proactive actions for the first time: `predictive_count = 4` (four routing decisions influenced by the forecast) and `proactive_scaleups = 1` (one replica scale-up issued before the observed load reached the target). All validity gates passed (`forecast_horizon_sufficient = True`, `delivered = True`, 55/55 predictions delivered). S4 used 17.6% serverless time versus S3's 21.2%, suggesting the proactive scale-up added Kubernetes capacity earlier and reduced serverless dependency. S3 achieved slightly better p99 (103.9 ms vs 108.3 ms, +4.3%) and fewer SLO violations (14 vs 44), but n = 1 is not conclusive. The identical monthly cost (USD 196/mo) confirms no cost penalty for the predictive mode at this load.
+
 == Controller HPO and Holdout Validation
 
 A separate hyperparameter optimization study explored four controller parameters via Optuna TPE screening: `target_cpu_util`, `kp_burn`, `proactive_trend_threshold`, and `proactive_approach_ratio`. The methodological finding from this study — conducted on the pre-fix infrastructure that predates the `2026-07-11_scaling_fix_n1` baseline — is reported here for completeness, but its specific quantitative results are *directional* and are superseded by Bugs 8-13; they are not part of the current baseline and are not used in the comparative evaluation above.

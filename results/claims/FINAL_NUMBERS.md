@@ -124,3 +124,29 @@ The n=1 AWS monthly projection (S1=USD 132, S2=USD 394, S3=USD 147, S4=USD 142/m
 With horizon=9, S4 passed the actuator-fidelity validity gate (`forecast_horizon_sufficient=True`, `run_validity_passed=True`, `delivered=True`). SLO violations dropped 87% from the original horizon=5 run (46,245 → 5,836). The 56 GRU predictions were delivered at 100% delivery rate. However, `predictive_count=0` and `proactive_scaleups=0` in all three tests — at 200 RPS constant load with `max_k8s_replicas=10`, both the observed and forecast replica targets are clamped at 10, so the forecast cannot produce a proactive scale-up beyond what the observed load already demands. This is a fundamental limitation of testing at constant high load with a tight cap; the forecast would be more actionable under variable load (e.g., ClarkNet) where it can predict surges before the observed load reaches the cap.
 
 **Cost note:** Dynamic-node EC2 cost (stress-harness reference: USD 0.027–0.028 per run) is separate from the serverless Lambda cost. These are directional diagnostic estimates from n=1 runs and must not be used to claim universal cost superiority.
+
+## ClarkNet variable-load experiment — all tiers exercised, all scenarios valid (n=1, 2026-07-13)
+
+**Source:** `results/experiments/phase-b/2026-07-13_clarknet-dynamic-node-n1`
+
+**Topology:** 2 static workload agents (6-pod capacity), `max_k8s_replicas=10`, `prediction_horizon=9` (135s window), ClarkNet trace (variable 30–164 RPS, mean ~73 RPS, 1,200 seconds).
+
+| Scenario | p50 (ms) | p95 (ms) | p99 (ms) | SLO Violations | RPS | Nodes | Delay (s) | Serverless % | Monthly USD | Valid |
+|---|---|---|---|---|---|---|---|---|---|---|
+| S1 (K8s+HPA) | 64.5 | 77.9 | 118.4 | 129 | 73.2 | 2 | 91.8 | 0.0% | 187 | ✅ |
+| S2 (Serverless) | 66.0 | 76.6 | 79.0 | 15 | 73.2 | 0 | 0.0 | 100.0% | 403 | ✅ |
+| S3 (Reactive) | 64.7 | 79.3 | 103.9 | 14 | 73.2 | 2 | 120.7 | 21.2% | 196 | ✅ |
+| S4 (Predictive) | 64.7 | 81.1 | 108.3 | 44 | 73.2 | 2 | 108.9 | 17.6% | 196 | ✅ |
+
+**This is the definitive mechanism experiment.** Unlike the constant 200 RPS diagnostic, ClarkNet's variable load (ramps and surges) allows the GRU forecast to predict traffic increases before they occur. For the first time in the project:
+- `predictive_count = 4` — the GRU forecast triggered 4 predictive routing decisions
+- `proactive_scaleups = 1` — 1 proactive scale-up was issued based on a forecast
+- `forecast_actionable_cycles = 1` — 1 cycle where the forecast capacity signal exceeded the observed
+- All validity gates passed: `forecast_horizon_sufficient=True`, `run_validity_passed=True`, `delivered=True`, 55/55 predictions delivered
+
+**Three-tier evidence under realistic traffic:**
+- Tier 1 (routing): S3/S4 shifted HAProxy weights during ClarkNet peaks (S3 serverless_wt=2,565, S4=2,325)
+- Tier 2 (pod scaling): Algorithm 2 / HPA scaled replicas as ClarkNet ramped (S3/S4 peak 9 scale events)
+- Tier 3 (node autoscaling): K3dAutoscaler provisioned 2 dynamic nodes in all K8s scenarios when ClarkNet peaks exceeded the 6-pod static capacity
+
+**S3 vs S4 (n=1, not conclusive):** S3 has slightly better p99 (103.9 ms vs 108.3 ms, +4.3%) and fewer SLO violations (14 vs 44). However, S4 used less serverless (17.6% vs 21.2%), suggesting the proactive scale-up added K8s capacity earlier, reducing serverless dependency. S4 and S3 have identical monthly cost (USD 196/mo). A paired n≥5 experiment is needed for statistical comparison.
