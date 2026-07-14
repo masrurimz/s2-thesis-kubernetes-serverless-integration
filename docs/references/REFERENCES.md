@@ -16,6 +16,9 @@ All papers downloaded as PDF for offline access. Located in `docs/references/`.
 | **ElaX** — Elastic Provisioning | `elax-elastic-provisioning-containerized-2019.pdf` | doi:10.1109/HPCC/SmartCity/DSS.2019.00274 | LSTM predictor + resource reservation + online feedback controller (thesis base algorithm) |
 | **HyMetricScaler** — Hybrid Autoscaling | `hymetricscaler-hybrid-autoscaling-2025.pdf` | doi:10.1109/HPCC67675.2025.00038 | Multi-metric hybrid (horizontal + vertical), PID for vertical, EMA for horizontal |
 | **Dehigama et al.** — Hybrid VM+Serverless Cost | `dehigama-hybrid-vm-serverless-cost-2024.pdf` | HotInfra 2024 | VMs for baseline, serverless for burst, 7.5-28.5% cost savings |
+| **Serracanta et al.** — HPA Stability Proof | `serracanta-hpa-stability-control-loop-2025.pdf` | doi:10.1109/ACCESS.2025.3526751 | Formal proof of HPA control-loop stability (global asymptotic, zero steady-state error) at any utilization target 30--80%. Justifies threshold tuning. |
+| **HyPA** — Hybrid HPA with Model Updates | `hypa-hybrid-hpa-automated-model-updates-2023.pdf` | doi:10.1109/NFV-SDN59219.2023.10329742 | Blends proactive+reactive; auto-updates model on distributional shift; asymmetric scale-up/down recommended for dynamic workloads |
+| **Tiny Autoscalers** — Lightweight Scaling | `tiny-autoscalers-2022.pdf` | arxiv:2203.00592 | Bottoming mechanism prevents rapid resource swings; small moving-average window for smoothing utilization |
 
 ## How Papers Map to Controller Versions
 
