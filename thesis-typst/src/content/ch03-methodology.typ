@@ -41,13 +41,15 @@ The system uses Prometheus for metrics collection and an SLO monitor component f
 
 === Workload Predictor (GRU Architecture)
 
-The workload prediction model uses a Gated Recurrent Unit (GRU) neural network with a single recurrent layer of 128 hidden units followed by head dropout regularization. The model accepts a 30-sample input window of per-interval request counts (sampled at 15-second resolution) and outputs direct multi-horizon forecasts for five 15-second steps ahead (75 seconds total), eliminating autoregressive error compounding. Training uses the Adam optimizer with Mean Squared Error loss, batch size 32, and early stopping with patience of 15 epochs (maximum 100). Per-horizon upper offsets, derived as the 90th percentile of positive validation residuals, are added to the point forecasts to form a conservative upper envelope (`upper_forecasts`) that directly addresses ramp underprediction.
+The workload prediction model uses a Gated Recurrent Unit (GRU) neural network with a single recurrent layer of 128 hidden units followed by head dropout regularization. The model accepts a 30-sample input window of per-interval request counts (sampled at 15-second resolution) and outputs direct multi-horizon forecasts for nine 15-second steps ahead (135 seconds total), eliminating autoregressive error compounding. Training uses the Adam optimizer with Mean Squared Error loss, batch size 32, and early stopping with patience of 15 epochs (maximum 100). Per-horizon upper offsets, derived as the 90th percentile of positive validation residuals, are added to the point forecasts to form a conservative upper envelope (`upper_forecasts`) that directly addresses ramp underprediction.
+
+The extended 9-step horizon (135 s) covers the K3dAutoscaler's maximum provisioning delay (120 s) plus a 15-second safety margin, following the self-calibrating approach of ADAPT @adapt2026. The forecast horizon is validated at runtime via the model-status endpoint.
 
 The trained model is served via a FastAPI prediction server that accepts recent request-rate history as input and returns point forecasts, upper-envelope forecasts, and a scalar confidence score. The confidence score is derived from the model's normalized validation error (RMSE relative to the training-set mean) rather than prediction variance: a score of 0.8 indicates the model's error is below 15% of the mean. The routing controller gates proactive actions on this confidence exceeding a configurable threshold (default: 0.5).
 
 === Resource Allocation Model
 
-where R is the target replica count, x is predicted or observed traffic intensity (requests per second), alpha is the resource-per-request coefficient (replicas per RPS), and beta is base replica overhead (minimum replicas at near-zero traffic). The coefficient alpha is derived from a calibrated saturation measurement: alpha = 1/r_saturation_per_replica, where r_saturation_per_replica is the RPS at which a single pod's p99 crosses the SLO threshold. At each control interval, the daemon computes a target replica count with a safety buffer gamma (typically 1.2 for +20% headroom), clamped to fixed bounds [3, 6] on the current testbed (two workload nodes at 300 millicores each).
+where R is the target replica count, x is predicted or observed traffic intensity (requests per second), alpha is the resource-per-request coefficient (replicas per RPS), and beta is base replica overhead (minimum replicas at near-zero traffic). The coefficient alpha is derived from a calibrated saturation measurement: alpha = 1/r_effective, where r_effective = r_saturation_per_replica × target_cpu_util. At each control interval, the daemon computes a target replica count with a safety buffer gamma (typically 1.0), clamped to fixed bounds [3, 6] on the current testbed (two workload nodes at 300 millicores each).
 
 === Algorithm 1: Routing Controller
 
@@ -68,6 +70,10 @@ Traffic weights shift gradually in increments of 10% to avoid oscillation, from 
 Algorithm 2 operates in two modes that share the same capacity model. In reactive mode (S3), the scaling signal is the mean observed RPS over the last 30 seconds. In predictive mode (S4), the daemon computes a predictive target from the GRU confidence-gated upper forecast and selects it only when it *strictly exceeds* the observed target; otherwise the observed target is used. A proactive hold interval (90 seconds) prevents premature rollback of a proactive scale-up while the forecast window is still active. In both scenarios, the V3 routing controller routes by *observed* ready-replica capacity; the forecast influences only Kubernetes replica planning, not the HAProxy weight split. This separation prevents over-routing to serverless during moderate load — a problem observed when the forecast directly drove routing weights.
 
 Scaling is performed by invoking kubectl scale deployment, chosen for its determinism and explicit audit trail. Safety checks include cooldown periods (15 seconds for scale-up, 300 seconds for scale-down in V3 mode), replica bounds clamping, scale-down hysteresis (target below 50% of current capacity), and readiness verification before traffic returns to Kubernetes.
+
+=== Node-Level Consolidation
+
+The K3dAutoscaler implements utilization-based node consolidation matching the Kubernetes Cluster Autoscaler semantics @k8sca-faq: a dynamic node is a candidate for removal when its CPU request utilization falls below 50% of allocatable capacity @serracanta2025hpa, all workload pods can be rescheduled onto other nodes, and the node has remained underutilized for at least 90 seconds. The kubectl drain command evicts pods before deletion. A 120-second cooldown prevents cascading deletions @tinyautoscalers2022. Pod-level scale-down uses a 120-second cooldown and 0.75 utilization threshold.
 
 == Evaluation Plan
 
@@ -92,6 +98,10 @@ Phase A0 validates infrastructure and autoscaler mechanisms. Phase A1 validates 
 === Metrics
 
 User-perceived performance metrics include p50, p95, and p99 latency, error rate, and achieved throughput. The primary SLO metric is p99 latency with a threshold of 200ms. Routing and control-plane metrics include weight change count, time-in-serverless percentage, prediction usage rate, and control-loop latency. Kubernetes replica scaling metrics include desired replicas, current replicas, ready replicas, scale-up/down events and latencies, and oscillation index. Resource and cost proxy metrics include CPU/memory utilization, K8s capacity time, Knative active time, and cost-normalized metrics (USD/1M requests, USD/1M SLO-compliant requests).
+
+=== Statistical Analysis Protocol
+
+The paired S3/S4 comparison uses a pre-specified primary endpoint (p99 latency) with permutation testing (n=5, one-sided). Secondary endpoints (p95, SLO violations, throughput, error rate) are reported with Bonferroni-corrected p-values; only the primary endpoint may be claimed as statistically significant.
 
 === Threats to Validity
 

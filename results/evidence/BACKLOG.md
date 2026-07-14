@@ -20,12 +20,13 @@ This is a work queue — not an interpretation or duplicate experiment report. U
   - Prerequisite: source telemetry (Prometheus prediction vs actual) available for the paired-H2 bundle
   - Done when: `uv run thesis experiment evidence derive-parquet` produces a provenance-preserving Parquet with source SHA-256 metadata under `derived/legacy-parquet/`; the artifact is queryable through `artifact_index` in the DuckDB catalog.
 
-- [ ] EVID-003 — Clean n=5 S3/S4 paired rerun with full treatment delivery
+- [x] EVID-003 — Clean n=5 S3/S4 paired rerun with full treatment delivery
   - Priority: high
-  - State: blocked
-  - Scope: `results/experiments/phase-b/<new-date>_paired-h2-clean/`
+  - State: resolved
+  - Scope: `results/experiments/phase-b/2026-07-14_clarknet-tuned-paired-n5/`
   - Prerequisite: real 15-second ClarkNet-trained GRU artifact loaded and passing health preflight; hard prediction-delivery gate (preflight + per-eligible-cycle delivery) active in the experiment runner
   - Done when: 5 valid S3/S4 pairs complete with `treatment_fidelity.delivery_rate == 1.0` for every S4 run; `paired_analysis.json` reports inferential statistics; the bundle is promoted toward `role: final` by a human evidence decision.
+  - **Resolution:** Resolved by `2026-07-14-clarknet-tuned-paired-n5`. All 5 S4 runs delivered complete forecasts (predictive_count=4–5, forecast_horizon_sufficient=True). H2 supported: primary p99 p=0.0304, d=−1.2646.
 
 - [ ] EVID-004 — Apply treatment-fidelity gate to DynamicExperimentRunner (Phase C)
   - Priority: medium

@@ -8,7 +8,7 @@
 ## Two evidence tiers (read this first)
 
 | **Diagnostic (n=1)** | `results/experiments/phase-b/2026-07-11_scaling_fix_n1` | Four-scenario (S1–S4) single-run diagnostic | Descriptive only. Directional mechanism evidence. |
-| **Paired H2 (n=5, clean)** | `results/experiments/phase-b/2026-07-12_paired-h2-clean-v2` | Counterbalanced S3/S4 paired comparison, ClarkNet, h=5 model | **Superseded** by the tuned n=5 below. |
+| **Paired H2 (n=5, clean)** | `results/experiments/phase-b/2026-07-12_paired-h2-clean-v2` | Counterbalanced S3/S4 paired comparison, ClarkNet, h=5 model | **⚠️ Superseded — see definitive n=5 below.** |
 | **Dynamic node diagnostic (n=1)** | `results/experiments/phase-b/2026-07-13_clarknet-dynamic-node-n1` | ClarkNet variable load, all tiers exercised, h=9 model | Descriptive. First proactive scaling evidence (predictive_count=4). |
 | **Paired H2 (n=5, tuned, definitive)** | `results/experiments/phase-b/2026-07-14_clarknet-tuned-paired-n5` | Counterbalanced S3/S4, ClarkNet, h=9, consolidation active, tuned S3 | **✅ Definitive.** H2 supported: p=0.030, d=−1.26 (large). |
 
@@ -30,6 +30,8 @@ The earlier `2026-07-11_paired-h2` and `2026-07-12_paired-h2-clean-v2` bundles a
 ---
 
 ## Tier 2 — Clean paired H2 result (n=5, full treatment delivery)
+
+**⚠️ SUPERSEDED: This section documents the pre-tuning n=5 result. The definitive result is in the section below.**
 
 **Source:** `results/experiments/phase-b/2026-07-12_paired-h2-clean-v2/paired_analysis.json`
 
@@ -155,7 +157,7 @@ With horizon=9, S4 passed the actuator-fidelity validity gate (`forecast_horizon
 
 **Source:** `results/experiments/phase-b/2026-07-14_clarknet-util-scaledown-n1`
 
-**What changed:** K3dAutoscaler now implements cluster-autoscaler-style consolidation (matching Kubernetes CA + KARPENTER `WhenEmptyOrUnderutilized`). A dynamic node is consolidated when: (1) CPU request utilization < 50% threshold, (2) pods can be rescheduled to other workload nodes, (3) node has been underutilized for >= 60s, (4) >= 120s since last scale-down. The `kubectl drain` evicts pods to other nodes before deletion. Cost model now computes actual per-node lifetime from provision event timestamps.
+**What changed:** K3dAutoscaler now implements cluster-autoscaler-style consolidation (matching Kubernetes CA + KARPENTER `WhenEmptyOrUnderutilized`). A dynamic node is consolidated when: (1) CPU request utilization < 50% threshold, (2) pods can be rescheduled to other workload nodes, (3) node has been underutilized for >= 90s, (4) >= 120s since last scale-down. The `kubectl drain` evicts pods to other nodes before deletion. Cost model now computes actual per-node lifetime from provision event timestamps.
 
 **Topology:** Same ClarkNet trace (30-164 RPS, mean 73), max_k8s_replicas=10, prediction_horizon=9.
 
@@ -178,16 +180,18 @@ With horizon=9, S4 passed the actuator-fidelity validity gate (`forecast_horizon
 ## Definitive paired H2 result — n=5, tuned, ClarkNet variable load (2026-07-14)
 
 **Source:** `results/experiments/phase-b/2026-07-14_clarknet-tuned-paired-n5`
-**Design:** 5 counterbalanced S3/S4 pairs, ClarkNet trace (30-164 RPS), max_k8s_replicas=10, prediction_horizon=9, utilization-based node consolidation, tuned S3 (scale_down_cooldown=120s, scale_down_threshold=0.75, node_idle=90s).
+**Design:** 5 counterbalanced S3/S4 pairs, ClarkNet trace (30-164 RPS), max_k8s_replicas=10, prediction_horizon=9, utilization-based node consolidation (node utilization threshold=0.5, node idle=90s, node cooldown=120s), tuned S3 (pod scale_down_cooldown=120s, pod scale_down_threshold=0.75).
 
 **All 5 pairs valid (5/5).** H2 **supported**.
+
+**Statistical correction policy:** Primary p99 p=0.0304 is the pre-specified test (significant at α=0.05). Secondary metrics p95 and SLO have corrected p=0.1216 (not significant after multiplicity correction across 5 metrics). Report secondaries as descriptive only.
 
 | Metric | S3 (Reactive) | S4 (Predictive) | Difference | Statistic |
 |---|---|---|---|---|
 | Mean p99 | 188.5 ms | 126.0 ms | −62.5 ms (−33.1%) | p=0.030, d=−1.26 |
 | 95% CI | — | — | [−100.9, −26.2] | Entirely below zero |
-| Mean SLO violations | 656 | 130 | −526 (−80.2%) | — |
-| Mean p95 | 95.8 ms | 81.9 ms | −13.9 ms (−14.5%) | p=0.030, d=−3.52 |
+| Mean SLO violations | 656 | 130 | −526 (−80.2%) | p=0.030, d=−1.35 |
+| Mean p95 | 95.8 ms | 81.9 ms | −13.9 ms (−14.5%) | p=0.030, d=−3.52 (both corrected p=0.122) |
 | Monthly cost | USD 163 | USD 163 | identical | — |
 
 Per-pair p99 values:

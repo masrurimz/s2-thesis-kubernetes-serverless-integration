@@ -1,5 +1,7 @@
 # H1/H2 Experiment Results
 
+> **⚠️ SUPERSEDED**: This document contains historical experiment results from January–February 2026. Current thesis evidence is in [results/README.md](../results/README.md), [FINAL_NUMBERS.md](../results/claims/FINAL_NUMBERS.md), and the definitive bundle at `results/experiments/phase-b/2026-07-14_clarknet-tuned-paired-n5/`. Do not cite this file for current claims.
+
 ## Thesis: Intelligent Hybrid Routing for Kubernetes-Serverless Integration
 
 **Date:** 2026-02-11 (Updated)  

@@ -20,6 +20,8 @@ All papers downloaded as PDF for offline access. Located in `docs/references/`.
 | **HyPA** — Hybrid HPA with Model Updates | `hypa-hybrid-hpa-automated-model-updates-2023.pdf` | doi:10.1109/NFV-SDN59219.2023.10329742 | Blends proactive+reactive; auto-updates model on distributional shift; asymmetric scale-up/down recommended for dynamic workloads |
 | **Tiny Autoscalers** — Lightweight Scaling | `tiny-autoscalers-2022.pdf` | arxiv:2203.00592 | Bottoming mechanism prevents rapid resource swings; small moving-average window for smoothing utilization |
 
+> **Note:** The ARIMA-PID, ElaX, HyMetricScaler, and Dehigama PDFs are stored as Git LFS pointers (131–133 bytes on disk) and are resolved with `git lfs pull`. All other PDFs in this directory are fully checked out with sizes >10 KB. SATA (doi:10.3390/electronics13071242) is DOI-only — no open-access PDF is available.
+
 ## How Papers Map to Controller Versions
 
 | Paper | V1 | V2 (PID+FF) | V3 (Capacity-Driven) |
@@ -48,15 +50,15 @@ All papers downloaded as PDF for offline access. Located in `docs/references/`.
 | **Multi-Cloud Container Orchestration** | 2025 (doi:10.62311/nesx/rphcrcscrcec2) | Reproducible multi-cloud K8s eval: Locust + Prometheus + Grafana, regression analysis |
 | **QoS vs Auto-Scaling Policy** | MDPI Sensors 2024 (doi:10.3390/s24123774) | HPA vs KPA scaling-efficiency metric, latency percentile evaluation, 10-trial repeats |
 | **DoE for Resource Sizing** | doi:10.3390/app151810098 | Response Surface Methodology finds optimal CPU/memory with minimal experiments; central composite design |
-| **SATA** — SLO Threshold Adaptation | doi:10.3390/electronics13071242 | Static SLO thresholds need 35-47% margin; dynamic threshold adjustment achieves 98% SLA compliance |
+| **SATA** — SLO Threshold Adaptation | doi:10.3390/electronics13071242 (DOI-only, no PDF) | Static SLO thresholds need 35-47% margin; dynamic threshold adjustment achieves 98% SLA compliance |
 | **CPU Throttling-Aware Autoscaling** | doi:10.1109/PIMRC59610.2024.10817283 | Per-pod capacity must be measured under actual CFS throttling, not assumed from CPU limits |
-| **Demystifying Serverless Costs** | arXiv:2506.01283 | Billing inflates resources up to 4.35× beyond actual consumption; OS scheduling granularity impacts cost |
-| **Skyrise** — Serverless vs VM Cost Break-even | arXiv:2501.07771 | Derives break-even throughput: FaaS cheaper below threshold, VMs cheaper above; Q6 break-even at 558 runs/hr, Q12 at 128 runs/hr |
-| **High Cost of Keeping Warm** | arXiv:2509.03104 | Measures 10-40% serverless overhead from instance churn, 2-10× memory waste; hybrid real+simulation methodology |
-| **BatchBench** — Autoscaling Benchmark | arXiv:2605.12272 | Five-axis evaluation: cost, SLA, responsiveness, thrash, interpretability; paired Wilcoxon + bootstrap CIs |
-| **SeBS** — Serverless Benchmark Suite | arXiv:2012.14132 | Realistic FaaS workloads: CPU-bound (image processing) + I/O-bound (uploader, DB). I/O-bound shows wider latency distributions; Lambda bills wall-clock duration including I/O waits |
-| **SeBS-Flow** — Serverless Workflow Benchmarks | arXiv:2410.03480 | Storage I/O dominates overhead in serverless workflows; NoSQL + object storage access patterns |
-| **Let's Trace It** — Fine-Grained FaaS Benchmarking | arXiv:2205.07696 | Sync + async serverless patterns; I/O-bound workloads dominated by external services, not compute; orchestration overhead significant |
+| **Demystifying Serverless Costs** | arXiv:2506.01283 · `demystifying-serverless-costs-2025.pdf` | Billing inflates resources up to 4.35× beyond actual consumption; OS scheduling granularity impacts cost |
+| **Skyrise** — Serverless vs VM Cost Break-even | arXiv:2501.07771 · `skyrise-serverless-vm-breakeven-2025.pdf` | Derives break-even throughput: FaaS cheaper below threshold, VMs cheaper above; Q6 break-even at 558 runs/hr, Q12 at 128 runs/hr |
+| **High Cost of Keeping Warm** | arXiv:2509.03104 · `high-cost-keeping-warm-2025.pdf` | Measures 10-40% serverless overhead from instance churn, 2-10× memory waste; hybrid real+simulation methodology |
+| **BatchBench** — Autoscaling Benchmark | arXiv:2605.12272 · `batchbench-autoscaling-benchmark-2026.pdf` | Five-axis evaluation: cost, SLA, responsiveness, thrash, interpretability; paired Wilcoxon + bootstrap CIs |
+| **SeBS** — Serverless Benchmark Suite | arXiv:2012.14132 · `sebs-serverless-benchmark-suite-2020.pdf` | Realistic FaaS workloads: CPU-bound (image processing) + I/O-bound (uploader, DB). I/O-bound shows wider latency distributions; Lambda bills wall-clock duration including I/O waits |
+| **SeBS-Flow** — Serverless Workflow Benchmarks | arXiv:2410.03480 · `sebs-flow-serverless-workflows-2024.pdf` | Storage I/O dominates overhead in serverless workflows; NoSQL + object storage access patterns |
+| **Let's Trace It** — Fine-Grained FaaS Benchmarking | arXiv:2205.07696 · `lets-trace-faas-benchmarking-2022.pdf` | Sync + async serverless patterns; I/O-bound workloads dominated by external services, not compute; orchestration overhead significant |
 
 ## Dataset References
 

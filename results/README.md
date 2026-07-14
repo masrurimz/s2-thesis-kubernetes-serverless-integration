@@ -15,7 +15,7 @@ Rules:
 | Hypothesis | Mechanism Validated? | Superiority Demonstrated? | Stats Done? | Notes |
 |------------|---------------------|--------------------------|-------------|-------|
 | **H1** (Hybrid > Pure) | ✅ Weight shifting, serverless engagement | ❌ Not supported in valid replicated set (`2026-02-15_clarknet-replay`); rerun-v2 (`n=1`) directional only | ✅ Welch t-test | Hybrid p99 worse than S1 in valid replicated set; no superiority claim |
-| **H2** (Predictive > Reactive) | ✅ PREDICTIVE triggered pre-violation | ✅ Supported in valid replicated set (`2026-02-15_clarknet-replay`); rerun-v2 (`n=1`) non-inferential | ✅ | Keep A1 mechanism evidence + valid replicated evidence; treat rerun-v2 as pipeline/directional |
+| **H2** (Predictive > Reactive) | ✅ PREDICTIVE triggered pre-violation | ✅ Supported (primary p99 p=0.0304, d=−1.26, definitive n=5) | ✅ | Definitive: `2026-07-14_clarknet-tuned-paired-n5`; corrected secondary p=0.1216 not significant |
 | **H3** (GRU adequate) | ✅ 6.01% RMSE (synthetic), ⚠️ 17.78% RMSE (real ClarkNet) | N/A | ✅ | Synthetic meets targets; real traces do not (<10% RMSE). GRU still outperforms baselines on real data. |
 
 ---
@@ -46,6 +46,9 @@ Rules:
 | `cost.unified-aws-s2-validation.2026-02-20` | B | Cost Analysis (S2 validation) | 2026-02-20 | S2 | `cost/2026-02-20_s2-validation-unified-aws-cost/` |
 | `cost.unified-aws-s2-validation-v2.2026-02-21` | B | Cost Analysis (S2 validation v2) | 2026-02-21 | S2 | `cost/2026-02-21_s2-validation-v2-unified-aws-cost/` |
 | `cost.unified-aws-all-scenarios-rerun-v2.2026-02-21` | B | Cost Analysis (all scenarios rerun v2) | 2026-02-21 | S1-S4 | `cost/2026-02-21_all-scenarios-rerun-v2-unified-aws-cost/` |
+| `experiments.2026-07-14-clarknet-tuned-paired-n5` | B | Paired H2 (role: final, status: current) | 2026-07-14 | S3, S4 | `experiments/phase-b/2026-07-14_clarknet-tuned-paired-n5/` |
+| `experiments.2026-07-14-clarknet-util-scaledown-n1` | B | Node Consolidation Diagnostic (n=1) | 2026-07-14 | S3, S4 | `experiments/phase-b/2026-07-14_clarknet-util-scaledown-n1/` |
+| `experiments.2026-07-13-clarknet-dynamic-node-n1` | B | Dynamic Node Diagnostic (n=1) | 2026-07-13 | S3, S4 | `experiments/phase-b/2026-07-13_clarknet-dynamic-node-n1/` |
 
 ---
 
