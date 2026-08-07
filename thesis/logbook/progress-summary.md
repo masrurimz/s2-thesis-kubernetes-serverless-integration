@@ -1,39 +1,63 @@
-# Ringkasan Progres Tesis — untuk Bimbingan
+# Ringkasan Progres Tesis
 
-**Dari:** [Nama] · NIM [NIM] · [Prodi] · 2026-08-07
+**Dari:** [Nama] · NIM [NIM] · [Prodi] · 7 Agustus 2026
 **Judul:** *Decision Making and Elastic Scalability Management in Heterogeneous Cloud Environments Based on Workload Prediction*
 
 ---
 
-## Status: penelitian selesai, naskah siap direview, siap bimbingan sebelum sidang
+## Status sekarang
 
-**Masalah yang diteliti.** Autoscaling di cloud punya trade-off: Kubernetes (K8s) stabil tetapi lambat menambah kapasitas; serverless cepat tetapi biayanya tinggi saat skala besar. Tesis ini menggabungkan keduanya dalam satu platform **hibrida**, dengan **prediksi beban kerja (GRU)** untuk mengambil keputusan skala lebih awal.
+Penelitian sudah selesai. Naskah tesis siap dibaca. Saya ingin bimbingan dulu sebelum daftar sidang.
 
-**Yang diuji.** Empat skenario arsitektur:
+## Intinya tentang apa
 
-| Skenario | Deskripsi |
+Kalau aplikasi di cloud sibuk, sistem harus nambah kapasitas. Kubernetes caranya stabil tapi agak lambat. Serverless caranya cepat tapi mahal kalau skalanya besar. Tesis saya menggabungkan keduanya — namanya arsitektur hibrida — dan menambahkan prediksi beban kerja (pakai model GRU) supaya sistem bisa nambah kapasitas *sebelum* puncaknya datang, bukan setelah.
+
+## Yang diuji
+
+Saya bandingkan 4 skenario:
+
+| Kode | Isinya |
 |---|---|
-| S1 | Kubernetes murni (HPA) |
-| S2 | Serverless murni (Knative) |
-| S3 | Hibrida K8s + serverless, skala reaktif (berdasarkan beban teramati) |
-| S4 | Hibrida K8s + serverless, skala **prediktif** (berdasarkan ramalan GRU) |
+| S1 | Kubernetes saja |
+| S2 | Serverless saja |
+| S3 | Hibrida, tapi reaktif (baru nambah kapasitas setelah beban naik) |
+| S4 | Hibrida, prediktif (nambah kapasitas berdasarkan ramalan) |
 
-**Hasil utama.** S4 (prediktif) mengungguli S3 (reaktif) pada latensi p99: **126 ms vs 188.5 ms (lebih cepat ~33%)**, pelanggaran SLO (p99 < 200 ms) turun **80%**, dengan biaya yang sama. Hasil ini **direplikasi secara independen** — S4 menang 9 dari 10 pasangan percobaan. Efeknya konsisten di tiga batch percobaan, termasuk satu batch yang direplikasi ulang dengan nilai p identik dengan eksperimen utama.
+## Hasilnya
 
-**Kejujuran terhadap keterbatasan.** Prediksi GRU akurat pada data sintetis (RMSE 4.75%) tetapi lebih kasar pada jejak nyata (MAPE 17.78%) — keterbatasan ini dilaporkan apa adanya; keunggulan S4 tetap muncul karena keputusan skala memanfaatkan prediksi walau tidak sempurna. Biaya dilaporkan sebagai model proxy, bukan billing cloud.
+Yang paling penting: **S4 lebih baik dari S3**.
 
-**Perubahan dari proposal (drift, dilaporkan jujur).** Platform berpindah dari GCP ke lingkungan lokal k3d + Knative karena kendala akses; primitif cloud yang diuji (HPA, KPA, node autoscaler) sama persis dan lingkungan lokal justru membuat eksperimen reproducible. Prediksi GRU digunakan untuk **keputusan skala**, bukan routing trafik (agar perbandingan S3 vs S4 bersih). Seluruh 13 perubahan terdokumentasi lengkap dengan 17 sitasi di **Analisis Drift** (terlampir/disediakan saat bimbingan).
+- Waktu respons p99: 126 ms vs 188,5 ms (lebih cepat kira-kira 33%)
+- Pelanggaran SLO (p99 di atas 200 ms) turun 80%
+- Biayanya sama
 
-**Kelengkapan.**
-- Naskah tesis selesai (Typst → PDF, kompilasi bersih) — siap dikirim/dibawa
-- Analisis drift proposal→pelaksanaan: 13 item, 17 sitasi terarsip
-- 139 bundle eksperimen dalam sistem eviden terkelola (registry + jurnal)
+Hasil ini juga saya coba ulang sendiri (replikasi). Dari 10 pasangan percobaan, S4 menang 9. Jadi arahnya konsisten, bukan kebetulan sekali jalan.
 
-**Yang saya butuhkan dari Bapak/Ibu:**
-1. Waktu bimbingan untuk memaparkan ringkasan ini + analisis drift (saya bisa hadir [Senin 09.00 / Selasa 13.00 / Rabu 10.00] atau menyesuaikan)
-2. Review naskah dan masukan terutama pada: perubahan platform (D1), penggunaan prediksi untuk scaling (D5), dan pelaporan akurasi GRU (D9)
-3. Konfirmasi timeline pendaftaran sidang
+## Yang jujur saya akui
 
----
+- Model prediksinya bagus di data latihan (RMSE 4,75%), tapi di jejak trafik nyata lebih kasar (MAPE 17,78%). Saya tulis apa adanya. Meski prediksinya tidak sempurna, keputusan skalanya tetap lebih bagus.
+- Angka biayanya dari model perkiraan, bukan tagihan cloud beneran.
 
-*Semua angka diverifikasi terhadap `results/claims/FINAL_NUMBERS.md` dan bundle eksperimen (tercatat di logbook). PDF naskah: `thesis-typst/build/thesis.pdf`.*
+## Yang berubah dari proposal dulu
+
+Ada beberapa hal yang beda dari proposal awal, dan saya catat semua:
+
+1. **Platform.** Dulu rencananya pakai GCP. Sekarang dijalankan di k3d + Knative (lokal). Alasannya akses resource, dan justru lebih mudah diulang eksperimennya. Komponen yang diuji tetap sama (HPA, KPA, node autoscaler).
+2. **Peran prediksi.** Dulu prediksi ikut mengarahkan routing trafik. Sekarang prediksi cuma dipakai untuk keputusan *berapa* kapasitas yang ditambah — routing tetap berdasarkan kapasitas yang tersedia. Tujuannya supaya perbandingan S3 vs S4 bersih (beda cuma di input prediksinya).
+
+Semua perubahan (13 item) saya tulis lengkap di **Analisis Drift**, lengkap dengan 17 sitasi. Bisa saya bawa saat bimbingan.
+
+## Yang sudah siap
+
+- Naskah tesis (PDF) — siap dikirim atau dibawa
+- Analisis drift proposal → pelaksanaan
+- 139 bundle eksperimen, tercatat rapi di sistem eviden
+
+## Yang saya minta
+
+1. Waktu bimbingan — saya bisa [Senin jam 9 / Selasa jam 1 / Rabu jam 10], atau menyesuaikan jadwal Bapak/Ibu
+2. Masukan terutama soal: pindah platform, peran prediksi, dan cara saya melaporkan akurasi model
+3. Kepastian kapan bisa daftar sidang
+
+Terima kasih.
