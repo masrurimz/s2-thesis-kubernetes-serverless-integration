@@ -8,18 +8,19 @@
 > - **Registry:** `results/evidence/registry.yaml`
 > - **Query cache:** `results/evidence/catalog.duckdb` (rebuilt, not canonical)
 
-**Latest audit:** 2026-08-07T02:49:43.393947+00:00
+**Latest audit:** 2026-08-07T07:35:12.307278+00:00
 
 ## Summary
 
-- **Total bundles:** 138
-- **By role:** diagnostic=89, final=6, intermediate=43
-- **By status:** archived=10, current=65, invalidated=63
+- **Total bundles:** 139
+- **By role:** diagnostic=90, final=6, intermediate=43
+- **By status:** archived=10, current=66, invalidated=63
 
 ## Bundles
 
 | Date | ID | Role | Valid/Total | Treatment | Claims | Path |
 |------|----|------|------------|-----------|--------|------|
+| 2026-08-07 | `experiments.2026-08-07-paired-h2-104918` | diagnostic | 10/10 | 280/280 (✓) | — | `experiments/phase-b/2026-08-07_paired-h2_104918` |
 | 2026-08-07 | `experiments.2026-08-07-paired-h2-060200` | diagnostic | 10/10 | 280/280 (✓) | — | `experiments/phase-b/2026-08-07_paired-h2_060200` |
 | 2026-08-07 | `experiments.2026-08-07-paired-h2-034648` | diagnostic | 6/6 | 168/168 (✓) | — | `experiments/phase-b/2026-08-07_paired-h2_034648` |
 | 2026-08-06 | `experiments.2026-08-06-paired-h2-234256` | diagnostic | 6/6 | 168/168 (✓) | — | `experiments/phase-b/2026-08-06_paired-h2_234256` |
@@ -163,6 +164,7 @@
 
 | Timestamp | Event | Experiment | Bundle | Run |
 |-----------|-------|------------|--------|-----|
+| 2026-08-07T07:35:12.307278+00:00 | registry_audited | registry | /home/zahid/.local/share/worktrees/groundup-ai/thesis-kubernetes-serverless-integration/thesis-defense-alignment/results/evidence | — |
 | 2026-08-07T02:49:43.393947+00:00 | registry_audited | registry | /home/zahid/.local/share/worktrees/groundup-ai/thesis-kubernetes-serverless-integration/thesis-defense-alignment/results/evidence | — |
 | 2026-08-07T02:49:19.815649+00:00 | registry_audited | registry | /home/zahid/.local/share/worktrees/groundup-ai/thesis-kubernetes-serverless-integration/thesis-defense-alignment/results/evidence | — |
 | 2026-07-14T02:22:49.649837+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |
