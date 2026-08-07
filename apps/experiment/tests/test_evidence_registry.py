@@ -194,6 +194,81 @@ class TestScanBundles:
         assert "s1-k8s-only" in entry.scenarios
         assert "s1-k" not in entry.scenarios
 
+    def test_events_only_bundle_falls_back_to_journal_validity(self, results_root: Path):
+        """Bundles whose result.json was never committed still scan as valid.
+
+        Regression guard: evidence refresh must not silently downgrade
+        n_runs_valid/treatment_fidelity to 0 when per-run result.json is
+        missing but the run journal (events.jsonl) recorded the validity
+        verdict and S4 treatment fidelity.
+        """
+        bundle = results_root / "experiments" / "phase-b" / "2026-08-07_paired-h2_eventsonly"
+        bundle.mkdir(parents=True)
+        (bundle / "meta.yaml").write_text("bundle_schema_version: 2\n")
+
+        def _events(scenario: str, run_id: int, *, s4: bool = False) -> None:
+            run_dir = bundle / f"{scenario}_run{run_id}"
+            run_dir.mkdir()
+            payload: dict = {
+                "run_validity_passed": True,
+            }
+            if s4:
+                payload["treatment_fidelity"] = TreatmentFidelity(
+                    required=True,
+                    eligible_cycles=56,
+                    successful_predictions=56,
+                    failed_predictions=0,
+                    delivery_rate=1.0,
+                    delivered=True,
+                    forecast_horizon_sufficient=True,
+                ).model_dump(mode="json")
+            (run_dir / "events.jsonl").write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "event": "validity_evaluated",
+                        "git_commit": "237ec40",
+                        "payload": payload,
+                    }
+                )
+                + "\n"
+            )
+
+        for rid in (1, 2, 3):
+            _events("s3-hybrid-reactive", rid)
+            _events("s4-hybrid-predictive", rid, s4=True)
+
+        entries = scan_bundles(results_root)
+        entry = list(entries.values())[0]
+        assert entry.n_runs_total == 6
+        assert entry.n_runs_valid == 6
+        assert entry.treatment_fidelity is not None
+        assert entry.treatment_fidelity.delivered is True
+        assert entry.treatment_fidelity.eligible_cycles == 168
+        assert "237ec40" in entry.git_commits
+
+    def test_events_only_bundle_invalid_run_stays_invalid(self, results_root: Path):
+        """A journal verdict of failed validity is respected by the fallback."""
+        bundle = results_root / "experiments" / "phase-b" / "2026-08-07_paired-h2_invalid"
+        bundle.mkdir(parents=True)
+        (bundle / "meta.yaml").write_text("bundle_schema_version: 2\n")
+        run_dir = bundle / "s3-hybrid-reactive_run1"
+        run_dir.mkdir()
+        (run_dir / "events.jsonl").write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "event": "validity_evaluated",
+                    "payload": {"run_validity_passed": False},
+                }
+            )
+            + "\n"
+        )
+        entries = scan_bundles(results_root)
+        entry = list(entries.values())[0]
+        assert entry.n_runs_total == 1
+        assert entry.n_runs_valid == 0
+
 
 class TestReconcileRegistry:
     """Merge-safe reconciliation tests."""

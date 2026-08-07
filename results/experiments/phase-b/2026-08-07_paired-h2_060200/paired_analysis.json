@@ -1,0 +1,71 @@
+{
+  "status": "primary_unrecoverable",
+  "schema_version": 1,
+  "n_pairs": 5,
+  "pair_ids": [
+    "pair_001",
+    "pair_002",
+    "pair_003",
+    "pair_004",
+    "pair_005"
+  ],
+  "explanation": "The k6-based primary artifacts (per-run result.json, k6 summary, and this paired_analysis.json) were deleted from the working tree before the bundle was committed (commits 7a7a315 / b87a968 contain only daemon.log, events.jsonl, meta.yaml). They were never tracked in git or Git LFS, are absent from all branches, the object database (including unreachable blobs), the evidence catalog sha256 index, filesystem copies, and trash. The p99 values cited in thesis ch04 derive from those deleted k6 summaries and CANNOT be reconstructed from retained data; they are reproduced below verbatim for cross-reference only (docs_citation). The surrogate section below is the only inferential analysis computable from retained data (per-interval p99 estimates logged by the routing daemon) and is NOT the k6-based metric cited in the thesis.",
+  "recovery_checks": {
+    "git_lfs": "not tracked (git lfs ls-files --all: no match)",
+    "git_history": "no commit ever contained result.json/k6/paired_analysis.json for this bundle",
+    "git_unreachable_blobs": "99 unreachable blobs scanned; sha256 match against evidence index: none",
+    "evidence_index_sha256": "index references deleted artifacts; content hashes do not exist as git objects",
+    "filesystem": "no copies found under /home/zahid, /tmp, /var/tmp, trash, sibling bundles, other worktrees"
+  },
+  "docs_citation": {
+    "s3_mean_p99_ms": 131.7,
+    "s4_mean_p99_ms": 109.9,
+    "mean_diff_ms": -21.8,
+    "one_sided_permutation_p": 0.0958,
+    "cohens_d": -0.71,
+    "slo_violations_s3_vs_s4": [
+      172,
+      101
+    ],
+    "s4_wins": "4 of 5 pairs",
+    "source": "thesis-typst/src/content/ch04-results.typ (Independent Replication section)"
+  },
+  "surrogate_daemon_p99_est": {
+    "note": "Computed with libs/analysis/analysis/comparison.py run_paired_comparison on the retained daemon.log series (mean of per-15s-interval p99_est per run; 5 counterbalanced pairs, run N paired with scenario run N). This is a proxy metric, NOT the k6 client-side p99 cited in the thesis. Directional agreement with the cited result is partial; do not quote these numbers as the replication result.",
+    "metric": "p99_est_daemon_ms",
+    "label": "H2-surrogate-daemon-p99-est",
+    "n_pairs": 5,
+    "baseline_mean": 168.22962129844842,
+    "comparison_mean": 145.52598009541234,
+    "mean_difference": -22.703641203036085,
+    "paired_ci_lower": -53.631850043412136,
+    "paired_ci_upper": 3.3436894797295964,
+    "permutation_p_value": 0.1278,
+    "cohens_d_paired": -0.6284689878756419,
+    "effect_size_interpretation": "medium",
+    "baseline_values": [
+      158.85006276875222,
+      164.48501429290977,
+      147.89937399095848,
+      196.86717148724924,
+      173.04648395237248
+    ],
+    "comparison_values": [
+      140.05249509822602,
+      133.43634206824973,
+      138.893883731689,
+      120.01246652857982,
+      195.23471305031723
+    ],
+    "pair_ids": [
+      "pair_001",
+      "pair_002",
+      "pair_003",
+      "pair_004",
+      "pair_005"
+    ],
+    "permutation_p_corrected": 1.0,
+    "h2_supported": false
+  },
+  "timestamp": "2026-08-07T23:40:00"
+}

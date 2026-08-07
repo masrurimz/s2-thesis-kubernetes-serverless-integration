@@ -167,6 +167,42 @@ def _run_is_valid(result: ExperimentResult) -> bool:
     return True
 
 
+def _derive_run_events_fallback(run_dir: Path, scenario: str) -> tuple[bool, TreatmentFidelity | None, str]:
+    """Derive run validity, S4 treatment fidelity, and git commit from the run
+    journal (``validity_evaluated`` event) when ``result.json`` is unavailable.
+
+    Some bundles only ever had ``daemon.log`` + ``events.jsonl`` committed
+    (result.json and the k6 summary were deleted pre-commit and are
+    gitignored), so the scanner falls back to the journal's own validity gate
+    verdict instead of silently downgrading ``n_runs_valid`` to 0.
+
+    Returns ``(valid, fidelity_or_None, git_commit)``.
+    """
+    events_path = run_dir / "events.jsonl"
+    if not events_path.exists():
+        return False, None, ""
+    try:
+        for line in events_path.read_text().splitlines():
+            if not line.strip():
+                continue
+            event = json.loads(line)
+            if event.get("event") != "validity_evaluated":
+                continue
+            payload = event.get("payload") or {}
+            valid = bool(payload.get("run_validity_passed"))
+            fid = None
+            tf_data = payload.get("treatment_fidelity")
+            if tf_data and scenario == Scenario.S4_HYBRID_PREDICTIVE.value:
+                try:
+                    fid = TreatmentFidelity(**tf_data)
+                except Exception:
+                    fid = None
+            return valid, fid, str(event.get("git_commit") or "")
+    except Exception:
+        return False, None, ""
+    return False, None, ""
+
+
 def _scan_run_dirs(bundle_dir: Path) -> list[tuple[str, int, Path]]:
     """Find all run directories in a bundle (v1 direct-child or v2 raw/ layout).
 
@@ -244,6 +280,16 @@ def _scan_single_bundle(
             fid = _derive_run_fidelity(result)
             if fid is not None:
                 s4_fidelities.append(fid)
+        else:
+            # Fallback: derive validity / fidelity / commit from the run
+            # journal when result.json was never committed (or was deleted).
+            events_valid, events_fid, events_commit = _derive_run_events_fallback(run_dir, scenario)
+            if events_valid:
+                n_valid += 1
+            if events_fid is not None:
+                s4_fidelities.append(events_fid)
+            if events_commit:
+                git_commits.add(events_commit)
 
     # Bundle-level treatment fidelity
     bundle_fidelity: TreatmentFidelity | None = None

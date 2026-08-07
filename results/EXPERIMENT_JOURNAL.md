@@ -8,7 +8,7 @@
 > - **Registry:** `results/evidence/registry.yaml`
 > - **Query cache:** `results/evidence/catalog.duckdb` (rebuilt, not canonical)
 
-**Latest audit:** 2026-08-07T07:35:12.307278+00:00
+**Latest audit:** 2026-08-07T16:38:33.937324+00:00
 
 ## Summary
 
@@ -164,6 +164,7 @@
 
 | Timestamp | Event | Experiment | Bundle | Run |
 |-----------|-------|------------|--------|-----|
+| 2026-08-07T16:38:33.937324+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |
 | 2026-08-07T07:35:12.307278+00:00 | registry_audited | registry | /home/zahid/.local/share/worktrees/groundup-ai/thesis-kubernetes-serverless-integration/thesis-defense-alignment/results/evidence | — |
 | 2026-08-07T02:49:43.393947+00:00 | registry_audited | registry | /home/zahid/.local/share/worktrees/groundup-ai/thesis-kubernetes-serverless-integration/thesis-defense-alignment/results/evidence | — |
 | 2026-08-07T02:49:19.815649+00:00 | registry_audited | registry | /home/zahid/.local/share/worktrees/groundup-ai/thesis-kubernetes-serverless-integration/thesis-defense-alignment/results/evidence | — |
