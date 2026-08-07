@@ -35,6 +35,7 @@ class TreatmentFidelity(BaseModel):
 
 
 JournalEventName = Literal[
+    "bundle_created",
     "run_started",
     "reset_completed",
     "daemon_started",

@@ -81,8 +81,8 @@ class CalibrationConfig(BaseModel):
 
     # Provisioning delay estimation (ADAPT-inspired)
     # The daemon measures scale-command-to-readiness and maintains an EWMA.
-    # The required forecast horizon = ceil((delay_estimate + safety) / sample_interval).
-    # With delay=60s, safety=15s, interval=15s → ceil(75/15) = 5 steps (matches model).
+    # With the deployed 9-step model, the 135s forecast window covers the
+    # maximum measured 120s provisioning delay plus a 15s safety margin.
     provisioning_delay_default_sec: float = 60.0
     provisioning_delay_ewma_alpha: float = 0.3
     provisioning_delay_safety_sec: float = 15.0
@@ -97,13 +97,13 @@ class CalibrationConfig(BaseModel):
     ki_burn: float = 0.05
     proactive_trend_threshold: float = 3.0
     proactive_approach_ratio: float = 0.8  # Trigger at 80% capacity
-    proactive_hold_sec: float = 90.0  # Hold proactive scale-up (5 steps × 15s = 75s, rounded up)
+    proactive_hold_sec: float = 90.0  # Hold proactive scale-up for the 9-step forecast window
 
     # GRU model params — direct multi-horizon architecture (schema v2)
-    # prediction_horizon=5 × sample_interval_sec=15s = 75s forecast window
-    # (covers K8s pod scale-up latency of ~45-60s)
+    # prediction_horizon=9 × sample_interval_sec=15s = 135s forecast window
+    # (covers the maximum measured 120s provisioning delay plus 15s margin)
     sample_interval_sec: int = 15
-    prediction_horizon: int = 5
+    prediction_horizon: int = 9
     gru_hidden_size: int = 128
     gru_num_layers: int = 1
     gru_learning_rate: float = 0.000380
@@ -165,6 +165,8 @@ class CalibrationConfig(BaseModel):
             "proactive_trend_threshold": self.proactive_trend_threshold,
             "proactive_approach_ratio": self.proactive_approach_ratio,
             "proactive_hold_sec": self.proactive_hold_sec,
+            # Keep trend extrapolation aligned with the multi-horizon GRU.
+            "proactive_lookahead_steps": self.prediction_horizon,
         }
 
     def to_scaling_config_overrides(self) -> dict:

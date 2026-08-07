@@ -1,84 +1,46 @@
-# Project Overview: Hybrid K8s-Serverless Integration
+# Project Overview
 
-## What This Project Does
+This project evaluates a hybrid Kubernetes + serverless control plane for tail-latency-sensitive workloads.
 
-This research implements a hybrid architecture that combines:
-- **Kubernetes clusters** for baseline warm operations
-- **Serverless computing** for infinite scaling during traffic spikes  
-- **Intelligent routing** using machine learning-based workload prediction
+- Kubernetes provides warm, capacity-limited replicas.
+- Knative provides elastic overflow.
+- Algorithm 1 V3 routes using observed load, observed ready capacity, and HAProxy rtime-derived p99.
+- A GRU forecast is confidence-gated and feeds Algorithm 2 Kubernetes replica scaling; it does not directly set routing weights.
 
-## Thesis Research Focus
+## Final research configuration
 
-**Title**: Decision Making and Elastic Scalability Management in Heterogeneous Cloud Environments Based on Workload Prediction
+- Workload: deterministic `/fib?n=33` CPU endpoint.
+- GRU training: synthetic diurnal, burst, and ramp series.
+- ClarkNet and Calgary: validation corpora; ClarkNet is also replayed for evaluation.
+- Forecast: 9 samples × 15 seconds = **135 seconds**.
+- Primary SLO: **p99 < 200 ms**.
+- Scenarios: S1 K8s + HPA, S2 serverless-only, S3 hybrid-reactive, S4 hybrid-predictive.
 
-**Key Innovation**: ElaX algorithm enhanced with GRU-based prediction for tail latency optimization
+## How the control loop works
 
-## Quick Understanding (5 minutes)
-
-### The Problem
-- Traditional Kubernetes: Slow to scale, wastes resources during low load
-- Pure Serverless: Expensive for sustained workloads, cold start latency
-- **Solution**: Hybrid system that intelligently routes traffic based on real-time conditions
-
-### How It Works
-```
-Normal Load (100 RPS)     →  Kubernetes Cluster (baseline capacity)
-Traffic Spike (1000 RPS)  →  Serverless Functions (instant scale)  
-Sustained High (800 RPS)  →  Back to Kubernetes (cost optimization)
+```text
+observed RPS -> Algorithm 1 V3 -> HAProxy K8s/Knative weights
+      |
+      +-> GRU confidence-gated forecast -> Algorithm 2 replica target
 ```
 
-### Key Components
-1. **GRU Workload Predictor**: Predicts traffic 30 seconds ahead using real HTTP trace data
-2. **Routing Controller**: Routes traffic based on SLO violations (tail latency >200ms)
-3. **Resource Allocator**: Uses formal model R = α·x + β with OLS coefficient tuning
-4. **Cost Optimizer**: Minimizes total cost while maintaining performance guarantees
+The forecast enables proactive Kubernetes capacity. Routing reacts to observed capacity and trend, so a forecast error cannot directly force an expensive serverless weight.
 
-## Implementation Approach
+## Final evidence snapshot
 
-We follow an **incremental, agile methodology**:
+- H2 definitive paired n=5: S3 mean p99 188.5 ms; S4 126.0 ms; p=0.0304; d=-1.26; both USD 163 proxy cost.
+- H1 directional n=1: S4 118.2 ms versus S1 2,421.3 ms.
 
-### Sprint 1: Basic Hybrid (Week 1)
-- Simple k3s + simulated serverless
-- Manual traffic switching
-- Basic monitoring
+These results support the stated testbed comparison only. H1 is not inferential, and cost is a directional proxy.
 
-### Sprint 2: Automation (Week 2) 
-- Simple load prediction
-- Automated routing decisions
-- Historical data collection
+## Current entry points
 
-### Sprint 3: SLO Management (Week 3)
-- Tail latency monitoring
-- 5-second SLO violation detection
-- Cost tracking
+```bash
+uv run thesis infra apply-resources
+uv run thesis infra deploy-app
+uv run thesis infra health
+uv run thesis-experiment preflight
+uv run thesis-experiment run --phase full --runs 5 --duration 300
+```
 
-### Sprint 4: ML Integration (Week 4)
-- GRU model training on real data
-- 30-second prediction horizon
-- Real-time inference
-
-### Sprint 5: Full Thesis (Week 5)
-- Complete ElaX implementation
-- Formal evaluation
-- Comparative analysis
-
-## Expected Results
-
-- **Workload-dependent cost ranking** (validated from measured run artifacts)
-- **<200ms p95 latency** under normal load
-- **<30 second scaling** response time
-- **RMSE <10%** prediction accuracy
-
-## Getting Started
-
-1. **[Prerequisites](01-prerequisites.md)** - Install required tools
-2. **[Quick Demo](02-quick-start.md)** - 15-minute working demo
-3. **[Architecture Deep Dive](03-understanding-architecture.md)** - Technical details
-
-## For Thesis Work
-
-See **[thesis-implementation/](../thesis-implementation/)** for formal research documentation.
-
-## For Development
-
-See **[incremental-development/](../incremental-development/)** for sprint-by-sprint implementation guides.
+Services use prediction port 8090, routing port 9104, Prometheus 9090, HAProxy HTTP 18082, and HAProxy stats 18404. See [Architecture](03-understanding-architecture.md) and [Running Experiments](../thesis-implementation/03-running-experiments.md) for the complete flow.

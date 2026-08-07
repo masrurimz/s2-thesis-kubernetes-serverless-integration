@@ -8,6 +8,7 @@ configuration with custom env vars and file-based output parsing.
 import json
 import os
 import subprocess
+import time
 from pathlib import Path
 from typing import Callable, Dict, Optional
 
@@ -61,6 +62,10 @@ class WorkloadStage(BaseStage):
         run_id = ctx.run_id
         run_dir = Path(ctx.output_dir) if ctx.output_dir else Path(".")
 
+        if _WORKLOAD not in _WORKLOAD_MAP:
+            available = ", ".join(sorted(_WORKLOAD_MAP))
+            raise ValueError(f"Unknown workload {_WORKLOAD!r}; available workloads: {available}")
+
         k6_summary = self._run_k6(scenario, run_id, run_dir, on_progress=on_progress)
 
         if k6_summary is None:
@@ -100,6 +105,9 @@ class WorkloadStage(BaseStage):
                          Use to update a spinner/progress bar description.
         """
         k6_results_dir = results_dir / "k6"
+        # Keep summaries inside this run's k6 directory; use invocation time to
+        # reject stale files left by an earlier run.
+        t_start = time.time()
         k6_results_dir.mkdir(parents=True, exist_ok=True)
 
         cmd = [
@@ -183,16 +191,24 @@ class WorkloadStage(BaseStage):
             logger.warning("k6_threshold_crossed", scenario=scenario, run_id=run_id)
 
         # k6 handleSummary saves the detailed JSON to k6_results_dir
-        k6_files = sorted(k6_results_dir.glob("clarknet_replay_*.json"))
-        if not k6_files:
-            logger.error("k6_no_output_file", dir=str(k6_results_dir))
+        k6_files = list(k6_results_dir.glob("clarknet_replay_*.json"))
+        fresh_files = [path for path in k6_files if path.stat().st_mtime >= t_start]
+        if len(fresh_files) != len(k6_files):
+            logger.warning(
+                "k6_stale_summaries_skipped",
+                count=len(k6_files) - len(fresh_files),
+                run_t_start=t_start,
+            )
+        if not fresh_files:
+            logger.error("k6_no_output_file", dir=str(k6_results_dir), run_t_start=t_start)
             return None
+        newest = max(fresh_files, key=lambda path: path.stat().st_mtime)
 
         try:
-            with open(k6_files[-1]) as f:
+            with open(newest) as f:
                 raw = json.load(f)
             summary = self._extract_metrics(raw, scenario, run_id)
-            summary["k6_summary_path"] = str(k6_files[-1])
+            summary["k6_summary_path"] = str(newest)
             logger.info(
                 "k6_complete",
                 scenario=scenario,
@@ -202,7 +218,7 @@ class WorkloadStage(BaseStage):
             )
             return summary
         except (json.JSONDecodeError, KeyError) as e:
-            logger.error("k6_parse_failed", error=str(e), file=str(k6_files[-1]))
+            logger.error("k6_parse_failed", error=str(e), file=str(newest))
             return None
 
     @staticmethod

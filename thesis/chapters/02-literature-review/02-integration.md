@@ -40,9 +40,9 @@ In the overflow pattern, Kubernetes handles all traffic up to its provisioned ca
 
 This pattern is reactive—it responds to saturation after it occurs. The latency between detecting saturation and serverless capacity becoming available (including potential cold starts) creates a window during which SLO violations may occur.
 
-**Pattern 2: Predictive Routing**
+**Pattern 2: Prediction-Assisted Hybrid Control**
 
-The predictive routing pattern uses a forecasting model to anticipate traffic changes and proactively adjust the traffic distribution between backends before capacity limits are reached:
+Prediction-assisted hybrid control uses a forecasting model to anticipate traffic changes and proactively prepare capacity before observed demand reaches platform limits. Depending on the controller design, the forecast may guide scaling or routing; the delivered system studied in this thesis assigns it to Kubernetes replica scaling while keeping routing grounded in observed capacity and tail latency:
 
 ```
      Traffic ──► Predictor ──► Router ──┬──► Kubernetes
@@ -52,4 +52,4 @@ The predictive routing pattern uses a forecasting model to anticipate traffic ch
 
 **Figure 2-4: Predictive Routing Pattern**
 
-This pattern is the basis for the architecture proposed in this research. By forecasting workload 30 seconds ahead using a GRU neural network and combining the prediction with real-time SLO monitoring, the system can pre-warm serverless capacity and shift traffic proactively. The ElaX algorithm [7] provides the algorithmic framework for implementing this pattern, as detailed in Section 2.5.2.
+This pattern motivates the architecture proposed in this research. The final system uses a GRU 9-step forecast at 15-second resolution (135 seconds) to provide lead time for proactive Kubernetes scaling, while observed capacity and tail latency govern traffic routing. The ElaX algorithm [7] provides the algorithmic framework for this separation, as detailed in Section 2.5.2.

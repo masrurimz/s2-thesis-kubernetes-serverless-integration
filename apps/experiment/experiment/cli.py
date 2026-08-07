@@ -9,6 +9,8 @@ Entry point: thesis-experiment (via pyproject.toml [project.scripts]).
 import json
 import os
 import random
+import shutil
+import tempfile
 import time
 from datetime import datetime
 from pathlib import Path
@@ -39,6 +41,63 @@ COOLDOWN_SEC = 60
 INTER_RUN_PAUSE_SEC = 60
 
 
+def _bundle_dir(
+    base_dir: str,
+    slug: str,
+    force: bool,
+) -> str:
+    """Resolve a unique experiment bundle directory.
+
+    Default names are timestamped (YYYY-MM-DD_slug_HHMMSS) so re-triggering the
+    same command can never collide with an earlier bundle. Explicit --output
+    paths are honoured but refused if they already exist, unless --force is
+    passed (which deletes the existing bundle first).
+    """
+    now = datetime.now()
+    candidate = Path(base_dir) / f"{now.strftime('%Y-%m-%d')}_{slug}_{now.strftime('%H%M%S')}"
+    if force and candidate.exists():
+        shutil.rmtree(candidate)
+    if candidate.exists():
+        console = Console()
+        console.print(
+            f"[red]Bundle directory already exists: {candidate}[/red]\n"
+            f"[red]Re-running would mix runs from two invocations. "
+            f"Pass --force to delete it first, or choose a different --output.[/red]"
+        )
+        raise typer.Exit(1)
+    return str(candidate)
+
+
+def _write_bundle_metadata(output_dir: str, scenarios: list[str], runs: int, status: str) -> None:
+    """Write bundle meta.yaml + a bundle-level events.jsonl (schema v2)."""
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    meta = out / "meta.yaml"
+    if not meta.exists():
+        meta.write_text(
+            f"bundle_schema_version: 2\n"
+            f"name: {out.name}\n"
+            f"date: {datetime.now().strftime('%Y-%m-%d')}\n"
+            f"scenarios: {scenarios}\n"
+            f"runs: {runs}\n"
+            f"status: {status}\n"
+        )
+    from shared.storage.journal import ExperimentJournal
+
+    journal = ExperimentJournal(
+        out / "events.jsonl",
+        experiment_id=out.name,
+        bundle_path=str(out),
+        git_commit=_git_commit_hash(),
+    )
+    journal.record(
+        journal.new_event(
+            "bundle_created",
+            payload={"scenarios": scenarios, "runs": runs, "status": status},
+        )
+    )
+
+
 @app.command()
 def run(
     phase: str = typer.Option("full", help="Phase: preflight, experiments, analysis, or full"),
@@ -51,6 +110,8 @@ def run(
     controller: str = typer.Option("v3", help="Controller version for S3/S4"),
     workload: str = typer.Option("clarknet", help="Workload trace: clarknet|spike|periodic|ramp|stationary"),
     calibration: Optional[str] = typer.Option(None, help="Path to CalibrationConfig JSON overrides"),
+    force: bool = typer.Option(False, "--force", help="Delete an existing bundle dir before running"),
+    no_preflight: bool = typer.Option(False, "--no-preflight", help="Skip preflight checks before experiments"),
 ) -> None:
     """Run experiment phase through the full pipeline."""
     from rich.console import Console
@@ -62,8 +123,12 @@ def run(
 
     console = Console()
 
-    datestamp = datetime.now().strftime("%Y-%m-%d")
-    output_dir = output or f"results/experiments/phase-b/{datestamp}_clarknet-replay"
+    output_dir = output or _bundle_dir("results/experiments/phase-b", "clarknet-replay", force)
+    if output and Path(output).exists() and not force:
+        console.print(f"[red]Output bundle already exists: {output}. Pass --force to delete it first.[/red]")
+        raise typer.Exit(1)
+    if output and force and Path(output).exists():
+        shutil.rmtree(output)
     scenario_list = scenarios.split(",") if scenarios else SCENARIOS
 
     console.print(
@@ -85,20 +150,26 @@ def run(
         seed=seed,
     )
 
-    if phase in ("preflight", "full"):
+    # Preflight runs before experiments by default (and as --phase preflight);
+    # --no-preflight opts out of the automatic gate only.
+    if phase == "preflight" or (phase in ("experiments", "full") and not no_preflight):
         console.print("\n[bold cyan]Preflight Checks[/bold cyan]")
         from experiment.stages.preflight import PreflightStage
 
-        stage = PreflightStage()
-        ctx_result = stage.execute(_make_ctx(config, scenario_list[0], 0, output_dir))
+        stage = PreflightStage(s4_planned=any(s.startswith("s4") for s in scenario_list))
+        # Preflight-only invocations must not create result-bundle dirs.
+        ctx_out = output_dir if phase in ("experiments", "full") else tempfile.mkdtemp(prefix="thesis-preflight-")
+        ctx_result = stage.execute(_make_ctx(config, scenario_list[0], 0, ctx_out))
         if not ctx_result.success:
             console.print(f"[red]Preflight failed: {ctx_result.error}[/red]")
-            if phase == "full":
+            if phase != "preflight":
                 raise typer.Exit(1)
         else:
             console.print("[green]All preflight checks passed[/green]")
 
     if phase in ("experiments", "full"):
+        if not dry_run:
+            _write_bundle_metadata(output_dir, scenario_list, runs, status="in_progress")
         console.print(f"\n[bold cyan]Running {runs * len(scenario_list)} experiments...[/bold cyan]")
         results = _run_replicated(config, scenario_list, output_dir, dry_run)
         console.print(f"\n[green]✅ {len(results)} runs completed[/green]")
@@ -169,7 +240,7 @@ def preflight() -> None:
     from experiment.stages.preflight import PreflightStage
     from shared.models.pipeline import ExperimentConfig, PipelineContext
 
-    stage = PreflightStage()
+    stage = PreflightStage(s4_planned=True)  # default plan covers all four scenarios
     config = ExperimentConfig()
     ctx = PipelineContext(
         batch_id="preflight-check",
@@ -282,6 +353,7 @@ def dynamic(
     ),
     results_dir: Optional[str] = typer.Option(None, help="Override results directory"),
     dry_run: bool = typer.Option(False, help="Show schedule only"),
+    force: bool = typer.Option(False, "--force", help="Delete an existing bundle dir before running"),
 ) -> None:
     """Phase C dynamic ramp/burst workload experiment (S3 vs S4)."""
     import random as _random
@@ -302,17 +374,16 @@ def dynamic(
             console.print(f"  {i}. {s} run {r}")
         return
 
-    rd = Path(results_dir) if results_dir else None
+    rd = results_dir or _bundle_dir(str(RESULTS_BASE), "dynamic-workload", force)
     results = run_dynamic_experiment(
         scenarios=scenario_list,
         num_runs=runs,
         cooldown_sec=cooldown,
         manage_daemon=manage_daemon,
-        results_dir=rd,
+        results_dir=Path(rd),
     )
     console.print(f"\n[green]✅ {len(results)} runs completed[/green]")
-    final_dir = rd or (RESULTS_BASE / f"{datetime.now().strftime('%Y-%m-%d')}_dynamic-workload")
-    console.print(f"[dim]Results: {final_dir}[/dim]")
+    console.print(f"[dim]Results: {rd}[/dim]")
     for s in scenario_list:
         total = sum(r.predictive_count for r in results if r.scenario == s)
         console.print(f"  {s}: PREDICTIVE={total}")
@@ -381,6 +452,7 @@ def paired_run(
     calibration: Optional[str] = typer.Option(None, help="Path to CalibrationConfig JSON overrides"),
     output: Optional[str] = typer.Option(None, help="Output directory"),
     dry_run: bool = typer.Option(False, help="Print schedule without running"),
+    force: bool = typer.Option(False, "--force", help="Delete an existing bundle dir before running"),
 ) -> None:
     """Run paired S3/S4 experiment for H2 decision (counterbalanced design).
 
@@ -399,8 +471,12 @@ def paired_run(
     if calibration:
         os.environ["CALIBRATION_OVERRIDE"] = calibration
 
-    datestamp = datetime.now().strftime("%Y-%m-%d")
-    output_dir = output or f"results/experiments/phase-b/{datestamp}_paired-h2"
+    output_dir = output or _bundle_dir("results/experiments/phase-b", "paired-h2", force)
+    if output and Path(output).exists() and not force:
+        console.print(f"[red]Output bundle already exists: {output}. Pass --force to delete it first.[/red]")
+        raise typer.Exit(1)
+    if output and force and Path(output).exists():
+        shutil.rmtree(output)
 
     os.environ["CONTROLLER_VERSION"] = controller
     os.environ["WORKLOAD"] = workload
@@ -434,6 +510,8 @@ def paired_run(
             table.add_row(str(pid), first, second)
         console.print(table)
         return
+
+    _write_bundle_metadata(output_dir, ["s3-hybrid-reactive", "s4-hybrid-predictive"], pairs * 2, status="in_progress")
 
     config = ExperimentConfig(
         phase="experiments",

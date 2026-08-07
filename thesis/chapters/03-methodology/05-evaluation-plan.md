@@ -37,7 +37,7 @@ The model is evaluated on both synthetic test data (primary accuracy assessment)
 
 #### Evaluation Scenarios
 
-Four scenarios are defined to compare platform-native autoscaling baselines against the custom hybrid control plane, and to isolate the value of GRU prediction within the hybrid architecture. All scenarios route traffic through HAProxy to eliminate data-path confounds. S1 and S2 use platform-native autoscaling (HPA and KPA respectively); S3 and S4 use the custom control plane (Algorithms 1+2).
+Four scenarios compare platform-native baselines with the custom hybrid controller. S1 and S2 use HPA and KPA; S3 and S4 use Algorithms 1+2. In S3/S4, routing uses observed capacity and tail latency, while the scaling signal differs: observed load for S3 and the confidence-gated GRU forecast for S4.
 
 **Table 3-3: Evaluation Scenarios**
 
@@ -48,13 +48,13 @@ Four scenarios are defined to compare platform-native autoscaling baselines agai
 | S3 | Hybrid Reactive | Dynamic K8s↔Knative | Algorithm 1 (routing) + Algorithm 2 (replicas, reactive) | $x_{obs}$ | Off |
 | S4 | Hybrid Predictive | Dynamic K8s↔Knative | Algorithm 1 (routing) + Algorithm 2 (replicas, predictive) | $x_{pred}$ | On |
 
-Where $x_{obs}$ = mean observed RPS over the last 30 seconds and $x_{pred}$ = GRU 30-second-ahead forecast.
+Where $x_{obs}$ is mean observed RPS over the last 30 seconds and $x_{pred}$ is the final 9-step GRU forecast (9 × 15 seconds = 135 seconds) used by Algorithm 2 for replica scaling. GRU output does not directly set HAProxy routing weights.
 
 **Scenario Comparisons:**
 
 - **S1 vs S2**: Compares **platform-native autoscaling baselines** — Kubernetes HPA (CPU-based, persistent pods) versus Knative KPA (concurrency-based, scale-to-zero). This establishes the performance envelope of each platform operating independently.
 - **S3 vs S1/S2**: Evaluates whether the **hybrid reactive control plane** (Algorithm 1 routing + Algorithm 2 scaling) improves over either baseline alone, by combining Kubernetes steady-state capacity with serverless burst absorption.
-- **S3 vs S4**: Isolates the **value of GRU prediction** — both use hybrid routing and Algorithm 2 scaling; the only difference is the scaling signal: reactive ($x_{obs}$) versus predictive ($x_{pred}$) and the PREDICTIVE trigger in Algorithm 1.
+- **S3 vs S4**: Isolates the value of GRU-assisted scaling—both use hybrid routing and Algorithm 2; the only difference is the scaling signal, reactive ($x_{obs}$) versus predictive ($x_{pred}$). Routing remains observed-load/capacity-driven in both.
 
 **Autoscaler Mutual Exclusion Constraint:** Infrastructure validation (Section 3.5.3, Phase A0) confirmed that Kubernetes HPA and direct replica scaling via `kubectl scale` conflict: HPA overrides manual replica changes after its stabilization window (~5 minutes). Therefore, S3 and S4 require HPA to be deleted before Algorithm 2 can safely control replicas. This constraint is enforced in the per-run reset procedure (Section 3.5.4).
 
@@ -75,19 +75,16 @@ Pre-experiment validation tests to confirm that testbed mechanisms function corr
 - HPA overrides `kubectl scale` after its 5-minute stabilization window (T3). **This mandates that S3/S4 delete HPA before Algorithm 2 can operate.**
 - KPA cold start: ~1.2 seconds. Scale-up 1→7 pods under concurrent load; scale-to-zero ~60 seconds after idle (T4).
 - KPA uses concurrency-based scaling, requiring workloads with meaningful processing time (not just lightweight health checks) to trigger scaling (T4).
-- All system evaluation experiments (Phases A1, B, C) use the `/fib?n=32` endpoint, which computes recursive Fibonacci numbers as a CPU-intensive workload. Unlike a busy-loop (`/work`), recursive Fibonacci yields to the Go runtime scheduler between function calls, allowing health checks, metrics reporting, and Prometheus scraping to operate correctly even under full CPU saturation. Combined with `GOMAXPROCS=1` (single Go runtime thread), this creates predictable per-replica capacity (~60 RPS) and linear queuing under overload.
+- All system evaluation experiments use the code-verified `/fib?n=33` endpoint, which computes recursive Fibonacci as scheduler-cooperative CPU work. Combined with `GOMAXPROCS=1`, this produces approximately 60 RPS measured saturation per replica. The final calibration uses $r_{saturation}=33.3$, target CPU utilization 0.5, $r_{effective}=16.65$, and $\alpha=1/r_{effective}\approx0.0601$ for Algorithm 2.
 
-> **Workload recalibration note:** Two iterations were required to reach the final parameterization:
-> 1. **v1 (`/work?duration_ms=5`):** ~145 RPS single-pod saturation. ClarkNet peak (164 RPS) only reached 1.13× saturation — insufficient for multi-replica scaling.
-> 2. **v2 (`/work?duration_ms=10`):** ~50 RPS saturation. However, the busy-loop monopolized the single Go thread (`GOMAXPROCS=1`), preventing health checks from responding under overload. Kubernetes restarted pods before HPA could react, and CPU utilization was reported as ~1% (the runtime could not schedule metrics collection).
-> 3. **v3 (`/fib?n=32`, final):** ~60 RPS saturation. Recursive Fibonacci cooperates with the Go scheduler, enabling correct CPU reporting (~400-500% under load), stable health checks, and proper HPA/Algorithm 2 scaling. At this parameterization, 85% of ClarkNet trace stages exceed single-pod capacity (peak at 2.73× saturation requiring ~4 replicas, mean at 1.22× requiring ~2 replicas).
+> **Workload recalibration note:** Earlier `/work?duration_ms=5` (~145 RPS) and `/work?duration_ms=10` (~50 RPS) busy-loop parameterizations are invalidated. The final `/fib?n=33` endpoint yields scheduler-cooperative processing and stable health checks. Code-verified calibration uses $r_{saturation}=33.3$, $r_{effective}=16.65$, and $\alpha=1/r_{effective}$; the measured endpoint saturation is approximately 60 RPS per replica.
 
 #### Phase A1: Mechanism Validation (Validasi Mekanisme)
 
 A controlled ramp-load experiment to validate that individual system mechanisms function correctly:
 
-- **Workload profile (k6 synthetic):** Baseline (60s @ 20 RPS) → Ramp (60s @ 20→100 RPS) → Peak (120s @ 100 RPS). All requests target `/fib?n=32` to ensure non-trivial, scheduler-cooperative CPU processing.
-- **Purpose:** Confirm that weight shifting, serverless engagement, SLO monitoring, PREDICTIVE action triggering, Kubernetes replica scaling via Algorithm 2, and traffic return to Kubernetes all operate as designed.
+- **Workload profile (k6 synthetic):** Baseline (60s @ 20 RPS) → Ramp (60s @ 20→100 RPS) → Peak (120s @ 100 RPS). Requests target `/fib?n=33` to ensure non-trivial, scheduler-cooperative CPU processing.
+- **Purpose:** Confirm weight shifting, serverless engagement, SLO monitoring, PREDICTIVE action logging, Algorithm 2 replica scaling, and traffic return to Kubernetes.
 - **Success criteria:**
   1. In S4, Algorithm 1 engages Knative before sustained SLO violation during the ramp (predictive trigger).
   2. Algorithm 2 issues a scale-up toward the computed $R_{target}$.
@@ -97,24 +94,21 @@ A controlled ramp-load experiment to validate that individual system mechanisms 
 
 The primary comparative evaluation with statistical rigor, using realistic time-varying workload derived from ClarkNet trace replay:
 
-- **Workload:** ClarkNet trace-driven replay using 30-second buckets and k6 `ramping-arrival-rate` stages (Section 3.2.4). Replay duration per run is fixed (e.g., 20 minutes) and recorded in the run manifest. A replay scaling factor $g$ is applied to fit testbed capacity and kept constant across all scenarios. Based on single-replica saturation calibration (~60 RPS for `/fib?n=32` with `GOMAXPROCS=1`), the scaling factor is set to $g = 33$, producing a peak replay rate of ~164 RPS (2.73× saturation, requiring ~4 replicas) and mean of ~73 RPS (1.22× saturation, requiring ~2 replicas). At this parameterization, 85% of ClarkNet trace stages exceed single-pod capacity, ensuring that scaling and routing mechanisms are exercised throughout each run.
-- **Replication (staged):**
-  - **Pilot gate:** $n = 2$ runs per scenario (8 total) to verify instrumentation and run-validity gates.
-  - **Main study:** target $n = 10$ to $15$ runs per scenario (40–60 total), depending on confidence-interval stability and runtime budget.
-  - **Power target:** practical target is ≥80% power for large effects (|d| ≈ 0.8–1.0), replacing the previous underpowered $n=5$ design.
-- **Randomization:** Run order randomized using `random.shuffle()` to control for temporal confounds (e.g., system warm-up, background processes).
+- **Workload:** ClarkNet trace-driven replay using 30-second buckets and k6 `ramping-arrival-rate` stages (Section 3.2.4). The final model horizon is 9 × 15 seconds = 135 seconds. The code-verified final endpoint is `/fib?n=33`; its measured saturation is approximately 60 RPS per replica, while calibration uses $r_{saturation}=33.3$, $r_{effective}=16.65$, and $\alpha=1/r_{effective}$.
+- **Replication:** The definitive H2 study uses a **counterbalanced paired design with n=5 pairs (10 runs total)** comparing S3 and S4. Each pair runs both treatments in counterbalanced order; the primary metric is paired p99 latency. A separate n=1 diagnostic executes all four scenarios (S1–S4).
+- **Randomization:** Pair order is counterbalanced to control temporal drift and node-state effects. Per-run reset and treatment-fidelity gates are recorded in each manifest.
 - **Cool-down:** 60-second pause between consecutive runs plus explicit system reset (see Section 3.5.4).
 
 **Statistical Analysis:**
 
-| Test | Purpose | Assumptions |
-|------|---------|-------------|
-| Welch's t-test | Mean comparison with unequal variances | Approximate normality |
-| Mann-Whitney U | Non-parametric rank comparison | No distributional assumptions |
-| Bootstrap CI | Confidence intervals via resampling | No distributional assumptions |
-| Cohen's d | Effect size quantification | — |
+| Test | Purpose | Interpretation |
+|------|---------|----------------|
+| Paired permutation test | Pre-specified primary p99 comparison for S3/S4 | p=0.0304, significant at α=0.05 |
+| Paired 95% CI | Uncertainty for S4−S3 p99 difference | [−100.9, −26.2] ms |
+| Paired Cohen's d | Effect size | d=−1.26 (large) |
+| Corrected secondary p-values | p95 and SLO after multiplicity correction | p=0.1216; descriptive only |
 
-Significance threshold is set at α = 0.05. Both parametric (Welch's t-test) and non-parametric (Mann-Whitney U) tests are reported to provide robustness against small-sample normality violations. Effect sizes (Cohen's d) are reported alongside p-values to quantify practical significance regardless of statistical significance.
+The n=1 S1–S4 diagnostic is descriptive. The paired n=5 H2 result uses the pre-specified primary p99 test; secondary p95 and SLO results are reported with the correction caveat.
 
 **Data Quality and Run Validity Gates:**
 
@@ -130,7 +124,7 @@ Significance threshold is set at α = 0.05. Both parametric (Welch's t-test) and
 Stress the system with controlled, repeatable bursts to quantify responsiveness and stability beyond historical traces:
 
 - **Workload profiles:**
-  1. **Single burst:** 60s @ 30 RPS → 30s @ 170 RPS → 180s @ 30 RPS. Burst peak chosen relative to calibrated single-replica saturation (~145 RPS) to stress the system without total collapse (1.17× saturation).
+  1. **Single burst:** 60s @ 30 RPS → 30s @ 170 RPS → 180s @ 30 RPS. The final `/fib?n=33` endpoint has approximately 60 RPS measured saturation per replica; code calibration uses $r_{saturation}=33.3$ and $r_{effective}=16.65$, so the burst exercises multi-replica scaling.
   2. **Burst train:** repeated 15s spikes every 60s for 10 minutes
 - **Purpose:** Stress the system with controlled bursts to measure scale-up responsiveness, oscillation behavior, and recovery time.
 - **Success criteria:**
@@ -148,9 +142,8 @@ Stress the system with controlled, repeatable bursts to quantify responsiveness 
    - Knative Serving (Kourier ingress) and Knative Service for the same application image
    - HAProxy configured with two backends (K8s and Knative) and runtime socket enabled
    - Prometheus configured to scrape: HAProxy stats endpoint, routing daemon metrics endpoint, Kubernetes metrics
-3. **Start GRU prediction server** (FastAPI) and confirm health endpoint responds.
-4. **Start routing daemon** with: control interval = 15s, logging enabled (structured JSON), Prometheus exporter enabled.
-5. **Application workload configuration:** The test application exposes a `/fib?n=32` endpoint with `GOMAXPROCS=1` to create CPU-intensive, scheduler-cooperative processing (~8ms per call). CPU limit is 500m, memory limit 128Mi. Each replica saturates at approximately 60 RPS.
+3. **Start the GRU prediction server** (FastAPI) and confirm its health endpoint responds.
+4. **Start the routing daemon** with control interval = 15s, structured JSON logging, and Prometheus exporter enabled. The application workload is `/fib?n=33` with `GOMAXPROCS=1`, 500m CPU limit, and 128Mi memory limit.
 
 #### (B) Per-Run Reset Procedure
 
@@ -237,7 +230,7 @@ For each run, store:
 | $/1M SLO-compliant requests | Total cost normalized by SLO-compliant output | Fairness metric for service quality |
 | Successful requests per USD | Output efficiency per cost | Throughput-cost fairness |
 
-Cost analysis uses the unified AWS model (EKS + EC2 for K8s share, Lambda Provisioned Concurrency for serverless share) applied to measured resource consumption. Production cost projections use real cloud node capacity (t3.medium, 1.8 vCPU allocatable) rather than the stress-harness constraint (400m allocatable). Raw total cost is reported, but fairness-normalized metrics above are primary for scenario comparison.
+Cost analysis uses the unified AWS model (EKS + EC2 for the Kubernetes share, Lambda Provisioned Concurrency for the serverless share) applied to measured resource consumption. Production cost projections use real cloud node capacity (t3.medium, 1.8 vCPU allocatable) rather than the bounded Docker `--cpus` stress-harness nodes. Raw total cost is reported with the evidence tier; proxy costs are projected, not billed.
 
 For Lambda sizing, execution time uses an explicit signal hierarchy to avoid under- or over-estimation in hybrid scenarios: (1) serverless-specific application duration from Knative-served successful requests; (2) scenario-level app duration for S2-only runs when serverless-specific splits are not needed; (3) CPU-derived fallback (`cpu_per_request_ms / 0.2 + 10ms`) only when app-duration signals are unavailable. Hybrid scenarios (S3/S4) must not use blended whole-scenario execution duration when serverless-specific signal is available. The analyzer reports whole-run totals (per 1200s run) and fairness-normalized metrics together.
 
@@ -254,7 +247,7 @@ For Lambda sizing, execution time uses an explicit signal hierarchy to avoid und
 
 The experimental evaluation is subject to the following known threats, documented proactively:
 
-1. **Localhost routing bias (Critical):** The k3d single-node testbed runs all components (HAProxy, K3s, Knative) on localhost, eliminating network latency between components. This limits the interpretability of absolute performance comparisons between scenarios, as production deployments would incur real network overhead. Additionally, the k3d environment uses Docker containers as cluster nodes, which may exhibit different resource scheduling behavior compared to bare-metal or cloud VM nodes.
+1. **Multi-node testbed and topology (Critical):** Final experiments use a bounded multi-node k3d testbed rather than the superseded single-node layout. Two static workload nodes and dynamically provisioned nodes are bounded with Docker `--cpus`; this exercises pending pods and node provisioning but does not reproduce cloud networking, VM boot, or availability-zone behavior.
 
 2. **Trace age and representativeness:** ClarkNet and Calgary are historical traces (1994–1995). They represent realistic temporal variability but may not match modern application semantics (TLS, dynamic content, microservices).
 
@@ -266,16 +259,16 @@ The experimental evaluation is subject to the following known threats, documente
 
 6. **Model coefficient drift:** The resource allocation coefficients ($\alpha, \beta$) are calibrated on the testbed; changes in container limits, application version, or node resources require recalibration to keep scaling behavior comparable.
 
-7. **Single-threaded application constraint:** The test application is configured with `GOMAXPROCS=1`, restricting each pod to single-threaded request processing via recursive Fibonacci computation (`/fib?n=32`, ~8ms per call, ~60 RPS saturation). Unlike a busy-loop, Fibonacci yields to the Go scheduler, enabling correct CPU reporting and health check responsiveness. This creates reproducible saturation behavior but does not represent typical multi-threaded web applications. Results should be interpreted in the context of this controlled bottleneck.
+7. **Single-threaded application constraint:** The test application uses code-verified `/fib?n=33` with `GOMAXPROCS=1`, restricting each pod to single-threaded recursive Fibonacci processing. Measured endpoint saturation is approximately 60 RPS per replica; calibration uses $r_{saturation}=33.3$, $r_{effective}=16.65$, and $\alpha=1/r_{effective}$. This is reproducible but not representative of all multi-threaded web applications.
 
 8. **Implementation bug invalidation:** Early Phase B and Phase C experiment data (prior to 2026-02-14) were invalidated due to three implementation bugs in the SLO monitor, Algorithm 1 priority ordering, and Prometheus scraping configuration. All reported results are from post-fix experiments.
 
 9. **GRU server availability:** The prediction server must be confirmed running before S4 experiments to ensure the predictive mechanism is active. Infrastructure health checks are performed at experiment start.
 
-10. **Sample size and power:** Small-$n$ designs are underpowered for moderate effects. The revised staged design (pilot + main) targets n=10–15 per scenario, with confidence-interval and effect-size stability as stopping criteria.
+10. **Sample size and power:** H2 uses a counterbalanced paired design with n=5 pairs (10 runs) and a pre-specified primary p99 test. The separate four-scenario diagnostic is n=1 and directional; H1 is not treated as inferential evidence.
 
 11. **Autoscaler mutual exclusion:** HPA and Algorithm 2 cannot coexist on the same Deployment (validated in Phase A0). This means S1 (HPA) and S3/S4 (Algorithm 2) use fundamentally different scaling mechanisms, which may confound direct performance comparisons between native and custom autoscaling approaches.
 
-13. **Artificial node capacity constraint (Critical).** Workload nodes use `system-reserved=15600m` (leaving ~400m allocatable) to force Cluster Autoscaler triggers within experiment durations. This is a deliberate stress-harness technique to exercise autoscaling mechanisms but means: (a) CA triggers at lower loads than production, (b) pod scheduling constraints create artificial resource starvation (S1 desired 9 replicas but only 6 schedulable), and (c) observed node counts do not represent production sizing. Cost projections are computed separately using production node capacity (t3.medium, 1.8 vCPU allocatable).
+13. **Artificial node capacity constraint (Critical):** Workload nodes use Docker `--cpus=1.0` bounds and the infra node uses a bounded CPU budget to emulate cloud VM capacity. This replaces the invalidated `system-reserved=15600m` hack. The bounded stress harness exercises pending pods, dynamic-node provisioning, and serverless offload; node counts and delay are not production capacity or billed cost.
 
-12. **Workload parameterization sensitivity:** The per-request computation directly determines single-pod capacity and thus the scaling behavior observed. Three iterations were required: (a) `/work?duration_ms=5` (~145 RPS) was too light for scaling; (b) `/work?duration_ms=10` (~50 RPS) blocked the Go scheduler, preventing health checks and CPU reporting; (c) `/fib?n=32` (~60 RPS) uses scheduler-cooperative CPU work that enables correct HPA and Algorithm 2 behavior. The final parameterization ensures the ClarkNet trace exercises multi-replica scaling across all scenarios (peak at 2.73× saturation requiring ~4 replicas, mean at 1.22× requiring ~2 replicas). Results are specific to this parameterization and may differ at other service times.
+12. **Workload parameterization sensitivity:** Earlier `/work?duration_ms=5` and `/work?duration_ms=10` busy-loop bundles are invalidated. The final code-verified `/fib?n=33` endpoint is scheduler-cooperative with approximately 60 RPS measured saturation per replica; the calibration uses $r_{saturation}=33.3$, $r_{effective}=16.65$, and $\alpha=1/r_{effective}$. Results remain specific to this controlled workload.

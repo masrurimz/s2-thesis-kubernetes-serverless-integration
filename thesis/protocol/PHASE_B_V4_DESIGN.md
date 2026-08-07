@@ -858,3 +858,9 @@ With node provisioning delay, we expect:
 | v2 | 2026-02-15 | Recalibrated to `duration_ms=10`; invalidated (busy-loop) |
 | v3 | 2026-02-15 | Switched to `/fib?n=32`, α=0.0167; pilot confirmed mechanisms work; S1 artificial advantage discovered |
 | **v4** | **2026-02-16** | **Multi-node with emulated node provisioning delay** |
+
+---
+
+## Final Execution Addendum (2026-07-14)
+
+The final H2 study was executed as a **counterbalanced paired n=5 design (10 runs total)** comparing S3 and S4, rather than five independent runs per scenario. It post-dates Bug 13 and therefore uses the corrected architecture in which GRU prediction drives Algorithm 2 replica scaling only; prediction does not directly set Algorithm 1 routing weights. The final runs used the h=9 model (9 × 15 seconds = 135-second horizon), ClarkNet variable load, active node consolidation, and a tuned S3 baseline. The definitive statistics are recorded in `results/claims/FINAL_NUMBERS.md`.

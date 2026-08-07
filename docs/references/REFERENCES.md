@@ -20,7 +20,7 @@ All papers downloaded as PDF for offline access. Located in `docs/references/`.
 | **HyPA** — Hybrid HPA with Model Updates | `hypa-hybrid-hpa-automated-model-updates-2023.pdf` | doi:10.1109/NFV-SDN59219.2023.10329742 | Blends proactive+reactive; auto-updates model on distributional shift; asymmetric scale-up/down recommended for dynamic workloads |
 | **Tiny Autoscalers** — Lightweight Scaling | `tiny-autoscalers-2022.pdf` | arxiv:2203.00592 | Bottoming mechanism prevents rapid resource swings; small moving-average window for smoothing utilization |
 
-> **Note:** The ARIMA-PID, ElaX, HyMetricScaler, and Dehigama PDFs are stored as Git LFS pointers (131–133 bytes on disk) and are resolved with `git lfs pull`. All other PDFs in this directory are fully checked out with sizes >10 KB. SATA (doi:10.3390/electronics13071242) is DOI-only — no open-access PDF is available.
+> **Note:** All controller PDFs in this directory are checked out as real PDFs (>50 KB, `%PDF` magic) except `arima-pid-container-autoscaling-2023.pdf`, which currently contains an HTML response and is listed as broken in the defense-alignment archive check. SATA (doi:10.3390/electronics13071242) is DOI-only — no open-access PDF is available.
 
 ## How Papers Map to Controller Versions
 
@@ -59,6 +59,15 @@ All papers downloaded as PDF for offline access. Located in `docs/references/`.
 | **SeBS** — Serverless Benchmark Suite | arXiv:2012.14132 · `sebs-serverless-benchmark-suite-2020.pdf` | Realistic FaaS workloads: CPU-bound (image processing) + I/O-bound (uploader, DB). I/O-bound shows wider latency distributions; Lambda bills wall-clock duration including I/O waits |
 | **SeBS-Flow** — Serverless Workflow Benchmarks | arXiv:2410.03480 · `sebs-flow-serverless-workflows-2024.pdf` | Storage I/O dominates overhead in serverless workflows; NoSQL + object storage access patterns |
 | **Let's Trace It** — Fine-Grained FaaS Benchmarking | arXiv:2205.07696 · `lets-trace-faas-benchmarking-2022.pdf` | Sync + async serverless patterns; I/O-bound workloads dominated by external services, not compute; orchestration overhead significant |
+
+## Drift-Report Citation Archive
+
+| Paper | File | arxiv/DOI | Key Insight |
+|-------|------|-----------|-------------|
+| **FaaSRail** — Representative Serverless Load | `faasrail-representative-serverless-load-2024.pdf` | zenodo.org/records/12735009 | Generates statistically representative scaled FaaS workloads |
+| **In-Vitro** — Serverless Trace Synthesis | `invitro-serverless-trace-synthesis-2023.pdf` | doi:10.1145/3605181.3626191 | Synthesizes representative traces at configurable scales |
+| **Mondal et al.** — GRU for Kubernetes Load Prediction | `mondal-gru-kubernetes-load-prediction-2023.pdf` | doi:10.3390/math11122675 | Uses GRU-based prediction for Kubernetes resource management |
+| **QoS vs Auto-Scaling Policy** | `qos-vs-autoscaling-policy-2024.pdf` | doi:10.3390/s24123774 | Repeats scaling-policy trials and compares latency percentiles |
 
 ## Dataset References
 

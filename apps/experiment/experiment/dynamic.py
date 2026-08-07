@@ -27,6 +27,7 @@ from typing import Dict, List, Optional
 import requests
 import structlog
 
+from experiment.stages.daemon import kill_process_on_port
 from shared.config import settings
 
 logger = structlog.get_logger(__name__)
@@ -82,7 +83,7 @@ class DynamicExperimentResult:
 def set_scenario(scenario: str, daemon_api: str = DAEMON_API) -> bool:
     """Set the daemon's active scenario via its HTTP API (daemon must be running)."""
     try:
-        resp = requests.post(f"{daemon_api}/scenario", json={"scenario": scenario}, timeout=5)
+        resp = requests.post(f"{daemon_api}/set_scenario", json={"scenario": scenario}, timeout=5)
         return resp.status_code == 200
     except Exception:
         return False
@@ -135,7 +136,7 @@ class DynamicExperimentRunner:
     def check_infrastructure(self, scenario: str, skip_daemon: bool = False) -> bool:
         """Check all required services are running."""
         endpoints = {
-            "haproxy": f"{HAPROXY_URL}/health",
+            "haproxy": f"{HAPROXY_URL}/fib?n=33",
             "prometheus": f"{PROMETHEUS_URL}/-/healthy",
         }
 
@@ -191,6 +192,8 @@ class DynamicExperimentRunner:
             "PREDICTION_CONFIDENCE_THRESHOLD": "0.6",
         }
 
+        kill_process_on_port(settings.DAEMON_API_PORT, "routing_daemon")
+
         try:
             proc = subprocess.Popen(
                 cmd,
@@ -203,6 +206,19 @@ class DynamicExperimentRunner:
 
             resp = requests.get(f"{DAEMON_API}/health", timeout=5)
             if resp.status_code == 200:
+                # Require a fresh daemon running the requested scenario.
+                status_resp = requests.get(f"{DAEMON_API}/status", timeout=5)
+                status = status_resp.json() if status_resp.status_code == 200 else {}
+                if status.get("uptime_seconds", 999) > 30 or status.get("scenario") != scenario:
+                    logger.error(
+                        "daemon_status_invalid",
+                        scenario=scenario,
+                        status_scenario=status.get("scenario"),
+                        uptime_seconds=status.get("uptime_seconds"),
+                    )
+                    proc.terminate()
+                    proc.wait()
+                    return None
                 logger.info("daemon_started", scenario=scenario, pid=proc.pid)
                 return proc
             else:
