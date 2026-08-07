@@ -12,7 +12,7 @@ This is an append-only record of experiments, advisor communication, publication
 - [publications](publications.md) — publication pipeline tracker
 - [venue communications](venue-communications.md) — journal/editor/reviewer correspondence
 - [professor Q&A](professor-qa.md) — anticipated questions, bilingual answers
-- [progress summary](progress-summary.md) — shareable handout; a snapshot, not a log or source of truth
+- [progress summary](progress-summary.md) — shareable handout; a snapshot, not a log or source of truth. WhatsApp-ready PDF export (regenerate before each send; `*.pdf` is gitignored so the PDF is a local artifact): `pandoc progress-summary.md -o progress-summary.pdf --pdf-engine=xelatex -V geometry:margin=2cm -V fontsize=10pt`
 
 ## Evidence hierarchy (what is canonical)
 
