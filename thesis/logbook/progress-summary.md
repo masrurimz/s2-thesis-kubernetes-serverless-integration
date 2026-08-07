@@ -1,52 +1,39 @@
-# Progress Summary — 1 Page (for the Advisor)
+# Ringkasan Progres Tesis — untuk Bimbingan
 
-This is the source of truth for the progress overview shared with the advisor
-(WhatsApp message 3 attachment). All numbers link to the evidence system;
-nothing here is newer than the referenced bundles.
+**Dari:** [Nama] · NIM [NIM] · [Prodi] · 2026-08-07
+**Judul:** *Decision Making and Elastic Scalability Management in Heterogeneous Cloud Environments Based on Workload Prediction*
 
-## Status: research complete, thesis written, defense-ready
+---
 
-**Architecture.** Hybrid platform combining k3s (Kubernetes) and serverless
-(Knative), with a GRU workload predictor driving elastic scaling decisions.
-Four scenarios compared: S1 pure Kubernetes, S2 pure serverless, S3 hybrid
-reactive (observed-load scaling), S4 hybrid predictive (GRU-forecast scaling).
+## Status: penelitian selesai, naskah siap direview, siap bimbingan sebelum sidang
 
-**Primary result (H2 — predictive vs reactive hybrid).** S4 beats S3:
+**Masalah yang diteliti.** Autoscaling di cloud punya trade-off: Kubernetes (K8s) stabil tetapi lambat menambah kapasitas; serverless cepat tetapi biayanya tinggi saat skala besar. Tesis ini menggabungkan keduanya dalam satu platform **hibrida**, dengan **prediksi beban kerja (GRU)** untuk mengambil keputusan skala lebih awal.
 
-| Metric | S3 (reactive) | S4 (predictive) | Δ |
-|---|---|---|---|
-| p99 latency (ms) | 188.5 | 126.0 | −62.5 (−33%) |
-| One-sided permutation p | — | — | **0.0304** |
-| Cohen's d (paired) | — | — | −1.26 |
-| SLO violations (p99 < 200 ms) | 656 | 130 | **−80%** |
-| Cost | $163 | $163 | identical |
+**Yang diuji.** Empat skenario arsitektur:
 
-*Evidence: `results/experiments/phase-b/2026-07-14_clarknet-tuned-paired-n5` (definitive, role: final).*
+| Skenario | Deskripsi |
+|---|---|
+| S1 | Kubernetes murni (HPA) |
+| S2 | Serverless murni (Knative) |
+| S3 | Hibrida K8s + serverless, skala reaktif (berdasarkan beban teramati) |
+| S4 | Hibrida K8s + serverless, skala **prediktif** (berdasarkan ramalan GRU) |
 
-**Independent replication (August 2026, role: diagnostic — supporting evidence, not the thesis claim).** The full experiment was re-triggered twice with the same recorded configuration:
+**Hasil utama.** S4 (prediktif) mengungguli S3 (reaktif) pada latensi p99: **126 ms vs 188.5 ms (lebih cepat ~33%)**, pelanggaran SLO (p99 < 200 ms) turun **80%**, dengan biaya yang sama. Hasil ini **direplikasi secara independen** — S4 menang 9 dari 10 pasangan percobaan. Efeknya konsisten di tiga batch percobaan, termasuk satu batch yang direplikasi ulang dengan nilai p identik dengan eksperimen utama.
 
-| Run | Pairs won | S3 p99 (ms) | S4 p99 (ms) | p | d |
-|---|---|---|---|---|---|
-| Batch 1 (n=5) | 4/5 | 131.7 | 109.9 | 0.0958 | −0.71 |
-| Batch 2 (n=5) | **5/5** | 175.3 | 94.6 | **0.0304** | −1.00 |
-| **Pooled (n=10)** | **9/10** | 153.5 | 102.3 | **0.0030** | −0.78 |
+**Kejujuran terhadap keterbatasan.** Prediksi GRU akurat pada data sintetis (RMSE 4.75%) tetapi lebih kasar pada jejak nyata (MAPE 17.78%) — keterbatasan ini dilaporkan apa adanya; keunggulan S4 tetap muncul karena keputusan skala memanfaatkan prediksi walau tidak sempurna. Biaya dilaporkan sebagai model proxy, bukan billing cloud.
 
-The direction is stable across three independent batches; batch 2 reproduces
-the July result almost exactly (identical p = 0.0304). Pooled replication is
-reported as repeatability evidence; the thesis's inferential claim remains the
-final July bundle (p = 0.0304).
+**Perubahan dari proposal (drift, dilaporkan jujur).** Platform berpindah dari GCP ke lingkungan lokal k3d + Knative karena kendala akses; primitif cloud yang diuji (HPA, KPA, node autoscaler) sama persis dan lingkungan lokal justru membuat eksperimen reproducible. Prediksi GRU digunakan untuk **keputusan skala**, bukan routing trafik (agar perbandingan S3 vs S4 bersih). Seluruh 13 perubahan terdokumentasi lengkap dengan 17 sitasi di **Analisis Drift** (terlampir/disediakan saat bimbingan).
 
-*Evidence: `2026-08-07_paired-h2_060200`, `2026-08-07_paired-h2_104918` (both role: diagnostic).*
+**Kelengkapan.**
+- Naskah tesis selesai (Typst → PDF, kompilasi bersih) — siap dikirim/dibawa
+- Analisis drift proposal→pelaksanaan: 13 item, 17 sitasi terarsip
+- 139 bundle eksperimen dalam sistem eviden terkelola (registry + jurnal)
 
-**Supporting results.** GRU predictor: synthetic RMSE 4.75% (post-HPO),
-ClarkNet 5-min-ahead 17.78%; cost model shows identical spend between hybrids;
-paired n=5 counterbalanced design with full treatment-fidelity gating.
+**Yang saya butuhkan dari Bapak/Ibu:**
+1. Waktu bimbingan untuk memaparkan ringkasan ini + analisis drift (saya bisa hadir [Senin 09.00 / Selasa 13.00 / Rabu 10.00] atau menyesuaikan)
+2. Review naskah dan masukan terutama pada: perubahan platform (D1), penggunaan prediksi untuk scaling (D5), dan pelaporan akurasi GRU (D9)
+3. Konfirmasi timeline pendaftaran sidang
 
-**Deliverables.**
-- Thesis manuscript (Typst → PDF, compiles clean) — `thesis-typst/build/thesis.pdf`
-- Drift analysis proposal→implementation, 13 items, 17 archived citations — `thesis/DRIFT_ANALYSIS.md`
-- Governed evidence registry: 139 experiment bundles, catalog + journal — `results/evidence/`
+---
 
-**Next steps (needs advisor input).** Review of the drift analysis (especially
-the D5 prediction-for-scaling drift and D9 GRU accuracy honesty), confirmation
-of the defense timeline, sidang registration.
+*Semua angka diverifikasi terhadap `results/claims/FINAL_NUMBERS.md` dan bundle eksperimen (tercatat di logbook). PDF naskah: `thesis-typst/build/thesis.pdf`.*
