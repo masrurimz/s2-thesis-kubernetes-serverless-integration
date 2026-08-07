@@ -38,3 +38,13 @@ This is an append-only record of experiments, advisor communication, publication
 - Before any outbound message, the agent verifies every factual claim against the evidence hierarchy and tags each with its bundle + role.
 - When the professor asks a real question, the agent appends an "actual question event" under the matching `QA-NNN` and files new questions as new IDs.
 - The agent keeps `progress-summary.md` in sync with `FINAL_NUMBERS.md` and the registry before it is shared.
+
+## Growth policy (unbounded logs stay usable)
+
+Append-only logs grow forever by design. The split rule keeps every file readable without breaking references:
+
+1. **Roll over by year, never mid-year.** When a stream file exceeds ~300 lines / ~100 events, split it at the year boundary: `experiments.md` → `experiments-2026.md` + `experiments-2027.md` (same for `venue-communications.md`, and `professor-qa.md` if it ever exceeds ~50 entries). The ID scheme makes this lossless — `EXP-YYYY-MM-DD-NN` already encodes the year, so an entry's home file is derivable from its ID.
+2. **The split is a `git mv` + index update.** Old file renamed to `<name>-<year>.md`, new empty file created, README "Files" table updated with a `(current)` marker and an archive row. No history is rewritten, no links break (the new file is the stream's continuation).
+3. **Never split by phase/topic/message.** A second parallel file for the same stream creates the "which file does this go in?" tax — the anti-pattern the flat layout exists to avoid.
+4. **Bounded streams never split**: `advisor-whatsapp.md` (one thread per advisor), `bimbingan.md` (~10 sessions), `publications.md` (a handful of PUB IDs). If a second advisor/committee thread appears, give it its own file (`committee-comms.md`).
+5. **The full experiment list never lives in the logbook.** `EXPERIMENT_JOURNAL.md` (generated) is the exhaustive machine ledger; `experiments.md` stays curated (series index + decision events). If the journal itself grows past a single file, that's an evidence-system concern, not a logbook one.

@@ -101,6 +101,25 @@ Seed entries below cover the runs that define the current evidence state (July d
 
 ---
 
+## Historical series index (Feb–Jul 2026)
+
+The complete machine list of all 139 bundles is the generated ledger: [../../results/EXPERIMENT_JOURNAL.md](../../results/EXPERIMENT_JOURNAL.md) (regenerate with `uv run thesis-experiment evidence journal`). Below is the **curated series index** — the runs that shaped the current evidence state, grouped by research arc. Roles per [../../results/evidence/registry.yaml](../../results/evidence/registry.yaml).
+
+| Series | Key bundles | Role | Established |
+|---|---|---|---|
+| Phase B pipeline builds (Feb) | `2026-02-12_calibration`, `2026-02-14_clarknet-replay`, `2026-02-16_s1-hpa-validation`, `2026-02-20_s2-serverless-validation`, `2026-02-22_full-phase-b-canonical-r5`, `2026-02-25_s3s4-post-p0p2-fixes` | diagnostic / archived | Canonical Phase B pipeline + validity gates |
+| V3 & S2 bring-up (Jul 4–7) | `2026-07-04_v3-tuned-full`, `2026-07-05_final-all-fixes`, `2026-07-07_s2-final`, `2026-07-07_s3-consistent` | diagnostic | Controller correctness (V3 + KPA path) |
+| Fairness calibration (Jul 5–11) | `2026-07-05_clarknet-cpu-limit`, `2026-07-06_s1-s4-fair-calibrated`, `2026-07-10_cpulimit_n1`, `2026-07-11_fair_tuned_n1`, `2026-07-11_nolimit_n1` | diagnostic | Node CPU bounding + r_saturation calibration (the fairness methodology) |
+| GRU holdout / HPO (Jul 10) | `2026-07-10_gp_holdout_n5`, `2026-07-10_tuned_holdout` | diagnostic | Post-HPO synthetic RMSE 4.75% |
+| H2 paired evolution (Jul 11–14) | `2026-07-11_paired-h2`, `2026-07-12_paired-h2-clean`, `2026-07-12_paired-h2-clean-v2` → `2026-07-14_clarknet-tuned-paired-n5` | diagnostic → **final** | The definitive H2 result (p=0.0304, role=final) |
+| H1 architecture diagnostics (Jul 13–14) | `2026-07-13_clarknet-dynamic-node-n1`, `2026-07-13_clarknet-scaledown-n1`, `2026-07-14_clarknet-tuned-s3-n1`, `2026-07-14_clarknet-util-scaledown-n1` | diagnostic | S1–S4 trade-off map (S2 fastest, 2.8× cost) |
+| Horizon tuning (Jul 13) | `2026-07-13_s4-horizon7-test`, `2026-07-13_s4-horizon9-test` | diagnostic | `prediction_horizon=9` (135 s) chosen |
+| Replication series (Aug 6–7) | `2026-08-06_paired-h2_225818/234256`, `2026-08-07_paired-h2_034648/060200/104918` | diagnostic | Reproducibility + config-drift finding (EXP-2026-08-06-02) |
+
+Also present (not indexed above): `phase-a1/`, `phase-c/`, `tuning/`, `validation/` bundles — see the journal for the exhaustive list.
+
+---
+
 ## Append convention
 
 New entry template (copy when the agent logs a run):
