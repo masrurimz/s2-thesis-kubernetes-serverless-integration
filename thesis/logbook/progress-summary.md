@@ -1,40 +1,63 @@
-# Ringkasan Progres Tesis
+# Laporan Kemajuan Tesis
 
-**Dari:** [Nama] · NIM [NIM] · [Prodi] · 7 Agustus 2026
-**Judul:** *Decision Making and Elastic Scalability Management in Heterogeneous Cloud Environments Based on Workload Prediction*
+**Nama** : [Nama Lengkap]  
+**NIM** : [NIM]  
+**Program Studi** : [Prodi]  
+**Dosen Pembimbing** : [Nama Dosen]  
+**Tanggal** : 7 Agustus 2026  
 
-## Status sekarang
+**Judul tesis**  
+*Decision Making and Elastic Scalability Management in Heterogeneous Cloud Environments Based on Workload Prediction*
 
-Penelitian sudah selesai. Naskah tesis siap dibaca. Saya ingin bimbingan dulu sebelum daftar sidang.
+---
 
-## Intinya tentang apa
+Assalamu’alaikum Wr. Wb.
 
-Kalau aplikasi di cloud sibuk, sistem harus nambah kapasitas. Kubernetes caranya stabil tapi agak lambat. Serverless caranya cepat tapi mahal kalau skalanya besar. Tesis saya menggabungkan keduanya — namanya arsitektur hibrida — dan menambahkan prediksi beban kerja (pakai model GRU) supaya sistem bisa nambah kapasitas *sebelum* puncaknya datang, bukan setelah.
+Dengan hormat, saya izin melaporkan kemajuan tesis saya. Mohon maaf sebelumnya karena sudah cukup lama tidak bimbingan. Alhamdulillah penelitian sudah saya selesaikan dan naskah tesis sudah siap untuk dibaca. Saya mohon kesediaan Bapak/Ibu untuk bimbingan sebelum saya mendaftar sidang.
 
-## Yang diuji
+## 1. Ringkasan topik
 
-Saya bandingkan 4 skenario: **S1** Kubernetes saja · **S2** Serverless saja · **S3** Hibrida reaktif (nambah kapasitas setelah beban naik) · **S4** Hibrida prediktif (nambah kapasitas berdasarkan ramalan).
+Penelitian ini membahas cara mengatur kapasitas aplikasi di lingkungan cloud yang menggabungkan Kubernetes dan serverless. Sistem diberi prediksi beban kerja (model GRU) agar kapasitas bisa ditambah sebelum puncak permintaan datang, bukan setelahnya. Empat skenario dibandingkan: Kubernetes saja (S1), serverless saja (S2), hibrida reaktif (S3), dan hibrida prediktif (S4).
 
-## Hasilnya
+## 2. Yang sudah dikerjakan
 
-Yang paling penting: **S4 lebih baik dari S3**. Waktu respons p99 126 ms vs 188,5 ms (lebih cepat kira-kira 33%), pelanggaran SLO (p99 di atas 200 ms) turun 80%, biayanya sama. Hasil ini juga saya coba ulang sendiri — dari 10 pasangan percobaan, S4 menang 9. Jadi arahnya konsisten, bukan kebetulan sekali jalan.
+1. Membangun platform eksperimen hibrida Kubernetes + serverless (Knative) beserta perangkat prediksi dan pengendali skala.
+2. Menjalankan eksperimen perbandingan empat skenario, termasuk uji berpasangan S3 vs S4.
+3. Menyusun ulang naskah tesis secara lengkap (siap dibaca dalam bentuk PDF).
+4. Menyusun catatan perubahan dari proposal ke pelaksanaan penelitian (analisis drift), lengkap dengan rujukan.
+5. Mengulang eksperimen utama untuk memastikan hasilnya dapat direproduksi.
 
-## Yang jujur saya akui
+## 3. Hasil utama
 
-Model prediksinya bagus di data latihan (RMSE 4,75%), tapi di jejak trafik nyata lebih kasar (MAPE 17,78%). Saya tulis apa adanya — meski prediksinya tidak sempurna, keputusan skalanya tetap lebih bagus. Angka biayanya dari model perkiraan, bukan tagihan cloud beneran.
+Pada perbandingan utama, skenario hibrida prediktif (S4) lebih baik daripada hibrida reaktif (S3): waktu respons p99 sekitar 126 ms dibanding 188,5 ms, pelanggaran SLO turun sekitar 80%, dengan perkiraan biaya yang sama. Hasil ini juga saya ulang secara mandiri; arah temuan tetap sama (S4 unggul pada sebagian besar ulangan).
 
-## Yang berubah dari proposal dulu
+Saya juga mencatat keterbatasan secara terbuka. Akurasi prediksi bagus pada data latihan, tetapi lebih kasar pada jejak trafik nyata. Angka biaya yang dilaporkan berasal dari model perkiraan, bukan tagihan cloud langsung.
 
-Ada beberapa hal yang beda dari proposal, dan saya catat semua: (1) **Platform** — dulu rencananya pakai GCP, sekarang dijalankan di k3d + Knative (lokal) karena akses resource, dan justru lebih mudah diulang eksperimennya. Komponen yang diuji tetap sama. (2) **Peran prediksi** — dulu prediksi ikut mengarahkan routing trafik; sekarang prediksi cuma dipakai untuk keputusan *berapa* kapasitas yang ditambah, supaya perbandingan S3 vs S4 bersih. Semua perubahan (13 item) saya tulis lengkap di **Analisis Drift**, lengkap 17 sitasi — bisa saya bawa saat bimbingan.
+## 4. Hal yang berbeda dari proposal
 
-## Yang sudah siap
+Ada beberapa perubahan dari proposal awal, dan semuanya sudah saya catat:
 
-Naskah tesis (PDF) · Analisis drift proposal → pelaksanaan · 139 bundle eksperimen tercatat rapi.
+1. **Platform.** Semula direncanakan di GCP. Pelaksanaan akhirnya di lingkungan lokal (k3d + Knative) karena keterbatasan akses sumber daya. Komponen yang diuji tetap sama, dan eksperimen menjadi lebih mudah diulang.
+2. **Peran prediksi.** Semula prediksi juga diarahkan ke routing lalu lintas. Pada pelaksanaan, prediksi dipakai untuk menentukan kapasitas yang ditambah, agar perbandingan S3 dan S4 hanya berbeda pada input prediksinya.
 
-## Yang saya minta
+Rincian lengkap ada pada dokumen Analisis Drift (13 butir perubahan, 17 rujukan). Dokumen ini siap saya bawa saat bimbingan.
 
-1. Waktu bimbingan — saya bisa [Senin jam 9 / Selasa jam 1 / Rabu jam 10], atau menyesuaikan jadwal Bapak/Ibu
-2. Masukan terutama soal: pindah platform, peran prediksi, dan cara saya melaporkan akurasi model
-3. Kepastian kapan bisa daftar sidang
+## 5. Dokumen yang sudah siap
 
-Terima kasih.
+- Naskah tesis (PDF)
+- Analisis drift proposal → pelaksanaan
+- Catatan dan bukti eksperimen (termasuk hasil ulangan)
+
+## 6. Mohon arahan Bapak/Ibu
+
+1. Kesediaan waktu bimbingan — saya menyesuaikan jadwal Bapak/Ibu.
+2. Masukan atas naskah, khususnya terkait perubahan platform, peran prediksi, dan cara pelaporan akurasi model.
+3. Arahan terkait waktu yang tepat untuk mendaftar sidang.
+
+Demikian laporan kemajuan ini saya sampaikan. Atas perhatian dan bimbingan Bapak/Ibu, saya ucapkan terima kasih.
+
+Wassalamu’alaikum Wr. Wb.
+
+Hormat saya,  
+[Nama Lengkap]  
+NIM [NIM]
