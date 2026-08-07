@@ -14,13 +14,13 @@ All papers downloaded as PDF for offline access. Located in `docs/references/`.
 | **BACC** — Budget-Aware Calibration and Control | `bacc-budget-aware-autoscaling-2026.pdf` | arxiv:2606.20575 | PI controller on burn-rate, ACI uncertainty calibration, budget-paced provisioning |
 | **ARIMA-PID** — Container Autoscaling | `arima-pid-container-autoscaling-2023.pdf` | doi:10.1007/s11042-023-16587-0 | ARIMA prediction + PID control for container autoscaling |
 | **ElaX** — Elastic Provisioning | `elax-elastic-provisioning-containerized-2019.pdf` | doi:10.1109/HPCC/SmartCity/DSS.2019.00274 | LSTM predictor + resource reservation + online feedback controller (thesis base algorithm) |
-| **HyMetricScaler** — Hybrid Autoscaling | `hymetricscaler-hybrid-autoscaling-2025.pdf` | doi:10.1109/HPCC67675.2025.00038 | Multi-metric hybrid (horizontal + vertical), PID for vertical, EMA for horizontal |
+| **HyMetricScaler** — Hybrid Autoscaling | _no PDF (DOI-only)_ | doi:10.1109/HPCC67675.2025.00038 | Multi-metric hybrid (horizontal + vertical), PID for vertical, EMA for horizontal |
 | **Dehigama et al.** — Hybrid VM+Serverless Cost | `dehigama-hybrid-vm-serverless-cost-2024.pdf` | HotInfra 2024 | VMs for baseline, serverless for burst, 7.5-28.5% cost savings |
 | **Serracanta et al.** — HPA Stability Proof | `serracanta-hpa-stability-control-loop-2025.pdf` | doi:10.1109/ACCESS.2025.3526751 | Formal proof of HPA control-loop stability (global asymptotic, zero steady-state error) at any utilization target 30--80%. Justifies threshold tuning. |
 | **HyPA** — Hybrid HPA with Model Updates | `hypa-hybrid-hpa-automated-model-updates-2023.pdf` | doi:10.1109/NFV-SDN59219.2023.10329742 | Blends proactive+reactive; auto-updates model on distributional shift; asymmetric scale-up/down recommended for dynamic workloads |
 | **Tiny Autoscalers** — Lightweight Scaling | `tiny-autoscalers-2022.pdf` | arxiv:2203.00592 | Bottoming mechanism prevents rapid resource swings; small moving-average window for smoothing utilization |
 
-> **Note:** All controller PDFs in this directory are checked out as real PDFs (>50 KB, `%PDF` magic) except `arima-pid-container-autoscaling-2023.pdf`, which currently contains an HTML response and is listed as broken in the defense-alignment archive check. SATA (doi:10.3390/electronics13071242) is DOI-only — no open-access PDF is available.
+> **Note:** All controller PDFs in this directory are checked out as real PDFs (>50 KB, `%PDF` magic) except `arima-pid-container-autoscaling-2023.pdf`, which currently contains an HTML response and is listed as broken in the defense-alignment archive check (Springer paywall — DOI-only, no open PDF). `elax-elastic-provisioning-containerized-2019.pdf` was re-fetched from the author's page (ynyang1.github.io) and verified correct on 2026-08-07 (the previously archived object was an unrelated paper). `hymetricscaler-hybrid-autoscaling-2025.pdf` was removed on 2026-08-07 — the archived object was an unrelated paper and no open-access copy of the IEEE HPCC 2025 paper exists; it is now DOI-only like SATA (doi:10.3390/electronics13071242).
 
 ## How Papers Map to Controller Versions
 
