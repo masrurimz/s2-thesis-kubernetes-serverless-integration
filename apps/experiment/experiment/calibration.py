@@ -24,6 +24,9 @@ import structlog
 
 from shared.config import settings
 
+from experiment.stages.daemon import kill_process_on_port
+from experiment.stages.reset import ResetStage
+
 logger = structlog.get_logger(__name__)
 
 # apps/experiment/experiment/calibration.py -> 4 levels up to repo root
@@ -180,6 +183,9 @@ def run_calibration(
 
         env = {**os.environ, "HSA_OVERRIDE_GFX_VERSION": "11.0.0", "PREDICTION_CONFIDENCE_THRESHOLD": "0.6"}
 
+        # Kill any stale process on the daemon API port before starting fresh
+        kill_process_on_port(settings.DAEMON_API_PORT, label="routing_daemon")
+
         daemon_proc = subprocess.Popen(
             daemon_cmd,
             cwd=str(PROJECT_ROOT),
@@ -199,6 +205,26 @@ def run_calibration(
                 daemon_proc.terminate()
                 daemon_proc.wait()
                 daemon_proc = None
+            else:
+                # Verify scenario matches requested and daemon is fresh (uptime <= 30s)
+                sresp = requests.get(f"{DAEMON_API}/status", timeout=5)
+                if sresp.status_code != 200:
+                    logger.error("daemon_status_unavailable", status_code=sresp.status_code)
+                    daemon_proc.terminate()
+                    daemon_proc.wait()
+                    daemon_proc = None
+                else:
+                    status = sresp.json()
+                    if status.get("scenario") != scenario:
+                        logger.error("daemon_scenario_mismatch", expected=scenario, got=status.get("scenario"))
+                        daemon_proc.terminate()
+                        daemon_proc.wait()
+                        daemon_proc = None
+                    elif status.get("uptime_seconds", 999) > 30:
+                        logger.error("daemon_not_fresh", uptime_seconds=status.get("uptime_seconds"))
+                        daemon_proc.terminate()
+                        daemon_proc.wait()
+                        daemon_proc = None
         except Exception as e:
             logger.error("daemon_not_responding", error=str(e))
             daemon_proc = None
@@ -251,6 +277,10 @@ def run_full_calibration(scenarios: List[str], rps_levels: List[int], duration_s
 
             for rps in rps_levels:
                 logger.info("calibrating_rps", scenario=scenario, rps=rps)
+
+                # Reset HAProxy weights to scenario defaults before each RPS level
+                if not ResetStage._reset_haproxy_weights(scenario):
+                    raise RuntimeError(f"HAProxy weight reset failed for {scenario} @ {rps} RPS")
 
                 with run_phase(console, f"{scenario} @ {rps} RPS"):
                     result = run_calibration(scenario, rps, duration_sec)

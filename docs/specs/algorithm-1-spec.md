@@ -1,187 +1,84 @@
-# Algorithm 1: SLO-Aware Routing Controller
+# Algorithm 1: V3 Capacity-Driven Routing Controller
 
-## Thesis Reference
+## Purpose
 
-Per thesis section 3.4.3.1, Algorithm 1 is the core routing controller that:
-1. Monitors p99 latency against SLO threshold
-2. Detects sustained violations
-3. Adjusts traffic weights to maintain SLO compliance
-4. Optimizes for cost when healthy
+Algorithm 1 is the 15-second routing loop for the hybrid Kubernetes/Knative testbed. It maintains the p99 < 200 ms SLO by shifting HAProxy weights between Kubernetes and serverless backends. It reads observed request load, observed ready replicas, observed HAProxy latency, and current weights. It does not use a GRU forecast as a direct routing-weight input.
 
-## Pseudocode (from thesis)
+The GRU forecast is consumed by Algorithm 2, which computes a Kubernetes replica target. Algorithm 1 may use observed-load trend extrapolation for a proactive routing decision when GRU confidence is sufficient; this post-Bug-13 behavior prevents an under-predicting forecast from directly over-routing to serverless.
 
-```
-Algorithm 1: SLO-Aware Routing Controller
-───────────────────────────────────────────
+## Inputs and outputs
 
-Input:
-  p99_current     : Current p99 latency (ms)
-  slo_threshold   : SLO target (200ms)
-  window_size     : Violation detection window (30s)
-  weights_current : Current {k3s, knative} weights
-  prediction      : Optional predicted load (from Algorithm 2)
+| Input | Meaning |
+|---|---|
+| `current_load` | Observed requests per second from Prometheus |
+| `ready_replicas` | Ready Kubernetes workload replicas |
+| `current_p99` | Tail latency observed by the SLO monitor |
+| `k8s_weight`, `knative_weight` | Current HAProxy percentages |
+| `trend` | Observed-load trend extrapolation |
+| `gru_confidence` | Confidence gate supplied by the prediction path |
+| `slo_threshold_ms` | 200 ms |
 
-Output:
-  weights_new     : Adjusted traffic weights
+The output is a graduated HAProxy weight update. Weights always sum to 100 and are changed only after cooldown, hysteresis, and backend-health checks pass.
 
-State:
-  violation_start : Timestamp of violation start (or null)
-  last_adjustment : Timestamp of last weight change
+## Decision priority
 
-Constants:
-  WEIGHT_STEP     : 10  (weight adjustment step)
-  COOLDOWN        : 15s (minimum time between adjustments)
-  HEALTHY_MARGIN  : 0.7 (threshold multiplier for "healthy" state)
+The decision flow is strictly ordered (Bug 2 fix):
 
-Procedure:
-1. IF p99_current > slo_threshold:
-     IF violation_start IS NULL:
-       violation_start ← now()
-     violation_duration ← now() - violation_start
-   ELSE:
-     violation_start ← NULL
-     violation_duration ← 0
-
-2. IF violation_duration ≥ window_size:
-     # Sustained violation - scale out to serverless
-     IF now() - last_adjustment ≥ COOLDOWN:
-       knative_new ← min(100, knative_current + WEIGHT_STEP)
-       k3s_new ← 100 - knative_new
-       last_adjustment ← now()
-       RETURN {k3s: k3s_new, knative: knative_new}
-
-3. IF p99_current < slo_threshold × HEALTHY_MARGIN:
-     # Healthy - optimize for cost by increasing k3s
-     IF now() - last_adjustment ≥ COOLDOWN:
-       k3s_new ← min(95, k3s_current + WEIGHT_STEP // 2)
-       knative_new ← 100 - k3s_new
-       last_adjustment ← now()
-       RETURN {k3s: k3s_new, knative: knative_new}
-
-4. # Use prediction if available (Algorithm 2 integration)
-   IF prediction IS NOT NULL AND prediction.confidence > 0.7:
-     load_change ← (prediction.value - current_load) / current_load
-     IF load_change > 0.3:  # Significant increase predicted
-       knative_new ← min(50, knative_current + WEIGHT_STEP)
-       k3s_new ← 100 - knative_new
-       RETURN {k3s: k3s_new, knative: knative_new}
-
-5. RETURN weights_current  # No change
+```text
+SCALE_OUT > PREDICTIVE > OPTIMIZE_COST > MAINTAIN
 ```
 
-## Implementation Mapping
+1. **SCALE_OUT:** sustained observed SLO violation or insufficient observed ready capacity. Increase serverless weight and let Algorithm 2 raise the Kubernetes replica target.
+2. **PREDICTIVE:** the observed trend approaches the capacity boundary and the GRU confidence gate is met. Algorithm 2 has already received the forecast; Algorithm 1 can shift routing using the observed trend, not the raw forecast value.
+3. **OPTIMIZE_COST:** the observed system is healthy with capacity headroom. Gradually restore Kubernetes weight.
+4. **MAINTAIN:** no threshold, cooldown, or health condition requires a change.
 
-| Thesis Component | Implementation File | Class/Function |
-|-----------------|---------------------|----------------|
-| p99_current | `controller/monitoring_v2/slo_monitor.py` | `SLOMonitor.check_slo().p99_latency_ms` |
-| slo_threshold | `controller/monitoring_v2/slo_monitor.py` | `SLOConfig.p99_threshold_ms` (200.0) |
-| window_size | `controller/monitoring_v2/slo_monitor.py` | `SLOConfig.violation_window_sec` (30) |
-| weights_current | `controller/intelligent_router/algorithm1_controller.py` | `Algorithm1Controller.current_weights` |
-| prediction | `controller/prediction/prediction_server.py` | `POST /predict` response |
-| WEIGHT_STEP | `controller/intelligent_router/algorithm1_controller.py` | `Algorithm1Config.weight_step` (10) |
-| COOLDOWN | `controller/intelligent_router/algorithm1_controller.py` | `Algorithm1Config.cooldown_sec` (15) |
-| HEALTHY_MARGIN | `controller/intelligent_router/algorithm1_controller.py` | `Algorithm1Config.healthy_margin` (0.7) |
+## Pseudocode
 
-## Core Implementation Files
+```text
+loop every 15 seconds:
+    load        <- observed Prometheus request rate
+    ready       <- observed ready Kubernetes replicas
+    p99         <- HAProxy rtime-derived p99
+    trend       <- extrapolate observed load
+    capacity    <- ready * r_effective
 
-| File | Purpose |
-|------|---------|
-| [`controller/intelligent_router/algorithm1_controller.py`](../../controller/intelligent_router/algorithm1_controller.py) | Main Algorithm 1 logic |
-| [`controller/daemon/routing_daemon.py`](../../controller/daemon/routing_daemon.py) | Daemon that runs Algorithm 1 with scenario configs |
-| [`controller/intelligent_router/weight_adjuster.py`](../../controller/intelligent_router/weight_adjuster.py) | HAProxy weight adjustment via admin socket |
-| [`controller/intelligent_router/metrics.py`](../../controller/intelligent_router/metrics.py) | Prometheus metrics for H2 evaluation |
-| [`controller/monitoring_v2/slo_monitor.py`](../../controller/monitoring_v2/slo_monitor.py) | SLO monitoring and violation detection |
+    if sustained(p99 > 200 ms) or load > capacity:
+        decision <- SCALE_OUT
+        increase Knative weight by WEIGHT_STEP
+        request Algorithm 2 to reconcile its observed-load replica target
+    else if trend approaches capacity and gru_confidence >= confidence_threshold:
+        decision <- PREDICTIVE
+        allow Algorithm 2's forecast-informed replica target
+        shift weights only according to observed trend and backend capacity
+    else if healthy(p99 < 200 ms) and load is below capacity margin:
+        decision <- OPTIMIZE_COST
+        restore Kubernetes weight gradually
+    else:
+        decision <- MAINTAIN
 
-## Integration Points
-
-1. **SLO Monitor** → Algorithm 1 (p99 metrics)
-2. **Prediction Server** → Algorithm 1 (load forecasts)
-3. **Algorithm 1** → HAProxy Weight Adjuster (weight commands)
-4. **Decision Logger** ← Algorithm 1 (audit trail)
-
-## Prometheus Metrics Exposed
-
-Metrics defined in `controller/intelligent_router/metrics.py`:
-
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
-| `slo_violation_total` | Counter | `slo_name` | Total SLO violations detected |
-| `routing_decision_total` | Counter | `decision_type` | Decisions by type (SCALE_OUT, OPTIMIZE_COST, PREDICTIVE, MAINTAIN) |
-| `reaction_time_ms` | Histogram | - | Time from violation detection to weight adjustment |
-
-Metrics exposed by routing daemon (`controller/daemon/routing_daemon.py`):
-
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
-| `routing_daemon_decision_total` | Counter | `scenario`, `action` | Decisions by scenario and action |
-| `routing_daemon_current_weight` | Gauge | `backend` | Current weight per backend (k3s, knative) |
-| `routing_daemon_prediction_used` | Counter | - | GRU predictions used in decisions |
-| `routing_daemon_decision_latency_ms` | Histogram | - | Decision loop latency |
-
-## Routing Daemon Integration
-
-The routing daemon (`controller/daemon/routing_daemon.py`) orchestrates Algorithm 1:
-
-### Scenario Configurations
-
-```python
-SCENARIO_CONFIGS = {
-    "s1-k8s-only": ScenarioConfig(k3s=100, knative=0, algorithm=False, predictions=False),
-    "s2-serverless-only": ScenarioConfig(k3s=0, knative=100, algorithm=False, predictions=False),
-    "s3-hybrid-reactive": ScenarioConfig(k3s=80, knative=20, algorithm=True, predictions=False),
-    "s4-hybrid-predictive": ScenarioConfig(k3s=80, knative=20, algorithm=True, predictions=True),
-}
+    apply only after cooldown/hysteresis and verify weights sum to 100
 ```
 
-### API Endpoints
+The forecast value is never copied directly into a routing weight. Algorithm 2 consumes the confidence-gated forecast for replica scaling; Algorithm 1 uses observed load, observed capacity, and confidence-gated trend extrapolation.
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/status` | GET | Current daemon status, weights, decision counts |
-| `/set_scenario` | POST | Change scenario (for H1/H2 evaluations) |
-| `/health` | GET | Health check (HAProxy, GRU connectivity) |
-| `/metrics` | GET | Prometheus metrics |
+## Weight policy
 
-### Running the Daemon
+Use graduated 10-percentage-point changes, bounded by 0/100 and the configured serverless safety limit. S3 and S4 begin with the configured three warm replicas; runtime routing decisions are driven by the observed signals above.
+
+## Algorithm 2 integration
+
+Algorithm 2 receives the GRU upper forecast and confidence, computes a target using the effective capacity model, and reconciles Kubernetes replicas in `[3, 6]` under the default calibration (the definitive paired H2 bundle used the experiment-local override `max_k8s_replicas = 10`; see `results/calibration/2026-08-06_definitive-repro.json`). Prediction therefore drives Kubernetes scaling. Algorithm 1 consumes the resulting ready capacity and observed load when deciding distribution.
+
+## Metrics
+
+The routing daemon exposes counters and gauges for decision type, SLO violations, current weights, observed load, ready replicas, and reaction time. The SLO monitor uses HAProxy `rtime` (raw response time) to derive p99; application request timing is not substituted for this control signal.
+
+## Operational entry points
 
 ```bash
-cd controller
-uv run python -m daemon.routing_daemon \
-  --scenario s4-hybrid-predictive \
-  --interval 15 \
-  --prometheus-url http://localhost:9090 \
-  --haproxy-host localhost \
-  --haproxy-port 9999 \
-  --gru-url http://localhost:8090 \
-  --api-port 9104
+uv run thesis-routing-daemon --port 9104
+curl http://localhost:9104/metrics
 ```
 
-## Decision Flow
-
-```
-┌─────────────────┐
-│ Decision Loop   │ (every 15s)
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ SLOMonitor      │ → Query Prometheus for p99 latency
-│ .check_slo()    │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────────────────────────────────────────────┐
-│ Algorithm1Controller.make_decision()                    │
-│                                                         │
-│  1. Check sustained violation → SCALE_OUT              │
-│  2. Check healthy state → OPTIMIZE_COST                │
-│  3. Check prediction (if S4) → PREDICTIVE              │
-│  4. Otherwise → MAINTAIN                               │
-└────────┬────────────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────┐
-│ WeightAdjuster  │ → Send weight command to HAProxy admin socket
-│ .set_weights()  │
-└─────────────────┘
-```
+The experiment CLI starts and stops the daemon as part of the governed pipeline. Prometheus is expected at `http://localhost:9090`, HAProxy HTTP at `http://localhost:18082`, and HAProxy stats at `http://localhost:18404`.

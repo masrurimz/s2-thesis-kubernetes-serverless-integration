@@ -1,220 +1,80 @@
-# Hybrid K8s-Serverless Integration Research
+# Hybrid Kubernetes–Serverless Integration Research
 
 ## Overview
 
-This repository contains the implementation and documentation for a novel hybrid architecture that combines the cost-effectiveness of Kubernetes clusters with the infinite scaling capabilities of serverless computing. The research demonstrates intelligent traffic routing using GRU-based workload prediction and ElaX algorithm implementation.
+This repository evaluates a hybrid Kubernetes and serverless architecture for tail-latency control. The final design uses GRU workload prediction to anticipate **Kubernetes replica scaling** (Algorithm 2), while Algorithm 1 performs capacity-driven traffic routing from **observed load** and observed ready capacity. Observed-load trend extrapolation is allowed to make proactive decisions only when GRU confidence gates it (V3, post Bug-13); the forecast does not directly set HAProxy weights.
 
-## Research Objectives
+## Research objectives
 
-**Thesis Title**: Decision Making and Elastic Scalability Management in Heterogeneous Cloud Environments Based on Workload Prediction
+- Evaluate ElaX-derived scaling and routing in a Kubernetes + Knative testbed.
+- Use a direct multi-horizon GRU forecast of **9 × 15-second samples = 135 seconds**.
+- Train the GRU on synthetic diurnal, burst, and ramp series; use ClarkNet and Calgary as validation corpora, with ClarkNet also used for trace replay.
+- Maintain the primary SLO of **p99 < 200 ms** while measuring tail latency, SLO violations, capacity, request distribution, and directional proxy cost.
+- Compare four controlled scenarios: S1 K8s + HPA, S2 serverless-only, S3 hybrid-reactive, and S4 hybrid-predictive.
 
-The primary goal is to create a system that:
-- **Implements ElaX algorithm** with GRU-based workload prediction (30-second horizon)
-- **Uses real HTTP trace data** from ClarkNet and Calgary datasets (4M+ requests)
-- **Focuses on tail latency optimization** with SLO-aware routing decisions
-- **Employs formal resource allocation** using R = α·x + β with OLS coefficient tuning
-- **Provides comprehensive evaluation** with RMSE prediction accuracy and cost analysis
+## Documentation structure
 
-## 🗂️ Documentation Structure
+### Getting started
 
-### 🚀 [Getting Started](getting-started/)
-**New to the project? Start here!**
-- **[Overview](getting-started/00-overview.md)** - 5-minute project introduction
-- **[Quick Start](getting-started/02-quick-start.md)** - 15-minute working demo
-- **[Prerequisites](getting-started/01-prerequisites.md)** - Tool installation guide
-- **[Architecture](getting-started/03-understanding-architecture.md)** - System design deep dive
+- [Overview](getting-started/00-overview.md)
+- [Quick start](getting-started/02-quick-start.md)
+- [Prerequisites](getting-started/01-prerequisites.md)
+- [Architecture](getting-started/03-understanding-architecture.md)
+- [Deploying services](getting-started/03-deploying-services.md)
+- [Teardown](getting-started/04-teardown.md)
 
-### 🎓 [Thesis Implementation](thesis-implementation/)
-**Formal research documentation**
-- **[Experiment Plan](thesis-implementation/01-experiment-plan.md)** - ElaX-GRU system design
-- **[Methodology](thesis-implementation/02-methodology-implementation.md)** - Technical implementation details
-- **[Running Experiments](thesis-implementation/03-running-experiments.md)** - Formal evaluation procedures
+### Thesis implementation
 
-### ⚡ [Incremental Development](incremental-development/)
-**Agile sprint-based implementation**
-- **[Sprint Overview](incremental-development/README.md)** - 5-sprint implementation plan
-- **[Sprint 1](incremental-development/phase-1-basic-hybrid.md)** - Basic hybrid foundation
-- **[Sprint 2](incremental-development/phase-2-prediction.md)** - Load prediction automation
-- **[Sprint 3](incremental-development/phase-3-slo-monitoring.md)** - SLO monitoring integration
-- **[Sprint 4](incremental-development/phase-4-gru-integration.md)** - GRU model integration
-- **[Sprint 5](incremental-development/phase-5-full-thesis.md)** - Complete ElaX implementation
+- [Experiment plan](thesis-implementation/01-experiment-plan.md)
+- [Methodology and implementation](thesis-implementation/02-methodology-implementation.md)
+- [Running experiments](thesis-implementation/03-running-experiments.md)
 
-### 📚 [Reference](reference/)
-**Background material and templates**
-- **[Experiment Results Template](reference/experiment-results-template.md)** - Results documentation format
+### Specifications and operations
 
-### 🗄️ [Archived](archived/)
-**Historical documentation and alternative approaches**
-- **[Initial Hybrid Plan](archived/initial-hybrid-plan.md)** - Original concept design
-- **[Experimental Methodology](archived/experimental-methodology.md)** - Alternative implementation approach
+- [Algorithm 1 specification](specs/algorithm-1-spec.md)
+- [SLO definition](specs/slo-definition.md)
+- [Calibration guide](CALIBRATION_GUIDE.md)
+- [Current experiment runbook](experiments/RUNNING_EXPERIMENTS.md)
+- [Deployment guide](deployment/VPS_DEPLOYMENT.md)
 
-## Thesis Alignment Updates
+### Reference and historical material
 
-### Key Changes Made to Align with Thesis Proposal
+- [Experiment results template](reference/experiment-results-template.md)
+- [References](references/REFERENCES.md)
+- [Archived methodology](archived/experimental-methodology.md) (historical; not a current protocol)
+- [Initial hybrid plan](archived/initial-hybrid-plan.md) (historical; not a current protocol)
 
-**1. Algorithm Foundation**:
-- **Original**: Custom hybrid scaler based on zscaler
-- **Updated**: ElaX algorithm implementation with GRU modification
+## Final evaluation snapshot
 
-**2. Machine Learning Model**:
-- **Original**: Simple linear regression for load prediction
-- **Updated**: GRU-based workload predictor with 30-second horizon
+- **H2 (definitive paired n=5):** S3 mean p99 **188.5 ms** versus S4 **126.0 ms**, p = **0.0304**, Cohen's d = **−1.26**; S4 won all five pairs. The proxy monthly cost is **USD 163 for both** scenarios.
+- **H1 (directional diagnostic n=1):** S4 p99 **118.2 ms** versus S1 **2,421.3 ms**. This is directional mechanism evidence, not an inferential result.
+- The result interpretation is SLO-first: p99 < 200 ms is the target; cost is a directional proxy, not measured cloud billing.
 
-**3. Dataset Integration**:
-- **Original**: Synthetic load patterns for testing
-- **Updated**: Real HTTP trace data from ClarkNet and Calgary (4,055,326 requests)
+## Current control flow
 
-**4. Controller Architecture**:
-- **Original**: Single intelligent autoscaler
-- **Updated**: Separated Routing Controller and Cluster Controller with thesis algorithms
+```text
+synthetic training -> GRU (9-step / 135 s forecast)
+                              |
+                              v
+                   Algorithm 2 replica scaling
+                              |
+observed load + ready capacity -> Algorithm 1 V3 routing -> HAProxy
+                              |
+                       Kubernetes / Knative backends
+```
 
-**5. Resource Allocation**:
-- **Original**: Simple cost-based calculations
-- **Updated**: Formal linear model R = α·x + β with OLS coefficient tuning
+The calibrated workload is the deterministic `/fib?n=33` endpoint. The shared calibration model uses `r_saturation_per_replica = 33.3`, `min_k8s_replicas = 3`, and `max_k8s_replicas = 6`; see [CALIBRATION_GUIDE.md](CALIBRATION_GUIDE.md).
 
-**6. Evaluation Methodology**:
-- **Original**: General performance metrics
-- **Updated**: RMSE for predictor, tail latency focus, formal control variables
+## Current pipeline quick start
 
-**7. SLO Management**:
-- **Original**: General response time monitoring
-- **Updated**: 99th percentile tail latency with 5-second SLO violation detection
-
-## Quick Start (Thesis Implementation)
-
-### 1. Dataset Preparation
 ```bash
-# Download ClarkNet and Calgary datasets
-mkdir -p datasets/{clarknet,calgary,processed}
-# [Download HTTP trace files to respective directories]
-
-# Process datasets to RPS format
-python3 data_processing/process_datasets.py
+uv run thesis-experiment preflight
+uv run thesis-experiment run --phase full --runs 5 --duration 300
+uv run thesis-experiment paired-run --pairs 5
+uv run thesis-experiment evidence audit
+uv run thesis-experiment evidence reconcile --apply
+uv run thesis-experiment evidence catalog refresh
+uv run thesis-experiment evidence journal
 ```
 
-### 2. GRU Model Training
-```bash
-# Train GRU workload predictor
-cd models/gru_predictor
-python3 train_gru_model.py --dataset ../../datasets/processed/rps_timeseries.csv
-python3 evaluate_predictor.py --model gru_model.pth
-```
-
-### 3. Deploy ElaX-Based System
-```bash
-# Setup infrastructure
-./infra/setup-clusters.sh
-
-# Deploy monitoring with tail latency metrics
-kubectl apply -f monitoring/prometheus-slo.yaml
-
-# Start ElaX controllers
-cd controllers/elax_implementation
-python3 routing_controller.py &  # Algorithm 1
-python3 cluster_controller.py &  # Resource allocation
-
-# Start resource allocator
-python3 resource_allocator.py &
-```
-
-### 4. Run Thesis Experiments
-```bash
-# Execute formal evaluation scenarios
-cd evaluation
-python3 run_thesis_experiments.py --dataset clarknet --duration 60
-python3 calculate_rmse.py --predictions results/predictions.json
-python3 cost_analysis.py --results results/ --pricing google_cloud
-```
-
-## Key Components
-
-### Intelligent Autoscaler
-- **Base**: Enhanced version of `autoscaler/experiment-7-zscaler/`
-- **Features**: Load prediction, cost optimization, hybrid routing decisions
-- **Thresholds**: Configurable switching points between k3s and serverless
-
-### Traffic Router  
-- **Technology**: HAProxy + Python controller
-- **Logic**: Real-time routing based on load metrics and predictions
-- **Monitoring**: Request distribution and performance tracking
-
-### Serverless Simulation
-- **Implementation**: Docker containers with instant scaling
-- **Resource Limits**: Simulated function boundaries and cold starts
-- **Cost Model**: Execution time and memory-based pricing
-
-### Load Generator
-- **Patterns**: Baseline, gradual scale, traffic spikes, sustained load, mixed workload
-- **Metrics**: Response time, throughput, error rates
-- **Output**: JSON results for analysis
-
-## Experiment Scenarios
-
-| Scenario | Load Pattern | Expected Behavior | Key Metrics |
-|----------|-------------|-------------------|-------------|
-| **Baseline** | 100 RPS steady | k3s handles 100% | Response time, cost |
-| **Gradual Scale** | 100�500 RPS | k3s scales, then hybrid | Scaling latency |
-| **Traffic Spike** | 100�1000 RPS instant | Immediate serverless | Spike response |
-| **Sustained Heavy** | 800 RPS for 20min | Scale back to k3s | Migration efficiency |
-| **Mixed Workload** | Variable patterns | Intelligent routing | Overall efficiency |
-
-## Success Criteria
-
-### Performance Targets
-- **Response Time**: <200ms p95 under normal load, <500ms during spikes
-- **Availability**: 99.9% uptime during load variations
-- **Scaling Speed**: <30 seconds to activate serverless
-
-### Cost Optimization
-- **Efficiency**: 60-80% cost reduction vs pure serverless
-- **Utilization**: 85%+ resource utilization in k3s
-- **Optimization**: Intelligent switching based on load duration
-
-## Repository Structure
-
-```
- docs/                          # Documentation
-    hybrid-k3s-serverless-experiment-plan.md
-    experiment-methodology.md
-    [other docs]
- autoscaler/
-    experiment-7-zscaler/      # Base autoscaler implementation
-    hybrid-experiment/         # Enhanced hybrid autoscaler
- controller/
-    hybrid-router.py           # Traffic routing logic
-    cost-tracker.py            # Cost calculation and tracking
- apps/rust-app/
-    v2-prometheus/             # Rust app with metrics
-    [other versions]
- workload/
-    intelligent-load-generator.py
-    test-scenarios/
- monitoring/
-    prometheus.yaml
- infra/
-     setup-clusters.sh
-     deploy-applications.sh
-     teardown-clusters.sh
-```
-
-## Research Contributions
-
-This research contributes to the field by:
-
-1. **Novel Hybrid Architecture**: First implementation combining aggressive k3s utilization with serverless overflow
-2. **Intelligent Routing**: ML-based load prediction for optimal traffic distribution  
-3. **Cost Optimization**: Real-time cost calculation and switching logic
-4. **Practical Implementation**: Working system demonstrating theoretical concepts
-5. **Performance Analysis**: Comprehensive benchmarking of hybrid vs pure approaches
-
-## Future Work
-
-- **Production Deployment**: Cloud provider integration (AWS Lambda, GKE Autopilot)
-- **Advanced ML**: LSTM models for better load prediction
-- **Multi-Region**: Geographic load distribution strategies
-- **Security**: Authentication, authorization, and network policies
-- **Auto-Tuning**: Self-optimizing threshold configuration
-
-## Contact
-
-For questions about this research or implementation details, please refer to the detailed documentation or create an issue in the repository.
+For infrastructure lifecycle, use `uv run thesis infra apply-resources`, `uv run thesis infra deploy-app`, and `uv run thesis infra health`. The prediction service listens on port 8090; the routing daemon listens on port 9104; Prometheus is on 9090, HAProxy HTTP on 18082, and HAProxy stats on 18404.

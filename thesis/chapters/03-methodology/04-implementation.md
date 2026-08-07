@@ -2,294 +2,155 @@
 
 ### 3.4.1 Workload Predictor (GRU Architecture)
 
-The workload prediction model uses a Gated Recurrent Unit (GRU) neural network, chosen for its favorable trade-off between prediction accuracy and computational efficiency compared to LSTM networks. GRU achieves comparable performance with fewer parameters, resulting in faster training and lower inference latency.
+The workload prediction model uses a Gated Recurrent Unit (GRU), chosen for its balance of accuracy, parameter count, and inference cost. The final model emits a direct multi-horizon forecast:
 
-**Architecture:**
-
-```
-Input: Time-series window (60 seconds of RPS data)
+```text
+Input: 30 samples of RPS at 15-second resolution
                     │
                     ▼
         ┌───────────────────────┐
-        │   Input Layer         │
-        │   (sequence_length,   │
-        │    features)          │
+        │   GRU layers +        │
+        │   dropout regularizer  │
         └───────────┬───────────┘
                     │
                     ▼
         ┌───────────────────────┐
-        │   GRU Layer 1         │
-        │   (64 units)          │
-        │   + Dropout (0.2)     │
+        │ Dense output: 9 steps │
+        │ (9 × 15 s = 135 s)    │
         └───────────┬───────────┘
                     │
                     ▼
-        ┌───────────────────────┐
-        │   GRU Layer 2         │
-        │   (32 units)          │
-        │   + Dropout (0.2)     │
-        └───────────┬───────────┘
-                    │
-                    ▼
-        ┌───────────────────────┐
-        │   Dense Layer         │
-        │   (prediction_horizon)│
-        └───────────┬───────────┘
-                    │
-                    ▼
-Output: Predicted RPS for next 30 seconds
+Output: forecast RPS for the next 135 seconds
 ```
 
-The model consists of two stacked GRU layers with decreasing hidden dimensions (64 → 32 units), each followed by dropout regularization (rate 0.2) to prevent overfitting. The final dense layer outputs the predicted RPS value for the 30-second prediction horizon. This multi-step prediction enables the routing controller to anticipate workload changes and take proactive action.
+The model uses stacked recurrent layers and dropout regularization. The prediction server returns the forecast and a confidence score. Confidence gating prevents low-confidence forecasts from driving proactive scaling. Synthetic test RMSE is 4.75% after HPO (6.01% before HPO); real ClarkNet RMSE is 17.78%.
 
-**Training Configuration:**
-
-| Parameter | Value | Rationale |
-|-----------|-------|-----------|
-| Optimizer | Adam | Adaptive learning rate, standard for RNN training |
-| Loss function | Mean Squared Error (MSE) | Direct optimization of prediction accuracy |
-| Batch size | 32 | Balance between gradient stability and memory usage |
-| Epochs | 100 (with early stopping) | Early stopping prevents overfitting on validation loss |
-| Validation split | 15% | Sufficient for monitoring generalization |
-| Learning rate | Default (0.001) | Adam default, no manual scheduling needed |
-
-**Prediction Server:** The trained model is served via a FastAPI prediction server that accepts recent RPS history as input and returns both the predicted load value and a confidence score. The confidence score is computed from prediction variance and serves as a gating mechanism—the routing controller only acts on predictions exceeding a configurable confidence threshold (default: 0.5).
+**Training configuration:** Adam optimizer, MSE loss, batch size 32, up to 100 epochs with early stopping, and a 15% temporally ordered validation split. Inference is designed to fit comfortably within the 15-second control cycle.
 
 ### 3.4.2 Resource Allocation Model (Model Alokasi Sumber Daya)
 
-A linear resource allocation model translates predicted workload into required Kubernetes resources. This model is used **online** by the routing daemon to compute replica scaling targets that are applied to the Kubernetes deployment in real time.
+The resource model translates a traffic signal into a Kubernetes replica target:
 
 $$R = \alpha \cdot x + \beta$$
 
-Where:
+where $R$ is the target replica count, $x$ is either observed RPS or forecast RPS, $\alpha$ is the calibrated replicas-per-RPS coefficient, and $\beta$ is the base overhead. The code-verified final calibration uses `fib_n=33`, $r_{saturation}=33.3$ RPS per replica, target CPU utilization 0.5, and therefore $r_{effective}=16.65$ and $\alpha=1/r_{effective}\approx0.0601$. Bounds and a safety clamp prevent extreme replica targets.
 
-- $R$: required Kubernetes capacity (expressed as **target replica count** for the primary deployment)
-- $x$: predicted traffic intensity (requests per second), produced by the GRU predictor for the next 30 seconds
-- $\alpha$: resource-per-request coefficient (replicas per RPS)
-- $\beta$: base replica overhead (minimum replicas at near-zero traffic)
-
-**Online Usage in the Live System:**
-
-At each control interval (15 seconds), the daemon obtains: (1) current observed load from HAProxy/Prometheus, (2) predicted load 30 seconds ahead from the GRU server, and (3) current replica state from Kubernetes. Algorithm 2 then computes a target replica count:
-
-$$R_{target} = \text{clamp}\left(\lceil (\alpha \cdot x_{pred} + \beta) \cdot \gamma \rceil, R_{min}, R_{max}\right)$$
-
-where $\gamma$ is a safety buffer (e.g., 1.2 for +20% headroom), and $R_{min}$, $R_{max}$ are fixed bounds to prevent extreme scaling. The computed target is **enforced** by issuing Kubernetes scaling commands (Section 3.4.3.2).
-
-**Coefficient Derivation (OLS):**
-
-The coefficients $\alpha$ and $\beta$ are obtained using Ordinary Least Squares (OLS) regression on calibration data collected from the same application and testbed:
-
-1. Fix replicas to known values $R \in \{1, 2, \ldots, k\}$.
-2. For each $R$, run a short steady workload sweep and record the sustainable throughput before crossing a latency SLO guardrail (p99 ≤ 200 ms).
-3. Fit a linear model: $R \approx \alpha x + \beta$.
-
-```python
-from sklearn.linear_model import LinearRegression
-
-model = LinearRegression()
-model.fit(X_historical_traffic, y_historical_resources)
-
-alpha = model.coef_[0]   # Resource per request coefficient
-beta = model.intercept_   # Base resource overhead
-```
-
-The calibration dataset, fitted coefficients, and chosen SLO guardrail are stored as experiment artifacts for reproducibility.
+The coefficient is calibrated from sustainable-throughput measurements at known replica counts, using p99 ≤ 200 ms as the SLO guardrail. In S3, $x=x_{obs}$ (observed RPS); in S4, $x=x_{pred}$ (the confidence-gated GRU forecast). The scaling model is the same in both modes; only the signal source differs.
 
 ### 3.4.3 Online Controllers
 
-The online control plane consists of two algorithms that operate at different layers of the system.
+The online control plane consists of two coordinated algorithms. Algorithm 1 controls traffic distribution; Algorithm 2 controls Kubernetes replica capacity. They run in a 15-second loop.
 
-#### 3.4.3.1 Algorithm 1: Routing Controller (Primary Implementation)
+#### 3.4.3.1 Algorithm 1: Routing Controller (V3)
 
-Algorithm 1 is the primary decision engine, fully implemented and experimentally evaluated. It monitors SLO compliance and adjusts traffic routing weights between Kubernetes and serverless backends using a priority-based decision framework.
+Algorithm 1 is the V3 capacity-driven routing controller. It uses observed load, ready Kubernetes capacity, and p99 state to adjust HAProxy weights. It does **not** use `GRUClient.predict()` to increase routing weights. A prediction can mark the PREDICTIVE priority and is consumed by Algorithm 2 for proactive scaling; routing remains grounded in observed capacity and tail latency. Observed-load trend extrapolation may gate a proactive routing shift.
 
-**Algorithm 1: SLO-Aware Routing Controller**
+**Algorithm 1: V3 SLO- and Capacity-Aware Routing Controller**
 
 ```pseudocode
-Algorithm 1: SLO-Aware Routing Controller
+Algorithm 1: V3 Routing Controller
 ────────────────────────────────────────────────────────────────
-
 Constants:
-  SLO_THRESHOLD ← 200ms            // p99 latency target
-  HEALTHY_MARGIN ← 0.7             // healthy = p99 < SLO × 0.7
-  WEIGHT_STEP ← 10                 // weight adjustment increment
-  COOLDOWN ← 15 seconds            // minimum time between adjustments
-  MAX_SERVERLESS ← 50              // maximum serverless weight (%)
-  CONFIDENCE_THRESHOLD ← 0.5       // minimum prediction confidence
-  LOAD_CHANGE_THRESHOLD ← 0.3      // significant load change (30%)
+  SLO_THRESHOLD ← 200ms
+  HEALTHY_MARGIN ← 0.7
+  WEIGHT_STEP ← 10
+  CONTROL_INTERVAL ← 15 seconds
+  MAX_SERVERLESS ← 50
+  CONFIDENCE_THRESHOLD ← 0.5
 
-Variables:
-  weights ← {k3s: 100, knative: 0}  // initial: all traffic to K8s
-  serverless_enabled ← False
-  last_adjustment_time ← null
+State:
+  weights ← {k8s: 100, knative: 0}
+  serverless_enabled ← false
 
-repeat every COOLDOWN seconds:
+repeat every CONTROL_INTERVAL:
+  p99 ← SLOMonitor.p99()
+  observed_load ← HAProxy.current_rps()
+  ready_capacity ← K8s.ready_replica_capacity()
+  trend ← extrapolate_observed_load(window=30s)
+  forecast, confidence ← GRUClient.predict() if available
 
-  // Step 1: Get current metrics
-  slo_status ← SLOMonitor.check()
-  prediction ← GRUClient.predict() if available
-  current_load ← get_current_rps()
+  // Priority 1: SCALE_OUT responds to observed overload/tail latency.
+  if p99 > SLO_THRESHOLD or observed_load > ready_capacity:
+    action ← SCALE_OUT
+    enable_serverless_and_prewarm_if_needed()
+    weights.knative ← min(MAX_SERVERLESS,
+                           weights.knative + WEIGHT_STEP)
 
-  // Step 2: Priority-based decision
-  if slo_status.violation_duration ≥ VIOLATION_WINDOW then
-    // SCALE_OUT (Priority 1): SLO violated → shift to serverless
-    if not serverless_enabled then
-      enable_serverless_backend()
-      prewarm_knative()
-      serverless_enabled ← True
-    end if
-    knative_weight ← min(MAX_SERVERLESS, weights.knative + WEIGHT_STEP)
-    weights ← {k3s: 100 - knative_weight, knative: knative_weight}
+  // Priority 2: PREDICTIVE marks forecast-assisted scaling only.
+  else if forecast is valid and confidence ≥ CONFIDENCE_THRESHOLD
+          and forecast indicates a future replica increase:
+    action ← PREDICTIVE
+    // Do not derive HAProxy weights from the forecast.
+    Algorithm2.submit_forecast(forecast, confidence)
+    // Routing remains based on observed trend/capacity.
+    if trend indicates observed capacity risk:
+      enable_serverless_and_prewarm_if_needed()
+      weights.knative ← min(MAX_SERVERLESS,
+                             weights.knative + WEIGHT_STEP)
 
-  else if prediction ≠ null
-         AND prediction.confidence ≥ CONFIDENCE_THRESHOLD
-         AND load_change(prediction, current_load) > LOAD_CHANGE_THRESHOLD then
-    // PREDICTIVE (Priority 2): Predicted surge → preemptive scale out
-    if not serverless_enabled then
-      enable_serverless_backend()
-      prewarm_knative()
-      serverless_enabled ← True
-    end if
-    knative_weight ← min(MAX_SERVERLESS, weights.knative + WEIGHT_STEP)
-    weights ← {k3s: 100 - knative_weight, knative: knative_weight}
+  // Priority 3: reclaim serverless capacity in a healthy state.
+  else if p99 < SLO_THRESHOLD × HEALTHY_MARGIN:
+    action ← OPTIMIZE_COST
+    weights.knative ← max(0, weights.knative - WEIGHT_STEP / 2)
+    if weights.knative = 0:
+      serverless_enabled ← false
 
-  else if slo_status.p99 < SLO_THRESHOLD × HEALTHY_MARGIN then
-    // OPTIMIZE_COST (Priority 3): Healthy → reduce serverless usage
-    step ← WEIGHT_STEP / 2
-    k3s_weight ← min(100, weights.k3s + step)
-    weights ← {k3s: k3s_weight, knative: 100 - k3s_weight}
-    if weights.knative = 0 then
-      serverless_enabled ← False
-    end if
+  // Priority 4: no change.
+  else:
+    action ← MAINTAIN
 
-  else
-    // MAINTAIN (Priority 4): No change needed
-    // Keep current weights
-  end if
-
-  // Step 3: Apply weights to HAProxy
-  HAProxy.set_weights(weights.k3s, weights.knative)
+  HAProxy.set_weights(100 - weights.knative, weights.knative)
+  record(action, observed_load, ready_capacity, weights)
 
 until shutdown
 ```
 
-**Decision Types and Priority:**
+The final priority order is **SCALE_OUT > PREDICTIVE > OPTIMIZE_COST > MAINTAIN**. There is no separate SCALE_IN action: reducing serverless weight and consolidation are part of `OPTIMIZE_COST`. The graduated weight sequence is 100/0 → 90/10 → 80/20 → 70/30 → 60/40 → 50/50.
 
-| Priority | Action | Trigger Condition | Effect |
-|----------|--------|-------------------|--------|
-| 1 | SCALE_OUT | p99 > SLO threshold for sustained period | Shift traffic toward serverless |
-| 2 | PREDICTIVE | Healthy state + GRU predicts >30% load increase | Preemptive serverless engagement |
-| 3 | OPTIMIZE_COST | p99 < SLO × healthy margin | Reduce serverless usage |
-| 4 | MAINTAIN | None of the above | Keep current weights |
+#### 3.4.3.2 Algorithm 2: Cluster Controller (Integrated in the Routing Daemon)
 
-The priority ordering ensures that active SLO violations always take precedence over predictive optimization, which in turn takes precedence over cost optimization. This prevents the system from reducing serverless capacity during a predicted surge.
-
-**Weight Progression:**
-
-Traffic weights shift gradually in increments of WEIGHT_STEP (10%) to avoid oscillation:
-
-```
-100/0 (K8s only) → 90/10 → 80/20 → 70/30 → 60/40 → 50/50 (maximum serverless)
-```
-
-The maximum serverless weight is capped at 50% to ensure the Kubernetes backend always handles at least half of the traffic, maintaining cost efficiency for baseline load.
-
-**Knative Pre-warming:** When serverless is first enabled (either by SCALE_OUT or PREDICTIVE), the controller sends a synthetic health-check request to the Knative service endpoint to trigger cold start initialization. This reduces the latency penalty when actual traffic begins routing to the serverless backend.
-
-#### 3.4.3.2 Algorithm 2: Cluster Controller (Terintegrasi pada Routing Daemon)
-
-Algorithm 2 is integrated into the live routing daemon and executes real Kubernetes scaling actions. The hybrid design uses **two coordinated control actions**:
-
-1. **Algorithm 1 (Routing Controller)** performs **immediate traffic shedding** by shifting a portion of traffic to the serverless (Knative) backend when a surge is detected or an SLO violation occurs.
-2. **Algorithm 2 (Cluster Controller)** performs **capacity restoration** by scaling Kubernetes replicas so that the Kubernetes backend can absorb the workload again.
-3. Once Kubernetes is scaled, ready, and healthy, **Algorithm 1 gradually returns traffic** from serverless back to Kubernetes, allowing Knative to scale down to zero.
-
-This design intentionally leverages the complementary strengths of the platforms: Knative provides rapid burst absorption (instant overflow), while Kubernetes provides cost-efficient steady capacity once replicas are ready.
-
-This coordination is active only in hybrid scenarios (S3 and S4). In baseline scenarios, S1 relies on HPA for native Kubernetes autoscaling without routing changes, and S2 relies on Knative KPA for serverless autoscaling without Kubernetes involvement.
-
-**Control-Loop Integration:**
-
-The daemon runs a **15-second control loop**. Algorithm 2 is executed in the same loop after Algorithm 1's routing decision, using the latest prediction and system state:
-
-```text
-Observe metrics → Predict (GRU) → Algorithm 1: shift traffic immediately if needed
-                               → Algorithm 2: scale K8s replicas toward predicted demand
-                               → If K8s ready+healthy: Algorithm 1 shifts traffic back to K8s
-```
-
-**Reactive vs Predictive Modes:** Algorithm 2 operates in two modes depending on the scenario. In **reactive mode** (S3), the scaling signal is the mean observed RPS over the last 30 seconds ($x_{obs}$), computed from HAProxy request counters. In **predictive mode** (S4), the signal is the GRU 30-second-ahead forecast ($x_{pred}$). Both modes use the identical resource model ($R = \alpha \cdot x + \beta$) and identical parameters ($\alpha$, $\beta$, $\gamma$, $R_{min}$, $R_{max}$, cooldowns), ensuring that any performance difference between S3 and S4 is attributable solely to the prediction signal.
-
-**Kubernetes Scaling Mechanism:**
-
-Scaling is performed by invoking `kubectl scale deployment/<name> --replicas=<R_target>`. This approach is chosen because it is deterministic, directly reproducible, and provides an explicit audit trail in controller logs. Infrastructure validation (Phase A0, Section 3.5.3) confirmed that Kubernetes HPA overrides manual `kubectl scale` commands after its stabilization window (~5 minutes), making the two mechanisms mutually exclusive. Therefore, Algorithm 2 requires HPA to be deleted from the target Deployment before it can safely control replicas. This mutual exclusion is enforced in the per-run reset procedure: S1 uses HPA as the native baseline, while S3 and S4 delete HPA and rely exclusively on Algorithm 2 for replica scaling.
-
-**Safety Checks and Anti-Oscillation Rules:**
-
-- **Cooldown:** minimum 30 seconds between scale-up actions, 60 seconds for scale-down.
-- **Bounds:** replicas clamped to $[R_{min}, R_{max}]$.
-- **Scale-down hysteresis:** scale-down only if target is below 80% of current capacity for a sustained window.
-- **Readiness verification:** traffic returns to Kubernetes only after `availableReplicas == desiredReplicas` and HAProxy backend health checks show Kubernetes endpoints as UP.
-
-**Algorithm 2: Integrated Cluster Controller (Reactive and Predictive Modes)**
+Algorithm 2 performs real Kubernetes scaling. It consumes observed load in S3 and the confidence-gated 9-step forecast in S4. This is the only algorithmic path through which GRU prediction affects scaling.
 
 ```pseudocode
-Algorithm 2: Integrated Cluster Controller (K8s Replica Scaling)
+Algorithm 2: Integrated Kubernetes Replica Scaling
 ────────────────────────────────────────────────────────────────
-
 Constants:
   CONTROL_INTERVAL ← 15 seconds
-  BUFFER γ ← 1.2
-  MIN_REPLICAS ← 1
-  MAX_REPLICAS ← 10
+  MIN_REPLICAS ← 3
+  MAX_REPLICAS ← 6 (default final cap)
   SCALE_DOWN_HYSTERESIS ← 0.8
   SCALE_UP_COOLDOWN ← 30 seconds
   SCALE_DOWN_COOLDOWN ← 60 seconds
 
 Configuration:
-  mode ∈ {REACTIVE, PREDICTIVE}    // S3 = REACTIVE, S4 = PREDICTIVE
-
-State:
-  last_scale_up_time ← null
-  last_scale_down_time ← null
+  mode ∈ {REACTIVE, PREDICTIVE}       // S3 / S4
 
 repeat every CONTROL_INTERVAL:
-
-  // Step 1: Determine scaling signal based on mode
-  R_current ← K8s.get_deployment_replicas()
+  R_current ← K8s.deployment_replicas()
   p99 ← SLOMonitor.p99()
 
   if mode = REACTIVE:
-    x ← HAProxy.mean_rps(window=30s)          // observed RPS over last 30s
-  else if mode = PREDICTIVE:
-    x_pred, conf ← GRU.predict_next_30s()
-    if conf < CONFIDENCE_THRESHOLD:
-      x ← HAProxy.mean_rps(window=30s)        // fallback to observed if low confidence
+    x ← HAProxy.mean_rps(window=30s)
+  else:
+    forecast, confidence ← GRU.latest_forecast(horizon=9)
+    if confidence ≥ CONFIDENCE_THRESHOLD:
+      x ← forecast.upper_capacity_signal
     else:
-      x ← x_pred
+      x ← HAProxy.mean_rps(window=30s)
 
-  // Step 2: Compute target replicas (identical formula for both modes)
   R_raw ← α × x + β
-  R_target ← clamp(ceil(R_raw × γ), MIN_REPLICAS, MAX_REPLICAS)
+  R_target ← clamp(ceil(R_raw), MIN_REPLICAS, MAX_REPLICAS)
 
-  // Step 3: Scale-up decision
-  if R_target > R_current AND cooldown_passed(last_scale_up_time, SCALE_UP_COOLDOWN):
+  if R_target > R_current and scale_up_cooldown_passed():
     kubectl scale deployment/app --replicas=R_target
-    last_scale_up_time ← now
-
-  // Step 4: Scale-down decision (conservative)
   else if R_target < R_current × SCALE_DOWN_HYSTERESIS
-          AND cooldown_passed(last_scale_down_time, SCALE_DOWN_COOLDOWN)
-          AND p99 < SLO_THRESHOLD × HEALTHY_MARGIN:
+          and p99 < SLO_THRESHOLD × HEALTHY_MARGIN
+          and scale_down_cooldown_passed():
     kubectl scale deployment/app --replicas=R_target
-    last_scale_down_time ← now
 
 until shutdown
 ```
 
-The only difference between S3 and S4 is the source of `x` in Step 1: S3 always uses observed RPS, while S4 uses the GRU forecast (with fallback to observed if confidence is below threshold). Steps 2–4 are identical, ensuring that any performance difference between S3 and S4 is attributable solely to the prediction signal.
+The same $R=\alpha x+\beta$ model and safety rules apply in both modes. Only the source of $x$ differs: observed load for S3 and GRU forecast for S4. This clean separation makes the paired comparison a test of predictive scaling rather than prediction-driven routing.
 
-**Coordination with Algorithm 1:**
-
-When Kubernetes scaling completes (replicas ready and endpoints healthy) and p99 latency is within the healthy margin, Algorithm 1 enters OPTIMIZE_COST mode and gradually increases Kubernetes weight (10% steps) until Knative weight reaches 0%. This creates a closed-loop behavior: serverless absorbs bursts immediately → Kubernetes scales to meet predicted demand → traffic returns to Kubernetes once capacity is available → serverless returns to zero for cost efficiency.
+**Coordination:** serverless absorbs an observed burst while Algorithm 2 restores Kubernetes capacity. Once replicas are ready and endpoints are healthy, Algorithm 1 reduces serverless weight through `OPTIMIZE_COST`; traffic is not returned based on a GRU-derived routing weight.

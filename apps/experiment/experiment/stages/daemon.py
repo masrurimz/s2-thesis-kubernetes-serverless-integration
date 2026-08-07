@@ -38,6 +38,36 @@ KUBECTL_PATH = os.environ.get(
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
 
 
+def is_port_listening(port: int) -> bool:
+    try:
+        with _socket.create_connection(("localhost", port), timeout=1):
+            return True
+    except OSError:
+        return False
+
+
+def kill_process_on_port(port: int, label: str = "stale_process") -> None:
+    if not is_port_listening(port):
+        return
+    logger.warning("stale_process_detected", port=port, label=label)
+    try:
+        result = subprocess.run(
+            ["ss", "-tlnp", f"sport = :{port}"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        for line in result.stdout.splitlines():
+            if f":{port}" not in line or "pid=" not in line:
+                continue
+            pid = int(line.split("pid=")[1].split(",")[0])
+            logger.warning("killing_stale_process", pid=pid, port=port, label=label)
+            os.kill(pid, signal.SIGKILL)
+            time.sleep(1)
+    except Exception as e:
+        logger.warning("stale_process_kill_failed", port=port, label=label, error=str(e))
+
+
 class DaemonStage(BaseStage):
     """Manages the routing daemon process lifecycle.
 
@@ -57,6 +87,10 @@ class DaemonStage(BaseStage):
         run_dir = Path(ctx.output_dir) if ctx.output_dir else Path(".")
         daemon_log = run_dir / "daemon.log"
 
+        if scenario == "s4-hybrid-predictive":
+            ok, error, _ = self.require_prediction_service()
+            if not ok:
+                raise RuntimeError(error)
         self._proc = self._start(scenario, daemon_log)
         if self._proc is None:
             raise RuntimeError(f"Failed to start daemon for scenario {scenario}")
@@ -114,36 +148,29 @@ class DaemonStage(BaseStage):
                 last_error = str(e)
             if attempt < 2:
                 time.sleep(1)
-        return False, f"prediction health preflight failed: {last_error}", {}
+        if is_port_listening(settings.GRU_PORT):
+            kill_process_on_port(settings.GRU_PORT, "gru_prediction_service")
+            return (
+                False,
+                (
+                    f"prediction service on port {settings.GRU_PORT} is unhealthy or model_loaded=false "
+                    f"(last error: {last_error}); start it with the correct model artifact before running S4"
+                ),
+                {},
+            )
+        return (
+            False,
+            (
+                f"prediction service is not running on port {settings.GRU_PORT} (last error: {last_error}); "
+                "start the operator-managed GRU server with the correct model artifact before running S4"
+            ),
+            {},
+        )
 
     @staticmethod
     def _kill_stale_daemon() -> None:
         """Kill any process listening on DAEMON_API_PORT before starting fresh."""
-        try:
-            sock = _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM)
-            sock.settimeout(2)
-            sock.connect(("localhost", DAEMON_API_PORT))
-            sock.close()
-        except (ConnectionRefusedError, OSError):
-            return  # Port free — nothing to kill
-
-        logger.warning("stale_daemon_detected", port=DAEMON_API_PORT)
-        try:
-            r = subprocess.run(
-                ["ss", "-tlnp", f"sport = :{DAEMON_API_PORT}"],
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-            for line in r.stdout.strip().split("\n"):
-                if f":{DAEMON_API_PORT}" in line and "pid=" in line:
-                    pid_str = line.split("pid=")[1].split(",")[0]
-                    pid = int(pid_str)
-                    logger.warning("killing_stale_daemon", pid=pid)
-                    os.kill(pid, signal.SIGKILL)
-                    time.sleep(1)
-        except Exception as e:
-            logger.warning("stale_daemon_kill_failed", error=str(e))
+        kill_process_on_port(DAEMON_API_PORT, "routing_daemon")
 
     def _start(self, scenario: str, log_path: Path) -> Optional[subprocess.Popen]:
         self._kill_stale_daemon()

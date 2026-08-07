@@ -338,3 +338,52 @@ Given these threats, the thesis makes these **validated** claims:
 > **"We designed and validated a hybrid Kubernetes-Serverless autoscaling system with GRU-based workload prediction. In a constrained local testbed, we demonstrated that all mechanisms function correctly: the GRU model predicts with 6.01% RMSE and sub-50ms latency, routing decisions shift traffic appropriately, and PREDICTIVE actions trigger before SLO violations. However, due to testbed limitations (localhost routing bias and insufficient load), we could not establish statistically significant performance superiority over baseline approaches. We therefore report these results as environment-limited mechanism validation rather than system-limited performance evaluation."**
 
 This framing is **defensible** for a master's thesis.
+
+---
+
+## July 2026 Alignment Addendum
+
+This addendum supersedes the earlier threat statements where they describe the final evidence. The February Phase B bundles and their threat analysis remain historical records, but the final thesis claims use the corrected July bundles only.
+
+### Bugs 8–13 and their final mitigations
+
+The 2026-07-11 infrastructure reset identified six additional invalidators (Bugs 8–13): workload-node CPU limits were not enforced; the saturation calibration and scaling coefficient were inconsistent; calibration tooling did not enforce the intended workload; S1 had an unfair dynamic-node path; the GRU server could disappear during a run; and prediction was incorrectly used to set routing behavior. All pre-reset performance bundles are superseded.
+
+- **Bug 8 — node CPU bounds:** final workload nodes use Docker `--cpus=1.0` bounds (with a bounded infra node), producing a multi-node stress harness rather than an unlimited host-capacity test.
+- **Bug 9 — saturation recalibration:** the final code calibration uses $r_{saturation}=33.3$ RPS per replica, down from the invalidated 66.7 value. With target CPU utilization 0.5, $r_{effective}=16.65$ and $\alpha=1/r_{effective}$.
+- **Bug 10 — calibration enforcement:** the endpoint and calibration tuple are code-verified (`fib_n=33`, `GOMAXPROCS=1`) and are checked in the lifecycle preflight.
+- **Bug 11 — S1 capacity fairness:** the corrected S1 baseline uses the same bounded multi-node capacity regime as the hybrid scenarios; the final H1 diagnostic is therefore not the former unlimited single-node comparison.
+- **Bug 12 — prediction-server availability:** preflight and treatment-fidelity gates require the prediction server to be healthy and all eligible S4 forecasts to be delivered.
+- **Bug 13 — prediction-for-scaling separation:** the final architecture uses GRU forecasts for Algorithm 2 replica scaling only. Algorithm 1 routing responds to observed load, ready capacity, tail latency, and observed-load trend; GRU output does not directly set HAProxy weights.
+
+The former single-node localhost-loopback path remains relevant only as a historical limitation for S2-era evidence. It is not the topology used by the July final diagnostic or definitive paired bundle.
+
+### Final replication and inference statement
+
+The definitive H2 evidence is a **counterbalanced paired n=5 design (10 runs total)**: five S3/S4 pairs on ClarkNet variable load, with a 9-step × 15-second (135-second) forecast horizon, active node consolidation, and a tuned reactive baseline. The separate `2026-07-11_scaling_fix_n1` bundle is a four-scenario diagnostic used for directional H1 evidence.
+
+The primary H2 p99 result is supported: S3 mean 188.5 ms, S4 mean 126.0 ms, 95% paired CI [−100.9, −26.2] ms, p=0.030 (unrounded p=0.0304), Cohen's d=−1.26. S4 won all five pairs. Mean SLO violations were 656 versus 130 (−80.2%), and p95/SLO secondary metrics have corrected p=0.1216 and are descriptive only. H1 is directional at n=1: S4 p99 118.2 ms versus S1 2,421.3 ms (−95.1%); it is not an inferential claim.
+
+### Updated cost framing
+
+All monthly values below are AWS proxy projections, not billed costs. The n=1 diagnostic values are directional; the paired S3/S4 equality is the relevant comparison for H2.
+
+| Evidence | S1 | S2 | S3 | S4 |
+|---|---:|---:|---:|---:|
+| `2026-07-11_scaling_fix_n1` projected USD/month | 132 | 394 | 147 | 142 |
+| `2026-07-14_clarknet-tuned-paired-n5` projected USD/month | — | — | **163** | **163** |
+
+The February cost table and its S3/S4 values are historical and superseded for thesis claims. Stress-harness dynamic-node costs remain separate directional diagnostics from the production-oriented proxy projection.
+
+### Updated claim verdicts
+
+| Claim | Final verdict |
+|---|---|
+| GRU synthetic adequacy | Validated: RMSE 4.75% post-HPO (6.01% pre-HPO) |
+| GRU real-trace adequacy | Partially validated: ClarkNet RMSE 17.78%, below original target |
+| H1 hybrid versus pure Kubernetes | Directional at n=1 (−95.1% p99); not inferentially established |
+| H2 predictive versus reactive | **Supported for primary p99** (p=0.030, d=−1.26); corrected secondaries descriptive |
+| Prediction role | Scaling (Algorithm 2), not direct routing weights |
+| Monthly cost | Projected proxy only; definitive S3=S4=USD 163 |
+
+**Defensible final framing:** The corrected multi-node stress harness validates the mechanisms and supports H2 on the pre-specified primary p99 comparison. It does not establish universal cloud performance, billed cost savings, or inferential H1 superiority from the n=1 diagnostic.

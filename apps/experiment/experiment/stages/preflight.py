@@ -16,6 +16,7 @@ from shared.config import settings
 from shared.models.pipeline import PipelineContext, PreflightResult
 
 from experiment.stages.base import BaseStage
+from experiment.stages.daemon import is_port_listening
 
 logger = structlog.get_logger(__name__)
 
@@ -57,10 +58,25 @@ class PreflightStage(BaseStage):
     """Validates cluster and service readiness before experiments.
 
     Checks: k6 binary, kubectl binary, k6 script, k6 stages, Prometheus,
-    HAProxy stats, GRU server, cluster nodes, target deployment, Knative serving.
+    Prometheus probe metric, HAProxy stats, daemon port freshness, GRU server,
+    cluster nodes, target deployment, Knative serving.
+
+    When the experiment plan includes S4 (s4-hybrid-predictive), the GRU check
+    requires either no listener on the GRU port or a health response with
+    model_loaded=true — a listener without a loaded model would corrupt S4 runs.
     """
 
     name = "preflight"
+
+    def __init__(self, s4_planned: bool = False):
+        """Create the preflight stage.
+
+        Args:
+            s4_planned: True when the experiment plan includes the S4
+                (s4-hybrid-predictive) scenario, which activates the GRU
+                prediction-service invariant (no listener or model loaded).
+        """
+        self.s4_planned = s4_planned
 
     def _run(self, ctx: PipelineContext) -> None:
         all_ok, checks = self._check_all()
@@ -76,8 +92,10 @@ class PreflightStage(BaseStage):
             "k6_script": K6_SCRIPT.exists(),
             "k6_stages": K6_STAGES.exists(),
             "prometheus": self._check_http(f"{PROMETHEUS_URL}/-/healthy"),
-            "haproxy_stats": self._check_http(HAPROXY_STATS_URL.replace(";csv", "")),
-            "gru_server": self._check_http(f"{GRU_URL}/health"),
+            "prometheus_probe": self._check_prometheus_probe(),
+            "haproxy_stats": self._check_haproxy_stats(),
+            "daemon_port": self._check_daemon_port(),
+            "gru_server": self._check_gru_server(),
             "cluster_nodes": self._check_nodes(),
             "target_deployment": self._check_deployment(),
             "knative_serving": self._check_knative(),
@@ -92,6 +110,78 @@ class PreflightStage(BaseStage):
     def _check_http(url: str) -> bool:
         try:
             return requests.get(url, timeout=5).status_code == 200
+        except Exception:
+            return False
+
+    @staticmethod
+    def _check_prometheus_probe() -> bool:
+        """Prometheus must return a non-empty result for the `up` probe metric."""
+        try:
+            r = requests.get(f"{PROMETHEUS_URL}/api/v1/query", params={"query": "up"}, timeout=5)
+            if r.status_code != 200:
+                return False
+            result = r.json().get("data", {}).get("result")
+            return bool(result)
+        except Exception:
+            return False
+
+    def _check_haproxy_stats(self) -> bool:
+        """HAProxy stats must parse to a sane (k3s, knative) weight tuple.
+
+        Uses the shared HAProxyClient (infra.networking.haproxy) to fetch and
+        parse the stats CSV; both backend weights must be present and within
+        the valid 0-100 range.
+        """
+        try:
+            from infra.networking.haproxy import HAProxyClient
+
+            client = HAProxyClient(
+                tcp_socket_host=settings.HAPROXY_HOST,
+                tcp_socket_port=settings.HAPROXY_SOCKET_PORT,
+                backend_name="servers",
+                stats_url=settings.HAPROXY_STATS_URL,
+            )
+            weights = client.get_current_weights()
+        except Exception:
+            return False
+        if not weights:
+            return False
+        k3s, knative = weights.get("k3s", -1), weights.get("knative", -1)
+        return 0 <= k3s <= 100 and 0 <= knative <= 100
+
+    def _check_daemon_port(self) -> bool:
+        """Daemon port invariant: no listener, or a fresh daemon (<=30s uptime).
+
+        A stale daemon left over from a previous session is killed by
+        DaemonStage before each run; a daemon that is still fresh (uptime
+        <= 30s) is tolerated as part of the current session.
+        """
+        if not is_port_listening(settings.DAEMON_API_PORT):
+            return True
+        try:
+            r = requests.get(f"http://localhost:{settings.DAEMON_API_PORT}/status", timeout=3)
+            if r.status_code != 200:
+                return False
+            uptime = r.json().get("uptime_seconds")
+            return isinstance(uptime, (int, float)) and 0 <= uptime <= 30
+        except Exception:
+            return False
+
+    def _check_gru_server(self) -> bool:
+        """GRU server readiness.
+
+        Without S4 in the plan, the server must answer /health with HTTP 200.
+        With S4 planned, either no listener may be present on the GRU port
+        (the service is operator-managed and started on demand), or the health
+        endpoint must report model_loaded=true.
+        """
+        if not self.s4_planned:
+            return self._check_http(f"{GRU_URL}/health")
+        if not is_port_listening(settings.GRU_PORT):
+            return True
+        try:
+            r = requests.get(f"{GRU_URL}/health", timeout=3)
+            return r.status_code == 200 and bool(r.json().get("model_loaded"))
         except Exception:
             return False
 

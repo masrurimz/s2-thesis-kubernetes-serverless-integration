@@ -83,7 +83,7 @@ class Algorithm1ConfigV3:
     # to trigger Knative routing BEFORE saturation hits.
     proactive_trend_threshold: float = 3.0  # Min per-step RPS rise to trigger
     proactive_approach_ratio: float = 0.6  # Start proactive at 60% of K8s capacity
-    proactive_lookahead_steps: int = 5  # Extrapolation horizon (5 × 15s = 75s ahead)
+    proactive_lookahead_steps: int = 9  # Extrapolation horizon (9 × 15s = 135s ahead)
 
     # Budget-aware pacing (BACC-inspired burn-rate PI)
     total_budget_violations: int = 1000

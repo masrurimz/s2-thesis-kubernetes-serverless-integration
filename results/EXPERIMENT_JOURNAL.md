@@ -8,21 +8,26 @@
 > - **Registry:** `results/evidence/registry.yaml`
 > - **Query cache:** `results/evidence/catalog.duckdb` (rebuilt, not canonical)
 
-**Latest audit:** 2026-07-14T02:22:49.649837+00:00
+**Latest audit:** 2026-08-07T02:49:43.393947+00:00
 
 ## Summary
 
-- **Total bundles:** 133
-- **By role:** diagnostic=85, final=5, intermediate=43
-- **By status:** archived=9, current=61, invalidated=63
+- **Total bundles:** 138
+- **By role:** diagnostic=89, final=6, intermediate=43
+- **By status:** archived=10, current=65, invalidated=63
 
 ## Bundles
 
 | Date | ID | Role | Valid/Total | Treatment | Claims | Path |
 |------|----|------|------------|-----------|--------|------|
+| 2026-08-07 | `experiments.2026-08-07-paired-h2-060200` | diagnostic | 10/10 | 280/280 (✓) | — | `experiments/phase-b/2026-08-07_paired-h2_060200` |
+| 2026-08-07 | `experiments.2026-08-07-paired-h2-034648` | diagnostic | 6/6 | 168/168 (✓) | — | `experiments/phase-b/2026-08-07_paired-h2_034648` |
+| 2026-08-06 | `experiments.2026-08-06-paired-h2-234256` | diagnostic | 6/6 | 168/168 (✓) | — | `experiments/phase-b/2026-08-06_paired-h2_234256` |
+| 2026-08-06 | `experiments.2026-08-06-paired-h2-225818` | diagnostic | 2/2 | 56/56 (✓) | — | `experiments/phase-b/2026-08-06_paired-h2_225818` |
+| 2026-08-06 | `experiments.2026-08-06-paired-h2-225749` | diagnostic | 0/0 | — | — | `experiments/phase-b/2026-08-06_paired-h2_225749` |
 | 2026-07-14 | `experiments.2026-07-14-clarknet-util-scaledown-n1` | intermediate | 2/3 | 56/56 (✓) | — | `experiments/phase-b/2026-07-14_clarknet-util-scaledown-n1` |
 | 2026-07-14 | `experiments.2026-07-14-clarknet-tuned-s3-n1` | intermediate | 2/3 | 56/56 (✓) | — | `experiments/phase-b/2026-07-14_clarknet-tuned-s3-n1` |
-| 2026-07-14 | `experiments.2026-07-14-clarknet-tuned-paired-n5` | diagnostic | 10/10 | 280/280 (✓) | — | `experiments/phase-b/2026-07-14_clarknet-tuned-paired-n5` |
+| 2026-07-14 | `experiments.2026-07-14-clarknet-tuned-paired-n5` | final | 10/10 | 280/280 (✓) | — | `experiments/phase-b/2026-07-14_clarknet-tuned-paired-n5` |
 | 2026-07-13 | `experiments.2026-07-13-s4-horizon9-test` | diagnostic | 1/1 | 56/56 (✓) | — | `experiments/phase-b/2026-07-13_s4-horizon9-test` |
 | 2026-07-13 | `experiments.2026-07-13-s4-horizon7-test` | diagnostic | 0/1 | 56/56 (✗) | — | `experiments/phase-b/2026-07-13_s4-horizon7-test` |
 | 2026-07-13 | `experiments.2026-07-13-dynamic-node-offload` | intermediate | 3/5 | 56/56 (✗) | — | `experiments/phase-b/2026-07-13_dynamic-node-offload` |
@@ -158,6 +163,8 @@
 
 | Timestamp | Event | Experiment | Bundle | Run |
 |-----------|-------|------------|--------|-----|
+| 2026-08-07T02:49:43.393947+00:00 | registry_audited | registry | /home/zahid/.local/share/worktrees/groundup-ai/thesis-kubernetes-serverless-integration/thesis-defense-alignment/results/evidence | — |
+| 2026-08-07T02:49:19.815649+00:00 | registry_audited | registry | /home/zahid/.local/share/worktrees/groundup-ai/thesis-kubernetes-serverless-integration/thesis-defense-alignment/results/evidence | — |
 | 2026-07-14T02:22:49.649837+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |
 | 2026-07-12T05:30:01.899091+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |
 | 2026-07-12T05:29:40.179507+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |

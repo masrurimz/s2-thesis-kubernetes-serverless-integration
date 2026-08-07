@@ -69,4 +69,4 @@ Chung et al. [6] conducted an empirical evaluation of gated recurrent networks a
 | Prediction accuracy | Reference | Comparable |
 | Real-time suitability | Moderate | High |
 
-For the workload prediction task in this research—short-horizon (30-second) HTTP traffic forecasting with a real-time latency constraint (<50ms inference)—GRU's lower computational cost and comparable accuracy make it the preferred architecture. The reduced parameter count also mitigates overfitting risk given the limited training data available from synthetic workload patterns [5], [16].
+For the workload prediction task in this research—multi-horizon HTTP traffic forecasting over 9 control steps (9 × 15 seconds = 135 seconds), with a real-time latency constraint (<50ms inference)—GRU's lower computational cost and comparable accuracy make it the preferred architecture. The forecast is used for proactive scaling rather than directly setting routing weights. The reduced parameter count also mitigates overfitting risk given the limited training data available from synthetic workload patterns [5], [16].

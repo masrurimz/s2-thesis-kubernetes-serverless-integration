@@ -21,7 +21,7 @@ Pattern Definition → Traffic Simulation → 1s RPS Time Series → Sliding Win
 
 **Processing steps (reproducible):**
 1. **Generate 1-second RPS series** by combining the four components with a fixed random seed to ensure reproducibility.
-2. **Windowing:** Construct sliding-window samples using an input window length of **60 seconds** (last 60 RPS points) and a prediction horizon of **30 seconds** ahead (target label).
+2. **Windowing:** Construct sliding-window samples using an input window length of **30 samples at 15-second resolution** and a direct prediction horizon of **9 steps** (9 × 15 seconds = 135 seconds).
 3. **Split:** Use temporally ordered split to prevent leakage: Training = 70%, Validation = 15%, Test = 15%.
 
 All generator parameters (amplitudes, spike probability, ramp slope range, noise variance, seed) are stored as a configuration file committed alongside the experiment code.
@@ -65,14 +65,14 @@ Raw HTTP Logs → CLF Parsing → Timestamp Extraction → Aggregation → RPS T
 
 ### 3.2.4 Trace-Driven Replay Workload Generation (Beban Replikasi Berbasis Trace)
 
-To evaluate the full hybrid system under realistic demand dynamics, the ClarkNet/Calgary traces are transformed into a **30-second RPS schedule** and then executed using **k6** with the `ramping-arrival-rate` executor. This produces a time-varying open-loop workload that approximates the trace's temporal intensity while remaining reproducible and controllable.
+To evaluate the full hybrid system under realistic demand dynamics, the ClarkNet/Calgary traces are transformed into a **30-second RPS schedule** and then executed using **k6** with the `ramping-arrival-rate` executor. The 30-second bucket is a replay representation; it is not the GRU forecast horizon. The final forecast horizon is 9 × 15 seconds = 135 seconds.
 
 #### (a) Canonical Replay Representation: 30-Second RPS Buckets
 
 The replay schedule is defined as a time series of (timestamp, RPS) pairs where each entry represents the start time of a **30-second bucket** and the average requests-per-second during that bucket.
 
-**Why 30 seconds?**
-- The GRU prediction horizon is **30 seconds** (Section 3.4.1).
+**Why 30-second replay buckets?**
+- The replay bucket is an aggregation and stage-generation unit; the final GRU prediction horizon is **135 seconds (9 × 15 seconds)**.
 - The routing daemon control loop runs every **15 seconds**, allowing two control decisions per replay bucket.
 - 30-second buckets reduce noise while preserving burst and ramp structure.
 
@@ -116,11 +116,11 @@ Raw HTTP Logs → Parse → Parquet → 30s Bucketing (RPS) → Scale → k6 Sta
 
 #### (d) Workload Endpoint and Determinism Controls
 
-All trace-driven replay and synthetic load tests target the `/work?duration_ms=5` endpoint rather than a lightweight health check. This endpoint performs a deterministic CPU busy-loop for 5 milliseconds per request, ensuring:
+All trace-driven replay and synthetic load tests target the deterministic CPU-bound `/fib?n=33` endpoint (the code-verified `CalibrationConfig.fib_n` value) rather than a lightweight health check or the invalidated `/work?duration_ms=5/10` busy-loop. Recursive Fibonacci yields to the Go runtime scheduler between calls, ensuring health checks, metrics reporting, and Prometheus scraping continue under load.
 
 1. **Meaningful per-request processing time** that triggers autoscaler responses (both HPA CPU-based and KPA concurrency-based).
-2. **Predictable saturation behavior** when combined with `GOMAXPROCS=1` (single Go runtime thread per pod), creating a theoretical maximum of 200 RPS per replica with practical saturation at ~145 RPS.
-3. **Linear capacity scaling** where each additional replica adds approximately 145 RPS of capacity, enabling the resource allocation model ($R = \alpha \cdot x + \beta$) to operate with calibrated coefficients ($\alpha \approx 0.0069$, $\beta = 0$).
+2. **Predictable saturation behavior** with `GOMAXPROCS=1` (single Go runtime thread per pod), measured at approximately 60 RPS per replica.
+3. **Calibrated scaling signal:** the final code calibration uses $r_{saturation}=33.3$ RPS per replica and target CPU utilization 0.5, giving $r_{effective}=16.65$ and $\alpha=1/r_{effective}\approx0.0601$. This conservative effective capacity drives Algorithm 2's $R=\alpha x+\beta$ model.
 
 The `/health` endpoint is retained exclusively for Kubernetes liveness/readiness probes and HAProxy backend health checks.
 

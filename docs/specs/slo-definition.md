@@ -1,107 +1,44 @@
-# SLO Definition and Metrics Specification
+# SLO Definition
 
-## Overview
+## Primary SLO
 
-This document defines the Service Level Objectives (SLOs) and metrics for the hybrid K8s-Serverless routing system per thesis section 3.4.3.
+The primary service-level objective is **p99 request latency < 200 ms** during each governed workload run. The threshold is evaluated over the experiment's measurement window and reported with p50, p95, p99, throughput, errors, and SLO-violation count.
 
-## SLO Targets
+| Percentile | Target | Purpose |
+|---|---:|---|
+| p50 | < 50 ms | Typical request experience |
+| p95 | < 100 ms | High-percentile experience |
+| **p99** | **< 200 ms** | **Primary control and evaluation SLO** |
 
-### Primary SLO: Response Latency
+Secondary indicators are HTTP error rate, availability, throughput degradation, and backend request distribution. They are reported descriptively unless a pre-registered hypothesis explicitly uses them.
 
-| Percentile | Target | Measurement Window |
-|------------|--------|-------------------|
-| p50 | < 50ms | 30 seconds |
-| p95 | < 100ms | 30 seconds |
-| **p99** | **< 200ms** | **30 seconds** |
+## Measurement and monitor
 
-### Secondary SLOs
+The SLO monitor derives latency from HAProxy `rtime` (raw response time), including the backend response path seen by the traffic proxy. This is the Bug 1 fix: HAProxy rtime, rather than an obsolete stats column or a client-side approximation, is the control signal used to detect p99 violations.
 
-| Metric | Target | Description |
-|--------|--------|-------------|
-| Error Rate | < 0.1% | HTTP 5xx / total requests |
-| Availability | > 99.9% | Uptime per hour |
-| Throughput | No degradation | Compared to baseline |
+Algorithm 1 samples the monitor every 15 seconds. A sustained violation enters the routing decision flow; cooldowns and hysteresis prevent oscillation. Application and k6 metrics remain useful for reporting and cross-checks, but do not replace the HAProxy rtime control signal.
 
-## Algorithm 1: SLO Violation Detection
+## Violation handling
 
-Per thesis section 3.4.3.1, the routing controller monitors p99 latency:
-
-```
-Algorithm 1: SLO-Aware Routing Controller
-Input: 
-  - current_p99: Current p99 latency (ms)
-  - slo_threshold: SLO target (200ms)
-  - violation_window: Detection window (30s)
-  - current_weights: {k3s: int, knative: int}
-
-Output:
-  - new_weights: Adjusted traffic weights
-
-Logic:
-  1. IF current_p99 > slo_threshold for violation_window:
-     - violation_detected = True
-  2. IF violation_detected:
-     - Increase knative_weight by 10% (better scaling)
-     - Decrease k3s_weight accordingly
-  3. IF current_p99 < slo_threshold * 0.7 (healthy margin):
-     - Gradually restore k3s_weight (cost efficiency)
-  4. Ensure weights sum to 100
+```text
+read HAProxy rtime-derived p99
+if p99 >= 200 ms for the configured violation window:
+    mark an SLO violation
+    Algorithm 1 evaluates SCALE_OUT first
+    increase serverless capacity/weight only after health and cooldown checks
+if p99 < 200 ms with capacity margin:
+    Algorithm 1 may optimize cost gradually
 ```
 
-## Prometheus Metrics
+Prediction is not a routing SLO signal. The GRU forecast is confidence-gated and feeds Algorithm 2's Kubernetes replica target; routing uses observed load, observed ready capacity, and observed trend extrapolation.
 
-### Required Metrics
+## Scenario reporting
 
-| Metric Name | Type | Labels | Description |
-|-------------|------|--------|-------------|
-| `http_request_duration_seconds` | Histogram | backend, status | Request latency |
-| `http_requests_total` | Counter | backend, status, method | Total requests |
-| `haproxy_backend_weight` | Gauge | backend, server | Current weights |
-| `slo_violation_total` | Counter | slo_name | SLO violation count |
-| `routing_decision_total` | Counter | decision_type | Routing decisions |
+Use the final four scenarios:
 
-### Prometheus Queries
+- **S1:** Kubernetes + HPA baseline
+- **S2:** serverless-only
+- **S3:** hybrid-reactive
+- **S4:** hybrid-predictive
 
-```promql
-# P99 latency (last 30s)
-histogram_quantile(0.99, 
-  sum(rate(http_request_duration_seconds_bucket[30s])) by (le)
-)
-
-# P95 latency
-histogram_quantile(0.95,
-  sum(rate(http_request_duration_seconds_bucket[30s])) by (le)
-)
-
-# Error rate
-sum(rate(http_requests_total{status=~"5.."}[1m])) /
-sum(rate(http_requests_total[1m]))
-
-# Request rate by backend
-sum(rate(http_requests_total[1m])) by (backend)
-
-# SLO compliance (1 = compliant, 0 = violation)
-histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[30s])) by (le)) < 0.2
-```
-
-## Metrics Collection Architecture
-
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   HAProxy   │────▶│  Prometheus │────▶│  Controller │
-│  (metrics)  │     │  (storage)  │     │  (queries)  │
-└─────────────┘     └─────────────┘     └─────────────┘
-       │                   │
-       ▼                   ▼
-┌─────────────┐     ┌─────────────┐
-│   Grafana   │     │  Alerting   │
-│ (dashboard) │     │  (optional) │
-└─────────────┘     └─────────────┘
-```
-
-## Implementation Notes
-
-1. **HAProxy Exporter**: Use haproxy-exporter for Prometheus metrics
-2. **Scrape Interval**: 15 seconds (matches routing decision interval)
-3. **Retention**: 7 days for experiment data
-4. **Alert Threshold**: p99 > 180ms (warning before SLO breach)
+The definitive paired H2 comparison is S3 versus S4 on ClarkNet replay. Report p99 and the SLO threshold together; do not replace the p99 SLO with proposal-era availability or scaling-speed targets.

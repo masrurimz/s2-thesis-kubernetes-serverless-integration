@@ -202,7 +202,7 @@ Start
 
 ---
 
-## Current Status
+## Historical Status Snapshot (superseded)
 
 | Phase | Status | Next Action |
 |-------|--------|-------------|
@@ -219,3 +219,13 @@ Start
 **Phase B v2 invalidated:** 2026-02-15 (busy-loop blocked Go scheduler)  
 **Phase B v3 redesign:** 2026-02-15 (switched to /fib?n=32)  
 **Next milestone:** Re-run Phase B with corrected parameterization, then thesis results chapter write-up
+
+---
+
+## Final Design Addendum (2026-07-14)
+
+The earlier Phase B plan and status table above are retained as historical planning records. The delivered design is the v4 multi-node testbed described in `PHASE_B_V4_DESIGN.md`: two bounded workload nodes plus dynamically provisioned workload nodes, Docker `--cpus` node bounds, workload/serverless placement isolation, and explicit node-provisioning and treatment-fidelity gates. The old single-node and unlimited-capacity assumptions must not be used for final claims.
+
+The definitive H2 execution used a **counterbalanced paired n=5 design (10 runs total)**, not five independent runs per scenario and not the earlier n=10–15-per-scenario target. Each pair ran S3 (reactive) and S4 (predictive) under the same ClarkNet variable-load replay, with pair order counterbalanced. The final GRU model supplied a 9-step horizon at 15 seconds per step (**h=9, 135 seconds**), sufficient for the measured provisioning-delay regime. Prediction drove Algorithm 2 replica scaling; routing remained observed-load/capacity-driven. The separate `2026-07-11_scaling_fix_n1` four-scenario run was retained as a diagnostic for directional H1 evidence.
+
+The final primary comparison is paired p99: S3 mean 188.5 ms versus S4 126.0 ms, 95% CI [−100.9, −26.2], p=0.030 (unrounded 0.0304), d=−1.26. Secondary p95 and SLO results are descriptive after corrected p=0.1216. See `results/claims/FINAL_NUMBERS.md` for the canonical values.

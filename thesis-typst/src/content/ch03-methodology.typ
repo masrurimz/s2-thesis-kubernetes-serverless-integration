@@ -23,7 +23,7 @@ The synthetic generator produces configurable traffic patterns at 1-second RPS r
 
 == System Architecture
 
-The proposed system integrates three subsystems: an offline training pipeline, an online prediction and control plane, and a hybrid execution infrastructure. The architecture follows a two-layer design inspired by the ElaX algorithm framework, where Algorithm 1 governs traffic routing between execution platforms and Algorithm 2 manages cluster-level resource scaling. Both algorithms are integrated into a single routing daemon that executes them in a coordinated 15-second control loop: Algorithm 1 provides immediate traffic shedding to serverless, while Algorithm 2 scales Kubernetes replicas to restore capacity, after which Algorithm 1 returns traffic to Kubernetes.
+The proposed system integrates three subsystems: an offline training pipeline, an online prediction and control plane, and a hybrid execution infrastructure. The architecture follows a two-layer design inspired by the ElaX algorithm framework, but the thesis-specific roles are explicit: Algorithm 1 governs traffic routing from observed load, ready-replica capacity, and SLO status, while Algorithm 2 manages Kubernetes replica scaling from observed load or the confidence-gated GRU upper forecast. Both algorithms are integrated into a single routing daemon that executes them in a coordinated 15-second control loop: Algorithm 1 provides immediate traffic shedding to serverless, while Algorithm 2 scales Kubernetes replicas to restore capacity, after which Algorithm 1 returns traffic to Kubernetes.
 
 === Infrastructure Components
 
@@ -49,7 +49,7 @@ The trained model is served via a FastAPI prediction server that accepts recent 
 
 === Resource Allocation Model
 
-where R is the target replica count, x is predicted or observed traffic intensity (requests per second), alpha is the resource-per-request coefficient (replicas per RPS), and beta is base replica overhead (minimum replicas at near-zero traffic). The coefficient alpha is derived from a calibrated saturation measurement: alpha = 1/r_effective, where r_effective = r_saturation_per_replica × target_cpu_util. At each control interval, the daemon computes a target replica count with a safety buffer gamma (typically 1.0), clamped to fixed bounds [3, 6] on the current testbed (two workload nodes at 300 millicores each).
+where R is the target replica count, x is predicted or observed traffic intensity (requests per second), alpha is the resource-per-request coefficient (replicas per RPS), and beta is base replica overhead (minimum replicas at near-zero traffic). The coefficient alpha is derived from a calibrated saturation measurement: alpha = 1/r_effective, where r_effective = r_saturation_per_replica × target_cpu_util. At each control interval, the daemon computes a target replica count with a safety buffer gamma (typically 1.0), clamped to fixed bounds [3, 6] under the default calibration. Workload pods request 300 millicores, and the two static workload nodes are CPU-bounded at 1.0 CPU each. The definitive paired H2 experiment used an experiment-local calibration override (`max_k8s_replicas = 10`, `prediction_horizon = 9`; see `results/calibration/2026-08-06_definitive-repro.json`) so that ClarkNet peaks exceed the six-pod static envelope and exercise node-level autoscaling, matching the configuration recorded in `results/claims/FINAL_NUMBERS.md`.
 
 === Algorithm 1: Routing Controller
 
@@ -57,7 +57,7 @@ Algorithm 1 is the primary decision engine. It monitors SLO compliance and adjus
 
 SCALE_OUT (Priority 1): When p99 latency exceeds the SLO threshold (200ms) for a sustained violation window, traffic is shifted toward the serverless backend by incrementing its weight in steps of 10%.
 
-PREDICTIVE (Priority 2): When the system is healthy but the GRU model predicts a load increase exceeding 30% with confidence above 0.5, serverless is preemptively engaged to avoid a future SLO violation.
+PREDICTIVE (Priority 2): When the system is healthy and observed-load trend indicates an approaching capacity boundary, serverless engagement may be adjusted using observed signals and the confidence gate; the GRU forecast itself is consumed by Algorithm 2 for Kubernetes replica planning, not used directly to set routing weights.
 
 OPTIMIZE_COST (Priority 3): When p99 latency is well within the healthy margin (under 70% of the SLO threshold), serverless usage is gradually reduced to save cost.
 
@@ -67,9 +67,9 @@ Traffic weights shift gradually in increments of 10% to avoid oscillation, from 
 
 === Algorithm 2: Cluster Controller
 
-Algorithm 2 operates in two modes that share the same capacity model. In reactive mode (S3), the scaling signal is the mean observed RPS over the last 30 seconds. In predictive mode (S4), the daemon computes a predictive target from the GRU confidence-gated upper forecast and selects it only when it *strictly exceeds* the observed target; otherwise the observed target is used. A proactive hold interval (90 seconds) prevents premature rollback of a proactive scale-up while the forecast window is still active. In both scenarios, the V3 routing controller routes by *observed* ready-replica capacity; the forecast influences only Kubernetes replica planning, not the HAProxy weight split. This separation prevents over-routing to serverless during moderate load — a problem observed when the forecast directly drove routing weights.
+Algorithm 2 operates in two modes that share the same capacity model. In reactive mode (S3), the scaling signal is the mean observed RPS over the last 30 seconds. In predictive mode (S4), the daemon computes a predictive target from the GRU confidence-gated upper forecast and selects it only when it *strictly exceeds* the observed target; otherwise the observed target is used. A proactive hold interval (90 seconds) prevents premature rollback of a proactive scale-up while the forecast window is still active. In both scenarios, the V3 routing controller routes by *observed* ready-replica capacity; the forecast influences only Kubernetes replica planning, not the HAProxy weight split. This separation from the proposal's prediction-driven-routing framing is an empirically motivated design decision: underprediction during ramps made direct forecast-based routing over-route to serverless, whereas scaling has the lead time needed to benefit from the 135-second horizon.
 
-Scaling is performed by invoking kubectl scale deployment, chosen for its determinism and explicit audit trail. Safety checks include cooldown periods (15 seconds for scale-up, 300 seconds for scale-down in V3 mode), replica bounds clamping, scale-down hysteresis (target below 50% of current capacity), and readiness verification before traffic returns to Kubernetes.
+Scaling is performed by invoking kubectl scale deployment, chosen for its determinism and explicit audit trail. Safety checks include cooldown periods (15 seconds for scale-up and 300 seconds for scale-down in V3 mode; the definitive paired comparison used the tuned baseline: 120 s cooldown with a 0.75 scale-down threshold), replica bounds clamping, scale-down hysteresis, and readiness verification before traffic returns to Kubernetes.
 
 === Node-Level Consolidation
 
@@ -93,7 +93,7 @@ The S1 vs S2 comparison evaluates platform-native baselines. The S3 vs S1/S2 com
 
 === Evaluation Phases
 
-Phase A0 validates infrastructure and autoscaler mechanisms. Phase A1 validates individual system mechanisms under a controlled ramp load. Phase B conducts replicated comparison with ClarkNet trace-driven workload (40 stages, 30 seconds each, RPS 22 to 164, mean 73) with n=5 replications per scenario and randomized run order. Phase C stresses the system with controlled burst profiles.
+Phase A0 validates infrastructure and autoscaler mechanisms. Phase A1 validates individual system mechanisms under a controlled ramp load. Phase B conducts a counterbalanced paired comparison with ClarkNet trace-driven workload (40 stages, 30 seconds each, RPS 22 to 164, mean 73): 5 pairs (10 runs) alternate scenario order between S3 and S4, plus n = 1 four-scenario diagnostics. Phase C stresses the system with controlled burst profiles.
 
 === Metrics
 
@@ -101,8 +101,8 @@ User-perceived performance metrics include p50, p95, and p99 latency, error rate
 
 === Statistical Analysis Protocol
 
-The paired S3/S4 comparison uses a pre-specified primary endpoint (p99 latency) with permutation testing (n=5, one-sided). Secondary endpoints (p95, SLO violations, throughput, error rate) are reported with Bonferroni-corrected p-values; only the primary endpoint may be claimed as statistically significant.
+The paired S3/S4 comparison uses a pre-specified one-sided permutation test on the paired p99 difference (alpha = 0.05). Secondary endpoints (p95, SLO violations, throughput, and error rate) are Bonferroni-corrected and reported descriptively; only the primary endpoint may be claimed as statistically significant.
 
 === Threats to Validity
 
-The experimental evaluation is subject to several documented threats. The localhost routing bias of the single-node k3d testbed eliminates network latency between components, limiting absolute performance comparison interpretability. Historical traces (1994-1995) may not match modern application semantics. Replay fidelity preserves request intensity but not client think times or cache behaviors. The single-threaded application constraint (GOMAXPROCS=1, /fib?n=32) creates reproducible saturation but does not represent typical multi-threaded web applications. The artificial node capacity constraint forces autoscaler triggers at lower loads than production. All results should be interpreted as mechanism validation rather than production-representative performance benchmarks.
+The experimental evaluation is subject to several documented threats. The multi-node k3d testbed uses two CPU-bounded workload nodes and localhost-adjacent routing, so it does not reproduce production network latency or network contention. Historical traces (1994-1995) may not match modern application semantics. Replay fidelity preserves request intensity but not client think times or cache behaviors. The single-threaded application constraint (GOMAXPROCS=1, /fib?n=33) creates reproducible saturation but does not represent typical multi-threaded web applications. The artificial node capacity constraint forces autoscaler triggers at lower loads than production. All results should be interpreted as mechanism validation rather than production-representative performance guarantees.

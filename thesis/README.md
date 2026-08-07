@@ -11,10 +11,12 @@ This directory contains thesis **narrative** (text, protocol, appendices). All e
 | Document | Purpose |
 |----------|---------|
 | [`../results/README.md`](../results/README.md) | **Start here** — Evidence registry and experiment index |
+| [`../results/claims/FINAL_NUMBERS.md`](../results/claims/FINAL_NUMBERS.md) | Canonical final numbers and evidence tiers |
 | [`../results/claims/CLAIMS_TO_EVIDENCE.md`](../results/claims/CLAIMS_TO_EVIDENCE.md) | Every claim mapped to raw data |
-| `protocol/EXPERIMENT_PROTOCOL.md` | Preregistered experimental design |
-| `protocol/THREATS_TO_VALIDITY.md` | Explicit limitations and biases |
-| [`../results/claims/INCONSISTENCIES.md`](../results/claims/INCONSISTENCIES.md) | Known data inconsistencies |
+| `protocol/EXPERIMENT_PROTOCOL.md` | Final and historical experimental designs |
+| `protocol/THREATS_TO_VALIDITY.md` | Explicit limitations and July alignment addendum |
+| [`DRIFT_ANALYSIS.md`](DRIFT_ANALYSIS.md) | Proposal-to-delivered defense alignment |
+| [`../results/claims/INCONSISTENCIES.md`](../results/claims/INCONSISTENCIES.md) | Known data inconsistencies and superseded bundles |
 
 ---
 
@@ -36,7 +38,19 @@ thesis/
 
 ## Reproduction
 
+The final lifecycle is staged so that infrastructure, treatment fidelity, and evidence governance are checked explicitly:
+
 ```bash
-HSA_OVERRIDE_GFX_VERSION=11.0.0 \
-  uv run python scripts/run_phase_b_experiments.py --phase full --runs 5 --duration 300
+uv run thesis-experiment preflight
+uv run thesis-experiment run
+uv run thesis-experiment paired-run
+uv run thesis-experiment dynamic
+uv run thesis-experiment evidence audit
+uv run thesis-experiment evidence reconcile --apply
+uv run thesis-experiment evidence catalog refresh
+uv run thesis-experiment evidence journal --limit 20
 ```
+
+Use the final evidence files as the source of truth for claims and interpretation:
+[`results/claims/FINAL_NUMBERS.md`](../results/claims/FINAL_NUMBERS.md) and
+[`DRIFT_ANALYSIS.md`](DRIFT_ANALYSIS.md).

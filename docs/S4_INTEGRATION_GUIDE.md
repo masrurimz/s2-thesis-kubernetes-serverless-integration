@@ -1,206 +1,89 @@
 # S4 Hybrid-Predictive Integration Guide
 
-**Status:** GRU Model Integrated ✅  
-**Model:** `data/models/gru_model.pt` (621KB, PyTorch)  
-**Performance:** 6.01% RMSE, 0.88 avg confidence
+## Final S4 behavior
 
----
+S4 is the hybrid-predictive scenario in the current experiment pipeline. The GRU is trained on synthetic workload patterns and emits a direct **9-step × 15-second = 135-second** forecast. The forecast is confidence-gated and feeds Algorithm 2 Kubernetes replica scaling. Algorithm 1 V3 routes with observed load, observed ready capacity, HAProxy `rtime` p99, and confidence-gated observed-load trend extrapolation; the raw forecast does not directly set HAProxy weights.
 
-## Architecture Overview
+The primary SLO is p99 < 200 ms. The canonical request is `/fib?n=33` through HAProxy HTTP on port 18082.
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        S4: Hybrid-Predictive                         │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  ┌──────────────┐      HTTP:8090      ┌──────────────┐             │
-│  │   routing    │ ◄────────────────── │ GRU Predict  │             │
-│  │   daemon     │   /predict          │   Server     │             │
-│  │   (S4)       │                     │  (PyTorch)   │             │
-│  └──────┬───────┘                     └──────┬───────┘             │
-│         │                                       │                    │
-│         │                                       │                    │
-│         ▼                                       ▼                    │
-│  ┌──────────────┐                     ┌──────────────┐             │
-│  │  Algorithm 1 │                     │  gru_model   │             │
-│  │  Controller  │                     │   .pt        │             │
-│  │              │                     │  (trained)   │             │
-│  └──────┬───────┘                     └──────────────┘             │
-│         │                                                            │
-│         │ weight adjustments                                         │
-│         ▼                                                            │
-│  ┌──────────────┐                                                  │
-│  │   HAProxy    │  ◄── traffic ──▶  K3s (80%) / Knative (20%)     │
-│  └──────────────┘                                                  │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
+```text
+synthetic GRU forecast + confidence
+                 |
+                 v
+Algorithm 2: Kubernetes replica target [3, 6]
+                 |
+observed load + ready capacity + rtime p99
+                 |
+                 v
+Algorithm 1 V3 -> graduated HAProxy weights -> K8s / Knative
 ```
 
----
+## Services
 
-## Components
-
-### 1. GRU Prediction Server (Port 8090)
-
-**File:** `controller/prediction/prediction_server.py`
+Start the current services with the installed entry points:
 
 ```bash
-# Start the prediction server
-HSA_OVERRIDE_GFX_VERSION=11.0.0 sg render -c \
-  "uv run python -m prediction.prediction_server"
+uv run thesis-prediction-server --port 8090
+uv run thesis-routing-daemon --port 9104
 ```
 
-**Endpoints:**
-- `GET /health` - Check model status
-- `POST /predict` - Get prediction
-- `GET /model/status` - Detailed model info
-
-**Example Prediction Request:**
-```bash
-curl -X POST http://localhost:8090/predict \
-  -H "Content-Type: application/json" \
-  -d '{"history": [100, 105, 110, ...], "horizon": 1}'
-```
-
-### 2. Routing Daemon (S4 Scenario)
-
-**File:** `controller/daemon/routing_daemon.py`
+Verify health and metrics:
 
 ```bash
-# Run S4 scenario
-HSA_OVERRIDE_GFX_VERSION=11.0.0 sg render -c \
-  "uv run python -m daemon.routing_daemon --scenario s4-hybrid-predictive"
+curl http://localhost:8090/health
+curl http://localhost:9104/metrics
+curl http://localhost:18082/fib?n=33
+curl http://localhost:9090/-/healthy
+curl http://localhost:18404/stats
 ```
 
-**S4 Configuration:**
-```python
-Scenario.S4_HYBRID_PREDICTIVE: ScenarioConfig(
-    k3s_weight=80,
-    knative_weight=20,
-    use_algorithm=True,
-    use_predictions=True,  # <-- GRU enabled
-    description="Algorithm 1 with GRU predictions",
-)
-```
+The prediction service exposes health and prediction endpoints according to its running API. The experiment manager owns daemon startup and teardown during governed runs, so manual startup is mainly for service diagnostics.
 
-### 3. GRU Client
+## Infrastructure and S4 run
 
-**File:** `controller/daemon/gru_client.py`
-
-The client queries the prediction server and provides:
-- `predicted_requests`: Forecast RPS
-- `confidence`: 0.0-1.0 prediction confidence
-- `latency_ms`: Response time
-
----
-
-## Startup Sequence
-
-### Step 1: Start Prediction Server
 ```bash
-# Terminal 1: Start GRU prediction server
-HSA_OVERRIDE_GFX_VERSION=11.0.0 sg render -c \
-  "uv run python -m prediction.prediction_server"
+uv run thesis infra apply-resources
+uv run thesis infra deploy-app
+uv run thesis infra health
+uv run thesis-experiment preflight
+uv run thesis-experiment run --phase full --runs 5 --duration 300 \
+  --scenarios s4-hybrid-predictive
 ```
 
-Verify: `curl http://localhost:8090/health`
+For the definitive comparison, use the counterbalanced paired command:
 
-### Step 2: Start Routing Daemon (S4)
 ```bash
-# Terminal 2: Run S4 scenario
-HSA_OVERRIDE_GFX_VERSION=11.0.0 sg render -c \
-  "uv run python -m daemon.routing_daemon --scenario s4-hybrid-predictive"
+uv run thesis-experiment paired-run --pairs 5
 ```
 
-### Step 3: Verify Integration
-```bash
-# Check daemon logs for GRU predictions
-# Look for: "GRU prediction received" or "PREDICTIVE decision"
-```
+S3 and S4 use the same ClarkNet replay and calibration; only the predictive control treatment differs. S4 is admitted to the definitive result only when predictions are delivered and the forecast horizon is sufficient.
 
----
+## What to inspect
 
-## Testing the Integration
+- Prediction delivery, confidence, and forecast horizon in the S4 run bundle.
+- Algorithm 2 target replicas and proactive scale decisions.
+- Algorithm 1 observed-load decisions and HAProxy weight transitions.
+- HAProxy `rtime`-derived p99 and SLO violations.
+- Backend request distribution and directional proxy cost.
 
-### Quick Test Script
-```python
-# test_s4_integration.py
-import sys
-sys.path.insert(0, '.')
-
-from daemon.gru_client import GRUClient
-
-client = GRUClient()
-
-# Test 1: Health check
-assert client.is_healthy(), "GRU server not healthy"
-print("✅ GRU server healthy")
-
-# Test 2: Prediction
-result = client.predict([100] * 30, horizon=1)
-assert result.success, f"Prediction failed: {result.error}"
-print(f"✅ Prediction: {result.predicted_requests} RPS")
-print(f"✅ Confidence: {result.confidence:.2f}")
-
-print("\n🎉 S4 integration working!")
-```
-
-### Run Test
-```bash
-uv run python test_s4_integration.py
-```
-
----
+The definitive H2 result is S3 mean p99 188.5 ms versus S4 126.0 ms (p=0.0304, d=-1.26), with identical USD 163 proxy cost. H1 remains a directional n=1 diagnostic: S4 118.2 ms versus S1 2,421.3 ms.
 
 ## Troubleshooting
 
-### Issue: "Model not loaded"
-**Solution:**
 ```bash
-# Verify model file exists
-ls -lh data/models/gru_model.pt
+# Service reachability
+curl http://localhost:8090/health
+curl http://localhost:9104/metrics
 
-# Reload model via API
-curl -X POST http://localhost:8090/model/reload
+# Infrastructure readiness
+uv run thesis infra health
+uv run thesis-experiment preflight
+
+# Evidence lifecycle
+uv run thesis-experiment evidence audit
+uv run thesis-experiment evidence reconcile --apply
+uv run thesis-experiment evidence catalog refresh
+uv run thesis-experiment evidence journal
 ```
 
-### Issue: "GPU not available"
-**Solution:**
-```bash
-# Set environment variable
-export HSA_OVERRIDE_GFX_VERSION=11.0.0
-# Or add to ~/.bashrc
-```
-
-### Issue: "Connection refused" (port 8090)
-**Solution:**
-```bash
-# Check if server is running
-lsof -i :8090
-
-# Start server if not running
-uv run python -m prediction.prediction_server
-```
-
----
-
-## Metrics to Monitor
-
-| Metric | Source | Target |
-|--------|--------|--------|
-| GRU Latency | Prediction server logs | <50ms |
-| GRU Confidence | Prediction response | >0.7 for routing decisions |
-| Prediction RMSE | Model metadata | 6.15% (validated) |
-| PREDICTIVE decisions | Daemon logs | Should see PREDICTIVE actions |
-
----
-
-## Summary
-
-✅ **GRU Model:** Trained and saved (6.01% RMSE)  
-✅ **Prediction Server:** FastAPI on port 8090  
-✅ **GRU Client:** HTTP client for routing daemon  
-✅ **S4 Scenario:** Configured with `use_predictions=True`  
-✅ **GPU Acceleration:** ROCm working with gfx1103 override  
-
-**Next:** Run load test against S4 scenario to validate end-to-end performance!
+Do not substitute a deleted standalone controller or a proposal-era fixed weight for the current CLI-managed V3 pipeline.

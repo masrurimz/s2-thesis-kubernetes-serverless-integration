@@ -1,3 +1,4 @@
+> **Historical-data banner:** The measurements in this section were derived from the invalidated February Phase B bundles (Bugs 1–7 in `results/claims/INCONSISTENCIES.md`). They are retained only as historical context and are not current comparative evidence. For the current cold-start threat and its interpretation, see [`protocol/THREATS_TO_VALIDITY.md`](../../protocol/THREATS_TO_VALIDITY.md).
 ## 4.5 Cold Start Latency Analysis
 
 Knative serverless backends introduce cold start latency when scaling from zero instances. This section quantifies the cold start penalty and its contribution to tail latency variance in the hybrid scenarios.

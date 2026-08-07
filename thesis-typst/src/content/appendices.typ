@@ -17,17 +17,17 @@ Tabel berikut menyajikan parameter kalibrasi yang digunakan dalam eksperimen.
     [fib_n], [33],
     [io_wait_ms], [50.0],
     [lambda_compute_ms], [24.0],
-    [r_saturation_per_replica], [66.7],
+    [r_saturation_per_replica], [33.3],
     [target_cpu_util], [0.5],
     [min_k8s_replicas], [3],
-    [max_k8s_replicas], [10],
+    [max_k8s_replicas], [6],
     [pod_cpu_millicores], [300],
-    [node_cpu_limit], [1.0],
+    [node_cpu_limit], [1.0 per workload node],
     [proactive_trend_threshold], [3.0],
     [proactive_approach_ratio], [0.6],
-    [proactive_lookahead_steps], [5],
+    [proactive_lookahead_steps], [9],
   ),
-  caption: [Calibration parameters],
+  caption: [Calibration parameters (default; the definitive paired H2 bundle used an experiment-local override #raw("max_k8s_replicas = 10, prediction_horizon = 9"), see the calibration override file under #raw("results/calibration/2026-08-06_definitive-repro.json"))],
 )
 
 == Alokasi Sumber Daya Kluster
@@ -37,8 +37,8 @@ Tabel berikut menyajikan parameter kalibrasi yang digunakan dalam eksperimen.
   table(
     columns: (auto, auto, auto),
     [Komponen], [CPU (Docker)], [Pod/Replica],
-    [K8s server node], [3.0], [---],
-    [K8s agent node], [3.0], [---],
+    [K8s server node], [1.0], [---],
+    [K8s workload nodes], [1.0 each (2)], [---],
     [Serverless agent node], [3.0], [---],
     [Dynamic workload nodes], [1.0 each], [---],
     [K8s baseline pods], [---], [3 x 300m],
@@ -69,64 +69,53 @@ Tabel berikut menyajikan parameter kalibrasi yang digunakan dalam eksperimen.
 
 = LAMPIRAN B: Hasil Eksperimen Mentah
 
-== Hasil Per-Run (n=5)
+== Hasil Per-Pasangan Definitif (n=5)
 
-Tabel berikut menyajikan hasil individu untuk setiap run pada eksperimen fib33_proactive (S3, S4) dan fib33_n5 (S1, S2).
-
-#figure(
-  kind: table,
-  table(
-    columns: (auto, auto, auto, auto, auto, auto),
-    [Skenario], [Run], [p99 (ms)], [p95 (ms)], [SLO], [Biaya (USD)],
-    [S1], [1], [112], [77], [43], [0.091],
-    [S1], [2], [116], [77], [69], [0.092],
-    [S1], [3], [112], [77], [58], [0.091],
-    [S1], [4], [99], [75], [30], [0.091],
-    [S1], [5], [110], [78], [6], [0.091],
-    [S2], [1], [77], [75], [8], [0.191],
-    [S2], [2], [79], [75], [4], [0.189],
-    [S2], [3], [78], [75], [9], [0.191],
-    [S2], [4], [78], [76], [8], [0.192],
-    [S2], [5], [77], [75], [6], [0.189],
-    [S3], [1], [447], [233], [3533], [0.069],
-    [S3], [2], [143], [86], [191], [0.069],
-    [S3], [3], [389], [167], [3818], [0.070],
-    [S3], [4], [178], [108], [522], [0.069],
-    [S3], [5], [390], [200], [5963], [0.069],
-    [S4], [1], [184], [102], [605], [0.072],
-    [S4], [2], [189], [94], [701], [0.072],
-    [S4], [3], [199], [104], [857], [0.072],
-    [S4], [4], [224], [92], [1093], [0.072],
-    [S4], [5], [143], [86], [253], [0.073],
-  ),
-  caption: [Per-run results across all scenarios (n=5)],
-)
-
-== Output Uji Statistik
+Tabel berikut menyajikan nilai p99 per pasangan dari bundle definitif `2026-07-14_clarknet-tuned-paired-n5`. Desainnya counterbalanced: lima pasangan (10 run) mengalternasikan urutan S3 dan S4 pada beban trace ClarkNet.
 
 #figure(
   kind: table,
   table(
-    columns: (auto, auto, auto),
-    [Metrik], [p99 (ms)], [SLO],
-    [Welch t-statistic], [-1.919], [-1.922],
-    [Welch p-value], [0.1216], [0.1247],
-    [Mann-Whitney U], [9.0], [9.0],
-    [Mann-Whitney p], [0.5476], [0.5476],
-    [Cohen's d], [-1.214], [-1.215],
-    [95% CI lower], [-229.35], [-3995.60],
-    [95% CI upper], [-10.33], [-239.80],
+    columns: (auto, auto, auto, auto, auto),
+    [Pair], [S3 p99 (ms)], [S4 p99 (ms)], [Selisih (ms)], [S4 lebih baik?],
+    [1], [235.6], [101.4], [-134.2], [Ya],
+    [2], [192.2], [104.9], [-87.3], [Ya],
+    [3], [151.4], [100.5], [-50.9], [Ya],
+    [4], [164.0], [155.7], [-8.3], [Ya],
+    [5], [199.2], [167.4], [-31.8], [Ya],
   ),
-  caption: [Statistical test output (S4 vs S3, n=5)],
+  caption: [Per-pair p99 latency pada bundle definitif ClarkNet (S3 reaktif vs S4 prediktif).],
 )
+
+== Ringkasan Uji Statistik Definitif
+
+#figure(
+  kind: table,
+  table(
+    columns: (auto, auto),
+    [Metrik], [Nilai],
+    [Rata-rata p99 S3 (ms)], [188.5],
+    [Rata-rata p99 S4 (ms)], [126.0],
+    [Selisih rata-rata (ms)], [-62.5 (-33.1%)],
+    [95% CI berpasangan (ms)], [-100.9 hingga -26.2],
+    [Uji permutasi satu sisi], [p = 0.0304],
+    [Cohen's d berpasangan], [-1.26 (besar)],
+    [Kemenangan pasangan S4], [5/5],
+    [Pelanggaran SLO rata-rata], [S3 656; S4 130],
+    [Biaya bulanan], [USD 163 vs USD 163],
+  ),
+  caption: [Hasil statistik bundle definitif; p99 adalah endpoint primer yang telah dipra-spesifikasikan.],
+)
+
+Bundle ini adalah perbandingan definitif counterbalanced untuk H2. Seluruh 5 pasangan valid, seluruh 280 prediksi GRU terkirim, dan `predictive_count` berada pada 4--5 per run S4. Metrik sekunder dilaporkan deskriptif setelah koreksi Bonferroni (p terkoreksi = 0.1216).
 
 #pagebreak()
 
 = LAMPIRAN C: Code Listings
 
-== Proactive Routing (V3 Controller)
+== Forecast-Gated Capacity Signal (V3 Controller)
 
-Berikut adalah potongan kode mekanisme proactive routing pada `algorithm1_v3.py`:
+Berikut adalah potongan kode sinyal kapasitas pada `algorithm1_v3.py`; sinyal prediksi diteruskan untuk perencanaan replika Algorithm 2, sedangkan pembagian routing Algorithm 1 tetap menggunakan beban teramati dan kapasitas replika siap:
 
 ```
 # Track actual load for real-time trend detection
@@ -142,8 +131,9 @@ if prediction and confidence >= threshold:
         approach_ratio = current_load / k8s_capacity
 
         if load_trend > 3.0 and approach_ratio > 0.6:
-            amplified = current_load + load_trend * 5  # 75s ahead
+            amplified = current_load + load_trend * 9  # 135s ahead
             predicted_upper = max(raw_pred, amplified)
+            # predicted_upper is consumed by Algorithm 2 replica planning
 ```
 
 == Kapasitas Efektif K8s
@@ -153,8 +143,8 @@ def _compute_k8s_capacity(self, available_replicas):
     return max(0, available_replicas) * self.r_effective_per_replica
 
 # r_effective = r_saturation * target_cpu_util
-# = 66.7 * 0.5 = 33.35 RPS/pod
-# 3 pods * 33.35 = 100.05 RPS total capacity
+# = 33.3 * 0.5 = 16.65 RPS/pod
+# 3 pods * 16.65 = 49.95 RPS model capacity
 
 def _compute_routing_split(self, total_load, k8s_capacity):
     if total_load <= k8s_capacity:
@@ -169,10 +159,14 @@ def _compute_routing_split(self, total_load, k8s_capacity):
 class CalibrationConfig(BaseModel):
     fib_n: int = 33
     io_wait_ms: float = 50.0
-    r_saturation_per_replica: float = 66.7
-    target_cpu_util: float = 0.5  # cap = 3 * 66.7 * 0.5 = 100 RPS
+    lambda_compute_ms: float = 24.0
+    r_saturation_per_replica: float = 33.3
+    target_cpu_util: float = 0.5
     min_k8s_replicas: int = 3
+    max_k8s_replicas: int = 6
+    pod_cpu_millicores: int = 300
+    node_cpu_limit: float = 1.0
     proactive_trend_threshold: float = 3.0
     proactive_approach_ratio: float = 0.6
-    proactive_lookahead_steps: int = 5  # 75s ahead
+    proactive_lookahead_steps: int = 9  # 135s ahead
 ```
