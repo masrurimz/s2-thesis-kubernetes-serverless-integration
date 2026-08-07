@@ -23,8 +23,7 @@ reactive (observed-load scaling), S4 hybrid predictive (GRU-forecast scaling).
 
 *Evidence: `results/experiments/phase-b/2026-07-14_clarknet-tuned-paired-n5` (definitive, role: final).*
 
-**Independent replication (August 2026).** The full experiment was re-triggered
-twice with the same recorded configuration:
+**Independent replication (August 2026, role: diagnostic — supporting evidence, not the thesis claim).** The full experiment was re-triggered twice with the same recorded configuration:
 
 | Run | Pairs won | S3 p99 (ms) | S4 p99 (ms) | p | d |
 |---|---|---|---|---|---|
@@ -33,9 +32,11 @@ twice with the same recorded configuration:
 | **Pooled (n=10)** | **9/10** | 153.5 | 102.3 | **0.0030** | −0.78 |
 
 The direction is stable across three independent batches; batch 2 reproduces
-the July result almost exactly (identical p = 0.0304).
+the July result almost exactly (identical p = 0.0304). Pooled replication is
+reported as repeatability evidence; the thesis's inferential claim remains the
+final July bundle (p = 0.0304).
 
-*Evidence: `2026-08-07_paired-h2_060200`, `2026-08-07_paired-h2_104918`.*
+*Evidence: `2026-08-07_paired-h2_060200`, `2026-08-07_paired-h2_104918` (both role: diagnostic).*
 
 **Supporting results.** GRU predictor: synthetic RMSE 4.75% (post-HPO),
 ClarkNet 5-min-ahead 17.78%; cost model shows identical spend between hybrids;
