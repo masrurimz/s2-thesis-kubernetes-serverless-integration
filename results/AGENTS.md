@@ -86,3 +86,39 @@ Legacy bundles (schema v1, direct-child `<scenario>_run<N>/` layout) remain in p
 - `EXPERIMENT_JOURNAL.md` — Generated registry summary (read-only)
 - `claims/CLAIMS_TO_EVIDENCE.md` — Every claim mapped to raw data
 - `claims/INCONSISTENCIES.md` — Tracked inconsistencies
+
+## Experiment Data Storage Policy
+
+**Where each experiment artifact lives — three tiers. Decided by size, meaning, and
+regenerability; **never** by file extension alone.**
+
+| Tier | Storage | What goes there | Examples |
+|---|---|---|---|
+| **(a) PLAIN GIT** | tracked in git, normal diffable text | small, human-meaningful, evidence-critical, must survive | `meta.yaml`, `events.jsonl`, `result.json`, `paired_analysis.json`, `k6-summary.json`, `daemon.log`, `provision_events.json`, `node_utilization.json`, `resource_utilization.json` |
+| **(b) GIT LFS** | Git LFS (`.gitattributes` filter) | large binary, regenerable | `*.parquet` metrics tables, `prometheus/` raw exports, model weights `*.pt` / `*.pth` |
+| **(c) DISK-ONLY** | untracked, ignored, documented in `results/evidence/registry.yaml` | very large, regenerable | phase-c raw k6 blobs (`k6-results.json`, ~160 MB each, ~1 GB total), `data/raw/*.gz` |
+
+**Rules**
+
+1. Small + human-meaningful + diffable + must-survive → **plain git**. Commit it.
+2. Large binary / raw exports → **Git LFS** (parquet, prometheus, weights). Wire the LFS filter
+   when the artifact first appears; never fall back to disk-only for something a reviewer needs.
+3. Huge + regenerable → **disk-only**, but register the bundle and its raw location in
+   `results/evidence/` so the data path is documented.
+4. **Never blanket-ignore `*.json`.** JSON is the evidence format of this repo; a blanket rule
+   silently hides every analysis artifact.
+5. **Bundle JSON is evidence-critical and MUST be tracked** in plain git: `result.json`,
+   `paired_analysis.json`, `k6-summary.json`, and per-run `result.json`/`manifest.json` are
+   committed, never ignored.
+6. `.gitignore` only names the large/derived exceptions
+   (`results/experiments/**/raw/*.json`, `raw/**/k6-results.json`, `**/prometheus/*.json`,
+   `**/k6/*.json`). Everything else under `results/experiments/` is addable by default.
+7. `results/evidence/` (registry + catalog) is the source of truth for bundle roles; a bundle's
+   storage tier must match its registry entry.
+
+**Incident note (Aug 2026) — why rule 4 exists.** A blanket `*.json` ignore line caused
+`paired_analysis.json` / `result.json` to be silently uncommitted across bundles; when a worktree
+was deleted, those analysis artifacts were **irrecoverable** — they existed on disk but never in
+git. Fix: scoped ignore rules + backfill of every on-disk `result.json` / `paired_analysis.json`
+(334 files, ~1.4 MB) so thesis-claim backing is versioned. Never reintroduce a blanket
+extension ignore.

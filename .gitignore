@@ -48,8 +48,20 @@ results/raw/**/*.csv
 *.pth
 controller/prediction/**/*.onnx
 
-# Load testing
-*.json
+# Load testing (outside bundles)
+results/load-tests/*.json
+k6/summary/*.json
+
+# Large raw JSON blobs only — bundle-level JSON (result.json, paired_analysis.json,
+# k6-summary.json) stays TRACKED in plain git as evidence-critical artifacts
+results/experiments/**/raw/*.json
+results/experiments/**/raw/**/k6-results.json
+!results/experiments/**/raw/**/k6-summary.json
+!results/experiments/**/raw/**/daemon-pre.json
+!results/experiments/**/raw/**/daemon-post.json
+# Derived per-run exports (prometheus scrape, k6 dump) — regenerable, LFS/disk tier
+results/experiments/**/prometheus/*.json
+results/experiments/**/k6/*.json
 
 # Legacy stress test output (not a formal results bundle)
 results/stress-test-output/
