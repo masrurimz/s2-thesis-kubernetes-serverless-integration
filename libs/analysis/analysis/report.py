@@ -58,10 +58,10 @@ def generate_report(
         p99 = _ms("p99_latency_ms")
         err = f"{np.mean([r['error_rate'] for r in rs]):.4f}"
         rps = f"{np.mean([r['throughput_rps'] for r in rs]):.1f}"
-        treq = f"{int(np.mean([r['total_requests'] for r in rs]))}"
+        treq = f"{int(np.mean([r.get('total_requests', r['throughput_rps'] * r['duration_sec']) for r in rs]))}"
         slo = f"{np.mean([r['slo_violations_k6'] for r in rs]):.0f} ± {np.std([r['slo_violations_k6'] for r in rs], ddof=1):.0f}"
-        su = f"{np.mean([r['scale_up_events'] for r in rs]):.1f}"
-        sd = f"{np.mean([r['scale_down_events'] for r in rs]):.1f}"
+        su = f"{np.mean([r.get('scale_up_events', r['scale_out_count']) for r in rs]):.1f}"
+        sd = f"{np.mean([r.get('scale_down_events', 0) for r in rs]):.1f}"
         kwtp = f"{np.mean([r['k8s_weight_time_product'] for r in rs]):.0f}"
         swtp = f"{np.mean([r['serverless_weight_time_product'] for r in rs]):.0f}"
         lines.append(

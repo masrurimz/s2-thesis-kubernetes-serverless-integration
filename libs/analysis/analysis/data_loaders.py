@@ -57,6 +57,58 @@ def group_by_scenario(data: Sequence[dict]) -> dict[str, list[dict]]:
     return grouped
 
 
+def build_results_final(bundle_dir: Path, include_invalid: bool = False) -> list[dict]:
+    """Project a bundle's per-run ``result.json`` files into the legacy flat
+    ``results_final.json`` shape consumed by ``thesis analysis reanalyze`` /
+    ``robust-stats``.
+
+    Supports both schema-v1 (``<scenario>_run<N>/result.json`` direct child)
+    and schema-v2 (``raw/<scenario>_run<N>/result.json``) layouts. Runs whose
+    ``run_validity_passed`` is False are excluded unless ``include_invalid``.
+
+    Returns a deterministic list sorted by (scenario, run_id).
+    """
+    result_paths = sorted(bundle_dir.glob("*/result.json")) + sorted(bundle_dir.glob("raw/*/result.json"))
+
+    records: list[dict] = []
+    for result_path in dict.fromkeys(result_paths):
+        with open(result_path) as f:
+            result = json.load(f)
+
+        if not include_invalid and result.get("run_validity_passed", True) is False:
+            continue
+
+        records.append(
+            {
+                "scenario": result.get("scenario", ""),
+                "run_id": result.get("run_id", 0),
+                "rps": result.get("rps", result.get("throughput_rps", 0.0)),
+                "duration_sec": result.get("duration_sec", 0),
+                "p50_latency_ms": result.get("p50_latency_ms", 0),
+                "p95_latency_ms": result.get("p95_latency_ms", 0),
+                "p99_latency_ms": result.get("p99_latency_ms", 0),
+                "error_rate": result.get("error_rate", 0),
+                "throughput_rps": result.get("throughput_rps", 0),
+                "slo_violation_count": result.get("slo_violation_count", result.get("slo_violations_k6", 0)),
+                "slo_violations_k6": result.get("slo_violations_k6", 0),
+                "slo_violation_duration_sec": result.get("slo_violation_duration_sec", 0),
+                "timestamp": result.get("timestamp", ""),
+                "maintain_count": result.get("maintain_count", 0),
+                "scale_out_count": result.get("scale_out_count", 0),
+                "predictive_count": result.get("predictive_count", 0),
+                "optimize_cost_count": result.get("optimize_cost_count", 0),
+                "gru_predictions_used": result.get("gru_predictions_used", False),
+                "gru_avg_confidence": result.get("gru_avg_confidence", 0),
+                "k8s_weight_time_product": result.get("k8s_weight_time_product", 0),
+                "serverless_weight_time_product": result.get("serverless_weight_time_product", 0),
+                "run_validity_passed": result.get("run_validity_passed", False),
+                "stress_validity_passed": result.get("stress_validity_passed", False),
+            }
+        )
+
+    return sorted(records, key=lambda record: (record["scenario"], record["run_id"]))
+
+
 # ---------------------------------------------------------------------------
 # Experiment metrics (from cost_analyzer.py) — resource utilization integration.
 # ---------------------------------------------------------------------------

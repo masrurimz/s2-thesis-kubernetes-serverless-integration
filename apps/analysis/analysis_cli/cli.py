@@ -41,7 +41,7 @@ from analysis.constants import (
     TARGET_MEM_UTIL,
 )
 from analysis.cost import analyze_from_experiment, compute_cost_proxy
-from analysis.data_loaders import group_by_scenario, load_experiment_metrics, load_phase_b_data
+from analysis.data_loaders import build_results_final, group_by_scenario, load_experiment_metrics, load_phase_b_data
 from analysis.report import generate_report
 from shared.scenarios import SCENARIO_ORDER
 from shared.stats import bootstrap_ci, cohens_d, effect_size_label
@@ -127,6 +127,47 @@ def reanalyze(
     logger.info("wrote_cost_analysis", path=str(cost_path))
 
     print(report)
+
+
+@app.command(name="results-final")
+def results_final_cmd(
+    results_dir: Path = typer.Option(
+        ...,
+        "--results-dir",
+        help="Path to experiment bundle dir containing per-run result.json",
+    ),
+    include_invalid: bool = typer.Option(
+        False,
+        "--include-invalid",
+        help="Include runs that failed validity gates",
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Print projected record count without writing",
+    ),
+) -> None:
+    """Project a bundle's per-run result.json files into legacy results_final.json.
+
+    Lets ``thesis analysis reanalyze --results-dir <bundle>`` work on modern
+    schema-v1/schema-v2 bundles. Writes results_final.json into the bundle root.
+    """
+    results_dir = results_dir.resolve()
+    results = build_results_final(results_dir, include_invalid)
+
+    if not results:
+        typer.echo(f"No valid result.json records found in {results_dir}", err=True)
+        raise typer.Exit(1)
+
+    typer.echo(f"Projected {len(results)} runs:")
+    for scenario, runs in sorted(group_by_scenario(results).items()):
+        typer.echo(f"  {scenario}: {len(runs)}")
+
+    if not dry_run:
+        output_path = results_dir / "results_final.json"
+        with open(output_path, "w") as f:
+            json.dump(results, f, indent=2)
+        typer.echo(f"Wrote {output_path}")
 
 
 # ---------------------------------------------------------------------------

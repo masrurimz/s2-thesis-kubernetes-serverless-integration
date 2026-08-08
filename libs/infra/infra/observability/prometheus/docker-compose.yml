@@ -35,9 +35,9 @@ services:
       - '--web.enable-admin-api'
       - '--log.level=info'
     
-    # Health check
+    # Health check — promtool ships in the prometheus image (wget may not)
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      test: ["CMD", "promtool", "query", "instant", "http://localhost:9090", "up"]
       interval: 30s
       timeout: 10s
       retries: 3

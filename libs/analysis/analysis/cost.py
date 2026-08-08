@@ -307,7 +307,7 @@ def compute_cost_proxy(results: list[dict]) -> dict[str, Any]:
         total_wt = k8s + srv
 
         serverless_share = srv / total_wt if total_wt > 0 else 0.0
-        total_req = r["total_requests"]
+        total_req = r.get("total_requests", r.get("throughput_rps", 0.0) * r.get("duration_sec", 0.0))
         violation_rate = r["slo_violations_k6"] / total_req if total_req > 0 else 0.0
 
         cost_proxies = {f"beta_{beta}": k8s + beta * srv for beta in BETA_VALUES}
