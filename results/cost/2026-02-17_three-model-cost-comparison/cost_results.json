@@ -1,0 +1,268 @@
+{
+  "correction_note": "Supersedes original 2026-02-17 analysis. Errors: Lambda on-demand vs PC, CPU-time vs wall-clock, 512MB vs 354MB memory, missing concurrency multiplier, missing S2 idle K8s cost. See report.md § Methodology Corrections.",
+  "pricing_models": {
+    "model1_lambda_pc": {
+      "name": "AWS Lambda Provisioned Concurrency",
+      "provisioned_gb_s": 0.0000041667,
+      "execution_gb_s": 0.0000097222,
+      "requests_per_million": 0.20,
+      "notes": "1 Knative pod (target-concurrency=10) = 10 Lambda PC instances"
+    },
+    "model2_cloud_run": {
+      "name": "Google Cloud Run Always-Allocated",
+      "vcpu_s": 0.0000240,
+      "gib_s": 0.0000025,
+      "requests_per_million": 0.40
+    },
+    "model3_node_hours": {
+      "name": "EC2 Node-Hours (t3.medium)",
+      "per_hour": 0.0416
+    }
+  },
+  "resource_config": {
+    "cpu_request_millicores": 200,
+    "cpu_request_vcpu": 0.2,
+    "memory_alloc_mi": 128,
+    "memory_alloc_gib": 0.125,
+    "lambda_equivalent_memory_mb": 354,
+    "lambda_equivalent_memory_gb": 0.346,
+    "knative_target_concurrency": 10,
+    "lambda_vcpu_at_1769mb": 1.0
+  },
+  "resource_consumption": {
+    "S1": {
+      "total_requests": 63850,
+      "successful_requests": 25746,
+      "success_rate_pct": 40.3,
+      "cpu_seconds_total": 449.1,
+      "k8s_cpu_seconds": 448.1,
+      "knative_cpu_seconds": 1.0,
+      "memory_gib_seconds": 48.2,
+      "peak_vcpu": 0.94,
+      "max_knative_pods": 2,
+      "avg_knative_pods": 2.0,
+      "avg_k8s_pods": 2.9,
+      "cpu_ms_per_request": 7.03,
+      "nodes_provisioned": 2
+    },
+    "S2": {
+      "total_requests": 87597,
+      "successful_requests": 78510,
+      "success_rate_pct": 89.6,
+      "cpu_seconds_total": 855.6,
+      "k8s_cpu_seconds": 0.2,
+      "knative_cpu_seconds": 855.4,
+      "memory_gib_seconds": 210.9,
+      "peak_vcpu": 1.86,
+      "max_knative_pods": 26,
+      "avg_knative_pods": 18.4,
+      "avg_k8s_pods": 1.0,
+      "cpu_ms_per_request": 9.77,
+      "nodes_provisioned": 0,
+      "littles_law": {
+        "concurrency_slots": 260,
+        "throughput_rps": 73,
+        "service_time_s": 3.56,
+        "effective_cpu_per_request_vcpu": 0.02,
+        "fib32_full_core_ms": 10,
+        "fib32_throttled_ms": 500,
+        "wall_clock_observed_s": 3.56
+      }
+    },
+    "S3": {
+      "total_requests": 87061,
+      "successful_requests": 66792,
+      "success_rate_pct": 76.7,
+      "cpu_seconds_total": 778.7,
+      "k8s_cpu_seconds": 552.0,
+      "knative_cpu_seconds": 226.7,
+      "memory_gib_seconds": 131.4,
+      "peak_vcpu": 1.40,
+      "max_knative_pods": 24,
+      "avg_knative_pods": 5.2,
+      "avg_k8s_pods": 3.5,
+      "cpu_ms_per_request": 8.94,
+      "nodes_provisioned": 2,
+      "serverless_traffic_pct": 77.6
+    },
+    "S4": {
+      "total_requests": 85347,
+      "successful_requests": 67619,
+      "success_rate_pct": 79.2,
+      "cpu_seconds_total": 777.4,
+      "k8s_cpu_seconds": 464.4,
+      "knative_cpu_seconds": 313.0,
+      "memory_gib_seconds": 148.8,
+      "peak_vcpu": 1.35,
+      "max_knative_pods": 24,
+      "avg_knative_pods": 6.7,
+      "avg_k8s_pods": 3.8,
+      "cpu_ms_per_request": 9.11,
+      "nodes_provisioned": 2,
+      "serverless_traffic_pct": 95.3
+    }
+  },
+  "S1": {
+    "total_requests": 63850,
+    "successful_requests": 25746,
+    "success_rate": 40.3,
+    "model1": {
+      "provisioned_capacity": 0.0412,
+      "execution": 0.0021,
+      "request_charges": 0.0128,
+      "ec2_nodes": 0.0408,
+      "total": 0.0969,
+      "per_1m_total": 1.52,
+      "per_1m_successful": 3.76,
+      "monthly_projection": 201
+    },
+    "model2": {
+      "vcpu_cost": 0.0108,
+      "memory_cost": 0.0001,
+      "request_charges": 0.0255,
+      "total": 0.0364,
+      "per_1m_total": 0.57,
+      "per_1m_successful": 1.41
+    },
+    "model3": {
+      "base_node": 0.0144,
+      "dynamic_nodes": 0.0264,
+      "total": 0.0408,
+      "per_1m_total": 0.64,
+      "per_1m_successful": 1.58
+    }
+  },
+  "S2": {
+    "total_requests": 87597,
+    "successful_requests": 78510,
+    "success_rate": 89.6,
+    "model1": {
+      "provisioned_capacity": 0.3326,
+      "execution": 1.0481,
+      "request_charges": 0.0175,
+      "ec2_nodes": 0.0144,
+      "total": 1.4126,
+      "per_1m_total": 16.13,
+      "per_1m_successful": 17.99,
+      "monthly_projection": 2934
+    },
+    "model2": {
+      "vcpu_cost": 0.0205,
+      "memory_cost": 0.0005,
+      "request_charges": 0.0350,
+      "total": 0.0561,
+      "per_1m_total": 0.64,
+      "per_1m_successful": 0.71
+    },
+    "model3": {
+      "base_node": 0.0144,
+      "dynamic_nodes": 0.0000,
+      "total": 0.0144,
+      "per_1m_total": 0.16,
+      "per_1m_successful": 0.18
+    }
+  },
+  "S3": {
+    "total_requests": 87061,
+    "successful_requests": 66792,
+    "success_rate": 76.7,
+    "model1": {
+      "provisioned_capacity": 0.1010,
+      "execution": 0.7527,
+      "request_charges": 0.0174,
+      "ec2_nodes": 0.0410,
+      "total": 0.9121,
+      "per_1m_total": 10.48,
+      "per_1m_successful": 13.66,
+      "monthly_projection": 1894
+    },
+    "model2": {
+      "vcpu_cost": 0.0187,
+      "memory_cost": 0.0003,
+      "request_charges": 0.0348,
+      "total": 0.0538,
+      "per_1m_total": 0.62,
+      "per_1m_successful": 0.81
+    },
+    "model3": {
+      "base_node": 0.0146,
+      "dynamic_nodes": 0.0264,
+      "total": 0.0410,
+      "per_1m_total": 0.47,
+      "per_1m_successful": 0.61
+    }
+  },
+  "S4": {
+    "total_requests": 85347,
+    "successful_requests": 67619,
+    "success_rate": 79.2,
+    "model1": {
+      "provisioned_capacity": 0.1273,
+      "execution": 0.9240,
+      "request_charges": 0.0171,
+      "ec2_nodes": 0.0405,
+      "total": 1.1089,
+      "per_1m_total": 12.99,
+      "per_1m_successful": 16.40,
+      "monthly_projection": 2303
+    },
+    "model2": {
+      "vcpu_cost": 0.0187,
+      "memory_cost": 0.0004,
+      "request_charges": 0.0341,
+      "total": 0.0532,
+      "per_1m_total": 0.62,
+      "per_1m_successful": 0.79
+    },
+    "model3": {
+      "base_node": 0.0144,
+      "dynamic_nodes": 0.0261,
+      "total": 0.0405,
+      "per_1m_total": 0.47,
+      "per_1m_successful": 0.60
+    }
+  },
+  "rankings": {
+    "model1_lambda_pc": {
+      "by_total_cost": ["S1", "S3", "S4", "S2"],
+      "by_per_successful_request": ["S1", "S3", "S4", "S2"],
+      "note": "Primary comparison model. S2 most expensive due to 260 concurrency slots × 3.56s wall-clock service time."
+    },
+    "model2_cloud_run": {
+      "by_total_cost": ["S1", "S4", "S3", "S2"],
+      "by_per_successful_request": ["S2", "S4", "S3", "S1"],
+      "note": "CPU-second billing neutralizes throttling multiplier. All scenarios within $0.02 of each other."
+    },
+    "model3_node_hours": {
+      "by_total_cost": ["S2", "S4", "S1", "S3"],
+      "by_per_successful_request": ["S2", "S4", "S3", "S1"],
+      "note": "Infrastructure-only cost. S2 cheapest (no dynamic nodes). Rankings invert vs Model 1."
+    }
+  },
+  "derived_metrics": {
+    "cpu_throttling": {
+      "cpu_per_pod_millicores": 200,
+      "concurrent_requests_per_pod": 10,
+      "effective_cpu_per_request_millicores": 20,
+      "slowdown_factor": 50,
+      "theoretical_service_time_ms": 500,
+      "observed_service_time_s": 3.56,
+      "wall_clock_vs_cpu_time_ratio": 364
+    },
+    "lambda_memory_mapping": {
+      "lambda_full_vcpu_memory_mb": 1769,
+      "pod_cpu_vcpu": 0.2,
+      "equivalent_lambda_memory_mb": 354,
+      "equivalent_lambda_memory_gb": 0.346,
+      "old_model_memory_mb": 512,
+      "overstatement_pct": 48
+    },
+    "s4_vs_s3_comparison": {
+      "s4_serverless_traffic_pct": 95.3,
+      "s3_serverless_traffic_pct": 77.6,
+      "s4_cost_premium_model1": 0.1968,
+      "s4_success_rate_improvement_pp": 2.5,
+      "cost_per_pp_improvement": 0.0787
+    }
+  }
+}
