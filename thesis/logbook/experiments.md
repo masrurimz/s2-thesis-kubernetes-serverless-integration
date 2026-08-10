@@ -140,3 +140,46 @@ New entry template (copy when the agent logs a run):
   - Drift/protocol: [../DRIFT_ANALYSIS.md](../DRIFT_ANALYSIS.md), section <D#>
 - Related: `WA-...`, `BIM-...`, `QA-...`
 ```
+
+## EXP-2026-08-08-01 — Replikasi paired H2 batch 1 (diagnostic, replication tier)
+- Date/time: 2026-08-08
+- Status: actioned
+- Evidence role: **diagnostic** (replication tier; bukan klaim final)
+- Phase/scenario: Phase B / S3–S4 paired, RUN1, 5 pairs, definitive config
+- What happened: Batch replikasi terdiri atas 10 run (5 pasangan S3/S4), dengan treatment fidelity 280/280, delivery 1.0, dan 0 prediksi gagal. Hasilnya menunjukkan S3 136.89 ms dan S4 132.93 ms pada p99, selisih −3.96 ms, permutation p=0.4363, dan d≈−0.05; S4 pada pasangan ke-5 mengalami keterlambatan provisioning sebesar 117 s.
+- Decision or interpretation: H2 **tidak didukung** pada batch ini. Sebagai bukti replication tier, hasil ini merupakan batch null yang harus dipertahankan dalam pelaporan variasi antar-batch; klaim H2 final tetap hanya berasal dari bundle definitif Juli.
+- Follow-up: none
+- Evidence:
+  - Bundle: [../../results/experiments/phase-b/2026-08-08_paired-h2_195150/](../../results/experiments/phase-b/2026-08-08_paired-h2_195150/)
+  - Registry: [../../results/evidence/registry.yaml](../../results/evidence/registry.yaml), role=diagnostic/current
+  - Drift/protocol: [../DRIFT_ANALYSIS.md](../DRIFT_ANALYSIS.md) §6b
+- Related: QA-011
+
+## EXP-2026-08-08-02 — Replikasi paired H2 batch 2 (diagnostic, replication tier)
+- Date/time: 2026-08-08
+- Status: actioned
+- Evidence role: **diagnostic** (replication tier; bukan klaim final)
+- Phase/scenario: Phase B / S3–S4 paired, RUN2, 5 pairs, definitive config
+- What happened: Batch replikasi terdiri atas 10 run dengan fidelity 280/280. S3 menghasilkan 160.38 ms dan S4 102.34 ms pada p99, selisih −58.05 ms, 95% CI [−161.5, −2.8], p=0.0621, dan d=−0.505 (medium); S4 lebih cepat pada 4 dari 5 pasangan, sedangkan pasangan ke-4 memuat outlier S3 sebesar 353 ms akibat provisioning node.
+- Decision or interpretation: H2 **marginal** pada batch ini. Hasilnya secara arah konsisten dengan hasil definitif, tetapi tetap merupakan bukti replication tier dan tidak menggantikan klaim H2 final dari bundle definitif Juli.
+- Follow-up: none
+- Evidence:
+  - Bundle: [../../results/experiments/phase-b/2026-08-08_paired-h2_233726/](../../results/experiments/phase-b/2026-08-08_paired-h2_233726/)
+  - Registry: [../../results/evidence/registry.yaml](../../results/evidence/registry.yaml), role=diagnostic/current
+  - Drift/protocol: [../DRIFT_ANALYSIS.md](../DRIFT_ANALYSIS.md) §6b
+- Related: QA-011
+
+## EXP-2026-08-09-01 — Replikasi penuh ClarkNet n=5, empat skenario (intermediate, replication tier)
+- Date/time: 2026-08-09
+- Status: actioned
+- Evidence role: **intermediate** (replication tier; bukan klaim final)
+- Phase/scenario: Phase B / S1–S4, RUN3, 4 skenario × 5 run, ClarkNet
+- What happened: Sebanyak 20 run bersih (4 skenario × 5) selesai dengan fidelity 280/280 per scenario-set. P99 dan pelanggaran SLO berturut-turut adalah: S1 K8s-only 110.3 ms / 253; S2 serverless-only 79.7 ms / 2; S3 hybrid-reactive 151.6 ms / 1998; S4 hybrid-predictive 99.1 ms / 92. Untuk H1, S2 dibandingkan dengan S1 menghasilkan Welch p=0.0004 dan d=−5.582 (MW p=0.0079). Untuk H2, S4 dibandingkan dengan S3 menurunkan p99 sebesar 34.6% dan pelanggaran SLO sebesar 95.4%, dengan MW p=0.0317, Welch p=0.0970, dan d=−1.300.
+- Decision or interpretation: H1 memperoleh dukungan pada perbandingan S2–S1. H2 menunjukkan hasil signifikan menurut Mann–Whitney tetapi tidak menurut Welch; secara batch-dependent hasilnya tetap konsisten secara arah dengan hasil definitif, sehingga RUN3 dicatat sebagai replication tier intermediate dan bukan klaim H2 final. Klaim H2 final tetap hanya bundle definitif Juli (p=0.0304, d=−1.26).
+- Follow-up: none
+- Evidence:
+  - Bundle: [../../results/experiments/phase-b/2026-08-09_clarknet-replay_032257/](../../results/experiments/phase-b/2026-08-09_clarknet-replay_032257/)
+  - Registry: [../../results/evidence/registry.yaml](../../results/evidence/registry.yaml), role=intermediate/current
+  - Claim/number: [../../results/claims/FINAL_NUMBERS.md](../../results/claims/FINAL_NUMBERS.md) (H2 final remains the July bundle)
+  - Drift/protocol: [../DRIFT_ANALYSIS.md](../DRIFT_ANALYSIS.md) §6b
+- Related: QA-011
