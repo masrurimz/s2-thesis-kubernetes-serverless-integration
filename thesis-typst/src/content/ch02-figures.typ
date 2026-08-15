@@ -77,72 +77,86 @@
 //    Source: Kubernetes official documentation, Components page.
 // ============================================================================
 #let fig-k8s-architecture() = cetz.canvas({
+  // ---- geometry ------------------------------------------------------------
+  let cp-x0 = 0.15            // control plane left
+  let cp-x1 = 5.5             // control plane right
+  let cp-cx = 2.925           // control plane centre x
+  let node-cx = 10.9          // worker node centre x
+  let node-w = 4.8            // worker node panel width
+  let node-half = node-w / 2
+
   // ---- Control Plane (left) ------------------------------------------------
   cetz.draw.rect(
-    (0.15, 0.25), (6.15, 8.45),
+    (cp-x0, 0.25), (cp-x1, 8.7),
     fill: c-cp, stroke: c-cp-edge, radius: 0.18,
   )
   cetz.draw.content(
-    (3.15, 7.85), text(size: 8.5pt, weight: "bold", fill: c-cp-edge, [Control Plane]),
+    (cp-cx, 8.1), text(size: 8.5pt, weight: "bold", fill: c-cp-edge, [Control Plane]),
     anchor: "center",
   )
 
-  // components stacked (centred x = 3.15)
-  dbox((3.15, 6.55), 4.6, 1.0, c-box, c-box-edge, [kube-apiserver])
-  dbox((3.15, 5.05), 4.6, 1.0, c-box, c-box-edge, [etcd])
-  dbox((3.15, 3.55), 4.6, 1.0, c-box, c-box-edge, [kube-scheduler])
-  dbox((3.15, 2.05), 4.6, 1.0, c-box, c-box-edge, [kube-controller-manager])
+  dbox((cp-cx, 6.9), 4.6, 0.9, c-box, c-box-edge, [kube-apiserver])
+  dbox((cp-cx, 5.5), 4.6, 0.9, c-box, c-box-edge, [etcd])
+  dbox((cp-cx, 4.1), 4.6, 0.9, c-box, c-box-edge, [kube-scheduler])
+  dbox((cp-cx, 2.7), 4.6, 0.9, c-box, c-box-edge, [kube-controller-manager])
 
-  // apiserver <-> etcd (persist + read)
+  // apiserver <-> etcd (double arrow)
   cetz.draw.line(
-    (3.15, 6.05), (3.15, 5.55),
+    (cp-cx, 6.45), (cp-cx, 5.95),
     mark: (start: "stealth", end: "stealth", fill: c-arrow),
     stroke: c-arrow,
   )
 
-  // ---- Data Plane (right) --------------------------------------------------
-  cetz.draw.rect(
-    (7.35, 0.25), (13.0, 8.45),
-    fill: c-dp, stroke: c-dp-edge, radius: 0.18,
-  )
+  // ---- helper: one worker node panel ---------------------------------------
+  let draw-node(cx, top, bot, label) = {
+    cetz.draw.rect(
+      (cx - node-half, bot), (cx + node-half, top),
+      fill: c-dp, stroke: c-dp-edge, radius: 0.12,
+    )
+    cetz.draw.content(
+      (cx, top - 0.34), text(size: 8pt, weight: "bold", fill: c-dp-edge, label),
+      anchor: "center",
+    )
+    dbox((cx, top - 1.05), 4.3, 0.72, c-box, c-box-edge, [kubelet], size: 7.5pt)
+    dbox((cx, top - 1.9), 4.3, 0.72, c-box, c-box-edge, [kube-proxy], size: 7.5pt)
+
+    // Pods group (dashed) with two containers + runtime label
+    let ptop = top - 2.5
+    let pbot = bot + 0.1
+    cetz.draw.rect(
+      (cx - 1.95, pbot), (cx + 1.95, ptop),
+      fill: rgb("#ffffff"),
+      stroke: (paint: c-dp-edge, thickness: 0.7pt, dash: "dashed"),
+      radius: 0.1,
+    )
+    cetz.draw.content(
+      (cx, ptop - 0.28), text(size: 7pt, weight: "bold", fill: c-dp-edge, [Pods]),
+      anchor: "center",
+    )
+    let cy = (ptop + pbot) / 2
+    dbox((cx - 0.9, cy), 1.6, 0.75, c-gray, c-gray-edge, [container], size: 6.5pt)
+    dbox((cx + 0.9, cy), 1.6, 0.75, c-gray, c-gray-edge, [container], size: 6.5pt)
+    cetz.draw.content(
+      (cx, pbot + 0.22), text(size: 6pt, fill: c-note, [container runtime]),
+      anchor: "center",
+    )
+
+    // kubelet / kube-proxy -> pods
+    darrow((cx, top - 1.41), (cx, ptop + 0.02), label: none)
+    darrow((cx, top - 2.26), (cx, ptop + 0.02), label: none)
+  }
+
+  // ---- two worker nodes (Node 1 above Node 2) ------------------------------
+  draw-node(node-cx, 8.7, 4.55, [Node 1])
+  draw-node(node-cx, 4.35, 0.2, [Node 2])
+
+  // ---- kube-apiserver -> both kubelets -------------------------------------
+  darrow((cp-cx + 2.3, 6.9), (node-cx - 2.15, 8.7 - 1.05), label: none)
+  darrow((cp-cx + 2.3, 6.9), (node-cx - 2.15, 4.35 - 1.05), label: none)
   cetz.draw.content(
-    (10.175, 7.85), text(size: 8.5pt, weight: "bold", fill: c-dp-edge, [Worker Node(s)]),
+    (6.95, 5.4), text(size: 6.5pt, fill: c-note, [kubelet watches apiserver]),
     anchor: "center",
   )
-
-  dbox((10.175, 6.55), 4.4, 1.0, c-box, c-box-edge, [kubelet])
-  dbox((10.175, 5.05), 4.4, 1.0, c-box, c-box-edge, [kube-proxy])
-
-  // Pods group (dashed container) with two containers inside
-  cetz.draw.rect(
-    (7.95, 0.75), (12.4, 4.15),
-    fill: rgb("#ffffff"), stroke: (paint: c-dp-edge, thickness: 0.7pt, dash: "dashed"),
-    radius: 0.12,
-  )
-  cetz.draw.content(
-    (10.175, 3.75), text(size: 7.5pt, weight: "bold", fill: c-dp-edge, [Pods]),
-    anchor: "center",
-  )
-  dbox((9.0, 2.15), 1.7, 1.5, c-gray, c-gray-edge, [container], size: 7pt)
-  dbox((11.35, 2.15), 1.7, 1.5, c-gray, c-gray-edge, [container], size: 7pt)
-  cetz.draw.content(
-    (10.175, 1.05), text(size: 6.5pt, fill: c-note, [container runtime]),
-    anchor: "center",
-  )
-
-  // ---- cross-plane arrows ---------------------------------------------------
-  // kube-apiserver -> kubelet (kubelet talks to apiserver)
-  darrow((5.45, 6.55), (7.975, 6.55), label: none)
-  cetz.draw.content(
-    (6.71, 7.15), text(size: 7pt, fill: c-note, [kubelet watches apiserver]),
-    anchor: "center",
-  )
-
-  // kubelet -> pods (kubelet manages containers)
-  darrow((10.175, 6.05), (10.175, 4.15), label: none)
-
-  // kube-proxy -> pods (network rules)
-  darrow((10.175, 4.55), (10.175, 4.15), label: none)
 })
 
 // ============================================================================
@@ -210,103 +224,125 @@
 // ============================================================================
 #let fig-cloud-services() = cetz.canvas({
   // ---- geometry ------------------------------------------------------------
-  let left-x = 0.15
-  let left-w = 5.0            // "Cloud Stack" column (layer + components)
-  let col-w = 2.4             // each model column
-  let col-y = 8.05            // model column header top
-  let col-h = 0.6             // model column header height
-  let body-top = 7.35         // top of the row band
-  let row-h = 1.55            // each row height
-  let rows = (
-    (name: [User], comp: [Login, Registration,\ Administration, Authentication,\ Authorization], iaas: "C", paas: "C", saas: "C"),
-    (name: [Application], comp: [User Interface,\ Transactions, Reports,\ Dashboard], iaas: "C", paas: "C", saas: "V"),
-    (name: [Application Stack], comp: [OS, Programming Language,\ App Server, Middleware,\ Database, Monitoring], iaas: "C", paas: "V", saas: "V"),
-    (name: [Infrastructure], comp: [Servers, Storage,\ Networking, Virtualization], iaas: "V", paas: "V", saas: "V"),
-  )
-  let col0 = left-x + left-w            // IaaS column left edge
-  let col1 = col0 + col-w               // PaaS
-  let col2 = col1 + col-w               // SaaS
-  let body-bot = body-top - rows.len() * row-h
+  let mx = 0.15
+  let x0 = mx                 // Service Models left
+  let x1 = 2.15               // Service Models right / Cloud Stack left
+  let x2 = 4.55               // Cloud Stack right / Stack Components left
+  let x3 = 9.35               // Stack Components right / Who Is Responsible left
+  let x4 = 13.55              // Who Is Responsible right
 
-  // ---- outer frame ---------------------------------------------------------
-  cetz.draw.rect(
-    (left-x, body-bot - 0.45), (col2 + col-w, col-y + col-h),
-    fill: rgb("#ffffff"), stroke: c-box-edge, radius: 0.1,
-  )
+  let ytop = 8.0              // body top (top of User layer)
+  let y_ua = 6.7              // User | Application boundary
+  let y_as = 4.8              // Application | Application Stack boundary
+  let y_si = 2.9              // Application Stack | Infrastructure boundary
+  let ybot = 1.2              // body bottom (bottom of Infrastructure)
 
-  // ---- header: Cloud Stack | (Service Models -> IaaS PaaS SaaS) ------------
-  cetz.draw.content(
-    (left-x + left-w / 2, col-y + col-h / 2),
-    text(size: 8pt, weight: "bold", [Cloud Stack]), anchor: "center",
-  )
-  cetz.draw.content(
-    ((col0 + col2 + col-w) / 2, col-y + col-h + 0.42),
-    text(size: 8pt, weight: "bold", [Service Models]), anchor: "center",
-  )
-  cetz.draw.content(
-    (col0 + col-w / 2, col-y + col-h / 2),
-    text(size: 8pt, weight: "bold", [IaaS]), anchor: "center",
-  )
-  cetz.draw.content(
-    (col1 + col-w / 2, col-y + col-h / 2),
-    text(size: 8pt, weight: "bold", [PaaS]), anchor: "center",
-  )
-  cetz.draw.content(
-    (col2 + col-w / 2, col-y + col-h / 2),
-    text(size: 8pt, weight: "bold", [SaaS]), anchor: "center",
-  )
+  let hdr_top = 8.9
+  let hdr_bot = 8.0
+  let hdr_mid = (hdr_top + hdr_bot) / 2
 
-  // ---- rows ----------------------------------------------------------------
-  for (i, row) in rows.enumerate() {
-    let ytop = body-top - i * row-h
-    let ymid = ytop - row-h / 2
+  let c-dark = rgb("#1f2937")
 
-    // left cell: layer name + components
-    cetz.draw.content(
-      (left-x + left-w / 2, ytop - 0.16),
-      text(size: 8pt, weight: "bold", row.name), anchor: "north",
-    )
-    cetz.draw.content(
-      (left-x + left-w / 2, ytop - 0.55),
-      text(size: 6.3pt, fill: c-note, row.comp), anchor: "north",
-    )
-
-    // responsibility cells
-    let cells = ((col0, row.iaas), (col1, row.paas), (col2, row.saas))
-    for cell in cells {
-      let cx = cell.at(0)
-      let v = cell.at(1)
-      let fill = if v == "C" { c-customer } else { c-vendor }
-      let edge = if v == "C" { c-cp-edge } else { c-gray-edge }
-      let word = if v == "C" { [Customer] } else { [Vendor] }
-      cetz.draw.rect(
-        (cx + 0.1, ytop - row-h + 0.08), (cx + col-w - 0.1, ytop - 0.08),
-        fill: fill, stroke: edge, radius: 0.08,
-      )
-      cetz.draw.content(
-        (cx + col-w / 2, ymid),
-        text(size: 7pt, weight: "bold", fill: edge, word), anchor: "center",
-      )
+  // ---- helper: plain grid cell ---------------------------------------------
+  let cell(x0, x1, y0, y1, body, size: 6pt, fill: c-box, edge: c-gray-edge, bold: false) = {
+    cetz.draw.rect((x0, y0), (x1, y1), fill: fill, stroke: edge, radius: 0.03)
+    let t = if bold {
+      text(size: size, weight: "bold", body)
+    } else {
+      text(size: size, body)
     }
+    cetz.draw.content(((x0 + x1) / 2, (y0 + y1) / 2), t, anchor: "center")
   }
 
-  // ---- legend --------------------------------------------------------------
-  cetz.draw.rect(
-    (left-x, body-bot - 0.4), (left-x + 1.0, body-bot - 0.1),
-    fill: c-customer, stroke: c-cp-edge, radius: 0.06,
-  )
-  cetz.draw.content(
-    (left-x + 1.35, body-bot - 0.25), text(size: 6.5pt, fill: c-note, [Customer responsible]),
-    anchor: "west",
-  )
-  cetz.draw.rect(
-    (left-x + 4.0, body-bot - 0.4), (left-x + 5.0, body-bot - 0.1),
-    fill: c-vendor, stroke: c-gray-edge, radius: 0.06,
-  )
-  cetz.draw.content(
-    (left-x + 5.35, body-bot - 0.25), text(size: 6.5pt, fill: c-note, [Vendor responsible]),
-    anchor: "west",
-  )
+  // ---- header row -----------------------------------------------------------
+  cetz.draw.line((mx, hdr_bot), (x4, hdr_bot), stroke: c-gray-edge)
+  cetz.draw.content(((x0 + x1) / 2, hdr_mid), text(size: 7.5pt, weight: "bold", [Service Models]), anchor: "center")
+  cetz.draw.content(((x1 + x2) / 2, hdr_mid), text(size: 7.5pt, weight: "bold", [Cloud Stack]), anchor: "center")
+  cetz.draw.content(((x2 + x3) / 2, hdr_mid), text(size: 7.5pt, weight: "bold", [Stack Components]), anchor: "center")
+  cetz.draw.content(((x3 + x4) / 2, hdr_mid), text(size: 7.5pt, weight: "bold", [Who Is Responsible]), anchor: "center")
+
+  // ---- column 2: Cloud Stack (4 tall cells, one layer name each) -----------
+  cell(x1, x2, y_ua, ytop, [User], size: 8pt, bold: true)
+  cell(x1, x2, y_as, y_ua, [Application], size: 8pt, bold: true)
+  cell(x1, x2, y_si, y_as, [Application\ Stack], size: 7.5pt, bold: true)
+  cell(x1, x2, ybot, y_si, [Infrastructure], size: 7.5pt, bold: true)
+
+  // ---- column 3: Stack Components grid --------------------------------------
+  // User layer: 3 stacked rows
+  let u_row = (ytop - y_ua) / 3
+  cell(x2, x3, ytop - u_row, ytop, [Login])
+  cell(x2, x3, ytop - 2 * u_row, ytop - u_row, [Registration])
+  cell(x2, x3, ytop - 3 * u_row, ytop - 2 * u_row, [Administration])
+
+  // Application layer: 2 cols x 3 rows
+  let hw = (x3 - x2) / 2
+  let ar = (y_ua - y_as) / 3
+  cell(x2, x2 + hw, y_ua - ar, y_ua, [Authentication])
+  cell(x2 + hw, x3, y_ua - ar, y_ua, [Authorization])
+  cell(x2, x2 + hw, y_ua - 2 * ar, y_ua - ar, [User Interface])
+  cell(x2 + hw, x3, y_ua - 2 * ar, y_ua - ar, [Transactions])
+  cell(x2, x2 + hw, y_ua - 3 * ar, y_ua - 2 * ar, [Reports])
+  cell(x2 + hw, x3, y_ua - 3 * ar, y_ua - 2 * ar, [Dashboard])
+
+  // Application Stack layer: 2 cols x 3 rows
+  let sr = (y_as - y_si) / 3
+  cell(x2, x2 + hw, y_as - sr, y_as, [OS])
+  cell(x2 + hw, x3, y_as - sr, y_as, [Programming Language])
+  cell(x2, x2 + hw, y_as - 2 * sr, y_as - sr, [App Svr])
+  cell(x2 + hw, x3, y_as - 2 * sr, y_as - sr, [Middleware])
+  cell(x2, x2 + hw, y_as - 3 * sr, y_as - 2 * sr, [Database])
+  cell(x2 + hw, x3, y_as - 3 * sr, y_as - 2 * sr, [Monitoring])
+
+  // Infrastructure layer: dark block
+  cetz.draw.rect((x2, ybot), (x3, y_si), fill: c-dark, stroke: c-dark, radius: 0.03)
+  cetz.draw.content(((x2 + x3) / 2, 2.45), text(size: 9pt, weight: "bold", fill: white, [IaaS]), anchor: "center")
+  cetz.draw.content(((x2 + x3) / 2, 1.95), text(size: 6pt, fill: white, [Vendor Supplies – Infrastructure Security]), anchor: "center")
+
+  // ---- column 1: Service Models (3 vertical bars, SaaS tallest) ------------
+  let bw = 0.55
+  let gap = 0.1
+  let bx = x0 + 0.1
+  // SaaS (tallest) -> PaaS -> IaaS (shortest)
+  cetz.draw.rect((bx, ybot), (bx + bw, y_ua), fill: rgb("#e5e7eb"), stroke: c-gray-edge, radius: 0.03)
+  cetz.draw.content((bx + bw / 2, (ybot + y_ua) / 2), rotate(-90deg, text(size: 7pt, weight: "bold", fill: c-box-edge, [SaaS])), anchor: "center")
+  cetz.draw.rect((bx + bw + gap, ybot), (bx + 2 * bw + gap, y_as), fill: rgb("#d1d5db"), stroke: c-gray-edge, radius: 0.03)
+  cetz.draw.content((bx + 1.5 * bw + gap, (ybot + y_as) / 2), rotate(-90deg, text(size: 7pt, weight: "bold", fill: c-box-edge, [PaaS])), anchor: "center")
+  cetz.draw.rect((bx + 2 * (bw + gap), ybot), (bx + 3 * bw + 2 * gap, y_si), fill: rgb("#9ca3af"), stroke: c-gray-edge, radius: 0.03)
+  cetz.draw.content((bx + 2.5 * bw + 2 * gap, (ybot + y_si) / 2), rotate(-90deg, text(size: 7pt, weight: "bold", fill: c-box-edge, [IaaS])), anchor: "center")
+
+  // ---- column 4: Who Is Responsible ----------------------------------------
+  let w_r = 1.32
+  let g_r = 0.06
+  let iaas_x0 = x3 + 0.05
+  let iaas_x1 = iaas_x0 + w_r
+  let paas_x0 = iaas_x1 + g_r
+  let paas_x1 = paas_x0 + w_r
+  let saas_x0 = paas_x1 + g_r
+  let saas_x1 = saas_x0 + w_r
+
+  // IaaS: Customer = User+Application+AppStack, Vendor = Infrastructure
+  cetz.draw.rect((iaas_x0, y_si), (iaas_x1, ytop), fill: c-customer, stroke: c-cp-edge, radius: 0.03)
+  cetz.draw.rect((iaas_x0, ybot), (iaas_x1, y_si), fill: c-vendor, stroke: c-gray-edge, radius: 0.03)
+  cetz.draw.content(((iaas_x0 + iaas_x1) / 2, (ytop + y_si) / 2), rotate(-90deg, text(size: 7pt, weight: "bold", fill: c-cp-edge, [Customer])), anchor: "center")
+  cetz.draw.content(((iaas_x0 + iaas_x1) / 2, (y_si + ybot) / 2), rotate(-90deg, text(size: 7pt, weight: "bold", fill: c-gray-edge, [Vendor])), anchor: "center")
+
+  // PaaS: Customer = User+Application, Vendor = AppStack+Infrastructure
+  cetz.draw.rect((paas_x0, y_as), (paas_x1, ytop), fill: c-customer, stroke: c-cp-edge, radius: 0.03)
+  cetz.draw.rect((paas_x0, ybot), (paas_x1, y_as), fill: c-vendor, stroke: c-gray-edge, radius: 0.03)
+  cetz.draw.content(((paas_x0 + paas_x1) / 2, (ytop + y_as) / 2), rotate(-90deg, text(size: 7pt, weight: "bold", fill: c-cp-edge, [Customer])), anchor: "center")
+  cetz.draw.content(((paas_x0 + paas_x1) / 2, (y_as + ybot) / 2), rotate(-90deg, text(size: 7pt, weight: "bold", fill: c-gray-edge, [Vendor])), anchor: "center")
+
+  // SaaS: Customer = User, Vendor = Application+AppStack+Infrastructure
+  cetz.draw.rect((saas_x0, y_ua), (saas_x1, ytop), fill: c-customer, stroke: c-cp-edge, radius: 0.03)
+  cetz.draw.rect((saas_x0, ybot), (saas_x1, y_ua), fill: c-vendor, stroke: c-gray-edge, radius: 0.03)
+  cetz.draw.content(((saas_x0 + saas_x1) / 2, (ytop + y_ua) / 2), rotate(-90deg, text(size: 7pt, weight: "bold", fill: c-cp-edge, [Customer])), anchor: "center")
+  cetz.draw.content(((saas_x0 + saas_x1) / 2, (y_ua + ybot) / 2), rotate(-90deg, text(size: 7pt, weight: "bold", fill: c-gray-edge, [Vendor])), anchor: "center")
+
+  // ---- legend ---------------------------------------------------------------
+  cetz.draw.rect((x0, 0.5), (x0 + 0.9, 0.85), fill: c-customer, stroke: c-cp-edge, radius: 0.04)
+  cetz.draw.content((x0 + 1.15, 0.675), text(size: 6.5pt, fill: c-note, [Customer managed]), anchor: "west")
+  cetz.draw.rect((x0 + 3.4, 0.5), (x0 + 4.3, 0.85), fill: c-vendor, stroke: c-gray-edge, radius: 0.04)
+  cetz.draw.content((x0 + 4.55, 0.675), text(size: 6.5pt, fill: c-note, [Vendor managed]), anchor: "west")
 })
 
 // ============================================================================

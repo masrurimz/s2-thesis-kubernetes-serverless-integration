@@ -91,5 +91,3 @@ Chapter 3: Methodology.
 Chapter 4: Results and Discussion.
 
 Chapter 5: Conclusion and Future Work.
-
-(Full details in source markdown.)
