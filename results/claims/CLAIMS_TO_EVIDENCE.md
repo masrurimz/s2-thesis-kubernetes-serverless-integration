@@ -90,7 +90,7 @@
 - **Evidence:** `results/experiments/phase-a1/2026-02-12_predictive-trigger/report.md`
 - **⚠️ Superseded by Bugs 8-13. See INCONSISTENCIES.md 2026-07-11 entry.**
 - **Registry ID:** `experiments.2026-02-12-predictive-trigger` (superseded; mechanism demo not recomputed on fixed infra)
-- **Result:** Range 0.72–0.82 during live predictions
+- **Result:** Range 0.72–0.88 during live predictions
 - **Status:** ✅ Validated (pre-fix infra)
 
 ---

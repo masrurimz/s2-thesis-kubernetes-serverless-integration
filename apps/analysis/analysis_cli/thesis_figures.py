@@ -62,24 +62,39 @@ def _phase_b_dir(repo_root: Path, bundle: str) -> Path:
     return repo_root / "results" / "experiments" / "phase-b" / bundle
 
 
-def _paired(repo_root: Path, bundle: str) -> tuple[float, float]:
-    """Return (cohens_d_paired, permutation_p_value) from a paired_analysis.json."""
+def _paired_stats(repo_root: Path, bundle: str) -> dict:
+    """Return mean-difference + paired CI + d + p from a paired_analysis.json."""
     p = _phase_b_dir(repo_root, bundle) / "paired_analysis.json"
     prim = _read_json(p)["primary"]
-    return float(prim["cohens_d_paired"]), float(prim["permutation_p_value"])
+    return {
+        "mean_diff": float(prim["mean_difference"]),
+        "ci_lower": float(prim["paired_ci_lower"]),
+        "ci_upper": float(prim["paired_ci_upper"]),
+        "d": float(prim["cohens_d_paired"]),
+        "p": float(prim["permutation_p_value"]),
+    }
 
 
 # ---------------------------------------------------------------------------
-# fig04_6 — H2 effect-size forest plot across replication batches
+# fig04_6 — H2 forest plot across replication batches.
+# Point estimate = S4−S3 mean-difference (ms); whiskers = 95% CI. Negative = S4
+# faster. CI is on the ms scale in every source (paired CI for the three paired
+# bundles; Welch CI for the n=5 replay RUN3).
 # ---------------------------------------------------------------------------
 def _fig_replication_batches(repo_root: Path, out_dir: Path) -> Path:
-    # Effect sizes (Cohen's d paired, S4 vs S3; negative = S4 better).
-    d_def, p_def = _paired(repo_root, DEFINITIVE_PAIRED)
-    d_run1, p_run1 = _paired(repo_root, PAIRED_RUN1)
-    d_run2, p_run2 = _paired(repo_root, PAIRED_RUN2)
+    st_def = _paired_stats(repo_root, DEFINITIVE_PAIRED)
+    st_run1 = _paired_stats(repo_root, PAIRED_RUN1)
+    st_run2 = _paired_stats(repo_root, PAIRED_RUN2)
 
-    # n=5 RUN3 S4-vs-S3: report.md — Cohen's d -1.300, Mann-Whitney p 0.0317.
-    d_run3, p_run3 = -1.300, 0.0317
+    # RUN3 (n=5 replay) S4-vs-S3 from report.md: Welch mean diff −52.50 ms,
+    # 95% CI [−102.60, −11.81], Cohen's d −1.300, Mann-Whitney p 0.0317.
+    st_run3 = {
+        "mean_diff": -52.50,
+        "ci_lower": -102.60,
+        "ci_upper": -11.81,
+        "d": -1.300,
+        "p": 0.0317,
+    }
 
     labels = [
         "Definitive\n(07-14, n=5)",
@@ -87,31 +102,36 @@ def _fig_replication_batches(repo_root: Path, out_dir: Path) -> Path:
         "RUN2\n(08-08 23:37, n=5)",
         "RUN3\n(08-09 replay, n=5)",
     ]
-    d_values = [d_def, d_run1, d_run2, d_run3]
-    p_values = [p_def, p_run1, p_run2, p_run3]
+    stats = [st_def, st_run1, st_run2, st_run3]
 
     fig, ax = plt.subplots(figsize=(8, 4.5))
     ypos = np.arange(len(labels))[::-1]
 
     ax.axvline(0, color="#999999", linewidth=1.0, zorder=1)
 
-    for y, d, p in zip(ypos, d_values, p_values):
-        color = "#2ca02c" if p < 0.05 else "#bdbdbd"
+    for y, s in zip(ypos, stats):
+        color = "#2ca02c" if s["p"] < 0.05 else "#bdbdbd"
+        # Asymmetric error: [mean−CI_lower, CI_upper−mean] in ms.
+        xerr = [[s["mean_diff"] - s["ci_lower"]], [s["ci_upper"] - s["mean_diff"]]]
         ax.errorbar(
-            d,
+            s["mean_diff"],
             y,
-            xerr=0.0,
+            xerr=xerr,
             fmt="o",
             markersize=11,
             markerfacecolor=color,
             markeredgecolor="#222222",
             markeredgewidth=0.8,
+            elinewidth=1.6,
+            capsize=4,
+            capthick=1.2,
+            ecolor="#555555",
             zorder=3,
         )
         ax.text(
-            d + 0.06,
+            s["mean_diff"] + 4,
             y,
-            f"d = {d:.2f}\np = {p:.3f}",
+            f"d = {s['d']:.2f}\np = {s['p']:.3f}",
             va="center",
             ha="left",
             fontsize=9,
@@ -120,11 +140,11 @@ def _fig_replication_batches(repo_root: Path, out_dir: Path) -> Path:
 
     ax.set_yticks(ypos)
     ax.set_yticklabels(labels)
-    ax.set_xlabel("Cohen's d (paired, S4 vs S3) — negative favours S4")
-    ax.set_title("H2 effect size across replication batches")
-    ax.set_xlim(-1.7, 0.7)
+    ax.set_xlabel("S4 − S3 mean p99 difference (ms) — negative favours S4")
+    ax.set_title("H2 across replication batches (point = mean diff, whiskers = 95% CI)")
+    ax.set_xlim(-190, 95)
     ax.grid(axis="x", linestyle=":", alpha=0.5)
-    ax.axvspan(-1.7, 0, color="#2ca02c", alpha=0.05, zorder=0)
+    ax.axvspan(-190, 0, color="#2ca02c", alpha=0.05, zorder=0)
     fig.tight_layout()
 
     out = out_dir / "fig04_6_replication_batches.png"

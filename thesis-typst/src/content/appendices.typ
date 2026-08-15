@@ -2,7 +2,6 @@
 // Appendix B — Raw Experiment Results
 // Appendix C — Code Listings
 // Ported from archived/thesis-latex/src/chapters/104-106-appendix-*.tex
-#import "figures.typ": *
 
 = LAMPIRAN A: Konfigurasi Eksperimen
 
@@ -174,45 +173,42 @@ class CalibrationConfig(BaseModel):
 
 #pagebreak()
 
-= LAMPIRAN D: Visualisasi Data
-
-== Grafik Data
-
-Berikut enam visualisasi data hasil eksperimen.
-
-#figure(
-  fig-paired-perpair(),
-  caption: [p99 per pasangan pada bundle definitif H2.],
-) <fig:fig04-1>
-
-#figure(
-  fig-p99-boxplot(),
-  caption: [Distribusi p99 empat skenario pada replikasi n=5.],
-) <fig:fig04-2>
-
-#figure(
-  fig-slo-violations(),
-  caption: [Pelanggaran SLO S3 versus S4.],
-) <fig:fig04-3>
-
-#figure(
-  fig-node-provisioning(),
-  caption: [Lini masa provisioning node.],
-) <fig:fig04-4>
-
-#figure(
-  fig-cost-comparison(),
-  caption: [Biaya bulanan per skenario.],
-) <fig:fig04-5>
-
-#figure(
-  image("../figures/fig04_6_replication_batches.png", width: 85%),
-  caption: [Ukuran efek H2 pada replikasi antar batch.],
-) <fig:fig04-6>
+= LAMPIRAN D: Data Mentah Replikasi
 
 == Data Mentah Replikasi n=5
 
-Tabel berikut menyajikan hasil replikasi empat skenario `2026-08-09_clarknet-replay_032257` yang telah selesai (n=5).
+Tabel berikut menyajikan hasil per-run replikasi empat skenario `2026-08-09_clarknet-replay_032257` yang telah selesai (n=5 per skenario).
+
+#figure(
+  kind: table,
+  table(
+    columns: (auto, auto, auto, auto),
+    [Run], [Skenario], [p99 (ms)], [Pelanggaran SLO],
+    [1], [S1 (K8s + HPA)], [117.5], [124],
+    [2], [S1 (K8s + HPA)], [98.8], [20],
+    [3], [S1 (K8s + HPA)], [115.2], [29],
+    [4], [S1 (K8s + HPA)], [107.5], [17],
+    [5], [S1 (K8s + HPA)], [112.7], [63],
+    [1], [S2 (Serverless)], [78.0], [1],
+    [2], [S2 (Serverless)], [78.7], [0],
+    [3], [S2 (Serverless)], [83.4], [0],
+    [4], [S2 (Serverless)], [79.0], [0],
+    [5], [S2 (Serverless)], [79.4], [1],
+    [1], [S3 (Hybrid-reaktif)], [239.4], [1363],
+    [2], [S3 (Hybrid-reaktif)], [151.6], [321],
+    [3], [S3 (Hybrid-reaktif)], [103.4], [26],
+    [4], [S3 (Hybrid-reaktif)], [153.9], [232],
+    [5], [S3 (Hybrid-reaktif)], [109.5], [56],
+    [1], [S4 (Hybrid-prediktif)], [88.9], [1],
+    [2], [S4 (Hybrid-prediktif)], [130.2], [77],
+    [3], [S4 (Hybrid-prediktif)], [88.2], [1],
+    [4], [S4 (Hybrid-prediktif)], [94.4], [12],
+    [5], [S4 (Hybrid-prediktif)], [93.8], [1],
+  ),
+  caption: [Hasil per-run replikasi n=5 (bundle `2026-08-09_clarknet-replay_032257`); nilai p99 dibulatkan satu desimal.],
+)
+
+== Ringkasan Per-Skenario n=5
 
 #figure(
   kind: table,
@@ -224,7 +220,7 @@ Tabel berikut menyajikan hasil replikasi empat skenario `2026-08-09_clarknet-rep
     [S3 (Hybrid-reaktif)], [5], [151.6], [1998], [73.2],
     [S4 (Hybrid-prediktif)], [5], [99.1], [92], [73.2],
   ),
-  caption: [Hasil replikasi empat skenario n=5 (run `2026-08-09_clarknet-replay_032257`).],
+  caption: [Ringkasan rata-rata per skenario (rerata p99 dan total pelanggaran SLO).],
 )
 
 == Perbandingan Statistik n=5
@@ -242,7 +238,3 @@ Tabel berikut menyajikan hasil replikasi empat skenario `2026-08-09_clarknet-rep
   ),
   caption: [Ringkasan uji statistik replikasi n=5.],
 )
-
-== Catatan Replikasi
-
-Data pada lampiran ini bersifat replikasi. Klaim definitif H2 tetap mengacu pada bundle Juli (p = 0.0304; Cohen's d = -1.26). Replikasi n=5 memakai `max_k8s_replicas = 10` sehingga S1 (HPA) tidak jenuh. Hal ini berbeda dengan diagnostik n=1 yang memakai `max_k8s_replicas = 6` dan mencatat p99 S1 sebesar 2.421 ms. Akibatnya keunggulan hybrid atas K8s murni tidak ter-reproduksi pada n=5.

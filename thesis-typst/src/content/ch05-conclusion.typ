@@ -8,7 +8,7 @@ This research designed, implemented, and evaluated a hybrid Kubernetes-serverles
 
 A GRU (Gated Recurrent Unit) neural network was designed and optimized through hyperparameter optimization (HPO) using Optuna TPE. The optimal configuration uses one recurrent layer with 128 hidden units, learning rate 0.000380, sequence length 30, and dropout 0.104. Post-HPO accuracy improved from 6.01% to 4.75% RMSE.
 
-The GRU predictor achieves target accuracy on synthetic workload patterns: RMSE 4.75% post-HPO (manual baseline 6.01%, target under 10%) with confidence scores 0.72-0.82 during live predictions. Validation against the ClarkNet HTTP trace yielded RMSE 17.78% at 5-minute aggregation. This is meaningful generalization, though below original thresholds. The gap comes from non-stationarity and irregular burst patterns that do not appear in synthetic training data.
+The GRU predictor achieves target accuracy on synthetic workload patterns: RMSE 4.75% post-HPO (manual baseline 6.01%, target under 10%) with confidence scores 0.72-0.88 during live predictions. Validation against the ClarkNet HTTP trace yielded RMSE 17.78% at 5-minute aggregation. This is meaningful generalization, though below original thresholds. The gap comes from non-stationarity and irregular burst patterns that do not appear in synthetic training data.
 
 === RQ2: Modified ElaX Decision Making
 
@@ -26,7 +26,7 @@ H1 (hybrid architecture outperforms the pure Kubernetes baseline): *Directional 
 
 H2 (predictive scaling outperforms reactive): *Statistically supported (p = 0.030, d = -1.26, large effect).* The definitive paired experiment (n = 5 counterbalanced pairs, `2026-07-14_clarknet-tuned-paired-n5`) finds S4 mean p99 126.0 ms versus 188.5 ms for S3 (mean difference -62.5 ms, 95% CI [-100.9, -26.2], p = 0.030, Cohen's d = -1.26). S4 wins all 5 pairs and shows 80.2% fewer SLO violations (130 vs 656) at identical monthly cost (USD 163). The GRU forecast triggered 4--5 predictive decisions per S4 run. This result reverses the earlier non-significant finding (p = 0.38, d = -0.241). It includes three necessary conditions: an extended 9-step forecast horizon (135 s), utilization-based node consolidation matching Kubernetes Cluster Autoscaler semantics, and a tuned reactive baseline.
 
-H3 (GRU prediction adequacy): Validated on synthetic data at 4.75% RMSE post-HPO with confidence 0.72-0.82. Partial on real traces: ClarkNet RMSE 17.78% falls below original thresholds due to workload non-stationarity.
+H3 (GRU prediction adequacy): Validated on synthetic data at 4.75% RMSE post-HPO with confidence 0.72-0.88. Partial on real traces: ClarkNet RMSE 17.78% falls below original thresholds due to workload non-stationarity.
 
 The n = 1 diagnostic cost projection (S1 = USD 132/mo, S2 = USD 394/mo, S3 = USD 147/mo, S4 = USD 142/mo) is a *directional estimate only* and must not be used to rank S3 and S4 or claim monthly savings. S1 is cheapest but fails the SLO (p99 = 2,421 ms); S2 is fastest but most expensive; the hybrid scenarios occupy a middle band.
 

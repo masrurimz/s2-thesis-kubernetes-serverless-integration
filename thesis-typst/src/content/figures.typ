@@ -99,7 +99,9 @@
 // ---------------------------------------------------------------------------
 // fig04_4 — Node provisioning timeline (definitive paired S3 run 1).
 // Total node CPU% over time (13 sample points, ~104 s apart) with vertical
-// markers at node_created (green) and scale_down_detected (red).
+// markers for every autoscaler lifecycle event. Two provisioning cycles:
+//   pending_detected -> provision_delay_started -> node_created (x2), then
+//   scale_down_detected -> node_deleted (x2) as load falls.
 // ---------------------------------------------------------------------------
 #let fig-node-provisioning() = line-chart(
   ((0, 6.0), (104, 59.4), (209, 63.3), (314, 125.8), (418, 100.7), (522, 115.4),
@@ -112,10 +114,19 @@
   y-label: [Total node CPU (%)],
   theme: (palette: (s3,)),
   annotations: (
+    // Cycle 1: pending -> delay -> node_created
+    (type: "v-line", value: 3.04, dash: "dotted", color: rgb("#7f7f7f"), label: [pending_detected]),
+    (type: "v-line", value: 3.04, dash: "dashed", color: rgb("#ff7f0e")),
     (type: "v-line", value: 3.77, dash: "dashed", color: evt-up, label: [node_created]),
-    (type: "v-line", value: 6.40, dash: "dashed", color: evt-up),
-    (type: "v-line", value: 7.30, dash: "dotted", color: slo, label: [scale_down]),
-    (type: "v-line", value: 11.77, dash: "dotted", color: slo),
+    // Cycle 2: pending -> delay -> node_created
+    (type: "v-line", value: 5.52, dash: "dotted", color: rgb("#7f7f7f")),
+    (type: "v-line", value: 5.52, dash: "dashed", color: rgb("#ff7f0e")),
+    (type: "v-line", value: 6.41, dash: "dashed", color: evt-up),
+    // Scale-down: detected -> deleted
+    (type: "v-line", value: 7.29, dash: "dash-dotted", color: slo, label: [scale_down_detected]),
+    (type: "v-line", value: 7.31, dash: "dotted", color: rgb("#9467bd"), label: [node_deleted]),
+    (type: "v-line", value: 11.76, dash: "dash-dotted", color: slo),
+    (type: "v-line", value: 11.78, dash: "dotted", color: rgb("#9467bd")),
   ),
 )
 
