@@ -1,5 +1,7 @@
 = LITERATURE REVIEW
 
+#import "ch02-figures.typ": *
+
 This chapter reviews the theoretical foundations and prior work that support this research. It covers cloud computing service models, container orchestration with Kubernetes, and serverless computing with the cold start problem. It also covers hybrid integration patterns, cloud application performance metrics, workload prediction with recurrent neural networks, and Kubernetes scaling strategies including the ElaX algorithm that this research extends.
 
 == Cloud Computing
@@ -23,8 +25,8 @@ The architecture has two planes. The Control Plane manages cluster-wide state an
 The Data Plane consists of Worker Nodes. These nodes run application workloads. Each node runs a Kubelet and a Kube-proxy. The Kubelet is an agent that ensures the containers in pod specifications run and stay healthy. The Kube-proxy is a network proxy. It maintains the rules that allow communication to pods. K3s is the lightweight Kubernetes distribution used in this research. It keeps full API compatibility and reduces the memory footprint to about 512MB RAM. This makes it suitable for resource-constrained environments.
 
 #figure(
-  image("../figures/image6.png", width: 80%),
-  caption: [Architecture of a Kubernetes cluster],
+  fig-k8s-architecture(),
+  caption: [Architecture of a Kubernetes cluster @kubernetes2024components],
 ) <fig:k8s-architecture>
 
 == Serverless Computing and Cold Start
@@ -34,14 +36,14 @@ Serverless computing is a cloud execution model. The provider manages the alloca
 Major commercial platforms include AWS Lambda, Google Cloud Functions, and Azure Functions. In the open-source ecosystem, Knative provides a Kubernetes-native serverless runtime. OpenFaaS offers a simpler function deployment model. This research uses Knative Serving as the serverless backend. It runs on the same Kubernetes cluster. This enables a fair comparison and simple traffic routing through a shared network namespace.
 
 #figure(
-  image("../figures/image8.png", width: 70%),
+  fig-serverless-architecture(),
   caption: [Serverless computing architecture @mampage2022holistic],
 ) <fig:serverless-architecture>
 
 The cloud service model and division of responsibilities are shown below @kavis2014.
 
 #figure(
-  image("../figures/image3.png", width: 80%),
+  fig-cloud-services(),
   caption: [Cloud services and division of responsibilities @kavis2014],
 ) <fig:cloud-services>
 
@@ -107,6 +109,6 @@ This research extends ElaX in three ways. First, GRU substitution replaces LSTM 
 The combination of ElaX's resource allocation model with cross-platform routing and GRU prediction forms the theoretical foundation for the hybrid system evaluated in this thesis.
 
 #figure(
-  image("../figures/image6.png", width: 80%),
+  fig-elax-architecture(),
   caption: [ElaX system architecture @yang2019elax],
 ) <fig:elax-architecture>

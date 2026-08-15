@@ -1,4 +1,30 @@
-#import "@preview/cetz:0.4.0"
+#import "ch03-figures.typ": *
+
+// ---------------------------------------------------------------------------
+// Algorithm block — matches the proposal docx style: a bordered box with a
+// bold "Algorithm N: Title" heading, a bold Input/Parameters preamble, and
+// numbered steps (1:, 2:, ...) with bold control-flow keywords and `<-`
+// assignment. An algorithm is NOT a Gambar figure.
+// ---------------------------------------------------------------------------
+#let algo(title, head, steps) = block(
+  stroke: 0.7pt + rgb("#5a6b80"),
+  inset: (x: 12pt, y: 10pt),
+  radius: 3pt,
+  breakable: true,
+)[
+  #align(center, text(size: 11pt)[#title])
+  #v(5pt)
+  #head
+  #v(4pt)
+  #for (n, b) in steps [
+    #grid(
+      columns: (2.6em, 1fr),
+      column-gutter: 0.5em,
+      align(right)[#n:],
+      b,
+    )
+  ]
+]
 
 = METHODOLOGY
 
@@ -13,7 +39,7 @@ Literature Study surveys cloud computing architectures, workload prediction meth
 Each phase produces artifacts that feed the next phases. The literature study informs the system design. The collected data trains the prediction model. The implemented system undergoes experimental evaluation. The evaluation results inform the thesis conclusions.
 
 #figure(
-  image("../figures/image11.png", width: 60%),
+  align(center, fig-research-flow()),
   caption: [Research methodology flow],
 ) <fig:research-flow>
 
@@ -40,51 +66,8 @@ Knative Serving (Serverless Backend) is deployed on the same K3s cluster. It use
 The system uses Prometheus for metrics collection. It also uses an SLO monitor component for real-time compliance checking. Prometheus scrapes HAProxy statistics at 1-second intervals. It collects request counts, response times, and backend health status. The SLO Monitor computes the 99th percentile (p99) tail latency from Prometheus time-series data. It also maintains a rolling violation window to detect sustained SLO breaches.
 
 #figure(
-  align(center, cetz.canvas(length: 1cm, {
-    import cetz.draw: *
-
-    let box-fill = rgb("#eef2f7")
-    let predict-fill = rgb("#fbf3e0")
-    let border = rgb("#5a6b80")
-    let lbl = rgb("#666666")
-
-    let node((x, y), body, fill: box-fill) = content(
-      (x, y),
-      box(
-        width: 2.6cm,
-        height: 0.9cm,
-        stroke: 0.7pt + border,
-        fill: fill,
-        inset: 3pt,
-        align(center + horizon, text(size: 7pt)[#body]),
-      ),
-    )
-
-    let arrow(a, b) = line(a, b, mark: (end: ">"), stroke: 0.7pt + border)
-
-    // Nodes
-    node((6.0, 10.2), [*SLO Monitor*\ p99, violation window])
-    node((2.4, 6.2), [*Algorithm 1*\ Routing Controller])
-    node((8.4, 6.2), [*Algorithm 2*\ Cluster Controller])
-    node((2.4, 2.6), [HAProxy weight update\ (k3s / knative)])
-    node((11.8, 6.2), [kubectl scale\ (K8s replicas)])
-    node((8.4, 0.4), [Confidence gate\ (confidence ≥ 0.5)], fill: predict-fill)
-    node((8.4, -1.6), [GRU forecast\ (9 × 15 s horizon)], fill: predict-fill)
-
-    // Arrows
-    arrow((5.0, 9.75), (2.9, 6.65))
-    arrow((7.0, 9.75), (7.9, 6.65))
-    arrow((2.4, 5.75), (2.4, 3.05))
-    arrow((9.7, 6.2), (10.5, 6.2))
-    arrow((8.4, 0.85), (8.4, 5.75))
-    arrow((8.4, -1.15), (8.4, -0.05))
-
-    // Labels
-    content((3.6, 8.4), text(size: 6.5pt, fill: lbl)[p99, violation window])
-    content((9.0, 8.3), text(size: 6.5pt, fill: lbl)[p99 (health gate)])
-    content((9.7, 3.4), text(size: 6.5pt, fill: lbl)[confidence-gated\ upper forecast])
-  })),
-  caption: [Hybrid control loop. The SLO monitor drives Algorithm 1 routing and Algorithm 2 replica scaling each 15-second cycle; the confidence-gated GRU forecast feeds proactive replica planning only.],
+  align(center, fig-control-loop()),
+  caption: [Hybrid system architecture. Clients send HTTP load through HAProxy, which splits traffic between the K3s and Knative backends by weight. The routing daemon reads Prometheus/SLO metrics and the GRU forecast, then writes HAProxy weights and kubectl scale commands each 15-second cycle.],
 ) <fig:control-loop>
 
 == Implementation
@@ -115,42 +98,37 @@ MAINTAIN (Priority 4): When none of the above conditions hold, the controller pr
 
 Traffic weights shift gradually in increments of 10% to avoid oscillation. They move from 100/0 (K8s only) through 90/10, 80/20, 70/30, 60/40, to a maximum of 50/50. When serverless first enables, the controller sends a synthetic health-check request to the Knative service endpoint. This request triggers cold start initialization. It reduces the latency penalty when actual traffic starts routing.
 
-#figure(
-  ```text
-  Algorithm 1: Routing Controller (priority decision framework)
-
-  Input:  p99, violation_duration                 (SLO status)
-          prediction = {predicted_requests, confidence}   (S4 only)
-          current_load                           (RPS)
-          current weights (k3s, knative), serverless_enabled
-  Params: cooldown = 15 s, violation_window = 30 s, weight_step = 10,
-          healthy_margin = 0.7, confidence_threshold = 0.5,
-          load_change_threshold = 0.3, max_knative = 50
-
-  1   if now - last_adjust < cooldown:
-  2       return MAINTAIN (current weights)
-
-  3   if violation_duration >= violation_window:             // Priority 1
-  4       if not serverless_enabled: enable + pre-warm Knative
-  5       knative = min(max_knative, knative + weight_step)  // +10%, cap 50
-  6       return SCALE_OUT (k3s = 100 - knative, knative)
-
-  7   healthy = healthy_margin * 200                         // 140 ms
-  8   if prediction and healthy <= p99 < 200:                // Priority 2
-  9       if confidence >= confidence_threshold and
-  10          (predicted_requests - current_load) / current_load > load_change_threshold:
-  11          knative = min(max_knative, knative + weight_step)
-  12          return PREDICTIVE (k3s = 100 - knative, knative)
-
-  13  if p99 < healthy and current_load > 0:                 // Priority 3
-  14      k3s = min(100, k3s + weight_step / 2)              // +5% back to K8s
-  15      if k3s == 100: disable serverless (scale-to-zero)
-  16      return OPTIMIZE_COST (k3s, knative = 100 - k3s)
-
-  17  return MAINTAIN (current weights)                      // Priority 4
-  ```,
-  caption: [Algorithm 1: Routing Controller. Priority decision framework: SCALE_OUT, PREDICTIVE, OPTIMIZE_COST, MAINTAIN.],
-) <fig:algo1>
+#algo(
+  [#text(weight: "bold")[Algorithm 1:] Routing Controller (priority decision framework)],
+  [
+    *Input:* p99, violation_duration (SLO status); prediction = \{predicted_requests, confidence\} (S4 only); current_load (RPS); current weights (k3s, knative), serverless_enabled \
+    *Parameters:* cooldown = 15 s, violation_window = 30 s, weight_step = 10, healthy_margin = 0.7, confidence_threshold = 0.5, load_change_threshold = 0.3, max_knative = 50
+  ],
+  (
+    (1, [*if* now - last_adjust < cooldown *then*]),
+    (2, [#h(1.4em) *return* MAINTAIN (current weights)]),
+    (3, [*end if*]),
+    (4, [*if* violation_duration >= violation_window *then* #h(2em) \{Priority 1\}]),
+    (5, [#h(1.4em) *if* *not* serverless_enabled *then* enable + pre-warm Knative]),
+    (6, [#h(1.4em) knative #sym.arrow.l min(max_knative, knative + weight_step) #h(2em) \{+10%, cap 50\}]),
+    (7, [#h(1.4em) *return* SCALE_OUT (k3s = 100 - knative, knative)]),
+    (8, [*end if*]),
+    (9, [healthy #sym.arrow.l healthy_margin \* 200 #h(4em) \{140 ms\}]),
+    (10, [*if* prediction *and* healthy <= p99 < 200 *then* #h(1.4em) \{Priority 2\}]),
+    (11, [#h(1.4em) *if* confidence >= confidence_threshold *and*]),
+    (12, [#h(2.8em) (predicted_requests - current_load) / current_load > load_change_threshold *then*]),
+    (13, [#h(2.8em) knative #sym.arrow.l min(max_knative, knative + weight_step)]),
+    (14, [#h(2.8em) *return* PREDICTIVE (k3s = 100 - knative, knative)]),
+    (15, [#h(1.4em) *end if*]),
+    (16, [*end if*]),
+    (17, [*if* p99 < healthy *and* current_load > 0 *then* #h(2.8em) \{Priority 3\}]),
+    (18, [#h(1.4em) k3s #sym.arrow.l min(100, k3s + weight_step / 2) #h(2em) \{+5% back to K8s\}]),
+    (19, [#h(1.4em) *if* k3s = 100 *then* disable serverless (scale-to-zero)]),
+    (20, [#h(1.4em) *return* OPTIMIZE_COST (k3s, knative = 100 - k3s)]),
+    (21, [*end if*]),
+    (22, [*return* MAINTAIN (current weights) #h(4.2em) \{Priority 4\}]),
+  ),
+)
 
 === Algorithm 2: Cluster Controller
 
@@ -158,44 +136,37 @@ Algorithm 2 operates in two modes that share the same capacity model. In reactiv
 
 The controller scales by invoking kubectl scale deployment. It chose this command for its determinism and explicit audit trail. Safety checks include cooldown periods, replica bounds clamping, scale-down hysteresis, and readiness verification before traffic returns to Kubernetes. The cooldown periods are 15 seconds for scale-up and 300 seconds for scale-down in V3 mode. The definitive paired comparison used the tuned baseline: 120 s cooldown with a 0.75 scale-down threshold.
 
-#figure(
-  ```text
-  Algorithm 2: Cluster Controller (Kubernetes replica scaling)
-
-  Input:  x_obs            (mean observed RPS, last 30 s)
-          predicted_upper  (confidence-gated GRU upper forecast; S4 only)
-          c                (current desired replicas), p99
-  Params: alpha = 1 / (r_sat * cpu_util), beta = 0, buffer = 1.0
-          min_replicas = 3, max_replicas = 6, scale_down_threshold = 0.75
-          hold = 90 s, up_cooldown = 15 s, down_cooldown = 120 s
-
-  1   R(x) = clamp(ceil((alpha * x + beta) * buffer), min_replicas, max_replicas)
-
-  2   observed_target = R(x_obs)
-  3   target = observed_target; proactive = False
-
-  4   if predictive mode (S4) and forecast available:
-  5       predictive_target = R(predicted_upper)
-  6       if predictive_target > observed_target:            // strictly exceeds
-  7           target = predictive_target; proactive = True
-  8           hold_until = now + hold
-  9       elif now < hold_until and held_target > observed_target:
-  10          target = held_target; proactive = True          // proactive hold
-
-  11  if target > c:                          action = SCALE_UP
-  12  elif target < c * scale_down_threshold: action = SCALE_DOWN
-  13  else:                                   action = MAINTAIN
-
-  14  if action == SCALE_UP and now - last_up >= up_cooldown:
-  15      kubectl scale deployment --replicas=target
-  16  elif action == SCALE_DOWN and now - last_down >= down_cooldown
-  17       and p99 < healthy and max(min_replicas, target) < c:
-  18      kubectl scale deployment --replicas=max(min_replicas, target)
-
-  Output: target replicas, action
-  ```,
-  caption: [Algorithm 2: Cluster Controller. Kubernetes replica scaling from observed load or the confidence-gated GRU upper forecast.],
-) <fig:algo2>
+#algo(
+  [#text(weight: "bold")[Algorithm 2:] Cluster Controller (Kubernetes replica scaling)],
+  [
+    *Input:* x_obs (mean observed RPS, last 30 s); predicted_upper (confidence-gated GRU upper forecast; S4 only); c (current desired replicas), p99 \
+    *Parameters:* alpha = 1 / (r_sat \* cpu_util), beta = 0, buffer = 1.0, min_replicas = 3, max_replicas = 6, scale_down_threshold = 0.75, hold = 90 s, up_cooldown = 15 s, down_cooldown = 120 s
+  ],
+  (
+    (1, [R(x) = clamp(ceil((alpha \* x + beta) \* buffer), min_replicas, max_replicas)]),
+    (2, [observed_target #sym.arrow.l R(x_obs)]),
+    (3, [target #sym.arrow.l observed_target; proactive #sym.arrow.l *false*]),
+    (4, [*if* predictive mode (S4) *and* forecast available *then*]),
+    (5, [#h(1.4em) predictive_target #sym.arrow.l R(predicted_upper)]),
+    (6, [#h(1.4em) *if* predictive_target > observed_target *then* #h(1em) \{strictly exceeds\}]),
+    (7, [#h(2.8em) target #sym.arrow.l predictive_target; proactive #sym.arrow.l *true*]),
+    (8, [#h(2.8em) hold_until #sym.arrow.l now + hold]),
+    (9, [#h(1.4em) *else if* now < hold_until *and* held_target > observed_target *then*]),
+    (10, [#h(2.8em) target #sym.arrow.l held_target; proactive #sym.arrow.l *true* #h(1em) \{proactive hold\}]),
+    (11, [#h(1.4em) *end if*]),
+    (12, [*end if*]),
+    (13, [*if* target > c *then* action #sym.arrow.l SCALE_UP]),
+    (14, [*else if* target < c \* scale_down_threshold *then* action #sym.arrow.l SCALE_DOWN]),
+    (15, [*else* action #sym.arrow.l MAINTAIN]),
+    (16, [*end if*]),
+    (17, [*if* action = SCALE_UP *and* now - last_up >= up_cooldown *then*]),
+    (18, [#h(1.4em) kubectl scale deployment --replicas=target]),
+    (19, [*else if* action = SCALE_DOWN *and* now - last_down >= down_cooldown]),
+    (20, [#h(1.4em) *and* p99 < healthy *and* max(min_replicas, target) < c *then*]),
+    (21, [#h(1.4em) kubectl scale deployment --replicas=max(min_replicas, target)]),
+    (22, [*end if*]),
+  ),
+)
 
 === Node-Level Consolidation
 
