@@ -93,7 +93,7 @@ The S1 vs S2 comparison evaluates platform-native baselines. The S3 vs S1/S2 com
 
 === Evaluation Phases
 
-Phase A0 validates infrastructure and autoscaler mechanisms. Phase A1 validates individual system mechanisms under a controlled ramp load. Phase B conducts a counterbalanced paired comparison with ClarkNet trace-driven workload (40 stages, 30 seconds each, RPS 22 to 164, mean 73). It uses 5 pairs (10 runs) that alternate scenario order between S3 and S4, plus n = 1 four-scenario diagnostics. Phase C stresses the system with controlled burst profiles.
+Phase A0 validates infrastructure and autoscaler mechanisms. Phase A1 validates individual system mechanisms under a controlled ramp load. Phase B conducts a counterbalanced paired comparison with ClarkNet trace-driven workload (40 stages, 30 seconds each, RPS 22 to 164, mean 73). It uses 5 pairs (10 runs) that alternate scenario order between S3 and S4, plus n = 1 four-scenario diagnostics. A four-scenario replication completed Phase B on 2026-08-09 (`2026-08-09_clarknet-replay_032257`). It ran 4 scenarios, 5 runs each (20 clean runs), with all validity gates passed (5/5 per scenario). Phase C stresses the system with controlled burst profiles.
 
 === Metrics
 
@@ -101,7 +101,7 @@ User-perceived performance metrics include p50, p95, and p99 latency, error rate
 
 === Statistical Analysis Protocol
 
-The paired S3/S4 comparison uses a pre-specified one-sided permutation test on the paired p99 difference (alpha = 0.05). Secondary endpoints (p95, SLO violations, throughput, and error rate) are Bonferroni-corrected and reported descriptively. Only the primary endpoint may be claimed as statistically significant.
+The paired S3/S4 comparison uses a pre-specified one-sided permutation test on the paired p99 difference (alpha = 0.05). Secondary endpoints (p95, SLO violations, throughput, and error rate) are Bonferroni-corrected and reported descriptively. Only the primary endpoint may be claimed as statistically significant. The four-scenario replication (S1, S2, S3, S4, n = 5 each) uses Welch's t-test and the Mann-Whitney U test on per-scenario p99 latency, with the same alpha = 0.05. This comparison is two-sided and reported as replication-tier evidence rather than as a pre-specified claim.
 
 === Threats to Validity
 

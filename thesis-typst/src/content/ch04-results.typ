@@ -3,6 +3,7 @@
 // six experiment bundles listed below. Earlier bundles (February 2026 and
 // 2026-07-08/10) are invalidated by Bugs 1–13 documented in
 // results/claims/INCONSISTENCIES.md and are not used.
+#import "figures.typ": *
 
 = RESULTS AND DISCUSSION
 
@@ -53,7 +54,7 @@ The experiment validated weight shifting. Traffic weights moved from 100/0 (pure
 
 == Comparative Evaluation
 
-The comparative evaluation compares four deployment scenarios: S1 (Kubernetes with HPA), S2 (serverless-only), S3 (hybrid with reactive routing), and S4 (hybrid with predictive routing). All scenarios replayed the ClarkNet HTTP trace at a mean of 73 requests per second (peak 164 RPS). Each scenario used a calibrated node capacity of Docker `--cpus=1.0` per workload node (2.0 CPU total), with `max_k8s_replicas = 6` capped to schedulable capacity and no per-pod CPU limits. These are *n = 1 diagnostic* results from the `2026-07-11_scaling_fix_n1` baseline. The four-scenario comparison (H1) awaits replication. The S3-vs-S4 paired comparison (H2) is reported below as a definitive n = 5 experiment. All four scenarios ran on this fixed infrastructure, so the comparison is like-for-like within a single bundle. The superseded July bundles differed: in them, S1/S2 and S3/S4 came from different controller configurations.
+The comparative evaluation compares four deployment scenarios: S1 (Kubernetes with HPA), S2 (serverless-only), S3 (hybrid with reactive routing), and S4 (hybrid with predictive routing). All scenarios replayed the ClarkNet HTTP trace at a mean of 73 requests per second (peak 164 RPS). Each scenario used a calibrated node capacity of Docker `--cpus=1.0` per workload node (2.0 CPU total), with `max_k8s_replicas = 6` capped to schedulable capacity and no per-pod CPU limits. These are *n = 1 diagnostic* results from the `2026-07-11_scaling_fix_n1` baseline. The four-scenario comparison (H1) was subsequently replicated at n = 5, as reported below. The S3-vs-S4 paired comparison (H2) is reported below as a definitive n = 5 experiment. All four scenarios ran on this fixed infrastructure, so the comparison is like-for-like within a single bundle. The superseded July bundles differed: in them, S1/S2 and S3/S4 came from different controller configurations.
 
 #figure(
   kind: table,
@@ -69,6 +70,18 @@ The comparative evaluation compares four deployment scenarios: S1 (Kubernetes wi
 ) <tab:scenario-summary>
 
 The four scenarios separate into two regimes. S1 (pure Kubernetes with HPA) saturates under the ClarkNet load. Its p99 reaches 2,421.3 ms and it accrues 6,717 SLO violations (7.66% SLO violation rate), far exceeding the 200 ms SLO threshold. The other three scenarios keep the p99 well under the SLO. S2 (serverless-only) reaches 77.7 ms, S3 (hybrid-reactive) reaches 98.8 ms, and S4 (hybrid-predictive) reaches 118.2 ms. Their SLO violation rates are at or near zero (0.02%, 0.00%, and 0.12% respectively). Two directed comparisons assess the role of the hybrid scenarios: the predictive scenario against the reactive scenario (S4 vs S3), and the hybrid predictive scenario against pure Kubernetes (S4 vs S1). Only a single run is available per scenario for this table. No inferential statistics (t-tests, effect sizes, confidence intervals) are computed here. The S4-vs-S1 verdict is a descriptive *n = 1 diagnostic*. The S4-vs-S3 comparison (H2) uses the definitive n = 5 paired design reported in the subsections below.
+
+The completed four-scenario replication ran on 2026-08-08 and 2026-08-09 (`2026-08-09_clarknet-replay_032257`). It ran 4 scenarios, 5 runs each (20 clean runs). All validity gates passed (5/5 per scenario), and treatment fidelity was delivered in every S4 run. Per-scenario mean p99 was S1 110.3 ms, S2 79.7 ms, S3 151.6 ms, and S4 99.1 ms. SLO violations were S1 253, S2 2, S3 1,998, and S4 92. The replication did not reproduce the n = 1 diagnostic's S1 saturation. The reason is the replica cap. The n = 1 diagnostic used `max_k8s_replicas = 6`, which forced pure Kubernetes to saturate (p99 2,421.3 ms). The replication used the definitive calibration override `max_k8s_replicas = 10`. With that headroom, HPA alone covered the ClarkNet load, and S1 did not saturate (p99 110.3 ms). The hybrid-vs-pure-Kubernetes advantage (H1) therefore did not reproduce at n = 5. S4 vs S1 was -10.2% with p = 0.24 (not significant). This is an important methodological finding. The hybrid's advantage over pure Kubernetes appears when the baseline is capacity-constrained, not when HPA has ample headroom.
+
+#figure(
+  fig-p99-boxplot(),
+  caption: [Per-scenario p99 latency in the n = 5 four-scenario replication (`2026-08-09_clarknet-replay_032257`). S1 no longer saturates because the replica cap was raised to 10.],
+) <fig:p99-box-n5>
+
+#figure(
+  fig-slo-violations(),
+  caption: [SLO violations per scenario in the n = 5 four-scenario replication. S3 (reactive) accrues the most; S4 (predictive) reduces violations by 95.4% versus S3.],
+) <fig:slo-violations-n5>
 
 === Predictive versus Reactive (H2, Initial Result, Superseded)
 
@@ -121,9 +134,21 @@ The initial paired experiment (above) used a 5-step forecast horizon (75 s windo
 
 H2 is *statistically supported*. S4 achieves 33.1% lower mean p99 latency (126.0 ms vs 188.5 ms), with a permutation p-value of 0.030 (below alpha = 0.05) and a large effect size (Cohen's d = -1.26). S4 wins all 5 pairs. The 95% confidence interval [-100.9, -26.2] lies entirely below zero. S4 also shows 80.2% fewer SLO violations (130 vs 656) at identical monthly cost. The GRU forecast triggered 4--5 predictive decisions per S4 run (`predictive_count` = 4--5). Prediction therefore contributes to the latency advantage rather than consolidation noise. The progression from the initial non-significant result (p = 0.38, d = -0.241) to the definitive significant result (p = 0.030, d = -1.26) shows that forecast horizon adequacy, node consolidation, and reactive-baseline tuning were all necessary for an actionable comparison.
 
+#figure(
+  fig-paired-perpair(),
+  caption: [Per-pair p99 latency for the definitive paired H2 comparison (n = 5, `2026-07-14_clarknet-tuned-paired-n5`). S4 is faster in all five pairs.],
+) <fig:paired-h2-perpair>
+
 === Independent Replication (2026-08-07) <sec:replication>
 
 To verify repeatability, the study re-triggered the paired experiment twice from the aligned codebase on 2026-08-07. The re-runs used the same configuration as the definitive bundle (ClarkNet trace, counterbalanced paired design, seed 42, `max_k8s_replicas = 10` calibration override, 9-step horizon). The first replication batch (`2026-08-07_paired-h2_060200`, n = 5) confirmed the *direction* of H2. S4 won 4 of 5 pairs (S3 131.7 ms vs S4 109.9 ms, mean difference -21.8 ms; SLO violations 172 vs 101, -41%). The effect was consistently negative (d = -0.71) but did not reach significance (one-sided permutation p = 0.0958), because the reactive baseline ran faster in that batch. The second batch (`2026-08-07_paired-h2_104918`, n = 5) reproduced the July result almost exactly. S4 won *all 5 pairs* (S3 175.3 ms vs S4 94.6 ms, mean difference -80.8 ms, 95% CI [-152.0, -33.0]; one-sided permutation *p = 0.0304*, d = -1.00; SLO violations 626 vs 8, p = 0.0304). Pooled across both August batches (n = 10 pairs, S4 wins 9 of 10), S4 remains significantly faster: mean difference -51.3 ms, paired-bootstrap 95% CI [-94.4, -19.7], one-sided permutation p = 0.0030, d = -0.78. The two August batches provide an independent, configuration-matched re-run. Batch 2 is significant on its own, and the pooled result is highly significant. Batch 1 documents the realistic between-batch variance. Reproducing the comparison with the *default* calibration cap (`max_k8s_replicas = 6`) produces different system behavior (S3 absorbs peaks via serverless overflow). This is documented separately in `thesis/DRIFT_ANALYSIS.md` §6b.
+
+Two further paired batches ran on 2026-08-08. RUN1 (`2026-08-08_paired-h2_195150`, n = 5) was null (mean difference -4.0 ms, one-sided permutation p = 0.436). RUN2 (`2026-08-08_paired-h2_233726`, n = 5) was marginal (mean difference -58.0 ms, 95% CI [-161.5, -2.8], one-sided permutation p = 0.062). Both batches retained the S4-favorable direction. The full four-scenario replication (`2026-08-09_clarknet-replay_032257`, 4 scenarios, 5 runs each, 20 clean runs) tested the S4-vs-S3 comparison with Welch's t-test and Mann-Whitney U. It found a Mann-Whitney p = 0.032 (significant at alpha = 0.05) with d = -1.30. The replication is batch-dependent. Some batches reach significance and others do not. The direction is consistently S4-favorable across every batch.
+
+#figure(
+  image("../figures/fig04_6_replication_batches.png", width: 90%),
+  caption: [S4-vs-S3 paired p99 difference across replication batches. Every batch favors S4; significance varies between batches.],
+) <fig:replication-batches>
 
 === Hybrid versus Pure Kubernetes (S4 vs S1)
 
@@ -166,6 +191,11 @@ The cost proxy is a model, not a billing observation. Break-even analyses distin
 
 S1 is the cheapest scenario (USD 132/mo) but fails the SLO catastrophically (p99 = 2,421 ms, 7.66% violation rate). Its low cost reflects poor service rather than efficiency. S2 (serverless-only) is the most expensive (USD 394/mo) but achieves the best raw latency (77.7 ms). These n = 1 cost projections are *directional diagnostic estimates only*. They must not be used to rank S3 and S4 or to claim monthly savings.
 
+#figure(
+  fig-cost-comparison(),
+  caption: [AWS monthly cost projection per scenario (n = 1 diagnostic). S1 is cheapest but fails the SLO; S2 is most expensive.],
+) <fig:cost-comparison>
+
 == Dynamic Node Provisioning and Serverless Offload
 
 The baseline diagnostic (`2026-07-11_scaling_fix_n1`) caps `max_k8s_replicas = 6` to match the two-node schedulable capacity. The K3dAutoscaler never fires, and the third tier (node-level autoscaling) is not exercised. A separate high-load diagnostic (`2026-07-13_dynamic-node-offload`, n = 1) raises the cap to 10 replicas and applies a constant 200 RPS workload for 1,200 seconds. It deliberately exceeds the six-pod static envelope to trigger Pending pods, dynamic node provisioning, and sustained serverless offload simultaneously.
@@ -184,6 +214,11 @@ The baseline diagnostic (`2026-07-11_scaling_fix_n1`) caps `max_k8s_replicas = 6
 ) <tab:dynamic-node-offload>
 
 This diagnostic exercises all three tiers. Tier 1 (routing): the hybrid scenarios shift HAProxy weights between K8s and Knative. S3 and S4 each accumulate over 24,000 serverless weight-time product. Tier 2 (pod scaling): HPA and Algorithm 2 scale replicas from 3 to 10 (the override cap). Tier 3 (node autoscaling): the K3dAutoscaler detects Unschedulable Pending pods and provisions two dynamic workload nodes per run. Each run records `pending_detected -> provision_delay_started -> node_created` in the provision event log.
+
+#figure(
+  fig-node-provisioning(),
+  caption: [Dynamic node provisioning timeline in the three-tier diagnostic. Serverless offload absorbs the 51--70 s provisioning delay in S3 and S4.],
+) <fig:node-provisioning>
 
 The trade-off between adding nodes and offloading to serverless is visible in the data. S1 (pure Kubernetes with two dynamic nodes but no serverless offload) has the worst p99 (6,665 ms) and success rate (65.6%). S3 (hybrid-reactive with the same two dynamic nodes plus 96.5% serverless time) achieves the best p99 (874 ms). Knative absorbed the 51--70-second provisioning delay in S3 and S4. The same delay caused severe latency degradation in S1, where no serverless fallback existed. Dynamic node provisioning alone is not a substitute for serverless offload. The two mechanisms are complementary. The hybrid architecture gains its value by using both concurrently.
 
@@ -241,7 +276,7 @@ The experimental evaluation validates two things. It validates the mechanistic c
 
 The study validated several mechanisms. The GRU model meets its accuracy target on synthetic data. It achieves a validation RMSE of 4.75% after hyperparameter optimization and an MAE of 4.91%, at an inference latency of about 40 ms. On real ClarkNet traces the error is substantially higher (RMSE 17.78%, MAPE 18.74%). Real-traffic prediction is therefore a partial validation. The routing controller correctly implements the priority-based decision framework and exhibits all four action types. The confidence-gated forecast feeds Algorithm 2's replica planning. The corrected predictive mechanism fired 9 predictive decisions in the S4 diagnostic run.
 
-For the hybrid-versus-pure-Kubernetes comparison (H1), the result is directionally positive at n = 1. S4 reduced p99 latency by 95.1% (2,421.3 ms -> 118.2 ms) and SLO violations by 98.5% (6,717 -> 104) relative to S1. The previous negative finding was an infrastructure artifact (un-enforced CPU limits and S1 dynamic-node over-provisioning). It was not a property of the hybrid mechanism. The n = 1 result does not establish inferential significance.
+For the hybrid-versus-pure-Kubernetes comparison (H1), the result is directionally positive at n = 1. S4 reduced p99 latency by 95.1% (2,421.3 ms -> 118.2 ms) and SLO violations by 98.5% (6,717 -> 104) relative to S1. The previous negative finding was an infrastructure artifact (un-enforced CPU limits and S1 dynamic-node over-provisioning). It was not a property of the hybrid mechanism. The n = 1 result does not establish inferential significance. The n = 5 four-scenario replication did not reproduce this advantage. It used `max_k8s_replicas = 10`, so S1 did not saturate (p99 110.3 ms). S4 versus S1 was not significant (p = 0.24). The hybrid's advantage therefore appears when the baseline is capacity-constrained, not when HPA has ample headroom.
 
 For the predictive-versus-reactive comparison (H2), the definitive paired experiment (n = 5 counterbalanced pairs, `2026-07-14_clarknet-tuned-paired-n5`, full treatment delivery) finds S4 mean p99 126.0 ms versus 188.5 ms for S3 (mean difference -62.5 ms, 95% CI [-100.9, -26.2] ms, p = 0.030, d = -1.26, large effect). S4 wins all 5 pairs. This result reverses the initial non-significant finding (p = 0.38, d = -0.241) documented in the superseded section above. The reversal came from three changes: extending the GRU forecast horizon from 5 to 9 steps (135 s), correcting the scaling calibration from alpha = 1/r_saturation to alpha = 1/r_effective, and adding utilization-based node consolidation. S4 also shows 80.2% fewer SLO violations (130 vs 656) at identical monthly cost. The corrected secondary p-values are descriptive only.
 
