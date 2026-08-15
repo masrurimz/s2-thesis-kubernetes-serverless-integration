@@ -193,7 +193,7 @@ Arsitektur *cloud* modern menghadapi tantangan *trade-off* antara skalabilitas d
 
 Sistem yang diusulkan mengimplementasikan pengontrol routing V3 berbasis kapasitas (*capacity-driven*) yang menggeser lalu lintas secara dinamis antara *backend Kubernetes* dan *serverless* berdasarkan pemantauan *tail latency*. Model GRU memengaruhi perencanaan replika Kubernetes melalui Algorithm 2, sedangkan Algorithm 1 merutekan berdasarkan beban teramati dan kapasitas replika siap. Evaluasi dilakukan melalui perbandingan berpasangan counterbalanced (n = 5, 10 run) antara skenario *hybrid-reactive* dan *hybrid-predictive* pada beban *trace* ClarkNet, ditambah diagnostik empat skenario n = 1 dan validasi mekanisme, dengan beban 40 tahap × 30 detik = 20 menit dan RPS 22--164.
 
-Pada perbandingan berpasangan S3/S4 yang berimbang (n = 5, beban variabel ClarkNet, perlakuan penuh), S4 mencapai rata-rata p99 126,0 ms vs 188,5 ms untuk S3 (selisih −62,5 ms, CI 95% [−100,9, −26,2] ms, p = 0,030, Cohen's d = −1,26, efek besar). S4 juga menunjukkan 80,2% lebih sedikit pelanggaran SLO (130 vs 656) dengan biaya bulanan yang identik. Prakiraan GRU memicu 4-5 keputusan prediktif per *run* S4. Metrik sekunder (p95, SLO) tidak signifikan setelah koreksi multiplisitas (p terkoreksi = 0,12). Model GRU mencapai RMSE 4,75% pada data sintetis; akurasi pada *trace* ClarkNet berada di bawah ambang batas target akibat non-stasioneritas beban kerja.
+Pada perbandingan berpasangan yang berimbang antara skenario hybrid-reactive (S3) dan hybrid-predictive (S4) (n = 5, beban variabel ClarkNet, perlakuan penuh), S4 mencapai rata-rata p99 126,0 ms vs 188,5 ms untuk S3 (selisih −62,5 ms, CI 95% [−100,9, −26,2] ms, p = 0,030, Cohen's d = −1,26, efek besar). S4 juga menunjukkan 80,2% lebih sedikit pelanggaran SLO (130 vs 656) dengan biaya bulanan yang identik. Prakiraan GRU memicu 4-5 keputusan prediktif per *run* S4. Metrik sekunder (p95, SLO) tidak signifikan setelah koreksi multiplisitas (p terkoreksi = 0,12). Model GRU mencapai RMSE 4,75% pada data sintetis; akurasi pada *trace* ClarkNet berada di bawah ambang batas target akibat non-stasioneritas beban kerja.
 
 #v(1em)
 #par(first-line-indent: 0pt)[
@@ -226,7 +226,7 @@ Modern cloud architecture faces a trade-off between scalability and cost efficie
 
 The proposed system implements a V3 capacity-driven routing controller that dynamically shifts traffic between Kubernetes and serverless backends based on tail latency monitoring. GRU prediction drives Kubernetes replica planning in Algorithm 2, while Algorithm 1 routes using observed load and ready-replica capacity. Evaluation uses a counterbalanced paired comparison (n = 5, 10 runs) of the hybrid-reactive and hybrid-predictive scenarios on a ClarkNet trace workload, plus n = 1 four-scenario diagnostics and mechanism validation. The trace has 40 stages × 30 seconds = 20 minutes, with RPS 22--164.
 
-In the counterbalanced S3/S4 paired comparison (n = 5, ClarkNet variable load, full treatment delivery), S4 achieves mean p99 126.0 ms versus 188.5 ms for S3 (mean difference -62.5 ms, 95% CI [-100.9, -26.2] ms, p = 0.030, Cohen's d = -1.26, large effect). S4 also shows 80.2% fewer SLO violations (130 vs 656) at identical monthly cost. The GRU forecast triggered 4-5 predictive decisions per S4 run. Secondary metrics (p95, SLO) are not significant after multiplicity correction (corrected p = 0.12). The GRU model achieves 4.75% RMSE on synthetic data; real-trace accuracy falls below the 10% target due to workload non-stationarity.
+In the counterbalanced paired comparison of the hybrid-reactive (S3) and hybrid-predictive (S4) scenarios (n = 5, ClarkNet variable load, full treatment delivery), S4 achieves mean p99 126.0 ms versus 188.5 ms for S3 (mean difference -62.5 ms, 95% CI [-100.9, -26.2] ms, p = 0.030, Cohen's d = -1.26, large effect). S4 also shows 80.2% fewer SLO violations (130 vs 656) at identical monthly cost. The GRU forecast triggered 4-5 predictive decisions per S4 run. Secondary metrics (p95, SLO) are not significant after multiplicity correction (corrected p = 0.12). The GRU model achieves 4.75% RMSE on synthetic data; real-trace accuracy falls below the 10% target due to workload non-stationarity.
 
 #v(1em)
 #par(first-line-indent: 0pt)[
@@ -268,6 +268,9 @@ In the counterbalanced S3/S4 paired comparison (n = 5, ClarkNet variable load, f
 )
 
 #pagebreak()
+
+#counter(page).update(1)
+#set page(numbering: "1")
 
 #include "content/ch01-introduction.typ"
 #include "content/ch02-literature.typ"

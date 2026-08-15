@@ -523,6 +523,7 @@
   set par(first-line-indent: (amount: 1.5em, all: true))
 
   // ---- 11. Roman numbering for preliminary pages ----
+  counter(page).update(1)
   set page(numbering: "i")
 
   // ---- 12. User content (dedication, foreword, abstracts,    ----
