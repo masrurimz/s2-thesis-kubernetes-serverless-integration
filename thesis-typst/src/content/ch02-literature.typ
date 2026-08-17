@@ -10,7 +10,15 @@ Cloud computing is a model for ubiquitous, convenient, on-demand network access 
 
 Cloud computing services fall into four models. Each model defines a different boundary of responsibility between the provider and the consumer:
 
-IaaS (Infrastructure as a Service) provides raw compute, storage, and networking. The user manages applications, data, runtime, middleware, and the OS. The provider manages virtualization, servers, storage, and networking. PaaS (Platform as a Service) adds managed runtime and middleware. The user manages only applications and data. SaaS (Software as a Service) delivers complete applications. The user manages only their data. FaaS (Function as a Service) is the most granular model. Developers deploy single functions without knowledge of the underlying execution environment. This research operates at the intersection of IaaS/PaaS (Kubernetes container orchestration) and FaaS (Knative serverless functions).
+- IaaS (Infrastructure as a Service) provides raw compute, storage, and networking. The user manages applications, data, runtime, middleware, and the OS. The provider manages virtualization, servers, storage, and networking.
+
+- PaaS (Platform as a Service) adds managed runtime and middleware. The user manages only applications and data.
+
+- SaaS (Software as a Service) delivers complete applications. The user manages only their data.
+
+- FaaS (Function as a Service) is the most granular model. Developers deploy single functions without knowledge of the underlying execution environment.
+
+This research operates at the intersection of IaaS/PaaS (Kubernetes container orchestration) and FaaS (Knative serverless functions).
 
 The hybrid cloud model is relevant to this research. The proposed architecture routes traffic between a Kubernetes cluster and a serverless platform. The Kubernetes cluster is analogous to a managed private environment. The serverless platform is analogous to a public elastic service. The system selects the right backend from real-time performance and predicted workload conditions.
 
@@ -55,7 +63,17 @@ The cold start penalty is large for latency-sensitive applications with strict S
 
 Kubernetes and serverless have complementary strengths and weaknesses. Kubernetes gives consistent low latency and is cost-efficient for sustained loads, but it requires capacity planning. Serverless gives instant elasticity and zero idle cost, but it has a cold start penalty. These differences motivate combining the two into hybrid architectures @dehigama2024. Dehigama et al. @dehigama2024 showed that a hybrid VM-serverless deployment can cut total cost by 7.5% compared to optimally provisioned VM-only setups. It also keeps SLO compliance. PulseNet @pulsenet2025 proposed a dual-track control plane. It separates sustainable traffic from excessive traffic. It gives 35% better performance than FaaS-only systems at cost parity.
 
-Combining Kubernetes and serverless gives four key advantages. Cost optimization: Kubernetes serves predictable baseline load and avoids per-invocation serverless costs; serverless serves burst traffic and avoids over-provisioning. Performance: warm Kubernetes pods avoid cold start latency for most requests; serverless handles overflow. Flexibility: each workload component runs on the most suitable platform. Reliability: cross-platform routing gives a fallback. LA-IMR @laimr2026 showed up to 20.7% P99 latency reduction in hybrid cloud-edge environments. It used predictive in-memory routing and proactive autoscaling.
+Combining Kubernetes and serverless gives four key advantages:
+
+- Cost optimization: Kubernetes serves predictable baseline load and avoids per-invocation serverless costs; serverless serves burst traffic and avoids over-provisioning.
+
+- Performance: warm Kubernetes pods avoid cold start latency for most requests; serverless handles overflow.
+
+- Flexibility: each workload component runs on the most suitable platform.
+
+- Reliability: cross-platform routing gives a fallback.
+
+LA-IMR @laimr2026 showed up to 20.7% P99 latency reduction in hybrid cloud-edge environments. It used predictive in-memory routing and proactive autoscaling.
 
 The literature describes two primary patterns. The Overflow Model routes all traffic to Kubernetes until saturation appears in CPU, memory, or latency metrics. Then excess traffic overflows to the serverless backend. This pattern is reactive. It responds to saturation after it occurs. The latency between detection and the availability of serverless capacity creates a window. SLO violations may occur in this window. The Predictive Scaling pattern uses a forecasting model to anticipate demand. It adjusts Kubernetes capacity before limits are reached. This pattern motivates the architecture proposed in this research. Its routing controller still uses observed load and ready capacity. AAPA @aapa2025 showed that archetype-aware confidence weighting reduces SLO violations.
 

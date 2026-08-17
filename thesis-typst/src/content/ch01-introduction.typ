@@ -52,9 +52,9 @@ The objectives of this research are:
 
 == Research Benefits (Manfaat Penelitian)
 
-Academic Benefits: contributes to hybrid cloud knowledge, reproducible methodology, extends ElaX.
+- *Academic Benefits:* contributes to hybrid cloud knowledge, reproducible methodology, extends ElaX.
 
-Practical Benefits: working architecture blueprint, validates GRU latency for real-time, empirical trade-off data.
+- *Practical Benefits:* working architecture blueprint, validates GRU latency for real-time, empirical trade-off data.
 
 == Research Contribution (Kontribusi Penelitian)
 
@@ -66,28 +66,28 @@ Practical Benefits: working architecture blueprint, validates GRU latency for re
 
 == Problem Constraints (Batasan Masalah)
 
-Platform: K3s + Knative + Kourier + HAProxy.
+- *Platform:* K3s + Knative + Kourier + HAProxy.
 
-Prediction: GRU only; prediction drives Algorithm 2 replica scaling, while Algorithm 1 routing uses observed load and capacity.
+- *Prediction:* GRU only; prediction drives Algorithm 2 replica scaling, while Algorithm 1 routing uses observed load and capacity.
 
-Training: synthetic + validation on ClarkNet/Calgary.
+- *Training:* synthetic + validation on ClarkNet/Calgary.
 
-Metrics: p99, throughput, error; cost proxy.
+- *Metrics:* p99, throughput, error; cost proxy.
 
-SLO: 200 ms p99.
+- *SLO:* 200 ms p99.
 
-Environment: multi-node k3d (two workload nodes, CPU-bounded, with dynamic nodes in high-load diagnostics).
+- *Environment:* multi-node k3d (two workload nodes, CPU-bounded, with dynamic nodes in high-load diagnostics).
 
-Traffic: HTTP request-response.
+- *Traffic:* HTTP request-response.
 
 == Writing Systematics (Sistematika Penulisan)
 
-Chapter 1: Introduction (this).
+1. Chapter 1: Introduction (this).
 
-Chapter 2: Literature Review.
+2. Chapter 2: Literature Review.
 
-Chapter 3: Methodology.
+3. Chapter 3: Methodology.
 
-Chapter 4: Results and Discussion.
+4. Chapter 4: Results and Discussion.
 
-Chapter 5: Conclusion and Future Work.
+5. Chapter 5: Conclusion and Future Work.

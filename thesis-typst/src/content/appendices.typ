@@ -27,8 +27,10 @@ Tabel berikut menyajikan parameter kalibrasi yang digunakan dalam eksperimen.
     [proactive_approach_ratio], [0.6],
     [proactive_lookahead_steps], [9],
   ),
-  caption: [Calibration parameters (default; the definitive paired H2 bundle used an experiment-local override #raw("max_k8s_replicas = 10, prediction_horizon = 9"), see the calibration override file under #raw("results/calibration/2026-08-06_definitive-repro.json"))],
+  caption: [Parameter kalibrasi (default)],
 )
+
+*Catatan (override definitif):* Bundle berpasangan definitif H2 menggunakan override khusus eksperimen `max_k8s_replicas = 10, prediction_horizon = 9`, bukan nilai default pada tabel di atas. Override ini penting karena menjelaskan mengapa S1 tidak jenuh pada replikasi n=5.
 
 == Alokasi Sumber Daya Kluster
 
@@ -84,7 +86,7 @@ Tabel berikut menyajikan nilai p99 per pasangan dari bundle definitif `2026-07-1
     [4], [164.0], [155.7], [-8.3], [Ya],
     [5], [199.2], [167.4], [-31.8], [Ya],
   ),
-  caption: [Per-pair p99 latency pada bundle definitif ClarkNet (S3 reaktif vs S4 prediktif).],
+  caption: [Per-pair p99 latency (bundle definitif ClarkNet)],
 )
 
 == Ringkasan Uji Statistik Definitif
@@ -104,7 +106,7 @@ Tabel berikut menyajikan nilai p99 per pasangan dari bundle definitif `2026-07-1
     [Pelanggaran SLO rata-rata], [S3 656; S4 130],
     [Biaya bulanan], [USD 163 vs USD 163],
   ),
-  caption: [Hasil statistik bundle definitif; p99 adalah endpoint primer yang telah dipra-spesifikasikan.],
+  caption: [Hasil statistik bundle definitif],
 )
 
 Bundle ini adalah perbandingan definitif counterbalanced untuk H2. Seluruh 5 pasangan valid, seluruh 280 prediksi GRU terkirim, dan `predictive_count` berada pada 4--5 per run S4. Metrik sekunder dilaporkan deskriptif setelah koreksi Bonferroni (p terkoreksi = 0.1216).
@@ -177,7 +179,7 @@ class CalibrationConfig(BaseModel):
 
 == Data Mentah Replikasi n=5
 
-Tabel berikut menyajikan hasil per-run replikasi empat skenario `2026-08-09_clarknet-replay_032257` yang telah selesai (n=5 per skenario).
+Tabel berikut menyajikan hasil per-run replikasi empat skenario `2026-08-09_clarknet-replay_032257` yang telah selesai (n=5 per skenario); nilai p99 dibulatkan satu desimal.
 
 #figure(
   kind: table,
@@ -205,7 +207,7 @@ Tabel berikut menyajikan hasil per-run replikasi empat skenario `2026-08-09_clar
     [4], [S4 (Hybrid-prediktif)], [94.4], [12],
     [5], [S4 (Hybrid-prediktif)], [93.8], [1],
   ),
-  caption: [Hasil per-run replikasi n=5 (bundle `2026-08-09_clarknet-replay_032257`); nilai p99 dibulatkan satu desimal.],
+  caption: [Hasil per-run replikasi n=5],
 )
 
 == Ringkasan Per-Skenario n=5
@@ -220,7 +222,7 @@ Tabel berikut menyajikan hasil per-run replikasi empat skenario `2026-08-09_clar
     [S3 (Hybrid-reaktif)], [5], [151.6], [1998], [73.2],
     [S4 (Hybrid-prediktif)], [5], [99.1], [92], [73.2],
   ),
-  caption: [Ringkasan rata-rata per skenario (rerata p99 dan total pelanggaran SLO).],
+  caption: [Ringkasan rata-rata per skenario],
 )
 
 == Perbandingan Statistik n=5

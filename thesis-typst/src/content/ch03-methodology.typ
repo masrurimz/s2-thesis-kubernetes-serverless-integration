@@ -45,21 +45,31 @@ Each phase produces artifacts that feed the next phases. The literature study in
 
 == Data Collection
 
-The GRU prediction model requires time-series workload data for training and validation. The research uses two data sources. The first is synthetic workload patterns. These patterns encode common traffic shapes: diurnal cycles, random bursts, and gradual ramps. The second is real HTTP trace datasets. These come from ClarkNet (NASA ClarkNet WWW server, August 1995, mean 3.27 RPS per second) and Calgary (University of Calgary, October 1994, mean 1.20 RPS per second).
+The GRU prediction model requires time-series workload data for training and validation. The research uses two data sources: synthetic workload patterns and real HTTP trace datasets. It is important to distinguish two separate uses of this data: *training data*, which builds and validates the prediction model, and *replay load*, which constructs the experiment's workload. They are not the same artifact.
 
-The synthetic generator produces configurable traffic patterns at 1-second RPS resolution. Its parameters cover diurnal amplitude, burst frequency, and ramp slope. The research generates a 72-hour synthetic dataset and splits it 70/15/15 into training, validation, and test sets. The research aggregates real traces to 1-minute, 5-minute, and 10-minute intervals. This aggregation assesses the effect of temporal resolution on prediction accuracy. The same model architecture and hyperparameters that train on synthetic data also apply to real traces for generalization assessment.
+=== Training Data
+
+Training data comes from two sources. The first is synthetic workload patterns. These patterns encode common traffic shapes: diurnal cycles, random bursts, and gradual ramps. The synthetic generator produces configurable traffic patterns at 1-second RPS resolution. Its parameters cover diurnal amplitude, burst frequency, and ramp slope. The research generates a 72-hour synthetic dataset and splits it 70/15/15 into training, validation, and test sets. The second source is the real HTTP trace datasets. These come from ClarkNet (NASA ClarkNet WWW server, August 1995, mean 3.27 RPS per second) and Calgary (University of Calgary, October 1994, mean 1.20 RPS per second). The research aggregates these real traces to 1-minute, 5-minute, and 10-minute intervals. This aggregation assesses the effect of temporal resolution on prediction accuracy. The model is trained on the synthetic data, and the same architecture and hyperparameters are applied to the real trace aggregates for generalization assessment. These aggregates validate the model; they are not the replay load.
+
+=== Replay Load (Sampling the Real Traces)
+
+The experiment load is a sampled window of the ClarkNet trace, separate from the training data. The ClarkNet and Calgary logs are continuous multi-month traces; replaying them in full is infeasible on a testbed. The experiment therefore selects one representative variable-load window, 1995-09-02 04:35:30 to 04:55:00 UTC, chosen for its high variance (coefficient of variation 0.468) with ramps and surges rather than a flat plateau. This window gives both reactive and predictive control decisions room to act. It is encoded as a k6 stage profile: 40 stages of 30 seconds each, 1,200 seconds (~20 minutes) total, at 22 to 164 RPS with a mean of 73 RPS (the raw 2.22 RPS mean scaled by a factor of 33 to reach the testbed's scaling-relevant regime). Phase B replays this profile through k6's ramping-arrival-rate executor.
 
 == System Architecture
 
 The proposed system integrates three subsystems. They are an offline training pipeline, an online prediction and control plane, and a hybrid execution infrastructure. The architecture uses a two-layer design inspired by the ElaX algorithm framework. The thesis-specific roles are explicit. Algorithm 1 governs traffic routing from observed load, ready-replica capacity, and SLO status. Algorithm 2 manages Kubernetes replica scaling from observed load or the confidence-gated GRU upper forecast. Both algorithms run in a single routing daemon. The daemon executes them in a coordinated 15-second control loop. Algorithm 1 provides immediate traffic shedding to serverless. Algorithm 2 scales Kubernetes replicas to restore capacity. Then Algorithm 1 returns traffic to Kubernetes.
 
+The execution infrastructure is a simulation of a real two-platform deployment on a single physical testbed. A production deployment would run Kubernetes and serverless as two separate managed platforms (for example, a managed Kubernetes service alongside a managed Knative/serverless platform). Reproducing that faithfully would require two physical clusters, which would complicate the controlled 15-second control-loop experiments. Instead, both platforms run on one physical k3d cluster — a single host with two CPU-bounded nodes — chosen for practical reproducibility. The two platforms are logically isolated and operated as if they were independent systems; the isolation mechanisms are detailed in Infrastructure Components. In operation, clients send HTTP load through HAProxy, which splits traffic between the two backends by weight. Each 15-second cycle the routing daemon reads Prometheus and SLO metrics plus the GRU forecast, then writes HAProxy weights and kubectl scale commands. The value claim of the thesis is this control plane (routing and scaling decisions), which is platform-agnostic: it issues HAProxy weight updates and kubectl scale commands through the same interfaces regardless of where the platforms physically run, so the measured control-plane behavior would be identical over physically separate platforms.
+
 === Infrastructure Components
 
-HAProxy is the entry point for all HTTP traffic. It distributes requests between the Kubernetes and serverless backends using weighted routing rules. Algorithm 1 adjusts the weights dynamically through the HAProxy Runtime API (TCP socket interface). HAProxy also exposes a statistics endpoint. This endpoint provides real-time throughput and latency metrics that the monitoring subsystem consumes.
+HAProxy is the entry point for all HTTP traffic. It distributes requests between the Kubernetes and serverless backends using weighted routing rules. HAProxy treats the two backends as two independent upstream endpoints and assigns them runtime-adjustable weights. Algorithm 1 adjusts the weights dynamically through the HAProxy Runtime API (TCP socket interface). HAProxy also exposes a statistics endpoint. This endpoint provides real-time throughput and latency metrics that the monitoring subsystem consumes.
 
 K3s (Kubernetes Backend) is a lightweight, certified Kubernetes distribution. It is deployed via k3d (k3s-in-Docker). K3s runs the primary application workload as always-warm pods. It provides consistent low-latency responses for baseline traffic. In this study, K3s is the baseline warm capacity. The research evaluates the relative cost advantage empirically per run, not as an assumption made a priori.
 
-Knative Serving (Serverless Backend) is deployed on the same K3s cluster. It uses Kourier as the ingress controller. Knative provides scale-to-zero capability and rapid autoscaling for burst traffic. When the routing controller enables the serverless backend, Knative manages the pod lifecycle automatically. This includes cold start initialization. The serverless backend activates only when SLO violations occur or when the GRU model predicts an imminent load surge.
+Knative Serving (Serverless Backend) runs on the same physical k3d cluster but is operated as an independent platform. It uses Kourier as its own ingress controller. Knative provides scale-to-zero capability and rapid autoscaling for burst traffic. When the routing controller enables the serverless backend, Knative manages the pod lifecycle automatically. This includes cold start initialization. The serverless backend activates only when SLO violations occur or when the GRU model predicts an imminent load surge.
+
+Four mechanisms enforce the logical isolation between the two platforms. First, separate namespaces and application instances: the warm workload runs as a Kubernetes Deployment (test-app-warm) with its own Service, while the serverless workload runs as a Knative Service. Second, separate ingress paths: the Kubernetes backend is reached through its own NodePort Service, whereas the serverless backend is reached through Knative's own ingress controller (Kourier), which routes on the Knative Host header. Third, independent autoscaling: Knative's KPA scales on concurrency and can scale to zero, while Kubernetes replicas are scaled by the HPA (S1) or by Algorithm 2 via kubectl (S3/S4). Fourth, independent lifecycle: the serverless backend can cold-start and scale to zero while the warm Kubernetes pods remain steady. Because the platforms are logically isolated and the control plane is platform-agnostic, this single-testbed simulation reproduces the behavior of a real deployment where Kubernetes and serverless are separate managed platforms.
 
 === Monitoring and Metrics Collection
 
@@ -67,7 +77,7 @@ The system uses Prometheus for metrics collection. It also uses an SLO monitor c
 
 #figure(
   align(center, fig-control-loop()),
-  caption: [Hybrid system architecture. Clients send HTTP load through HAProxy, which splits traffic between the K3s and Knative backends by weight. The routing daemon reads Prometheus/SLO metrics and the GRU forecast, then writes HAProxy weights and kubectl scale commands each 15-second cycle.],
+  caption: [Hybrid system architecture],
 ) <fig:control-loop>
 
 == Implementation
@@ -82,19 +92,16 @@ The trained model runs in a FastAPI prediction server. The server accepts recent
 
 === Resource Allocation Model
 
-The resource allocation model uses a linear form. In this model, R is the target replica count, x is predicted or observed traffic intensity (requests per second), alpha is the resource-per-request coefficient (replicas per RPS), and beta is base replica overhead (minimum replicas at near-zero traffic). The research derives alpha from a calibrated saturation measurement: alpha = 1/r_effective, where r_effective = r_saturation_per_replica × target_cpu_util. At each control interval, the daemon computes a target replica count with a safety buffer gamma (typically 1.0). It clamps this count to fixed bounds [3, 6] under the default calibration. Workload pods request 300 millicores. The two static workload nodes are CPU-bounded at 1.0 CPU each. The definitive paired H2 experiment used an experiment-local calibration override (`max_k8s_replicas = 10`, `prediction_horizon = 9`; see `results/calibration/2026-08-06_definitive-repro.json`). This override makes ClarkNet peaks exceed the six-pod static envelope and exercise node-level autoscaling. It matches the configuration recorded in `results/claims/FINAL_NUMBERS.md`.
+The resource allocation model uses a linear form. In this model, R is the target replica count, x is predicted or observed traffic intensity (requests per second), alpha is the resource-per-request coefficient (replicas per RPS), and beta is base replica overhead (minimum replicas at near-zero traffic). The research derives alpha from a calibrated saturation measurement: alpha = 1/r_effective, where r_effective = r_saturation_per_replica × target_cpu_util. At each control interval, the daemon computes a target replica count with a safety buffer gamma (typically 1.0). It clamps this count to fixed bounds [3, 6] under the default calibration. Workload pods request 300 millicores. The two static workload nodes are CPU-bounded at 1.0 CPU each. The definitive paired H2 experiment used an experiment-local calibration override (`max_k8s_replicas = 10`, `prediction_horizon = 9`; see the definitive calibration override record). This override makes ClarkNet peaks exceed the six-pod static envelope and exercise node-level autoscaling. It matches the consolidated calibration record.
 
 === Algorithm 1: Routing Controller
 
 Algorithm 1 is the primary decision engine. It monitors SLO compliance and adjusts traffic routing weights between Kubernetes and serverless backends. It uses a priority-based decision framework with four action types:
 
-SCALE_OUT (Priority 1): When p99 latency exceeds the SLO threshold (200ms) for a sustained violation window, the controller shifts traffic toward the serverless backend. It increments the serverless weight in steps of 10%.
-
-PREDICTIVE (Priority 2): When the system is healthy and the observed-load trend indicates an approaching capacity boundary, the controller may adjust serverless engagement using observed signals and the confidence gate. The GRU forecast is consumed by Algorithm 2 for Kubernetes replica planning. It does not directly set routing weights.
-
-OPTIMIZE_COST (Priority 3): When p99 latency is well within the healthy margin (under 70% of the SLO threshold), the controller gradually reduces serverless usage to save cost.
-
-MAINTAIN (Priority 4): When none of the above conditions hold, the controller preserves current weights.
+- *SCALE_OUT (Priority 1):* When p99 latency exceeds the SLO threshold (200ms) for a sustained violation window, the controller shifts traffic toward the serverless backend. It increments the serverless weight in steps of 10%.
+- *PREDICTIVE (Priority 2):* When the system is healthy and the observed-load trend indicates an approaching capacity boundary, the controller may adjust serverless engagement using observed signals and the confidence gate. The GRU forecast is consumed by Algorithm 2 for Kubernetes replica planning. It does not directly set routing weights.
+- *OPTIMIZE_COST (Priority 3):* When p99 latency is well within the healthy margin (under 70% of the SLO threshold), the controller gradually reduces serverless usage to save cost.
+- *MAINTAIN (Priority 4):* When none of the above conditions hold, the controller preserves current weights.
 
 Traffic weights shift gradually in increments of 10% to avoid oscillation. They move from 100/0 (K8s only) through 90/10, 80/20, 70/30, 60/40, to a maximum of 50/50. When serverless first enables, the controller sends a synthetic health-check request to the Knative service endpoint. This request triggers cold start initialization. It reduces the latency penalty when actual traffic starts routing.
 
@@ -178,19 +185,21 @@ The K3dAutoscaler implements utilization-based node consolidation. It matches th
 
 The research defines four scenarios. They compare platform-native autoscaling baselines against the custom hybrid control plane. They also isolate the value of GRU prediction within the hybrid architecture:
 
-S1 (K8s + HPA Baseline): 100% traffic to Kubernetes, HPA native CPU-based autoscaling, GRU off.
-
-S2 (Knative-Only KPA): 100% traffic to Knative via HAProxy, KPA concurrency-based autoscaling with scale-to-zero, GRU off.
-
-S3 (Hybrid Reactive): Dynamic K8s to Knative routing via Algorithm 1, Algorithm 2 scaling using observed RPS (observed), GRU off.
-
-S4 (Hybrid Predictive): Dynamic K8s to Knative routing via Algorithm 1, Algorithm 2 scaling using GRU forecast (predicted), GRU on.
+#table(
+  columns: (auto, auto, auto, auto),
+  align: (left, left, left, left),
+  [*Scenario*], [*Description*], [*Autoscaling*], [*GRU*],
+  [S1 (K8s + HPA Baseline)], [100% traffic to Kubernetes], [HPA native CPU-based autoscaling], [off],
+  [S2 (Knative-Only KPA)], [100% traffic to Knative via HAProxy], [KPA concurrency-based autoscaling with scale-to-zero], [off],
+  [S3 (Hybrid Reactive)], [Dynamic K8s to Knative routing via Algorithm 1], [Algorithm 2 scaling using observed RPS (observed)], [off],
+  [S4 (Hybrid Predictive)], [Dynamic K8s to Knative routing via Algorithm 1], [Algorithm 2 scaling using GRU forecast (predicted)], [on],
+)
 
 The S1 vs S2 comparison evaluates platform-native baselines. The S3 vs S1/S2 comparison evaluates whether the hybrid reactive control plane improves over either baseline alone. The S3 vs S4 comparison isolates the value of GRU prediction. Both use hybrid routing and Algorithm 2 scaling. Both route by observed load. S4 also consumes the confidence-gated upper forecast for Kubernetes replica planning. A practical caveat applies. The scaling model maps load to replicas via ceil(alpha dot.op x dot.op gamma) clamped to a minimum of three replicas. Therefore moderate-load forecasts (e.g., 62 RPS) can map to the same replica target as the observed signal. This makes the predictive and reactive paths operationally identical for that cycle. The comparison is therefore only discriminative when the forecast produces a *different* replica target than the observed signal. This condition depends on the calibration margin and is analyzed in Chapter 4.
 
 === Evaluation Phases
 
-Phase A0 validates infrastructure and autoscaler mechanisms. Phase A1 validates individual system mechanisms under a controlled ramp load. Phase B conducts a counterbalanced paired comparison with ClarkNet trace-driven workload (40 stages, 30 seconds each, RPS 22 to 164, mean 73). It uses 5 pairs (10 runs) that alternate scenario order between S3 and S4, plus n = 1 four-scenario diagnostics. A four-scenario replication completed Phase B on 2026-08-09 (`2026-08-09_clarknet-replay_032257`). It ran 4 scenarios, 5 runs each (20 clean runs), with all validity gates passed (5/5 per scenario). Phase C stresses the system with controlled burst profiles.
+Phase A0 validates infrastructure and autoscaler mechanisms. Phase A1 validates individual system mechanisms under a controlled ramp load. Phase B conducts a counterbalanced paired comparison with ClarkNet trace-driven workload (40 stages, 30 seconds each, RPS 22 to 164, mean 73). Under this replay profile, S1 and S2 run on platform-native autoscaling (HPA and KPA respectively), while S3 and S4 run the custom control plane (Algorithm 1 routing plus Algorithm 2 scaling); all four scenarios receive the identical k6 replay load. It uses 5 pairs (10 runs) that alternate scenario order between S3 and S4, plus n = 1 four-scenario diagnostics. A four-scenario replication completed Phase B on 2026-08-09 (`2026-08-09_clarknet-replay_032257`). It ran 4 scenarios, 5 runs each (20 clean runs), with all validity gates passed (5/5 per scenario). Phase C stresses the system with controlled burst profiles.
 
 === Metrics
 
@@ -202,4 +211,4 @@ The paired S3/S4 comparison uses a pre-specified one-sided permutation test on t
 
 === Threats to Validity
 
-The experimental evaluation has several documented threats. The multi-node k3d testbed uses two CPU-bounded workload nodes and localhost-adjacent routing. It does not reproduce production network latency or network contention. Historical traces (1994-1995) may not match modern application semantics. Replay fidelity preserves request intensity but not client think times or cache behaviors. The single-threaded application constraint (GOMAXPROCS=1, /fib?n=33) creates reproducible saturation. It does not represent typical multi-threaded web applications. The artificial node capacity constraint forces autoscaler triggers at lower loads than production. All results should be interpreted as mechanism validation, not as production-representative performance guarantees.
+The experimental evaluation has several documented threats. The multi-node k3d testbed uses two CPU-bounded workload nodes and localhost-adjacent routing. It does not reproduce production network latency or network contention. Historical traces (1994-1995) may not match modern application semantics. Replay fidelity preserves request intensity but not client think times or cache behaviors. The single-threaded application constraint (GOMAXPROCS=1, /fib?n=33) creates reproducible saturation. It does not represent typical multi-threaded web applications. The artificial node capacity constraint forces autoscaler triggers at lower loads than production. Because both platforms share the same physical nodes, they compete for the same CPU capacity, which a real split deployment would not; the measured results are therefore a conservative, mechanism-validating bound rather than a production capacity claim. All results should be interpreted as mechanism validation, not as production-representative performance guarantees.

@@ -134,8 +134,20 @@
   // (center x, center y, width, height, title, tech, description, fill)
   container((1.5, 7.2), 2.9cm, 1.5cm, [Clients / Load], [k6 workload generator], [synthetic + ClarkNet traces], c-ext)
   container((6.0, 7.2), 3.6cm, 1.5cm, [HAProxy], [ingress, weighted routing], [Runtime API + stats endpoint], c-ing)
+  // Simulated platform separation — both backends run on ONE physical k3d
+  // testbed but are logically isolated and operated as independent platforms.
+  // Dashed container drawn BEHIND the boxes (with a margin) so the two
+  // backends sit inside one region; incoming arrows pass over the dashed
+  // edge naturally, keeping the diagram planar with zero arrow crossings.
+  line(
+    (2.5, 1.9), (11.5, 1.9), (11.5, 4.5), (2.5, 4.5), (2.5, 1.9),
+    close: true,
+    stroke: (paint: lbl, thickness: 0.7pt, dash: "dashed"),
+  )
   container((4.8, 3.2), 3.8cm, 1.6cm, [Knative Backend], [Knative + Kourier], [scale-to-zero serverless], c-inf)
   container((9.2, 3.2), 3.8cm, 1.6cm, [K3s Backend], [K3s via k3d], [always-warm pods], c-inf)
+  tag((7.0, 1.6), [simulated platform separation\
+    (shared physical testbed)])
 
   // --- control plane (top-right) --------------------------------------------
   container((6.0, 9.8), 3.2cm, 1.5cm, [Monitoring], [Prometheus + SLO monitor], [p99, violation window], c-obs)
