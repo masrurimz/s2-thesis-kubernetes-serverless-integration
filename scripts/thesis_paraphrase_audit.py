@@ -138,6 +138,59 @@ def jaccard(a: set[str], b: set[str]) -> float:
     return len(a & b) / len(a | b)
 
 
+AI_TELLS: dict[str, str] = {
+    "delve": r"\bdelve",
+    "crucial": r"\bcrucial",
+    "moreover": r"\bmoreover\b",
+    "furthermore": r"\bfurthermore\b",
+    "notably": r"\bnotably\b",
+    "it is worth noting": r"\bit is worth noting",
+    "leverage": r"\bleverag",
+    "seamless": r"\bseamless",
+    "robust": r"\brobust",
+    "landscape": r"\blandscape",
+    "tapestry": r"\btapestry",
+    "myriad": r"\bmyriad",
+    "plethora": r"\bplethora",
+    "harness": r"\bharness",
+    "pivotal": r"\bpivotal",
+    "foster": r"\bfoster",
+    "underscore": r"\bunderscore",
+    "not only but also": r"\bnot only\b[^.]*\bbut also\b",
+    "in conclusion": r"\bin conclusion\b",
+    "overall-comma": r"\boverall,",
+}
+
+
+def stylometric_report(text: str) -> list[str]:
+    """T5: AI-tell scan. Signals only, never a verdict: peer-reviewed evaluations
+    (Weber-Wulff et al. 2023; Liang et al. 2023) show AI detectors are unreliable
+    and false-flag non-native English writing. This tier reports surface tells and
+    burstiness so an author can remove them; it does not classify authorship."""
+    import re
+
+    prose = re.sub(r"//[^\n]*", " ", text)
+    prose = re.sub(r"\$[^$]*\$", " ", prose)
+    prose = re.sub(r"@[A-Za-z0-9_:-]+", " ", prose)
+    findings = []
+    for name, pat in AI_TELLS.items():
+        n = len(re.findall(pat, prose, re.I))
+        if n:
+            findings.append(f"[T5-AI-TELL] {name}: {n}")
+    em = prose.count("\u2014")
+    if em:
+        findings.append(f"[T5-AI-TELL] em-dash in prose: {em}")
+    sentences = [s for s in re.split(r"[.]+", prose) if len(s.split()) >= 3]
+    lengths = [len(s.split()) for s in sentences]
+    mean = sum(lengths) / max(len(lengths), 1)
+    var = sum((n_words - mean) ** 2 for n_words in lengths) / max(len(lengths), 1)
+    print(
+        f"T5 stats: {len(sentences)} sentences, mean {mean:.1f}w, "
+        f"burstiness {var**0.5 / mean:.2f} (low uniformity is human-like)"
+    )
+    return findings
+
+
 def audit(manuscript_glob: str, ref_dir: str, extract_dir: str) -> int:
     files = sorted(glob.glob(manuscript_glob, recursive=True))
     if not files:
@@ -196,6 +249,9 @@ def audit(manuscript_glob: str, ref_dir: str, extract_dir: str) -> int:
     except ImportError:
         print("T4: sentence-transformers not installed, tier skipped")
 
+    for line in stylometric_report(text):
+        findings += 1
+        print(line)
     print(f"\nfindings: {findings}")
     return 0 if findings == 0 else 1
 
