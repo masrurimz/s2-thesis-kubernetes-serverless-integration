@@ -402,7 +402,7 @@
   set text(font: body-font, size: 12pt)
   set par(justify: true, leading: 0.85em, spacing: 0.85em)
   set heading(numbering: "1.")
-  set list(indent: 2em, spacing: 0.3em)
+  set list(indent: 2em, spacing: 0.85em)
   set figure(kind: image, supplement: [Gambar], numbering: "1")
 
   // Force correct Indonesian supplement for table figures
