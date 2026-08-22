@@ -77,6 +77,26 @@ LA-IMR @laimr2026 showed up to 20.7% P99 latency reduction in hybrid cloud-edge 
 
 The literature describes two primary patterns. The Overflow Model routes all traffic to Kubernetes until saturation appears in CPU, memory, or latency metrics. Then excess traffic overflows to the serverless backend. This pattern is reactive. It responds to saturation after it occurs. The latency between detection and the availability of serverless capacity creates a window. SLO violations may occur in this window. The Predictive Scaling pattern uses a forecasting model to anticipate demand. It adjusts Kubernetes capacity before limits are reached. This pattern motivates the architecture proposed in this research. Its routing controller still uses observed load and ready capacity. AAPA @aapa2025 showed that archetype-aware confidence weighting reduces SLO violations.
 
+Earlier studies cover parts of this problem. @table-prior-work shows what each study covers, and what it does not.
+
+#figure(
+  kind: table,
+  table(
+    columns: (auto, auto, auto, auto),
+    align: (left, left, left, left),
+    [*Thread*], [*Representative work*], [*Covered*], [*Not covered*],
+    [Hybrid deployment cost], [@dehigama2024], [VM-serverless cost comparison], [No dynamic traffic routing],
+    [Dual-track serverless control], [@pulsenet2025], [Overflow routing and trend prediction on Knative], [No Kubernetes-FaaS routing, no confidence-gated prediction],
+    [Predictive autoscaling with confidence], [@aapa2025], [Archetype confidence weighting with an SLO objective], [Single platform, no cross-platform routing],
+    [Predictive cloud-edge routing], [@laimr2026], [Predictive routing and proactive autoscaling], [No separation of scaling and routing],
+    [GRU prediction for Kubernetes], [@mondal2023toward], [GRU forecasting of cluster load], [No routing, no serverless backend],
+    [Unified prediction and allocation], [@yang2019elax], [Predictor, resource model, online controller], [Single platform, no SLO-aware routing],
+  ),
+  caption: [Partial prior work on each thread],
+) <table-prior-work>
+
+Earlier work covers each thread. No single thread is new. The contribution is the combination: cross-platform routing between Kubernetes and an independent serverless platform, GRU prediction used for replica scaling, routing from observed load with SLO awareness, and a confidence gate on the forecast. No earlier system combines these parts. Built on ElaX's resource allocation model, this combination closes the research gap.
+
 == Cloud Application Performance Metrics
 
 Measuring and managing cloud application performance requires a structured framework of metrics, targets, and monitoring approaches.
@@ -95,7 +115,7 @@ Workload prediction turns reactive scaling into proactive scaling. Reactive scal
 
 LSTM (Long Short-Term Memory) is a recurrent neural network architecture. Hochreiter and Schmidhuber introduced it. It learns long-term dependencies in sequential data. The key innovation is the cell state. The cell state holds information and is regulated by three gates: the forget gate, the input gate, and the output gate. LSTM has been widely applied to cloud workload prediction @mondal2023toward. However, its three-gate architecture introduces large computational overhead. For a hidden state of size h, each LSTM cell requires $4h(h + x) + 4h$ parameters, where x is the input dimension. This overhead causes slower training and higher inference latency.
 
-GRU (Gated Recurrent Unit) is simpler than LSTM. Cho et al. proposed it. GRU combines the forget and input gates into a single update gate. It also merges the cell state and hidden state. The reset gate controls how much past information to forget. The update gate controls the balance between the previous hidden state and the candidate activation. Chung et al. ran an empirical evaluation. They found that GRU achieves comparable or superior performance to LSTM on many sequence modeling tasks. GRU uses about 25% fewer parameters. @mondal2023toward evaluated both architectures for Kubernetes workload prediction. It confirmed similar accuracy with significant computational savings.
+GRU (Gated Recurrent Unit) is simpler than LSTM. Cho et al. proposed it. GRU combines the forget and input gates into a single update gate. It also merges the cell state and hidden state. The reset gate controls how much past information to forget. The update gate controls the balance between the previous hidden state and the candidate activation. Chung et al. ran an empirical evaluation. They found that GRU achieves comparable or superior performance to LSTM on many sequence modeling tasks. The GRU cell needs about 25% fewer parameters than the LSTM cell, from three instead of four gate parameter sets. @mondal2023toward evaluated both architectures for Kubernetes workload prediction. It found similar accuracy, with slightly lower GRU training time.
 
 #figure(
   kind: table,
@@ -105,7 +125,7 @@ GRU (Gated Recurrent Unit) is simpler than LSTM. Cho et al. proposed it. GRU com
     [Gates], [3 (forget, input, output)], [2 (reset, update)],
     [State vectors], [2 (cell + hidden)], [1 (hidden only)],
     [Parameters per cell], [$4h(h+x) + 4h$], [$3h(h+x) + 3h$],
-    [Training speed], [Baseline], [~25% faster],
+    [Training speed], [Baseline], [Slightly faster],
     [Prediction accuracy], [Reference], [Comparable],
     [Real-time suitability], [Moderate], [High],
   ),
@@ -120,9 +140,9 @@ Kubernetes provides built-in autoscaling mechanisms at two granularity levels @r
 
 Both HPA and Cluster Autoscaler are reactive. They respond to observed metric thresholds. They do not anticipate future demand @zhang2021zeus. This reactive gap between demand onset and scaling completion is the core problem that predictive approaches address.
 
-ElaX (Elastic Execution) is an algorithm that provisions resource elasticity in containerized online cloud services. @yang2019elax proposed it. ElaX uses a two-layer decision architecture. It separates workload prediction from resource management. The Workload Predictor forecasts future traffic volume. It uses a recurrent neural network (LSTM or GRU). The Resource Allocation Model maps predicted traffic to required compute resources. It uses the linear model $R = alpha dot.op x + beta$, where R is CPU resources required, x is traffic volume (requests per second), alpha is the slope coefficient representing resource cost per request, and beta is base resource overhead. The Online Controller monitors real-time SLO compliance. It adjusts resources from the gap between target and observed tail latency. It uses a slack-based scaling algorithm.
+ElaX (Elastic Execution) is an algorithm that provisions resource elasticity in containerized online cloud services. @yang2019elax proposed it. ElaX has three components: a workload predictor, a resource reservation model, and an online controller. This design separates workload prediction from resource management. The Workload Predictor forecasts future traffic volume. It uses a Long Short-Term Memory (LSTM) recurrent network. The Resource Allocation Model maps predicted traffic to required compute resources. It uses the linear model $R = alpha dot.op x + beta$, where R is CPU resources required, x is traffic volume (requests per second), alpha is the slope coefficient representing resource cost per request, and beta is base resource overhead. The Online Controller monitors real-time SLO compliance. It adjusts resources from the gap between target and observed tail latency. It uses a slack-based scaling algorithm.
 
-This research extends ElaX in three ways. First, GRU substitution replaces LSTM with GRU as the workload predictor. This change reduces inference latency from about 100ms to about 40ms. It keeps comparable prediction accuracy. Second, capacity-driven decision logic extends the original resource allocation adjustment. It routes traffic between two platforms, Kubernetes and serverless. This change adds a cross-platform dimension to the elasticity decision. It uses observed load and ready capacity for routing. Third, a priority-based action hierarchy (SCALE_OUT, PREDICTIVE, OPTIMIZE_COST, MAINTAIN) integrates reactive SLO monitoring with confidence-gated predictive replica scaling. This hierarchy ensures that SLO recovery always takes precedence over cost optimization.
+This research extends ElaX in three ways. First, GRU substitution replaces LSTM with GRU as the workload predictor. In this research, GRU inference takes about 40 ms (Chapter 4). It keeps comparable prediction accuracy. Second, capacity-driven decision logic extends the original resource allocation adjustment. It routes traffic between two platforms, Kubernetes and serverless. This change adds a cross-platform dimension to the elasticity decision. It uses observed load and ready capacity for routing. Third, a priority-based action hierarchy (SCALE_OUT, PREDICTIVE, OPTIMIZE_COST, MAINTAIN) integrates reactive SLO monitoring with confidence-gated predictive replica scaling. This hierarchy ensures that SLO recovery always takes precedence over cost optimization.
 
 The combination of ElaX's resource allocation model with cross-platform routing and GRU prediction forms the theoretical foundation for the hybrid system evaluated in this thesis.
 
