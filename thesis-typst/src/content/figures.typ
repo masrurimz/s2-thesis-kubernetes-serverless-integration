@@ -114,19 +114,19 @@
   y-label: [Total node CPU (%)],
   theme: (palette: (s3,)),
   annotations: (
-    // Cycle 1: pending -> delay -> node_created
-    (type: "v-line", value: 3.04, dash: "dotted", color: rgb("#7f7f7f"), label: [pending_detected]),
-    (type: "v-line", value: 3.04, dash: "dashed", color: rgb("#ff7f0e")),
-    (type: "v-line", value: 3.77, dash: "dashed", color: evt-up, label: [node_created]),
+    // Cycle 1: pending -> delay -> node_created (t = ts - t_start, t_start = 1783967907.923196)
+    (type: "v-line", value: 317.7, dash: "dotted", color: rgb("#7f7f7f"), label: [pending_detected]),
+    (type: "v-line", value: 317.7, dash: "dashed", color: rgb("#ff7f0e")),
+    (type: "v-line", value: 394.4, dash: "dashed", color: evt-up, label: [node_created]),
     // Cycle 2: pending -> delay -> node_created
-    (type: "v-line", value: 5.52, dash: "dotted", color: rgb("#7f7f7f")),
-    (type: "v-line", value: 5.52, dash: "dashed", color: rgb("#ff7f0e")),
-    (type: "v-line", value: 6.41, dash: "dashed", color: evt-up),
+    (type: "v-line", value: 576.9, dash: "dotted", color: rgb("#7f7f7f")),
+    (type: "v-line", value: 576.9, dash: "dashed", color: rgb("#ff7f0e")),
+    (type: "v-line", value: 669.5, dash: "dashed", color: evt-up),
     // Scale-down: detected -> deleted
-    (type: "v-line", value: 7.29, dash: "dash-dotted", color: slo, label: [scale_down_detected]),
-    (type: "v-line", value: 7.31, dash: "dotted", color: rgb("#9467bd"), label: [node_deleted]),
-    (type: "v-line", value: 11.76, dash: "dash-dotted", color: slo),
-    (type: "v-line", value: 11.78, dash: "dotted", color: rgb("#9467bd")),
+    (type: "v-line", value: 762.2, dash: "dash-dotted", color: slo, label: [scale_down_detected]),
+    (type: "v-line", value: 763.7, dash: "dotted", color: rgb("#9467bd"), label: [node_deleted]),
+    (type: "v-line", value: 1229.5, dash: "dash-dotted", color: slo),
+    (type: "v-line", value: 1231.0, dash: "dotted", color: rgb("#9467bd")),
   ),
 )
 
