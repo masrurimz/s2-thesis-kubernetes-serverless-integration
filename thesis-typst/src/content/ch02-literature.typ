@@ -1,10 +1,11 @@
-= LITERATURE REVIEW
-
 #import "ch02-figures.typ": *
+#import "headings.typ": H, cap
+
+= #H("ch2")
 
 This chapter reviews the theoretical foundations and prior work that support this research. It covers cloud computing service models, container orchestration with Kubernetes, and serverless computing with the cold start problem. It also covers hybrid integration patterns, cloud application performance metrics, workload prediction with recurrent neural networks, and Kubernetes scaling strategies including the ElaX algorithm that this research extends.
 
-== Cloud Computing
+== #H("ch2-cloud")
 
 Cloud computing is a model for ubiquitous, convenient, on-demand network access to a shared pool of configurable computing resources @mell2011nist. These resources are networks, servers, storage, applications, and services. A provider can provision and release them rapidly with minimal management effort or service provider interaction. The model is now the dominant way to deploy and operate software systems at scale. By 2023, 87% of enterprises had adopted multi-cloud strategies.
 
@@ -22,7 +23,7 @@ This research operates at the intersection of IaaS/PaaS (Kubernetes container or
 
 The hybrid cloud model is relevant to this research. The proposed architecture routes traffic between a Kubernetes cluster and a serverless platform. The Kubernetes cluster is analogous to a managed private environment. The serverless platform is analogous to a public elastic service. The system selects the right backend from real-time performance and predicted workload conditions.
 
-== Containers and Kubernetes
+== #H("ch2-containers")
 
 Containers are lightweight, standalone executable packages. They encapsulate application code, runtime, system tools, libraries, and configuration @pahl2019cloud. A virtual machine runs a full guest operating system. A container shares the host kernel. Containers isolate processes through Linux namespaces and control groups @yadav2019docker. This design difference gives three practical advantages. Startup time drops from minutes to seconds. Resource overhead drops to the shared kernel footprint. Deployment density increases from tens to hundreds of instances per host.
 
@@ -34,10 +35,10 @@ The Data Plane consists of Worker Nodes. These nodes run application workloads. 
 
 #figure(
   fig-k8s-architecture(),
-  caption: [Architecture of a Kubernetes cluster @kubernetes2024components],
+  caption: cap([Architecture of a Kubernetes cluster @kubernetes2024components], [Arsitektur klaster Kubernetes @kubernetes2024components]),
 ) <fig:k8s-architecture>
 
-== Serverless Computing and Cold Start
+== #H("ch2-serverless")
 
 Serverless computing is a cloud execution model. The provider manages the allocation and provisioning of servers dynamically @sadaqat2018serverless. Servers still exist despite the name. The abstraction removes server management from the developer's responsibility @savage2018going. Key characteristics include event-driven execution, stateless processing, automatic scaling, and pay-per-use pricing. Functions run when events trigger them, not continuously. No persistent state remains between invocations. Scaling runs from zero to thousands based on the event rate. Billing uses the actual compute time consumed, typically per 100ms of execution @mampage2022holistic.
 
@@ -45,21 +46,21 @@ Major commercial platforms include AWS Lambda, Google Cloud Functions, and Azure
 
 #figure(
   fig-serverless-architecture(),
-  caption: [Serverless computing architecture @mampage2022holistic],
+  caption: cap([Serverless computing architecture @mampage2022holistic], [Arsitektur komputasi _serverless_ @mampage2022holistic]),
 ) <fig:serverless-architecture>
 
 The cloud service model and division of responsibilities are shown below @kavis2014.
 
 #figure(
   fig-cloud-services(),
-  caption: [Cloud services and division of responsibilities @kavis2014],
+  caption: cap([Cloud services and division of responsibilities @kavis2014], [Layanan _cloud_ dan pembagian tanggung jawab @kavis2014]),
 ) <fig:cloud-services>
 
 The cold start problem is the primary performance limitation of serverless computing @golec2023cold. A cold start occurs when a function invocation arrives but no warm (pre-initialized) function instance exists to handle it. The platform must then do several sequential initialization steps. These steps are container provisioning, runtime initialization, function code loading, and dependency initialization. Typical cold start latencies range from 100–500 ms for AWS Lambda, 200–600 ms for Google Cloud Functions, and 1000–3000 ms for Knative on Kubernetes. Knative must provision a full Kubernetes pod, not a lightweight container sandbox. Beni et al. @beni2021reducing showed that keeping warm containers during elastic scaling of Kubernetes-based serverless platforms can reduce cold start latency by 50–80%. This finding motivates the predictive pre-warming approach used in this research.
 
 The cold start penalty is large for latency-sensitive applications with strict SLO targets. If p99 latency must stay below 200 ms, one cold start invocation can cause an SLO violation. This trade-off between serverless elasticity and cold start latency motivates the hybrid architecture proposed in this thesis. Kubernetes provides always-warm pods for baseline traffic. Serverless absorbs overflow, but only when prediction shows enough lead time for warm-up.
 
-== Kubernetes-Serverless Integration
+== #H("ch2-integration")
 
 Kubernetes and serverless have complementary strengths and weaknesses. Kubernetes gives consistent low latency and is cost-efficient for sustained loads, but it requires capacity planning. Serverless gives instant elasticity and zero idle cost, but it has a cold start penalty. These differences motivate combining the two into hybrid architectures @dehigama2024. Dehigama et al. @dehigama2024 showed that a hybrid VM-serverless deployment can cut total cost by 7.5% compared to optimally provisioned VM-only setups. It also keeps SLO compliance. PulseNet @pulsenet2025 proposed a dual-track control plane. It separates sustainable traffic from excessive traffic. It gives 35% better performance than FaaS-only systems at cost parity.
 
@@ -92,12 +93,12 @@ Earlier studies cover parts of this problem. @table-prior-work shows what each s
     [GRU prediction for Kubernetes], [@mondal2023toward], [GRU forecasting of cluster load], [No routing, no serverless backend],
     [Unified prediction and allocation], [@yang2019elax], [Predictor, resource model, online controller], [Single platform, no SLO-aware routing],
   ),
-  caption: [Partial prior work on each thread],
+  caption: cap([Partial prior work on each thread], [Sebagian penelitian terdahulu pada setiap jalur penelitian]),
 ) <table-prior-work>
 
 Earlier work covers each thread. No single thread is new. The contribution is the combination: cross-platform routing between Kubernetes and an independent serverless platform, GRU prediction used for replica scaling, routing from observed load with SLO awareness, and a confidence gate on the forecast. No earlier system combines these parts. Built on ElaX's resource allocation model, this combination closes the research gap.
 
-== Cloud Application Performance Metrics
+== #H("ch2-metrics")
 
 Measuring and managing cloud application performance requires a structured framework of metrics, targets, and monitoring approaches.
 
@@ -109,7 +110,7 @@ Response time splits into three components. Network latency covers routing overh
 
 Scalability is the ability of a system to handle more workload by adding resources. Elasticity adds the ability to acquire and release resources automatically when demand changes. Kubernetes achieves elasticity through the Horizontal Pod Autoscaler (HPA). The HPA reacts to observed CPU or custom metrics. Serverless platforms offer inherent elasticity. They provision function instances per invocation.
 
-== Workload Prediction with Recurrent Neural Networks
+== #H("ch2-prediction")
 
 Workload prediction turns reactive scaling into proactive scaling. Reactive scaling responds to current metrics. Proactive scaling prepares for anticipated demand. Time-series forecasting with recurrent neural networks has shown effectiveness for cloud workload prediction tasks @mondal2023toward.
 
@@ -129,12 +130,12 @@ GRU (Gated Recurrent Unit) is simpler than LSTM. Cho et al. proposed it. GRU com
     [Prediction accuracy], [Reference], [Comparable],
     [Real-time suitability], [Moderate], [High],
   ),
-  caption: [LSTM vs GRU comparison],
+  caption: cap([LSTM vs GRU comparison], [Perbandingan LSTM vs GRU]),
 ) <table-lstm-gru>
 
 For the workload prediction task in this research, GRU is the preferred architecture. The task is short-horizon (135 s, 9 × 15 s) HTTP traffic forecasting with a real-time latency constraint (under 50ms inference). GRU has a lower computational cost and comparable accuracy. The reduced parameter count also lowers overfitting risk. The synthetic workload patterns provide limited training data.
 
-== Kubernetes Scaling and the ElaX Algorithm
+== #H("ch2-elax")
 
 Kubernetes provides built-in autoscaling mechanisms at two granularity levels @ren2023research. The Horizontal Pod Autoscaler (HPA) scales the number of pod replicas within a deployment. It uses observed resource utilization metrics. HPA runs a control loop with a default period of 15 seconds. It queries the metrics API. It computes the desired replica count as the ratio of current to desired metric value. It scales subject to min/max bounds and stabilization windows. Serracanta et al. @serracanta2025hpa formally proved that the HPA control loop is globally asymptotically stable at any utilization target between 30 and 80%. This finding justifies threshold tuning as a sound design choice. However, reactive threshold controllers can still oscillate under volatile load. Tiny Autoscalers @tinyautoscalers2022 introduced a bottoming mechanism that prevents rapid resource swings. This mechanism informs the consolidation idle-timer design used in this thesis. The Cluster Autoscaler operates at the node level. It adds nodes when pods cannot be scheduled. It removes underutilized nodes after a configurable cool-down period.
 
@@ -148,5 +149,5 @@ The combination of ElaX's resource allocation model with cross-platform routing 
 
 #figure(
   fig-elax-architecture(),
-  caption: [ElaX system architecture @yang2019elax],
+  caption: cap([ElaX system architecture @yang2019elax], [Arsitektur sistem ElaX @yang2019elax]),
 ) <fig:elax-architecture>

@@ -1,7 +1,9 @@
 // Chapter 1 — Introduction (Pendahuluan)
 // English-first body. Structure restored per advisory.
+#import "headings.typ": H
 
-= INTRODUCTION
+
+= #H("ch1")
 
 Cloud computing adoption has accelerated over the past decade. It changed how organizations deploy, scale, and manage software systems. The Flexera 2023 State of the Cloud Report shows that 87% of enterprises use a multi-cloud strategy. This reflects an industry-wide shift toward cloud-native architectures. These architectures adapt to changing demand while controlling operational costs. This growth created two main paradigms for deploying cloud-native applications: container orchestration and serverless computing. Each paradigm offers distinct advantages. Each also imposes trade-offs. These trade-offs become significant under dynamic, real-world workload conditions.
 
@@ -17,7 +19,7 @@ The algorithmic foundation builds on the *ElaX algorithm* proposed by @yang2019e
 
 This thesis investigates whether a hybrid Kubernetes-serverless architecture can manage elastic scalability in heterogeneous cloud environments. The architecture adds GRU-based workload prediction and SLO-aware routing decisions. The research designs, implements, and evaluates each component: the prediction model, the routing controller, and the integrated hybrid architecture. It tests these components through systematic experiments on synthetic and real-world workload traces.
 
-== Problem Formulation (Rumusan Masalah)
+== #H("ch1-problem")
 
 Based on the background analysis presented above, this research addresses the following research questions:
 
@@ -29,7 +31,7 @@ Based on the background analysis presented above, this research addresses the fo
 
 3. *How to evaluate the modified ElaX mechanism for automatic scaling and load distribution in a Kubernetes and serverless integrated environment?*  
    This question concerns the experimental methodology for evaluating the hybrid system. It evaluates several dimensions: prediction accuracy (RMSE, MAE, MAPE), system performance (tail latency, throughput, error rate), and cost efficiency. The evaluation compares four scenarios: K8s + HPA Baseline, Knative-Only (KPA), hybrid-reactive, and hybrid-predictive. These scenarios validate the correctness of individual mechanisms and the integrated system behavior.
-== Hypotheses (Hipotesis)
+== #H("ch1-hypotheses")
 
 The research questions are operationalized as three testable hypotheses:
 
@@ -40,7 +42,7 @@ The research questions are operationalized as three testable hypotheses:
   - #strong[H3 (predictor adequacy)]: A GRU workload predictor achieves the pre-registered accuracy target (RMSE < 10% of normalized range, MAE < 5%, inference < 50 ms) on synthetic test data. The target is supported on synthetic data and only partially validated on real traces.
 
 
-== Research Objectives (Tujuan Penelitian)
+== #H("ch1-objectives")
 
 The objectives of this research are:
 
@@ -50,13 +52,13 @@ The objectives of this research are:
 
 3. *Evaluate the hybrid system* through systematic experimentation encompassing prediction model accuracy, mechanism validation, multi-scenario comparison (S1–S4), and honest assessment of experimental limitations.
 
-== Research Benefits (Manfaat Penelitian)
+== #H("ch1-benefits")
 
 - *Academic Benefits:* contributes to hybrid cloud knowledge, reproducible methodology, extends ElaX.
 
 - *Practical Benefits:* working architecture blueprint, validates GRU latency for real-time, empirical trade-off data.
 
-== Research Contribution (Kontribusi Penelitian)
+== #H("ch1-contribution")
 
 1. GRU-Based Workload Predictor for HTTP Traffic (30-sample input window at 15 s, 9-step / 135 s horizon, test RMSE 4.75% post-HPO with 6.01% as the pre-HPO manual baseline, ~40 ms inference).
 
@@ -64,7 +66,7 @@ The objectives of this research are:
 
 3. Multi-Scenario Evaluation Framework with Transparent Validity Assessment (Phase A1 mechanism validation, n = 1 four-scenario diagnostic, and definitive counterbalanced paired Phase B n = 5 / 10-run comparison, with threats documented).
 
-== Problem Constraints (Batasan Masalah)
+== #H("ch1-constraints")
 
 - *Platform:* K3s + Knative + Kourier + HAProxy.
 
@@ -80,7 +82,7 @@ The objectives of this research are:
 
 - *Traffic:* HTTP request-response.
 
-== Writing Systematics (Sistematika Penulisan)
+== #H("ch1-systematics")
 
 1. Chapter 1: Introduction (this).
 

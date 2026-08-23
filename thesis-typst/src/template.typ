@@ -395,18 +395,21 @@
   title: none,
   paths: none,
   proposal: true,
+  edition: "en",
   doc,
 ) = {
   // ---- 1. Document-wide defaults ----
+  // Edition-aware figure/table supplements: Gambar/Tabel (id) vs Figure/Table (en)
+  let supp-image = if edition == "id" { [Gambar] } else { [Figure] }
+  let supp-table = if edition == "id" { [Tabel] } else { [Table] }
   set page(paper: "a4", margin: standard-margin)
   set text(font: body-font, size: 12pt)
   set par(justify: true, leading: 0.85em, spacing: 0.85em)
   set heading(numbering: "1.")
   set list(indent: 2em, spacing: 0.85em)
-  set figure(kind: image, supplement: [Gambar], numbering: "1")
+  set figure(kind: image, supplement: supp-image, numbering: "1")
 
-  // Force correct Indonesian supplement for table figures
-  show figure.where(kind: table): set figure(supplement: [Tabel], numbering: "1")
+  show figure.where(kind: table): set figure(supplement: supp-table, numbering: "1")
 
   // ---- Override outline entry for figures ----
   // Show "Gambar 2.1" / "Tabel 3.1" in DAFTAR GAMBAR / DAFTAR TABEL
@@ -417,7 +420,7 @@
         let loc = el.location()
         let h = counter(heading.where(level: 1)).at(loc).at(0)
         let f = el.counter.at(loc).at(0)
-        let supp = if el.kind == table { [Tabel] } else { [Gambar] }
+        let supp = if el.kind == table { supp-table } else { supp-image }
         link(loc, it.indented([#supp #h.#f], it.inner()))
       }
     } else {
@@ -434,7 +437,7 @@
       let loc = el.location()
       let h = counter(heading.where(level: 1)).at(loc).at(0)
       let f = el.counter.at(loc).at(0)
-      let supp = if el.kind == table { [Tabel] } else { [Gambar] }
+      let supp = if el.kind == table { supp-table } else { supp-image }
       link(loc, [#supp #h.#f])
     }
   }
@@ -454,7 +457,7 @@
     }
     block[
       #if it.numbering != none [
-        BAB #counter(heading.where(level: 1)).display("1")
+        #(if edition == "id" { "BAB" } else { "CHAPTER" }) #counter(heading.where(level: 1)).display("1")
         \
       ]
       #text[#upper(it.body)]
@@ -478,7 +481,7 @@
   //? Table
   show figure.where(kind: table): it => context [
     #set text(size: 10pt)
-    Tabel #counter(heading.where(level: 1)).display("1").#it.counter.display(it.numbering). #it.caption.body
+    #supp-table #counter(heading.where(level: 1)).display("1").#it.counter.display(it.numbering). #it.caption.body
     #it.body
   ]
 
@@ -486,7 +489,7 @@
   show figure.where(kind: image): it => context [
     #set text(size: 10pt)
     #it.body
-    Gambar #counter(heading.where(level: 1)).display("1").#it.counter.display(it.numbering). #it.caption.body
+    #supp-image #counter(heading.where(level: 1)).display("1").#it.counter.display(it.numbering). #it.caption.body
   ]
 
   // ---- 4. COVER PAGE 1 (with background) ----

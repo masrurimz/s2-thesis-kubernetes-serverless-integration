@@ -96,6 +96,26 @@
 //=============================================================================
 
 #import "template.typ": thesis
+#import "content/headings.typ": H
+
+// ---------------------------------------------------------------------------
+// LANGUAGE MODE / EDITION SWITCH
+// Canonical edition is the English body (default, no input flag needed).
+// Compile the Indonesian edition with:
+//     typst compile --input lang=id src/thesis.typ build/thesis-id.pdf
+//   or: make master-id
+// Structural headings flip with the edition (CHAPTER I INTRODUCTION vs
+// BAB I PENDAHULUAN) via content/headings.typ. Always rendered in BOTH
+// editions: the administrative chrome (cover, approval, KATA PENGANTAR)
+// and the dual abstracts (ABSTRAK id + ABSTRACT en).
+// text(lang:, region:) drives hyphenation, smart quotes, figure supplement
+// localization (when supplement: auto), and the CSL bibliography locale:
+// with lang "id"/"ID", Typst 0.13's hayagriva uses locales-id-ID for APA
+// terms (et al. -> dkk., and -> dan, in -> dalam).
+// ---------------------------------------------------------------------------
+#let edition = sys.inputs.at("lang", default: "en")
+#let body-lang = if edition == "id" { "id" } else { "en" }
+#let body-region = if body-lang == "id" { "ID" } else { none }
 
 #show: thesis.with(
   author: author,
@@ -110,14 +130,21 @@
   title: title,
   paths: paths,
   proposal: false, // full thesis (not proposal)
+  edition: edition,
 )
 
-// English-first drafting: body in English, keep ITS Indonesian chrome (BAB etc)
-#set text(lang: "en")
+#set text(lang: body-lang, region: body-region)
 
-// Gate Indonesian citation rewrites (uncomment only for final Indonesian body pass)
-// #show "et al.": "dkk"
-// #show " & ": " dan "
+// Fallback for any residual English citation tokens the CSL locale misses.
+// Inert in the English edition.
+#show: body => {
+  if body-lang == "id" {
+    show "et al.": "dkk."
+    body
+  } else {
+    body
+  }
+}
 
 //=============================================================================
 // 1. DEDICATION
@@ -240,7 +267,7 @@ In the counterbalanced paired comparison of the hybrid-reactive (S3) and hybrid-
 //=============================================================================
 
 #outline(
-  title: [#align(center, text(size: 14pt, weight: "bold")[#upper("DAFTAR ISI")])],
+  title: [#align(center, text(size: 14pt, weight: "bold")[#upper(H("toc"))])],
   indent: auto,
   depth: 3,
 )
@@ -252,7 +279,7 @@ In the counterbalanced paired comparison of the hybrid-reactive (S3) and hybrid-
 //=============================================================================
 
 #outline(
-  title: [#align(center, text(size: 14pt, weight: "bold")[#upper("DAFTAR TABEL")])],
+  title: [#align(center, text(size: 14pt, weight: "bold")[#upper(H("lot"))])],
   target: figure.where(kind: table),
 )
 
@@ -263,7 +290,7 @@ In the counterbalanced paired comparison of the hybrid-reactive (S3) and hybrid-
 //=============================================================================
 
 #outline(
-  title: [#align(center, text(size: 14pt, weight: "bold")[#upper("DAFTAR GAMBAR")])],
+  title: [#align(center, text(size: 14pt, weight: "bold")[#upper(H("lof"))])],
   target: figure.where(kind: image),
 )
 
@@ -284,7 +311,7 @@ In the counterbalanced paired comparison of the hybrid-reactive (S3) and hybrid-
 
 #set heading(numbering: none)
 
-= DAFTAR PUSTAKA
+= #H("bib")
 #bibliography(
   "bibliography.bib",
   title: none,

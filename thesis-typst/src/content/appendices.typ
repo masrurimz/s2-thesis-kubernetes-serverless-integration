@@ -3,9 +3,11 @@
 // Appendix C — Code Listings
 // Ported from archived/thesis-latex/src/chapters/104-106-appendix-*.tex
 
-= LAMPIRAN A: Konfigurasi Eksperimen
+#import "headings.typ": H, cap
 
-== Parameter Kalibrasi
+= #H("app-a")
+
+== #H("app-a-calib")
 
 Tabel berikut menyajikan parameter kalibrasi yang digunakan dalam eksperimen.
 
@@ -27,12 +29,12 @@ Tabel berikut menyajikan parameter kalibrasi yang digunakan dalam eksperimen.
     [proactive_approach_ratio], [0.6],
     [proactive_lookahead_steps], [9],
   ),
-  caption: [Parameter kalibrasi (default)],
+  caption: cap([Calibration parameters (default)], [Parameter kalibrasi (default)]),
 )
 
 *Catatan (override definitif):* Bundle berpasangan definitif H2 menggunakan override khusus eksperimen `max_k8s_replicas = 10, prediction_horizon = 9`, bukan nilai default pada tabel di atas. Override ini penting karena menjelaskan mengapa S1 tidak jenuh pada replikasi n=5.
 
-== Alokasi Sumber Daya Kluster
+== #H("app-a-alloc")
 
 #figure(
   kind: table,
@@ -46,10 +48,10 @@ Tabel berikut menyajikan parameter kalibrasi yang digunakan dalam eksperimen.
     [K8s baseline pods], [---], [3 x 300m],
     [Knative pods (KPA)], [---], [3 (min-scale)],
   ),
-  caption: [Cluster resource allocation],
+  caption: cap([Cluster resource allocation], [Alokasi sumber daya klaster]),
 )
 
-== Parameter Trace ClarkNet
+== #H("app-a-trace")
 
 #figure(
   kind: table,
@@ -64,14 +66,14 @@ Tabel berikut menyajikan parameter kalibrasi yang digunakan dalam eksperimen.
     [RPS rata-rata], [73],
     [Jumlah request per run], [87840],
   ),
-  caption: [ClarkNet trace replay parameters],
+  caption: cap([ClarkNet trace replay parameters], [Parameter replay trace ClarkNet]),
 )
 
 #pagebreak()
 
-= LAMPIRAN B: Hasil Eksperimen Mentah
+= #H("app-b")
 
-== Hasil Per-Pasangan Definitif (n=5)
+== #H("app-b-pairs")
 
 Tabel berikut menyajikan nilai p99 per pasangan dari bundle definitif `2026-07-14_clarknet-tuned-paired-n5`. Desainnya counterbalanced: lima pasangan (10 run) mengalternasikan urutan S3 dan S4 pada beban trace ClarkNet.
 
@@ -86,10 +88,10 @@ Tabel berikut menyajikan nilai p99 per pasangan dari bundle definitif `2026-07-1
     [4], [164.0], [155.7], [-8.3], [Ya],
     [5], [199.2], [167.4], [-31.8], [Ya],
   ),
-  caption: [Per-pair p99 latency (bundle definitif ClarkNet)],
+  caption: cap([Per-pair p99 latency (definitive ClarkNet bundle)], [Per-pair p99 latency (bundle definitif ClarkNet)]),
 )
 
-== Ringkasan Uji Statistik Definitif
+== #H("app-b-stats")
 
 #figure(
   kind: table,
@@ -106,16 +108,16 @@ Tabel berikut menyajikan nilai p99 per pasangan dari bundle definitif `2026-07-1
     [Pelanggaran SLO rata-rata], [S3 656; S4 130],
     [Biaya bulanan], [USD 163 vs USD 163],
   ),
-  caption: [Hasil statistik bundle definitif],
+  caption: cap([Statistical results of the definitive bundle], [Hasil statistik bundle definitif]),
 )
 
 Bundle ini adalah perbandingan definitif counterbalanced untuk H2. Seluruh 5 pasangan valid, seluruh 280 prediksi GRU terkirim, dan `predictive_count` berada pada 4--5 per run S4. Metrik sekunder dilaporkan deskriptif setelah koreksi Bonferroni (p terkoreksi = 0.1216).
 
 #pagebreak()
 
-= LAMPIRAN C: Code Listings
+= #H("app-c")
 
-== Forecast-Gated Capacity Signal (V3 Controller)
+== #H("app-c-signal")
 
 Berikut adalah potongan kode sinyal kapasitas pada `algorithm1_v3.py`; sinyal prediksi diteruskan untuk perencanaan replika Algorithm 2, sedangkan pembagian routing Algorithm 1 tetap menggunakan beban teramati dan kapasitas replika siap:
 
@@ -138,7 +140,7 @@ if prediction and confidence >= threshold:
             # predicted_upper is consumed by Algorithm 2 replica planning
 ```
 
-== Kapasitas Efektif K8s
+== #H("app-c-capacity")
 
 ```
 def _compute_k8s_capacity(self, available_replicas):
@@ -155,7 +157,7 @@ def _compute_routing_split(self, total_load, k8s_capacity):
     knative_pct = burst_ratio * 100
 ```
 
-== CalibrationConfig
+== #H("app-c-config")
 
 ```
 class CalibrationConfig(BaseModel):
@@ -175,9 +177,9 @@ class CalibrationConfig(BaseModel):
 
 #pagebreak()
 
-= LAMPIRAN D: Data Mentah Replikasi
+= #H("app-d")
 
-== Data Mentah Replikasi n=5
+== #H("app-d-raw")
 
 Tabel berikut menyajikan hasil per-run replikasi empat skenario `2026-08-09_clarknet-replay_032257` yang telah selesai (n=5 per skenario); nilai p99 dibulatkan satu desimal.
 
@@ -207,10 +209,10 @@ Tabel berikut menyajikan hasil per-run replikasi empat skenario `2026-08-09_clar
     [4], [S4 (Hybrid-prediktif)], [94.4], [12],
     [5], [S4 (Hybrid-prediktif)], [93.8], [1],
   ),
-  caption: [Hasil per-run replikasi n=5],
+  caption: cap([Per-run results of the n=5 replication], [Hasil per-run replikasi n=5]),
 )
 
-== Ringkasan Per-Skenario n=5
+== #H("app-d-summary")
 
 #figure(
   kind: table,
@@ -222,10 +224,10 @@ Tabel berikut menyajikan hasil per-run replikasi empat skenario `2026-08-09_clar
     [S3 (Hybrid-reaktif)], [5], [151.6], [1998], [73.2],
     [S4 (Hybrid-prediktif)], [5], [99.1], [92], [73.2],
   ),
-  caption: [Ringkasan rata-rata per skenario],
+  caption: cap([Mean summary per scenario], [Ringkasan rata-rata per skenario]),
 )
 
-== Perbandingan Statistik n=5
+== #H("app-d-stats")
 
 #figure(
   kind: table,
@@ -238,5 +240,5 @@ Tabel berikut menyajikan hasil per-run replikasi empat skenario `2026-08-09_clar
     [S3 vs S1], [+37.4%; p = 0.165], [Tidak signifikan],
     [S4 vs S3 (SLO)], [-95.4%; Mann-Whitney p = 0.0345], [Signifikan],
   ),
-  caption: [Ringkasan uji statistik replikasi n=5.],
+  caption: cap([Summary of statistical tests for the n=5 replication.], [Ringkasan uji statistik replikasi n=5.]),
 )

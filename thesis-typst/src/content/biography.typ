@@ -1,6 +1,8 @@
 // Biography
 
-= BIOGRAFI PENULIS
+#import "headings.typ": H
+
+= #H("biography")
 
 Penulis bernama Muhammad Zahid Masruri, NRP 6025222041, merupakan mahasiswa Magister Komputer (M.Kom) Program Studi Teknik Informatika, Departemen Teknik Informatika, Fakultas Teknologi Elektro dan Informatika Cerdas, Institut Teknologi Sepuluh Nopember (ITS), Surabaya. Penulis menempuh pendidikan magister mulai tahun 2022 dengan bidang minat Komputasi Awan, Kubernetes, dan Komputasi _Serverless_. Tesis yang disusun berjudul "Pengambilan Keputusan dan Pengaturan Skalabilitas Elastis pada Lingkungan Cloud yang Heterogen dengan Berbasiskan pada Prediksi Workload" di bawah bimbingan Prof. Tohari Ahmad, S.Kom., M.IT., Ph.D. dan Royyana Muslim Ijtihadie, S.Kom., M.Kom., Ph.D.
 

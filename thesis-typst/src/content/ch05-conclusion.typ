@@ -1,16 +1,17 @@
-= CONCLUSION AND SUGGESTIONS
+#import "headings.typ": H
+= #H("ch5")
 
 This research designed, implemented, and evaluated a hybrid Kubernetes-serverless architecture with GRU-based workload prediction for Kubernetes replica scaling and observed-load traffic routing. The system addresses elastic scalability management in heterogeneous cloud environments through SLO-aware decision making. Three research questions were posed; each is answered below with direct reference to experimental evidence. The definitive paired S3/S4 comparison uses n = 5 counterbalanced pairs with variable ClarkNet load, utilization-based node consolidation, and a tuned reactive baseline (`2026-07-14_clarknet-tuned-paired-n5`). Earlier bundles are retained as historical records.
 
-== Conclusion
+== #H("ch5-conclusion")
 
-=== RQ1: GRU-Based Workload Prediction
+=== #H("ch5-rq1")
 
 A GRU (Gated Recurrent Unit) neural network was designed and optimized through hyperparameter optimization (HPO) using Optuna TPE. The optimal configuration uses one recurrent layer with 128 hidden units, learning rate 0.000380, sequence length 30, and dropout 0.104. Post-HPO accuracy improved from 6.01% to 4.75% RMSE.
 
 The GRU predictor achieves target accuracy on synthetic workload patterns: RMSE 4.75% post-HPO (manual baseline 6.01%, target under 10%) with confidence scores 0.72-0.88 during live predictions. Validation against the ClarkNet HTTP trace yielded RMSE 17.78% at 5-minute aggregation. This is meaningful generalization, though below original thresholds. The gap comes from non-stationarity and irregular burst patterns that do not appear in synthetic training data.
 
-=== RQ2: Modified ElaX Decision Making
+=== #H("ch5-rq2")
 
 The research extends the ElaX framework @yang2019elax with two algorithms for heterogeneous cloud environments. Algorithm 1 (Routing Controller) monitors tail latency (p99) against configurable thresholds. It makes four types of decisions in priority order: SCALE_OUT for active SLO violations, PREDICTIVE for anticipated surges, OPTIMIZE_COST for stable periods, and MAINTAIN as default. Weight-based routing via HAProxy implements traffic distribution. It adjusts the Kubernetes-to-serverless split from 100/0 to 50/50.
 
@@ -18,7 +19,7 @@ Algorithm 2 (Cluster Controller) uses a horizontal scaling formula R = alpha dot
 
 Phase A1 validated the predictive pre-warming mechanism. PREDICTIVE triggered at p99 = 146 ms (healthy state) when the observed-load trend indicated a predicted 47% workload surge and GRU confidence was 72%. It pre-positioned serverless capacity before an SLO violation occurred. In the definitive controller, the forecast also informs Algorithm 2 replica planning. Routing remains observed-load driven.
 
-=== RQ3: Evaluation of the Modified ElaX Mechanism
+=== #H("ch5-rq3")
 
 A comprehensive evaluation framework spans mechanism validation (Phase A1), comparative evaluation (Phase B), and dynamic burst validation (Phase C). The evaluation compares four scenarios: S1 (K8s+HPA), S2 (Serverless-only), S3 (Hybrid-reactive), and S4 (Hybrid-predictive). The Phase B baseline is an *n = 1 diagnostic* run per scenario (`2026-07-11_scaling_fix_n1`). The definitive n = 5 paired experiment (`2026-07-14_clarknet-tuned-paired-n5`) confirms H2.
 
@@ -36,7 +37,7 @@ A separate high-load diagnostic (`2026-07-13_dynamic-node-offload`, n = 1) shows
 
 Under variable ClarkNet load with utilization-based node consolidation (`2026-07-14_clarknet-util-scaledown-n1`, n = 1), the predictive controller showed its strongest advantage. S4 achieved 50.5% lower p99 (113 ms vs 228 ms) and 96.3% fewer SLO violations (40 vs 1,085) than S3, at a 5% cost premium. The K3dAutoscaler's consolidation logic matched the Kubernetes Cluster Autoscaler's 50% utilization threshold and reschedulability check. It provisioned nodes on ClarkNet peaks and consolidated underutilized nodes on valleys. S3's aggressive consolidation deleted all dynamic nodes when utilization dropped. This caused latency spikes on the next peak. S4's forecast maintained capacity and prevented excessive consolidation.
 
-== Future Work
+== #H("ch5-future")
 
 Based on the limitations identified during evaluation, six directions are recommended:
 
