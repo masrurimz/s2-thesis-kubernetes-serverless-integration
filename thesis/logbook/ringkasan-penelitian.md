@@ -1,0 +1,19 @@
+# Ringkasan Penelitian Tesis
+
+**Nama** : Muhammad Zahid Masruri | **NRP** : 6025221041 | **Prodi** : Magister Komputer (M.Kom), Teknik Informatika, ITS
+**Judul** : Decision Making and Elastic Scalability Management in Heterogeneous Cloud Environments Based on Workload Prediction
+**Pembimbing** : Prof. Tohari Ahmad dan Royyana Muslim Ijtihadie, S.Kom., M.Kom., Ph.D. | **Tanggal** : 10 September 2026
+
+**Konteks.** Kubernetes memberi kendali penuh atas kapasitas, tetapi autoscaler bawaannya baru bereaksi setelah beban naik. Knative menambah kapasitas dalam hitungan detik, tetapi lebih mahal untuk beban yang berlangsung lama. Pendekatan hibrida memakai keduanya dan memunculkan dua keputusan berulang: kapan kapasitas Kubernetes ditambah dan kapan trafik dialihkan ke serverless. Penelitian ini menjawab keduanya dengan prediksi beban kerja berbasis GRU.
+
+**Mengapa penting.** Penyediaan node memerlukan 45 sampai 120 detik, lebih lama daripada reaksi pengendali reaktif, sehingga kapasitas baru siap setelah puncak trafik lewat. Dampaknya terasa pada p99, sementara bukti empiris yang membandingkan pengendali reaktif dan prediktif secara berpasangan dan dapat diulang masih terbatas.
+
+**Rumusan masalah.** (1) Bagaimana merancang prediksi beban kerja trafik aplikasi web menggunakan GRU? (2) Bagaimana memodifikasi algoritma ElaX untuk penskalaan klaster dan pendistribusian trafik ke tipe klaster berbeda? (3) Bagaimana mengevaluasi mekanisme tersebut pada lingkungan terintegrasi Kubernetes dan serverless?
+
+**Metodologi.** GRU menerima 30 sampel pada resolusi 15 detik dan mengeluarkan sembilan langkah prediksi, setara 135 detik ke depan. Pelatihan memakai data sintetis 72 jam, hyperparameter dipilih dengan Optuna, dan validasi memakai jejak ClarkNet dan Calgary. ElaX diperluas dengan dua algoritma: Algoritma 1 memantau p99 dan memilih tindakan berprioritas, yaitu SCALE_OUT, PREDICTIVE, OPTIMIZE_COST, dan MAINTAIN, sambil menggeser bobot trafik Kubernetes dan serverless pada HAProxy; Algoritma 2 memakai rumus R = alfa dikali x ditambah beta, dengan mode reaktif dari beban teramati atau mode prediktif dari ramalan GRU. Penskala node memakai konsolidasi berbasis utilisasi yang mengikuti semantik Cluster Autoscaler. Empat skenario dibandingkan: S1 Kubernetes dengan HPA, S2 serverless murni, S3 hibrida reaktif, dan S4 hibrida prediktif, dengan beban trace ClarkNet 22 sampai 164 permintaan per detik, metrik utama p99 ambang SLO 200 ms, dan lima pasangan berpasangan yang diuji dengan permutasi satu arah pada alpha 0,05.
+
+**Hasil evaluasi.** Pada satu kali jalan per skenario, p99 S1 sampai S4 berturut-turut 2.421,3; 77,7; 98,8; dan 118,2 ms. Hasil utamanya datang dari lima ulangan berpasangan: S4 mencapai 126,0 ms berbanding 188,5 ms pada S3, atau 33,1 persen lebih cepat, dengan p = 0,030, dan pelanggaran SLO turun 80,2 persen, dari 656 menjadi 130, pada biaya bulanan yang sama, yaitu USD 163. S4 unggul pada kelima pasangan, dan replikasi independen memberi arah yang sama pada 9 dari 10 pasangan. Akurasi model mencapai RMSE 4,75 persen pada data sintetis dan 17,78 persen pada jejak nyata. Perbandingan melawan Kubernetes murni masih bersifat arah, dan angka biaya masih berupa perkiraan.
+
+**Kesimpulan.** Model GRU memenuhi target akurasi pada data sintetis dan cukup cepat untuk keputusan waktu nyata. Kerangka ElaX diperluas dengan dua algoritma, dan keputusan PREDICTIVE terbukti aktif sebelum pelanggaran SLO terjadi. Hasil utamanya, hibrida prediktif 33,1 persen lebih cepat pada p99 dengan pelanggaran SLO 80,2 persen lebih sedikit pada biaya yang sama, didukung secara statistik. Perbaikan itu bergantung pada tiga syarat bersama: horizon ramalan yang menutupi jeda penyediaan node, konsolidasi node yang mengikuti semantik Cluster Autoscaler, dan baseline reaktif yang disetel secara wajar.
+
+*Sumber angka: results/claims/FINAL_NUMBERS.md.*

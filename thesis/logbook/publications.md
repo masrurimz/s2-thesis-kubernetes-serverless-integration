@@ -5,7 +5,7 @@
 
 ## ITS S2 publication requirement (verified 2026-08-07)
 
-**Author context:** S2 Informatics, ITS Surabaya — Muhammad Zahid Masruri, NRP 6025222041; supervisors Prof. Tohari Ahmad & Royyana Muslim Ijtihadie.
+**Author context:** S2 Informatics, ITS Surabaya — Muhammad Zahid Masruri, NRP 6025221041 (user-confirmed 2026-09-10; earlier entry had wrong 6025222041); supervisors Prof. Tohari Ahmad & Royyana Muslim Ijtihadie.
 
 **Controlling rules (both reported; cohort/program confirmation recommended):**
 
@@ -27,11 +27,11 @@
 
 - First logged: 2026-08-07
 - Status: pending
-- Stage: idea
-- Target venue: [to be decided — see shortlist below]
-- Manuscript/artifact: `thesis-typst/build/thesis.pdf` (chapter adaptation needed — paper is a compressed version, not a cut-down thesis)
+- Stage: outline
+- Target venue: CCGrid 2027 (proposed 2026-09-10; abstract 2026-11-24, paper 2026-12-01, notification 2027-02-01, Dallas-Fort Worth 2027-05-24/27) — adviser confirms
+- Manuscript/artifact: new 6–7 page conference paper (separate from the thesis; existing results only)
 - Contribution claim: hybrid K8s+serverless autoscaling where GRU forecasts drive scaling (not routing), with explicit autoscaler fairness (node CPU bounding, r_saturation calibration) and an evidence-governed, replicated experiment (paired n=5, p=0.0304, independent replication 9/10 pairs). Evidence: ../../results/claims/FINAL_NUMBERS.md, bundles in experiments.md.
-- Current next action: decide venue + co-authors (advisor) — due: after defense; then draft paper (8-page conference or ~12-page journal)
+- Current next action: draft the paper from the outline below — due: 2026-09-24; submit before 2026-12-01
 - Evidence: thesis ch01 (hypotheses), ch04 sec:replication, ../DRIFT_ANALYSIS.md §6
 
 ### 2026-08-07 — ITS requirement + venue shortlist verified
@@ -39,6 +39,33 @@
 - What changed: ITS requirement verified (research route needs accepted Scopus Q3/WoS journal OR published Sinta 1-4 OR seminar+journal). Venue shortlist below.
 - Evidence: ITS rules above; venue facts researched with URLs
 - Next action: pick venue, confirm with advisor, start paper draft
+
+### 2026-09-10 — adviser directive: short conference paper, venue before January
+- Status: pending
+- What changed: the adviser approved the FRS request and redirected the publication. Write a 6–7 page conference paper using only results that already exist, from scenarios S1–S4 and the paired S3/S4 comparison. The paper does not need to cover the whole thesis. It must state the context clearly and why the work matters. Submission must fall before January 2027. A conference paper of this length also serves the ITS regular route, which accepts an oral presentation in an indexed international seminar.
+- Evidence: adviser message [advisor-whatsapp.md](advisor-whatsapp.md) WA-2026-09-10-01; numbers from [../../results/claims/FINAL_NUMBERS.md](../../results/claims/FINAL_NUMBERS.md)
+- Next action: confirm the venue with the adviser, then draft the paper from the outline below
+
+### PAPER-001 outline (6–7 pages, IEEE two-column)
+- Title and abstract: proposed title "GRU-Based Predictive Autoscaling for Hybrid Kubernetes and Serverless Clusters". Keywords: Kubernetes, serverless, autoscaling, workload prediction, GRU. Abstract of 120–150 words, no citations.
+- Framing note: serverless carries the paper's emphasis, because the study compares a Kubernetes backend against a serverless backend and then the two hybrid modes. State one caveat in the first paragraph of Section III, or a reviewer will read the platform claim as false: both backends run on a single k3d testbed, simulating a two-platform deployment, with separate namespaces, separate ingress paths, and separate workload instances (`ch03-method`, `ch03-infra`).
+- Serverless evidence to use: at 200 RPS constant load, S1 with dynamic nodes but no offload held only 65,6 percent success at p99 6.665 ms, while S3 held 96,5 percent of time in serverless at p99 874 ms. Serverless offload absorbed the 51–70 s node provisioning delay. S2 (Knative-only) is the pure serverless baseline at n = 1.
+- I. Introduction (about 1 page). Context: two deployment paradigms and their limits. Why it matters: node provisioning takes 45–120 s, reactive control reacts after the peak, and p99 violations carry service penalties. Contributions: (a) GRU horizon sized to measured provisioning delay, (b) two-mode cluster controller, (c) utilization-based node consolidation matching Cluster Autoscaler, (d) paired replication with published statistics.
+- II. Related work (about 0.5 page). ElaX, predictive autoscaling, serverless offloading, hybrid cluster management.
+- III. Method (about 1.5 pages). Figure 1: architecture (HAProxy entry, Algorithm 1 routing, Algorithm 2 scaling, Prometheus and SLO monitor, K3dAutoscaler). Figure 2: GRU design (30 samples at 15 s in, 9 steps / 135 s out). Subsection: scenario definitions S1–S4 and the counterbalanced paired design.
+- IV. Evaluation (about 2 pages). Setup: ClarkNet window 1995-09-02 04:35:30–04:55:00 UTC, 40 stages of 30 s, 22–164 RPS, SLO p99 200 ms, permutation test with alpha 0.05. Table I: four-scenario diagnostic n=1. Figure 3: GRU forecast against actual on ClarkNet. Table II: definitive paired n=5 (p99, SLO violations, cost, p values, effect sizes). Paragraph: independent replication, 9 of 10 pairs, pooled p=0.003. Paragraph: node consolidation diagnostic. Paragraph: threats to validity.
+- V. Discussion (about 0.5 page). Three necessary conditions for the predictive gain, and where the result does not transfer.
+- VI. Conclusion (about 0.3 page).
+- References: 20–25 entries, drawn from the thesis bibliography.
+- Assets to reuse: `results/experiments/phase-b/2026-07-14_clarknet-tuned-paired-n5/raw/*/prediction-actual.parquet` for the forecast figure; `metrics.parquet` for latency series; thesis figures in `thesis-typst/src/content/figures.typ`.
+
+### Conference options with a deadline before January 2027 (researched 2026-09-10)
+| Venue | Deadline | Notification | Where | Fit | Status |
+|---|---|---|---|---|---|
+| IEEE CCGrid 2027 | abstract 2026-11-24, paper 2026-12-01 | 2027-02-01 | Dallas-Fort Worth, 2027-05-24/27 | Best fit: cluster, cloud, and internet computing, serverless elasticity, learning-assisted scheduling | Proposed primary |
+| IEEE ICC 2027 | 2026-10-02 | 2027-01-15 | to confirm | Weak fit: communications scope, cloud and edge symposium only | Backup |
+| IEEE ICDCS 2027 | mid-January by series history | April | to confirm | Strong scope, but the deadline falls after January, so it fails the adviser's window | Not eligible |
+| IEEE/ACM UCC 2026 | passed (2026-08-19) | passed | Florianopolis | Strong fit | Closed |
 
 ---
 

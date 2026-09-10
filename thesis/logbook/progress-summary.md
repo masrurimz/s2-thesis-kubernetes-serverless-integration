@@ -1,10 +1,10 @@
 # Laporan Kemajuan Tesis
 
-**Nama** : [Nama Lengkap]  
-**NIM** : [NIM]  
-**Program Studi** : [Prodi]  
-**Dosen Pembimbing** : [Nama Dosen]  
-**Tanggal** : 7 Agustus 2026  
+**Nama** : Muhammad Zahid Masruri  
+**NRP** : 6025221041  
+**Program Studi** : Magister Komputer (M.Kom), Teknik Informatika — ITS Surabaya  
+**Dosen Pembimbing** : Prof. Tohari Ahmad dan Royyana Muslim Ijtihadie, S.Kom, M.Kom  
+**Tanggal** : 10 September 2026  
 
 **Judul tesis**  
 *Decision Making and Elastic Scalability Management in Heterogeneous Cloud Environments Based on Workload Prediction*
@@ -13,7 +13,7 @@
 
 Assalamu’alaikum Wr. Wb.
 
-Dengan hormat, saya izin melaporkan kemajuan tesis saya. Mohon maaf sebelumnya karena sudah cukup lama tidak bimbingan. Alhamdulillah penelitian sudah saya selesaikan dan naskah tesis sudah siap untuk dibaca. Saya mohon kesediaan Bapak/Ibu untuk bimbingan sebelum saya mendaftar sidang.
+Dengan hormat, saya izin melaporkan kemajuan tesis saya. Mohon maaf sebelumnya karena sudah cukup lama tidak bimbingan. Alhamdulillah penelitian sudah berjalan jauh: eksperimen sudah selesai dijalankan, dan naskah tesis sudah saya susun. Saya mohon kesediaan Bapak/Ibu untuk mereview naskah ini dan memberikan bimbingan serta arahan langkah selanjutnya.
 
 ## 1. Ringkasan topik
 
@@ -59,5 +59,5 @@ Demikian laporan kemajuan ini saya sampaikan. Atas perhatian dan bimbingan Bapak
 Wassalamu’alaikum Wr. Wb.
 
 Hormat saya,  
-[Nama Lengkap]  
-NIM [NIM]
+Muhammad Zahid Masruri  
+NRP 6025221041
