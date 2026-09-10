@@ -20,7 +20,7 @@
 
 // --- Author Information ---
 #let author = "Muhammad Zahid Masruri"
-#let nrp = "6025222041"
+#let nrp = "6025221041"
 #let sign = "resources/fake-sign.svg"  // replace when real signature available
 
 // --- Supervisor Information ---
@@ -188,7 +188,7 @@ Peneliti menyadari bahwa dalam penyusunan laporan tesis ini masih terdapat banya
   \
   \
   Muhammad Zahid Masruri \
-  NRP: 6025222041
+  NRP: 6025221041
 ]
 
 #pagebreak()

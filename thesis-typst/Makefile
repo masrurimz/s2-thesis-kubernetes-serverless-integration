@@ -6,7 +6,7 @@ all: master
 
 master:
 	mkdir -p build
-	@echo "Building Master's Thesis PDF..."
+	typst compile src/thesis.typ build/thesis.pdf
 	@echo "Output: build/thesis.pdf"
 
 # Indonesian body edition: same sources, --input lang=id switches text
