@@ -28,6 +28,12 @@ This is a work queue — not an interpretation or duplicate experiment report. U
   - Done when: 5 valid S3/S4 pairs complete with `treatment_fidelity.delivery_rate == 1.0` for every S4 run; `paired_analysis.json` reports inferential statistics; the bundle is promoted toward `role: final` by a human evidence decision.
   - **Resolution claimed:** Resolved by `2026-07-14-clarknet-tuned-paired-n5`. All 5 S4 runs delivered complete forecasts (predictive_count=4–5, forecast_horizon_sufficient=True). H2 supported: primary p99 p=0.0304, d=−1.2646.
   - **Correction 2026-09-11:** the stated prerequisite was not met. The model behind that bundle is `data/models/gru_model.pt`, trained on synthetic data in 18 seconds on 2026-07-13 with `prediction_horizon=9`; its scaler mean is 86.62 from synthetic training at `base_rps` 100. No 15-second ClarkNet-trained artifact existed at the time. The delivery gate part of the definition was met, the artifact part was not.
+- [x] EVID-006a — n=1 paired S3/S4 run against the leak-free artifact (2026-09-11)
+  - Bundle: `results/experiments/phase-b/2026-09-11_clarknet-leakfree-paired-n1`
+  - Valid: both arms zero request failures, S4 delivered 55 of 55 eligible forecasts, both arms passed the run-validity gate.
+  - Result at n=1: reactive p99 120.4 ms and 117 SLO violations against predictive 152.6 ms and 254, with three scale-ups against six and higher k8s replica-seconds. The predictor delivered every forecast but only one cycle was actionable, so the proactive arm scaled up less and carried the same load on fewer replicas.
+  - Two attempts were rejected first and are kept beside it as `-invalid` (HAProxy exited mid-run, so the load history never filled the model's input window) and `-aborted` (the prediction server hung on the integrated GPU and failed every eligible cycle). Both failures were caught by the gates the bundle records, not by inspection.
+
   - **Status now:** a genuine 15-second ClarkNet-trained, leak-free artifact exists as of 2026-09-11, `results/models/gru/2026-09-10_clarknet-15s-h9-leakfree` (registry `role: final`, `status: current`, GRU holdout RMSE 29.635 ± 0.016, replay window held out). The remaining work is the paired rerun against that artifact, tracked as EVID-006.
 
 - [ ] EVID-006 — Paired S3/S4 rerun against the leak-free ClarkNet artifact
