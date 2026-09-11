@@ -89,6 +89,7 @@ def build_results_final(bundle_dir: Path, include_invalid: bool = False) -> list
                 "p99_latency_ms": result.get("p99_latency_ms", 0),
                 "error_rate": result.get("error_rate", 0),
                 "throughput_rps": result.get("throughput_rps", 0),
+                "total_requests": result.get("total_requests", 0),
                 "slo_violation_count": result.get("slo_violation_count", result.get("slo_violations_k6", 0)),
                 "slo_violations_k6": result.get("slo_violations_k6", 0),
                 "slo_violation_duration_sec": result.get("slo_violation_duration_sec", 0),

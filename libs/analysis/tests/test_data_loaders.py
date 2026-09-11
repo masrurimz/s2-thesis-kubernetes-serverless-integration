@@ -14,6 +14,7 @@ def _write_result(bundle_dir, name, **overrides):
         "p50_latency_ms": 50.0,
         "error_rate": 0.01,
         "throughput_rps": 95.0,
+        "total_requests": 87840,
         "slo_violations_k6": 2,
         "duration_sec": 60.0,
         "timestamp": "2026-07-14T00:00:00Z",
@@ -58,6 +59,7 @@ def test_build_results_final_schema_v1(tmp_path):
         "p99_latency_ms",
         "error_rate",
         "throughput_rps",
+        "total_requests",
         "slo_violation_count",
         "slo_violations_k6",
         "slo_violation_duration_sec",
@@ -73,6 +75,18 @@ def test_build_results_final_schema_v1(tmp_path):
         "run_validity_passed",
         "stress_validity_passed",
     ]
+
+
+def test_build_results_final_carries_total_requests(tmp_path):
+    _write_result(
+        tmp_path,
+        "s3-hybrid-reactive_run1",
+        scenario="s3-hybrid-reactive",
+        run_id=1,
+        total_requests=87840,
+    )
+
+    assert build_results_final(tmp_path)[0]["total_requests"] == 87840
 
 
 def test_build_results_final_excludes_invalid(tmp_path):
