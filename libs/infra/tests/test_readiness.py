@@ -106,7 +106,7 @@ def test_no_actions_when_testbed_already_up(monkeypatch):
         "cluster": CLUSTER,
         "changed": False,
         "actions": [],
-        "nodes": {"servers": 1, "agents": 1},
+        "nodes": {"servers": 1, "agents": 1, "dynamic_agents": 0},
         "haproxy": True,
         "prometheus": True,
     }
@@ -137,7 +137,7 @@ def test_converges_stopped_testbed(monkeypatch):
     assert fake_start.calls == [["k3d", "cluster", "start", CLUSTER]]
     assert any("up" in cmd for cmd in fake_haproxy.calls)
     assert not any("up" in cmd for cmd in fake_prometheus.calls)
-    assert result["nodes"] == {"servers": 0, "agents": 1}
+    assert result["nodes"] == {"servers": 0, "agents": 1, "dynamic_agents": 0}
 
 
 def test_restarts_cluster_when_server_not_running(monkeypatch):

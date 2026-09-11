@@ -121,3 +121,32 @@ def test_dry_run_lists_actions_without_mutating(monkeypatch):
     assert len(mutating) == 2
     assert all(dry_run for _, dry_run in mutating)
     assert [node for node in fake.inventory if node["role"] == "agent"] == []
+
+
+def test_list_nodes_reads_the_state_k3d_actually_reports(monkeypatch):
+    """k3d nests the state under "State"; reading a flat "state" makes every node look stopped."""
+    import json as _json
+
+    payload = [
+        {
+            "name": "k3d-thesis-hybrid-server-0",
+            "role": "server",
+            "State": {"Running": True, "Status": "running"},
+            "runtimeLabels": {"k3d.cluster": "thesis-hybrid"},
+        },
+        {
+            "name": "k3d-other-agent-0",
+            "role": "agent",
+            "State": {"Running": True, "Status": "running"},
+            "runtimeLabels": {"k3d.cluster": "other"},
+        },
+    ]
+    monkeypatch.setattr(
+        shaping,
+        "run",
+        lambda *a, **k: type("R", (), {"returncode": 0, "stdout": _json.dumps(payload), "stderr": ""})(),
+    )
+
+    assert shaping.list_nodes("thesis-hybrid") == [
+        {"name": "k3d-thesis-hybrid-server-0", "role": "server", "state": "running"}
+    ]

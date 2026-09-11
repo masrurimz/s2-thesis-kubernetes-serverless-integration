@@ -53,7 +53,8 @@ def ensure_testbed(cluster: str = "thesis-hybrid", *, servers: int = 1, agents: 
 
     final_nodes = list_nodes(cluster)
     server_count = sum(1 for node in final_nodes if node["role"] == "server")
-    agent_count = sum(1 for node in final_nodes if node["role"] == "agent")
+    static_agents = sum(1 for node in final_nodes if node["role"] == "agent" and "dynamic" not in node["name"])
+    dynamic_agents = sum(1 for node in final_nodes if node["role"] == "agent" and "dynamic" in node["name"])
     if server_count < servers:
         # Server nodes are reported, not converged: the testbed runs a single server.
         logger.warning("testbed_server_count_below_expected", cluster=cluster, have=server_count, want=servers)
@@ -62,7 +63,7 @@ def ensure_testbed(cluster: str = "thesis-hybrid", *, servers: int = 1, agents: 
         "cluster": cluster,
         "changed": bool(actions),
         "actions": actions,
-        "nodes": {"servers": server_count, "agents": agent_count},
+        "nodes": {"servers": server_count, "agents": static_agents, "dynamic_agents": dynamic_agents},
         "haproxy": haproxy_up,
         "prometheus": prometheus_up,
     }

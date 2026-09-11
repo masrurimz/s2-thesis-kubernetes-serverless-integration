@@ -228,8 +228,10 @@ def ensure(
     if not result["actions"]:
         console.print("  [green]already in the requested state[/green]")
 
+    nodes = result["nodes"]
     console.print(
-        f"  nodes: servers={result['nodes']['servers']} agents={result['nodes']['agents']}"
+        f"  nodes: servers={nodes['servers']} agents={nodes['agents']}"
+        f" (+{nodes['dynamic_agents']} dynamic)"
         f"  |  haproxy={'up' if result['haproxy'] else 'down'}"
         f"  |  prometheus={'up' if result['prometheus'] else 'down'}"
     )

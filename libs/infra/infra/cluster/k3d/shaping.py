@@ -20,12 +20,17 @@ def list_nodes(cluster: str) -> list[dict]:
     except json.JSONDecodeError:
         logger.warning("k3d_node_list_parse_failed")
         return []
-    # Cluster membership lives in runtimeLabels, not a top-level field.
-    return [
-        {"name": item.get("name", ""), "role": item.get("role", ""), "state": item.get("state", "")}
-        for item in items
-        if (item.get("runtimeLabels") or {}).get("k3d.cluster") == cluster
-    ]
+    # Cluster membership lives in runtimeLabels, not a top-level field, and the
+    # node state arrives as a nested object keyed "State" with a "Status" inside.
+    parsed = []
+    for item in items:
+        if (item.get("runtimeLabels") or {}).get("k3d.cluster") != cluster:
+            continue
+        state = item.get("state")
+        if not state:
+            state = (item.get("State") or {}).get("Status", "")
+        parsed.append({"name": item.get("name", ""), "role": item.get("role", ""), "state": state})
+    return parsed
 
 
 def _agent_index(cluster: str, name: str) -> int | None:
