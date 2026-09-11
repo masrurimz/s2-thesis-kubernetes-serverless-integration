@@ -140,16 +140,15 @@ class KnativeInstaller:
         return True
 
     def _configure_autoscaling(self) -> bool:
-        self._kubectl(
-            [
-                "apply",
-                "-f",
-                "-",
-            ],
-            check=False,
-        )
-        # Fallback: just log that autoscaling defaults should be configured manually
-        console.print("[dim]Configure autoscaling defaults via kubectl if needed.[/dim]")
+        """Report the autoscaler settings in force.
+
+        Nothing is applied here on purpose. The settings that shape a run are the
+        service's own annotations (minScale 0, maxScale 10, target concurrency) in
+        `workloads/test_app/knative-service.yaml`; the rest is Knative's default.
+        Patching the cluster instead would silently change what every earlier run
+        measured.
+        """
+        console.print("[dim]Autoscaler: Knative defaults, service annotations in the workload manifest.[/dim]")
         return True
 
     def _configure_node_isolation(self) -> None:
