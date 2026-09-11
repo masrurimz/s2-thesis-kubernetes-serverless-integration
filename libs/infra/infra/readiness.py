@@ -68,11 +68,6 @@ def rebuild_testbed(
         return {"cluster": cluster, "ready": False, "actions": actions, "summary": "knative install failed"}
     actions.append("installed knative")
 
-    if not HAProxyManager().start():
-        logger.error("haproxy_start_failed")
-        return {"cluster": cluster, "ready": False, "actions": actions, "summary": "haproxy did not start"}
-    PrometheusManager().start()
-
     deployed = deploy_test_app(skip_build=skip_build)
     actions.extend(deployed["actions"])
     if not (deployed["k8s_ok"] and deployed["knative_ok"]):
@@ -82,6 +77,14 @@ def rebuild_testbed(
             "actions": actions,
             "summary": f"deploy failed: k8s={deployed['k8s_ok']} knative={deployed['knative_ok']}",
         }
+
+    # The proxy is started after the application so its first render can name the
+    # Knative host; starting it earlier leaves it routing to the previous cluster.
+    if not HAProxyManager().start():
+        logger.error("haproxy_start_failed")
+        return {"cluster": cluster, "ready": False, "actions": actions, "summary": "haproxy did not start"}
+    PrometheusManager().start()
+    actions.append("started haproxy and prometheus")
 
     converged = ensure_testbed(cluster, agents=agents)
     actions.extend(converged["actions"])
@@ -109,6 +112,32 @@ def _wait_for_nodes_to_settle(cluster: str, *, timeout_sec: float = 60.0, interv
             return
         time.sleep(interval_sec)
     logger.warning("nodes_did_not_settle", cluster=cluster)
+
+
+def _refresh_haproxy_host(actions: list[str]) -> None:
+    """Restart HAProxy when its config names a cluster that is no longer there.
+
+    The config rewrites the Host header to the Knative service's own host, and that
+    host embeds the Kourier IP. A proxy started before the application existed holds
+    the previous cluster's address, so every request it forwards to the serverless
+    arm returns 404 — an arm that looks broken rather than slow.
+    """
+    from infra.networking.haproxy.manager import HAProxyManager
+    from infra.networking.haproxy.render import RUNTIME_DIR, current_host_in, knative_host, render_config
+
+    live = knative_host()
+    if live is None:
+        return
+    rendered = RUNTIME_DIR / "haproxy.cfg"
+    if current_host_in(rendered) == live:
+        return
+
+    render_config("default", host=live)
+    manager = HAProxyManager()
+    manager.stop()
+    if manager.start():
+        actions.append(f"restarted haproxy for knative host {live}")
+        logger.info("haproxy_host_refreshed", host=live)
 
 
 def wait_for_cluster(cluster: str, *, timeout_sec: float = 240.0, interval_sec: float = 5.0) -> bool:
@@ -229,6 +258,12 @@ def ensure_testbed(
     if not haproxy_up and haproxy.start():
         haproxy_up = True
         actions.append("started haproxy")
+
+    # The Knative host carries the cluster's IP, so a proxy started before the
+    # application existed is routing to the previous cluster's address. Every
+    # convergence re-checks it, which is also what repairs a rebuilt stack.
+    if haproxy_up:
+        _refresh_haproxy_host(actions)
 
     prometheus = PrometheusManager()
     prometheus_up = prometheus.is_running()

@@ -121,6 +121,9 @@ def patch_all(monkeypatch, nodes, *, haproxy_running, prometheus_running, pods=N
     monkeypatch.setattr(shaping, "run", fake_k3d)
     monkeypatch.setattr(residue, "run", fake_k3d)
     monkeypatch.setattr(readiness, "run", fake_start)
+    # The proxy-host refresh reads the live cluster and restarts HAProxy; it has its
+    # own test below, and the stateful fakes here do not model it.
+    monkeypatch.setattr(readiness, "_refresh_haproxy_host", lambda actions: None)
     monkeypatch.setattr(haproxy_manager, "run", fake_haproxy)
     monkeypatch.setattr(prometheus_manager, "run", fake_prometheus)
     return fake_k3d, fake_haproxy, fake_prometheus, fake_start
@@ -239,3 +242,53 @@ def test_dry_run_reports_pruning_without_touching_anything(monkeypatch):
     assert fake_k3d.kubectl_deletes() == []
     assert len(fake_k3d.inventory) == 3
     assert len(fake_k3d.pods) == 1
+
+
+def test_the_proxy_is_restarted_when_its_config_names_another_cluster(monkeypatch, tmp_path):
+    """A rebuilt cluster gets a new Kourier IP, and the config embeds it."""
+    from infra.networking.haproxy import render
+
+    monkeypatch.setattr(render, "RUNTIME_DIR", tmp_path)
+    (tmp_path / "haproxy.cfg").write_text(
+        "backend servers\n    http-request set-header Host test-app.default.192.168.0.2.sslip.io\n"
+    )
+    monkeypatch.setattr(render, "knative_host", lambda **kwargs: "test-app.default.172.22.0.2.sslip.io")
+
+    calls = []
+    monkeypatch.setattr(
+        "infra.networking.haproxy.manager.HAProxyManager",
+        lambda: type(
+            "M", (), {"stop": lambda self: calls.append("stop"), "start": lambda self: calls.append("start") or True}
+        )(),
+    )
+
+    actions: list[str] = []
+    readiness._refresh_haproxy_host(actions)
+
+    assert calls == ["stop", "start"]
+    assert actions == ["restarted haproxy for knative host test-app.default.172.22.0.2.sslip.io"]
+    assert render.current_host_in(tmp_path / "haproxy.cfg") == "test-app.default.172.22.0.2.sslip.io"
+
+
+def test_the_proxy_is_left_alone_when_its_config_already_matches(monkeypatch, tmp_path):
+    from infra.networking.haproxy import render
+
+    monkeypatch.setattr(render, "RUNTIME_DIR", tmp_path)
+    monkeypatch.setattr(render, "knative_host", lambda **kwargs: "test-app.default.172.22.0.2.sslip.io")
+    (tmp_path / "haproxy.cfg").write_text(
+        "backend servers\n    http-request set-header Host test-app.default.172.22.0.2.sslip.io\n"
+    )
+
+    calls: list[str] = []
+    monkeypatch.setattr(
+        "infra.networking.haproxy.manager.HAProxyManager",
+        lambda: type(
+            "M", (), {"stop": lambda self: calls.append("stop"), "start": lambda self: calls.append("start")}
+        )(),
+    )
+
+    actions: list[str] = []
+    readiness._refresh_haproxy_host(actions)
+
+    assert calls == []
+    assert actions == []

@@ -28,6 +28,16 @@ K8S_WORKLOAD_NODE = "k3d-thesis-hybrid-agent-0"
 RUNTIME_DIR = Path.home() / ".cache" / "thesis" / "haproxy"
 
 _HOST_HEADER = re.compile(r"^(\s*http-request set-header Host )\S+$", re.MULTILINE)
+_HOST_HEADER_VALUE = re.compile(r"^\s*http-request set-header Host (\S+)$", re.MULTILINE)
+
+
+def current_host_in(path: Path) -> str | None:
+    """The host a rendered config routes Knative traffic to."""
+    try:
+        match = _HOST_HEADER_VALUE.search(path.read_text())
+    except OSError:
+        return None
+    return match.group(1) if match else None
 
 
 def knative_host(*, context: str = SERVERLESS_CONTEXT) -> str | None:
