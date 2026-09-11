@@ -7,6 +7,7 @@ This module provides the loader/predict interface consumed by the FastAPI
 server, with auto-discovery of model artifacts from standard paths.
 """
 
+import hashlib
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -35,6 +36,7 @@ class GRUModelLoader:
 
     def __init__(self, model_path: Optional[Path] = None):
         self._predictor = GRUPredictor()
+        self.artifact_sha256: str | None = None
         self.is_loaded: bool = False
         self.model_path: Optional[Path] = None
         self.model_type: str = "unknown"
@@ -64,6 +66,11 @@ class GRUModelLoader:
             self.is_loaded = True
             self.model_path = path
             self.model_type = "pytorch" if str(path).endswith(".pt") else "sklearn"
+            digest = hashlib.sha256()
+            with open(path, "rb") as handle:
+                for chunk in iter(lambda: handle.read(1 << 20), b""):
+                    digest.update(chunk)
+            self.artifact_sha256 = digest.hexdigest()
             logger.info(
                 "Model loaded via canonical predictor",
                 path=str(path),
@@ -162,4 +169,5 @@ class GRUModelLoader:
             "scaler_mean": self.scaler_mean,
             "scaler_std": self.scaler_std,
             "val_coverage": self.val_coverage,
+            "artifact_sha256": self.artifact_sha256,
         }

@@ -12,7 +12,7 @@ import random
 import shutil
 import tempfile
 import time
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
@@ -20,6 +20,8 @@ import typer
 import structlog
 
 from shared.models.experiment import ExperimentConfig, ExperimentResult
+
+from experiment.profiles import get_profile, profile_names
 
 if TYPE_CHECKING:
     from rich.console import Console
@@ -442,6 +444,248 @@ def trace_replay(
         raise typer.Exit(rc)
 
 
+@app.command()
+def summary(
+    bundle: str = typer.Argument(..., help="Bundle directory containing per-run result.json files"),
+    print_report: bool = typer.Option(True, "--print/--no-print", help="Print the summary after writing it"),
+) -> None:
+    """Write SUMMARY.md for a bundle: what ran, the headline table, the pair verdict."""
+    from rich.console import Console
+
+    from experiment.summary import write_summary
+
+    console = Console()
+    path = write_summary(Path(bundle))
+    console.print(f"[green]Summary written: {path}[/green]")
+    if print_report:
+        console.print(path.read_text())
+
+
+@app.command()
+def reproduce(
+    profile: str = typer.Option(..., "--profile", help=f"Experiment profile: {', '.join(profile_names())}"),
+    pairs: Optional[int] = typer.Option(None, help="Override the profile's pair count"),
+    runs: Optional[int] = typer.Option(None, help="Override the profile's run count"),
+    duration: int = typer.Option(300, help="Workload duration in seconds per run"),
+    seed: int = typer.Option(42, help="Random seed for schedule and ordering"),
+    output: Optional[str] = typer.Option(None, help="Bundle directory (default: dated name from the profile)"),
+    controller: str = typer.Option("v3", help="Controller version for S3/S4"),
+    workload: str = typer.Option("clarknet", help="Workload trace"),
+    resume: bool = typer.Option(True, "--resume/--no-resume", help="Continue an existing bundle instead of refusing"),
+    force: bool = typer.Option(False, "--force", help="Delete an existing bundle before running"),
+    dry_run: bool = typer.Option(False, help="Report what would happen without changing anything"),
+) -> None:
+    """Run an experiment under a named profile, end to end.
+
+    Converges the testbed to the profile's shape, ensures the prediction server is
+    the right artifact on CPU, runs the profile's design, writes the analysis and a
+    human-readable summary, and exits nonzero when a run or pair failed its gate.
+
+    Idempotent: a bundle that already holds every requested pair or run is left
+    alone and only re-analysed, and a partial bundle continues from where it stopped
+    rather than starting over.
+    """
+    from rich.console import Console
+    from rich.panel import Panel
+
+    console = Console()
+
+    selected = get_profile(profile)
+    pair_count = pairs if pairs is not None else selected.pairs
+    run_count = runs if runs is not None else selected.runs
+
+    console.print(
+        Panel.fit(
+            f"[bold]Reproduce: {selected.name}[/bold]\n"
+            f"{selected.description}\n\n"
+            f"Scenarios: {', '.join(selected.scenarios)}\n"
+            f"{'Pairs: ' + str(pair_count) if pair_count else 'Runs per scenario: ' + str(run_count)}\n"
+            f"Static agent nodes: {selected.k8s_agents}  |  Prediction server: {selected.prediction_server}\n"
+            f"Controller: {controller}  |  Workload: {workload}  |  Seed: {seed}",
+            border_style="cyan",
+        )
+    )
+
+    suffix = f"{pair_count}p" if pair_count else f"{run_count}r"
+    output_dir = output or f"results/experiments/phase-b/{date.today().isoformat()}_{selected.name}-{suffix}"
+    bundle_path = Path(output_dir)
+
+    if force and bundle_path.exists():
+        shutil.rmtree(bundle_path)
+    if bundle_path.exists() and not resume:
+        console.print(
+            f"[red]Bundle already exists: {output_dir}. Pass --resume to continue it or --force to replace it.[/red]"
+        )
+        raise typer.Exit(1)
+
+    existing_pairs = _completed_pairs(bundle_path) if pair_count else {}
+    existing_runs: frozenset[tuple[str, int]] = _completed_runs(bundle_path) if not pair_count else frozenset()
+
+    if dry_run:
+        if pair_count:
+            console.print(f"Would run {pair_count - len(existing_pairs)} of {pair_count} pairs into {output_dir}")
+        else:
+            total = len(selected.scenarios) * run_count
+            console.print(f"Would run {total - len(existing_runs)} of {total} runs into {output_dir}")
+        for key, value in selected.routing_env.items():
+            console.print(f"  daemon environment: {key}={value}")
+        return
+
+    from infra.readiness import ensure_testbed
+
+    testbed = ensure_testbed(cluster=os.environ.get("K3D_CLUSTER_NAME", "thesis-hybrid"), agents=selected.k8s_agents)
+    console.print(f"[cyan]Testbed:[/cyan] {testbed['nodes']} | actions: {testbed['actions'] or 'none needed'}")
+
+    server: dict = {"status": "not required"}
+    if selected.prediction_server:
+        from experiment.services import ensure_prediction_server
+
+        server = ensure_prediction_server()
+        console.print(f"[cyan]Prediction server:[/cyan] {server['status']} on port {server.get('port')}")
+        if server["status"] == "unavailable":
+            console.print(f"[red]Prediction server unavailable: {server.get('reason')}[/red]")
+            console.print("[red]S4 runs would be invalid, so the experiment is not started.[/red]")
+            raise typer.Exit(1)
+
+    os.environ["CONTROLLER_VERSION"] = controller
+    os.environ["WORKLOAD"] = workload
+    os.environ.update(selected.routing_env)
+
+    config = ExperimentConfig(phase="experiments", runs=run_count or 1, duration_sec=duration, seed=seed)
+    from shared.storage.journal import ExperimentJournal
+
+    exit_code = 0
+
+    if pair_count:
+        bundle_journal = ExperimentJournal(
+            bundle_path / "events.jsonl",
+            experiment_id=bundle_path.name,
+            bundle_path=str(bundle_path),
+            git_commit=_git_commit_hash(),
+        )
+        _write_bundle_metadata(output_dir, list(selected.scenarios), pair_count * 2, status="in_progress")
+        bundle_journal.record(
+            bundle_journal.new_event(
+                "profile_applied",
+                payload={"profile": selected.as_dict(), "testbed": testbed, "prediction_server": server},
+            )
+        )
+
+        missing = pair_count - len(existing_pairs)
+        if missing > 0:
+            console.print(f"\n[bold cyan]Running {missing} pair(s)[/bold cyan]")
+            _run_pairs(
+                output_dir,
+                pairs=missing,
+                start_pair_id=max(existing_pairs, default=0) + 1,
+                config=config,
+                console=console,
+                bundle_journal=bundle_journal,
+            )
+
+        s3_results, s4_results, pair_ids = _collect_pairs(bundle_path)
+        console.print(f"\n[bold green]{len(pair_ids)} valid pair(s) in the bundle[/bold green]")
+        if len(pair_ids) < pair_count:
+            _write_insufficient_pairs(output_dir, len(pair_ids), pair_count, 0)
+            console.print(f"[red]Insufficient valid pairs: {len(pair_ids)}/{pair_count}[/red]")
+            exit_code = 1
+        else:
+            _write_paired_analysis(output_dir, s3_results, s4_results, pair_ids, console)
+    else:
+        _write_bundle_metadata(output_dir, list(selected.scenarios), run_count, status="in_progress")
+        missing = len(selected.scenarios) * run_count - len(existing_runs)
+        if missing > 0:
+            console.print(f"\n[bold cyan]Running {missing} of {len(selected.scenarios) * run_count} runs[/bold cyan]")
+            _run_replicated(config, list(selected.scenarios), output_dir, dry_run=False, skip=existing_runs)
+        else:
+            console.print("\n[green]Every requested run is already present[/green]")
+
+        from experiment.stages.analyze import AnalyzeStage
+        from experiment.stages.report import ReportStage
+
+        all_results = _load_run_results(bundle_path)
+        analyzer = AnalyzeStage()
+        clean, excluded, comparisons = analyzer.analyze_batch(all_results)
+        report_stage = ReportStage()
+        analysis_set = [r for r in clean if r.stress_validity_passed or r.scenario == "s2-serverless-only"]
+        (bundle_path / "report.md").write_text(report_stage.generate_report(clean, analysis_set, excluded, comparisons))
+        if excluded:
+            exit_code = 1
+
+    from experiment.summary import write_summary
+
+    summary_path = write_summary(bundle_path)
+    console.print(f"\n[green]Summary: {summary_path}[/green]")
+
+    status = "completed" if not exit_code else "invalid"
+    _write_bundle_metadata(
+        output_dir,
+        list(selected.scenarios),
+        pair_count * 2 if pair_count else run_count,
+        status=status,
+    )
+
+    if exit_code:
+        raise typer.Exit(code=exit_code)
+
+
+def _load_result(run_dir: Path) -> Optional[ExperimentResult]:
+    path = run_dir / "result.json"
+    if not path.exists():
+        return None
+    try:
+        return ExperimentResult(**json.loads(path.read_text()))
+    except Exception:
+        return None
+
+
+def _load_run_results(bundle_path: Path) -> list[ExperimentResult]:
+    results = []
+    for run_dir in sorted(p for p in bundle_path.glob("*_run*") if p.is_dir()):
+        result = _load_result(run_dir)
+        if result is not None:
+            results.append(result)
+    return results
+
+
+def _completed_runs(bundle_path: Path) -> frozenset[tuple[str, int]]:
+    done = set()
+    for result in _load_run_results(bundle_path):
+        if result.run_validity_passed:
+            done.add((result.scenario, result.run_id))
+    return frozenset(done)
+
+
+def _collect_pairs(bundle_path: Path) -> tuple[list, list, list[str]]:
+    """Pairs from disk: both runs valid and the S4 arm fully delivered."""
+    by_scenario: dict[str, dict[int, ExperimentResult]] = {}
+    for result in _load_run_results(bundle_path):
+        by_scenario.setdefault(result.scenario, {})[result.run_id] = result
+
+    s3 = by_scenario.get("s3-hybrid-reactive", {})
+    s4 = by_scenario.get("s4-hybrid-predictive", {})
+    paired: list[tuple[int, ExperimentResult, ExperimentResult]] = []
+    for run_id, s4_result in s4.items():
+        s3_result = s3.get(run_id)
+        if s3_result is None:
+            continue
+        delivered = s4_result.treatment_fidelity is not None and s4_result.treatment_fidelity.delivered
+        if s3_result.run_validity_passed and s4_result.run_validity_passed and delivered:
+            paired.append((run_id, s3_result, s4_result))
+
+    paired.sort(key=lambda item: item[0])
+    return (
+        [s3_result for _, s3_result, _ in paired],
+        [s4_result for _, _, s4_result in paired],
+        [f"pair_{run_id:03d}" for run_id, _, _ in paired],
+    )
+
+
+def _completed_pairs(bundle_path: Path) -> set[int]:
+    _, _, pair_ids = _collect_pairs(bundle_path)
+    return {int(pid.split("_")[1]) for pid in pair_ids}
+
+
 @app.command(name="paired-run")
 def paired_run(
     pairs: int = typer.Option(5, help="Number of counterbalanced S3/S4 pairs"),
@@ -463,8 +707,6 @@ def paired_run(
     from rich.console import Console
     from rich.panel import Panel
     from rich.table import Table
-
-    from shared.progress import countdown
 
     console = Console()
 
@@ -530,11 +772,48 @@ def paired_run(
         git_commit=_git_commit_hash(),
     )
 
-    # Collect paired results. A pair is accepted only when BOTH runs pass
-    # validity AND the S4 treatment was fully delivered; otherwise the pair is
-    # excluded (raw run directories retained) and we retry. The attempt cap
-    # bounds cost so an unhealthy prediction service surfaces as a nonzero exit
-    # instead of silent reactive runs.
+    s3_results, s4_results, pair_ids, attempt = _run_pairs(
+        output_dir,
+        pairs=pairs,
+        start_pair_id=1,
+        config=config,
+        console=console,
+        bundle_journal=bundle_journal,
+    )
+
+    # Paired statistical analysis
+    n_valid = len(pair_ids)
+    console.print(f"\n[bold green]✅ {n_valid} valid pairs completed[/bold green]")
+
+    if n_valid < pairs:
+        _write_insufficient_pairs(output_dir, n_valid, pairs, attempt)
+        console.print(
+            f"[red]Insufficient valid pairs: {n_valid}/{pairs} after {attempt} attempts. "
+            f"S4 treatment delivery gate blocked confounded runs.[/red]"
+        )
+        raise typer.Exit(code=1)
+
+    _write_paired_analysis(output_dir, s3_results, s4_results, pair_ids, console)
+
+
+def _run_pairs(
+    output_dir: str,
+    *,
+    pairs: int,
+    start_pair_id: int,
+    config: ExperimentConfig,
+    console: "Console",
+    bundle_journal,
+) -> tuple[list, list, list[str], int]:
+    """Run counterbalanced S3/S4 pairs, excluding pairs whose treatment did not deliver.
+
+    A pair counts only when both runs pass validity and the S4 arm delivered every
+    eligible forecast, so a broken treatment surfaces as an excluded pair instead of
+    a confounded comparison. Pair numbering starts at ``start_pair_id`` so a resumed
+    bundle appends rather than overwrites.
+    """
+    from shared.progress import countdown
+
     s3_results: list[ExperimentResult] = []
     s4_results: list[ExperimentResult] = []
     pair_ids: list[str] = []
@@ -543,9 +822,9 @@ def paired_run(
 
     while len(pair_ids) < pairs and attempt < max_attempts:
         attempt += 1
-        pair_id = attempt
+        pair_id = start_pair_id + len(pair_ids)
         # Counterbalanced order: alternate which scenario runs first.
-        if attempt % 2 == 1:
+        if pair_id % 2 == 1:
             first_scenario, second_scenario = "s3-hybrid-reactive", "s4-hybrid-predictive"
         else:
             first_scenario, second_scenario = "s4-hybrid-predictive", "s3-hybrid-reactive"
@@ -554,9 +833,8 @@ def paired_run(
             f"\n[bold cyan]Attempt {attempt}/{max_attempts} (valid pairs: {len(pair_ids)}/{pairs})[/bold cyan]"
         )
 
-        # Run first scenario
         console.print(f"  [dim]Running {first_scenario}...[/dim]")
-        r1 = _run_single(first_scenario, pair_id, (attempt - 1) * 2, config, output_dir, console=console)
+        r1 = _run_single(first_scenario, pair_id, (pair_id - 1) * 2, config, output_dir, console=console)
         if r1 is None:
             console.print(f"  [red]First scenario {first_scenario} failed[/red]")
             continue
@@ -564,20 +842,17 @@ def paired_run(
         with countdown(console, INTER_RUN_PAUSE_SEC, "Inter-run pause"):
             pass
 
-        # Run second scenario
         console.print(f"  [dim]Running {second_scenario}...[/dim]")
-        r2 = _run_single(second_scenario, pair_id, (attempt - 1) * 2 + 1, config, output_dir, console=console)
+        r2 = _run_single(second_scenario, pair_id, (pair_id - 1) * 2 + 1, config, output_dir, console=console)
         if r2 is None:
             console.print(f"  [red]Second scenario {second_scenario} failed[/red]")
             continue
 
-        # Normalize: s3 = reactive, s4 = predictive
         if first_scenario == "s3-hybrid-reactive":
             s3r, s4r = r1, r2
         else:
             s3r, s4r = r2, r1
 
-        # Validity gate: both valid AND S4 treatment fully delivered
         s4_delivered = s4r.treatment_fidelity is not None and s4r.treatment_fidelity.delivered
         reasons = s4r.treatment_fidelity.reasons if s4r.treatment_fidelity else []
         if not (s3r.run_validity_passed and s4r.run_validity_passed and s4_delivered):
@@ -612,36 +887,39 @@ def paired_run(
             with countdown(console, INTER_RUN_PAUSE_SEC, "Inter-pair pause"):
                 pass
 
-    # Paired statistical analysis
-    n_valid = len(pair_ids)
-    console.print(f"\n[bold green]✅ {n_valid} valid pairs completed[/bold green]")
+    return s3_results, s4_results, pair_ids, attempt
 
-    if n_valid < pairs:
-        # Could not collect enough fully-valid treatment pairs within the
-        # attempt cap: do not report inferential statistics from confounded runs.
-        analysis_path = Path(output_dir) / "paired_analysis.json"
-        analysis = {
-            "status": "insufficient_valid_pairs",
-            "n_valid_pairs": n_valid,
-            "pairs_requested": pairs,
-            "attempts": attempt,
-            "timestamp": datetime.now().isoformat(),
-        }
-        analysis_path.write_text(json.dumps(analysis, indent=2))
-        console.print(
-            f"[red]Insufficient valid pairs: {n_valid}/{pairs} after {attempt} attempts. "
-            f"S4 treatment delivery gate blocked confounded runs.[/red]"
-        )
-        raise typer.Exit(code=1)
+
+def _write_insufficient_pairs(output_dir: str, n_valid: int, pairs: int, attempt: int) -> None:
+    from datetime import datetime
+
+    analysis_path = Path(output_dir) / "paired_analysis.json"
+    analysis = {
+        "status": "insufficient_valid_pairs",
+        "n_valid_pairs": n_valid,
+        "pairs_requested": pairs,
+        "attempts": attempt,
+        "timestamp": datetime.now().isoformat(),
+    }
+    analysis_path.write_text(json.dumps(analysis, indent=2))
+
+
+def _write_paired_analysis(
+    output_dir: str,
+    s3_results: list,
+    s4_results: list,
+    pair_ids: list[str],
+    console: "Console",
+) -> None:
+    """Write the paired comparison for the collected pairs and report the verdict."""
+    from datetime import datetime
 
     from analysis.comparison import run_paired_comparison, apply_holm_paired
 
-    # Primary endpoint: paired p99 latency
     s3_p99 = [r.p99_latency_ms for r in s3_results]
     s4_p99 = [r.p99_latency_ms for r in s4_results]
     primary = run_paired_comparison(s3_p99, s4_p99, metric="p99_latency_ms", pair_ids=pair_ids, label="H2-primary")
 
-    # Secondary endpoints
     secondaries = []
     for metric_name, attr in [
         ("p95_latency_ms", "p95_latency_ms"),
@@ -659,7 +937,6 @@ def paired_run(
 
     apply_holm_paired(secondaries)
 
-    # Report
     console.print("\n[bold cyan]H2 Paired Analysis[/bold cyan]")
     console.print("\n  [bold]Primary: p99 latency[/bold]")
     console.print(f"    S3 mean: {primary.baseline_mean:.1f}ms  |  S4 mean: {primary.comparison_mean:.1f}ms")
@@ -675,13 +952,11 @@ def paired_run(
         sig = "✅" if s.permutation_p_corrected < 0.05 else "⚠️"
         console.print(f"    {s.metric}: diff={s.mean_difference:+.2f}, p={s.permutation_p_corrected:.4f} {sig}")
 
-    # Save paired analysis
-
     analysis_path = Path(output_dir) / "paired_analysis.json"
     analysis = {
         "primary": primary.model_dump(),
         "secondaries": [s.model_dump() for s in secondaries],
-        "n_pairs": n_valid,
+        "n_pairs": len(pair_ids),
         "pair_ids": pair_ids,
         "s3_p99_values": s3_p99,
         "s4_p99_values": s4_p99,
@@ -822,8 +1097,14 @@ def _run_replicated(
     scenarios: list[str],
     output_dir: str,
     dry_run: bool,
+    skip: frozenset[tuple[str, int]] = frozenset(),
 ) -> list[ExperimentResult]:
-    """Run replicated experiments with randomized order."""
+    """Run replicated experiments with randomized order.
+
+    Entries in ``skip`` are runs already present and valid in the bundle, so a
+    resumed invocation only executes what is missing while keeping the schedule
+    order identical to a fresh run.
+    """
     from rich.console import Console
 
     from shared.progress import (
@@ -836,7 +1117,7 @@ def _run_replicated(
     )
 
     console = Console()
-    schedule = [(s, r) for s in scenarios for r in range(1, config.runs + 1)]
+    schedule = [(s, r) for s in scenarios for r in range(1, config.runs + 1) if (s, r) not in skip]
     rng = random.Random(config.seed)
     rng.shuffle(schedule)
 

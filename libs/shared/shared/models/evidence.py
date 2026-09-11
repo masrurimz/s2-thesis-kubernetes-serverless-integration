@@ -48,6 +48,7 @@ JournalEventName = Literal[
     "run_completed",
     "run_failed",
     "pair_excluded",
+    "profile_applied",
     "bundle_registered",
     "legacy_backfilled",
     "bundle_promoted",
