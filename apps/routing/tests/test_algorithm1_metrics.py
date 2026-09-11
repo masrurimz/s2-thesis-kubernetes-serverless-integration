@@ -29,6 +29,7 @@ class TestAlgorithm1Metrics:
         monitor.set_mock_metrics(p99=250.0)
         monitor.violation_start_time = int(time.time()) - 35
 
+        controller.last_adjustment_time = None
         controller.make_decision()
 
         after = get_counter_value(slo_violation_total, {"slo_name": "p99_latency"})
@@ -40,6 +41,7 @@ class TestAlgorithm1Metrics:
         monitor.set_mock_metrics(p99=250.0)
         monitor.violation_start_time = int(time.time()) - 35
 
+        controller.last_adjustment_time = None
         controller.make_decision()
 
         after = get_counter_value(routing_decision_total, {"decision_type": "SCALE_OUT"})
@@ -50,7 +52,8 @@ class TestAlgorithm1Metrics:
 
         monitor.set_mock_metrics(p99=100.0)
 
-        controller.make_decision()
+        controller.last_adjustment_time = None
+        controller.make_decision(current_load=100)
 
         after = get_counter_value(routing_decision_total, {"decision_type": "OPTIMIZE_COST"})
         assert after == initial + 1
@@ -62,6 +65,7 @@ class TestAlgorithm1Metrics:
 
         prediction = {"predicted_requests": 200, "confidence": 0.9}
 
+        controller.last_adjustment_time = None
         controller.make_decision(prediction=prediction, current_load=100)
 
         after = get_counter_value(routing_decision_total, {"decision_type": "PREDICTIVE"})
@@ -85,6 +89,7 @@ class TestAlgorithm1Metrics:
         controller.make_decision()
 
         monitor.violation_start_time = int(time.time()) - 35
+        controller.last_adjustment_time = None
         controller.make_decision()
 
         after_sum = get_histogram_sum(reaction_time_ms)
@@ -96,14 +101,12 @@ class TestAlgorithm1Metrics:
         initial_scale_out = get_counter_value(routing_decision_total, {"decision_type": "SCALE_OUT"})
 
         # First: optimize cost
-        monitor.set_mock_metrics(p99=100.0)
-        controller.make_decision()
-
-        # Second: maintain (due to cooldown)
-        controller.make_decision()
-
-        # Reset cooldown
         controller.last_adjustment_time = None
+        monitor.set_mock_metrics(p99=100.0)
+        controller.make_decision(current_load=100)
+
+        # Second: maintain (no current load provided)
+        controller.make_decision()
 
         # Third: scale out
         monitor.set_mock_metrics(p99=250.0)

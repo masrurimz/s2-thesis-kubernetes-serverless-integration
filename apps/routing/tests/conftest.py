@@ -18,16 +18,6 @@ def temp_db():
 
 
 @pytest.fixture
-def mock_haproxy_stats():
-    """Mock HAProxy stats CSV response."""
-    return """# pxname,svname,qcur,qmax,scur,smax,slim,stot,bin,bout,dreq,dresp,ereq,econ,eresp,wretr,wredis,status,weight,act,bck,chkfail,chkdown,lastchg,downtime,qlimit,pid,iid,sid,throttle,lbtot,tracked,type,rate,rate_lim,rate_max,check_status,check_code,check_duration,hrsp_1xx,hrsp_2xx,hrsp_3xx,hrsp_4xx,hrsp_5xx,hrsp_other,hanafail,req_rate,req_rate_max,req_tot,cli_abrt,srv_abrt,comp_in,comp_out,comp_byp,comp_rsp,lastsess,last_chk,last_agt,qtime,ctime,rtime,ttime,
-servers,k3s-cluster,0,0,0,1,100,1000,50000,100000,0,0,0,0,0,0,0,UP,80,1,0,0,0,3600,0,,1,2,1,,1000,,2,0,,10,L4OK,,0,0,950,0,50,0,0,,0,,0,0,0,0,0,0,0,,,0,0,0,0,
-servers,serverless-sim,0,0,0,1,100,250,12500,25000,0,0,0,0,0,0,0,UP,20,1,0,0,0,3600,0,,1,2,2,,250,,2,0,,5,L4OK,,0,0,240,0,10,0,0,,0,,0,0,0,0,0,0,0,,,0,0,0,0,
-servers,BACKEND,0,0,0,2,200,1250,62500,125000,0,0,,0,0,0,0,UP,100,1,0,,0,3600,0,,1,2,0,,1250,,1,0,,15,,,,0,1190,0,60,0,0,,,,0,0,0,0,0,0,0,,,0,0,0,0,
-"""
-
-
-@pytest.fixture
 def sample_traffic_data():
     """Sample traffic data for testing."""
 

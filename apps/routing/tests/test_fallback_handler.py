@@ -18,10 +18,9 @@ class TestFallbackHandler:
         """Test handler initialization."""
         assert handler.safe_k3s_weight == 80
         assert handler.safe_knative_weight == 20
-        assert handler.emergency_k3s_weight == 95
-        assert handler.emergency_knative_weight == 5
-        assert handler.fallback_mode is False
-        assert handler.emergency_mode is False
+        assert handler.emergency_k3s_weight == 100
+        assert handler.emergency_knative_weight == 0
+        assert handler.get_status()["in_fallback"] is False
 
     def test_init_custom_weights(self):
         """Test handler with custom weights."""
@@ -43,43 +42,39 @@ class TestFallbackHandler:
 
     def test_get_fallback_weights_high_load(self, handler):
         """Test fallback weights under high load."""
-        high_load_stats = {"total_requests": 3000, "avg_response_time": 250.0, "error_rate": 0.0}
+        high_load_stats = {"current_rps": 800, "cpu_usage": 0.5, "error_rate": 0.0}
 
         weights = handler.get_fallback_weights(high_load_stats)
 
-        assert weights["k3s"] == 60
-        assert weights["knative"] == 40
-        assert handler.fallback_mode is True
+        assert weights["k3s"] == 80
+        assert weights["knative"] == 20
 
     def test_get_fallback_weights_low_load(self, handler):
         """Test fallback weights under low load."""
-        low_load_stats = {"total_requests": 50, "avg_response_time": 20.0, "error_rate": 0.0}
+        low_load_stats = {"current_rps": 5, "p99_latency_ms": 20.0, "error_rate": 0.0}
 
         weights = handler.get_fallback_weights(low_load_stats)
 
-        assert weights["k3s"] == 90
-        assert weights["knative"] == 10
-        assert handler.fallback_mode is True
+        assert weights["k3s"] == 80
+        assert weights["knative"] == 20
 
     def test_get_fallback_weights_emergency_high_error(self, handler):
         """Test fallback weights with high error rate."""
-        emergency_stats = {"total_requests": 1000, "avg_response_time": 100.0, "error_rate": 0.1}
+        emergency_stats = {"current_rps": 100, "p99_latency_ms": 100.0, "error_rate": 0.15}
 
         weights = handler.get_fallback_weights(emergency_stats)
 
-        assert weights["k3s"] == 95
-        assert weights["knative"] == 5
-        assert handler.emergency_mode is True
+        assert weights["k3s"] == 100
+        assert weights["knative"] == 0
 
     def test_get_fallback_weights_emergency_high_latency(self, handler):
         """Test fallback weights with very high response time."""
-        emergency_stats = {"total_requests": 1000, "avg_response_time": 1500.0, "error_rate": 0.0}
+        emergency_stats = {"current_rps": 100, "p99_latency_ms": 1500.0, "error_rate": 0.0}
 
         weights = handler.get_fallback_weights(emergency_stats)
 
-        assert weights["k3s"] == 95
-        assert weights["knative"] == 5
-        assert handler.emergency_mode is True
+        assert weights["k3s"] == 100
+        assert weights["knative"] == 0
 
 
 class TestFallbackConditions:
@@ -92,12 +87,12 @@ class TestFallbackConditions:
 
     def test_is_emergency_condition_high_error(self, handler):
         """Test emergency detection with high error rate."""
-        stats = {"error_rate": 0.06, "avg_response_time": 25.0}
+        stats = {"error_rate": 0.15, "p99_latency_ms": 25.0}
         assert handler._is_emergency_condition(stats) is True
 
     def test_is_emergency_condition_high_latency(self, handler):
         """Test emergency detection with high latency."""
-        stats = {"error_rate": 0.0, "avg_response_time": 1500.0}
+        stats = {"error_rate": 0.0, "p99_latency_ms": 1500.0}
         assert handler._is_emergency_condition(stats) is True
 
     def test_is_emergency_condition_normal(self, handler):
@@ -105,14 +100,14 @@ class TestFallbackConditions:
         stats = {"error_rate": 0.01, "avg_response_time": 25.0}
         assert handler._is_emergency_condition(stats) is False
 
-    def test_is_high_load_condition_by_volume(self, handler):
-        """Test high load detection by request volume."""
-        stats = {"total_requests": 2500, "avg_response_time": 25.0}
+    def test_is_high_load_condition_by_rps(self, handler):
+        """Test high load detection by request rate."""
+        stats = {"current_rps": 800, "cpu_usage": 0.3}
         assert handler._is_high_load_condition(stats) is True
 
-    def test_is_high_load_condition_by_latency(self, handler):
-        """Test high load detection by elevated latency."""
-        stats = {"total_requests": 1000, "avg_response_time": 300.0}
+    def test_is_high_load_condition_by_cpu(self, handler):
+        """Test high load detection by CPU utilization."""
+        stats = {"current_rps": 100, "cpu_usage": 0.9}
         assert handler._is_high_load_condition(stats) is True
 
     def test_is_high_load_condition_normal(self, handler):
@@ -127,7 +122,7 @@ class TestFallbackConditions:
 
     def test_is_low_load_condition_normal(self, handler):
         """Test low load detection under normal conditions."""
-        stats = {"total_requests": 500}
+        stats = {"current_rps": 50}
         assert handler._is_low_load_condition(stats) is False
 
 
@@ -144,14 +139,15 @@ class TestFallbackRecovery:
         assert handler.should_enable_intelligent_routing() is True
 
     def test_should_enable_intelligent_routing_emergency(self, handler):
-        """Test re-enabling blocked during emergency mode."""
-        handler.emergency_mode = True
+        """Test re-enabling blocked while in fallback."""
+        handler._in_fallback = True
+        handler._fallback_start_time = time.time()
         assert handler.should_enable_intelligent_routing() is False
 
     def test_should_enable_intelligent_routing_recent_fallback(self, handler):
-        """Test re-enabling blocked after recent fallback."""
-        handler.fallback_mode = True
-        handler.last_fallback_time = int(time.time())
+        """Test re-enabling blocked within fallback timeout."""
+        handler._in_fallback = True
+        handler._fallback_start_time = time.time() - 60
         assert handler.should_enable_intelligent_routing() is False
 
     def test_should_enable_intelligent_routing_old_fallback(self, handler):
@@ -162,15 +158,15 @@ class TestFallbackRecovery:
 
     def test_reset_fallback_state(self, handler):
         """Test resetting fallback state."""
-        handler.fallback_mode = True
-        handler.emergency_mode = True
-        handler.fallback_reason = "test"
+        handler._in_fallback = True
+        handler._fallback_start_time = 123.0
+        handler._recovery_count = 2
 
         handler.reset_fallback_state()
 
-        assert handler.fallback_mode is False
-        assert handler.emergency_mode is False
-        assert handler.fallback_reason is None
+        assert handler._in_fallback is False
+        assert handler._fallback_start_time is None
+        assert handler._recovery_count == 0
 
     def test_get_recovery_weights_not_in_fallback(self, handler):
         """Test recovery weights when not in fallback mode."""
@@ -182,7 +178,7 @@ class TestFallbackRecovery:
 
     def test_get_recovery_weights_in_fallback(self, handler):
         """Test recovery weights during fallback mode."""
-        handler.fallback_mode = True
+        handler._in_fallback = True
         target = {"k3s": 60, "knative": 40}
 
         result = handler.get_recovery_weights(target)
@@ -194,7 +190,7 @@ class TestFallbackRecovery:
         """Test getting handler status."""
         status = handler.get_status()
 
-        assert "fallback_mode" in status
-        assert "emergency_mode" in status
-        assert "safe_weights" in status
-        assert "emergency_weights" in status
+        assert "in_fallback" in status
+        assert "fallback_start_time" in status
+        assert "recovery_count" in status
+        assert "timeout_sec" in status

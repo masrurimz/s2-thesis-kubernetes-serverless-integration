@@ -96,24 +96,23 @@ class TestDecisionLogger:
             logger.log_decision(
                 {
                     "timestamp": int(time.time()) + i,
-                    "decision_type": "intelligent" if i < 7 else "fallback",
-                    "current_stats": {"total_requests": 1000},
-                    "prediction": {"predicted_requests": 1200, "confidence": 0.8},
-                    "previous_weights": {"k3s": 80, "knative": 20},
-                    "target_weights": {"k3s": 75, "knative": 25},
-                    "weights_changed": i % 2 == 0,
-                    "decision_latency": 0.05,
+                    "scenario": "test",
+                    "action": "OPTIMIZE_COST" if i < 7 else "MAINTAIN",
+                    "k3s_weight": 80,
+                    "knative_weight": 20,
+                    "reason": "test decision",
+                    "p99_latency_ms": 100.0 + i,
+                    "confidence": 0.8,
                 }
             )
 
         stats = logger.get_decision_stats(hours=1)
 
         assert stats["total_decisions"] == 10
-        assert stats["intelligent_decisions"] == 7
-        assert stats["fallback_decisions"] == 3
-        assert stats["weight_changes"] == 5
-        assert "avg_latency" in stats
-        assert "avg_confidence" in stats
+        assert stats["action_counts"] == {"OPTIMIZE_COST": 7, "MAINTAIN": 3}
+        assert stats["avg_p99_latency"] == pytest.approx(104.5)
+        assert stats["avg_confidence"] == pytest.approx(0.8)
+        assert stats["time_range_hours"] == 1
 
 
 class TestDecisionLoggerExport:
@@ -152,7 +151,8 @@ class TestDecisionLoggerExport:
             data = json.load(f)
 
         assert "decisions" in data
-        assert "statistics" in data
+        assert "export_time" in data
+        assert data["total_decisions"] == 5
         assert len(data["decisions"]) == 5
 
         Path(output_path).unlink()
