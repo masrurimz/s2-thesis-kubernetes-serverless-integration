@@ -13,7 +13,7 @@ import json
 
 import structlog
 
-from infra.cluster.k3d.shaping import list_nodes
+from infra.cluster.k3d.shaping import list_nodes, remove_node
 from infra.commands import run
 
 logger = structlog.get_logger(__name__)
@@ -32,8 +32,7 @@ def prune_dynamic_nodes(cluster: str, *, dry_run: bool = False) -> list[str]:
         if node["role"] != "agent" or "dynamic" not in node["name"]:
             continue
         actions.append(f"deleted leftover dynamic node {node['name']}")
-        if not dry_run:
-            run(["k3d", "node", "delete", node["name"], "--cluster", cluster])
+        remove_node(cluster, node["name"], dry_run=dry_run)
 
     if actions:
         logger.info("dynamic_nodes_pruned", cluster=cluster, count=len(actions))

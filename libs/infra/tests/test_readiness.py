@@ -47,6 +47,8 @@ class FakeK3d:
                 {"items": [{"metadata": {"name": pod["name"]}, "spec": {"nodeName": pod["node"]}} for pod in self.pods]}
             )
             return subprocess.CompletedProcess(cmd, 0, stdout=stdout, stderr="")
+        if cmd[0] == "kubectl" and "delete" in cmd and "node" in cmd:
+            return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
         if cmd[0] == "kubectl" and "delete" in cmd and "pod" in cmd:
             target = cmd[cmd.index("pod") + 1]
             if not dry_run:
@@ -85,12 +87,22 @@ class FakeCompose:
 
 
 class FakeClusterStart:
-    def __init__(self):
+    """Answers `kubectl get nodes` from the k3d inventory; records lifecycle calls."""
+
+    def __init__(self, k3d=None):
+        self.k3d = k3d
         self.calls: list[list[str]] = []
 
     def __call__(self, cmd, dry_run=False, cwd=None, check=False):
         self.calls.append(list(cmd))
+        if cmd[0] == "kubectl" and "get" in cmd and "nodes" in cmd:
+            names = [node["name"] for node in (self.k3d.inventory if self.k3d else [])]
+            stdout = json.dumps({"items": [{"metadata": {"name": name}} for name in names]})
+            return subprocess.CompletedProcess(cmd, 0, stdout=stdout, stderr="")
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+
+    def cluster_starts(self) -> list[list[str]]:
+        return [cmd for cmd in self.calls if cmd[:2] == ["k3d", "cluster"]]
 
 
 def server(state="running"):
@@ -105,7 +117,7 @@ def patch_all(monkeypatch, nodes, *, haproxy_running, prometheus_running, pods=N
     fake_k3d = FakeK3d(nodes, pods)
     fake_haproxy = FakeCompose(haproxy_running, "haproxy")
     fake_prometheus = FakeCompose(prometheus_running, "prometheus")
-    fake_start = FakeClusterStart()
+    fake_start = FakeClusterStart(fake_k3d)
     monkeypatch.setattr(shaping, "run", fake_k3d)
     monkeypatch.setattr(residue, "run", fake_k3d)
     monkeypatch.setattr(readiness, "run", fake_start)
@@ -154,7 +166,7 @@ def test_converges_stopped_testbed(monkeypatch):
     ]
     assert result["haproxy"] is True
     assert result["prometheus"] is True
-    assert fake_start.calls == [["k3d", "cluster", "start", CLUSTER]]
+    assert fake_start.cluster_starts() == [["k3d", "cluster", "start", CLUSTER]]
     assert any("up" in cmd for cmd in fake_haproxy.calls)
     assert not any("up" in cmd for cmd in fake_prometheus.calls)
     assert result["nodes"] == {"servers": 0, "agents": 1, "dynamic_agents": 0}
@@ -171,7 +183,7 @@ def test_restarts_cluster_when_server_not_running(monkeypatch):
     result = readiness.ensure_testbed()
 
     assert result["actions"] == [f"started cluster {CLUSTER}"]
-    assert fake_start.calls == [["k3d", "cluster", "start", CLUSTER]]
+    assert fake_start.cluster_starts() == [["k3d", "cluster", "start", CLUSTER]]
     assert not any("up" in cmd for cmd in fake_haproxy.calls)
 
 

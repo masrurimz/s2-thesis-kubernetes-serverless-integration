@@ -86,12 +86,12 @@ def deploy_test_app(*, skip_build: bool = False) -> dict:
     )
     time.sleep(5)
 
-    k8s_ok, knative_ok = _verify_endpoints()
+    k8s_ok, knative_ok = verify_endpoints()
     logger.info("test_app_deployed", k8s_ok=k8s_ok, knative_ok=knative_ok)
     return {"k8s_ok": k8s_ok, "knative_ok": knative_ok, "actions": actions}
 
 
-def _verify_endpoints() -> tuple[bool, bool]:
+def verify_endpoints() -> tuple[bool, bool]:
     """Request one fib from each path, requiring the I/O wait the workload declares."""
     import requests
 

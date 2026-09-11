@@ -12,6 +12,7 @@ import random
 import shutil
 import tempfile
 import time
+from dataclasses import replace
 from datetime import date, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
@@ -26,6 +27,7 @@ from experiment.profiles import get_profile, profile_names
 if TYPE_CHECKING:
     from rich.console import Console
 
+    from experiment.conditions import RunConditions
     from shared.models.pipeline import PipelineContext
 
 app = typer.Typer(help="Experiment orchestration")
@@ -114,8 +116,19 @@ def run(
     calibration: Optional[str] = typer.Option(None, help="Path to CalibrationConfig JSON overrides"),
     force: bool = typer.Option(False, "--force", help="Delete an existing bundle dir before running"),
     no_preflight: bool = typer.Option(False, "--no-preflight", help="Skip preflight checks before experiments"),
+    agents: int = typer.Option(1, help="Static agent nodes the testbed is converged to before each run"),
+    allow_loaded_host: bool = typer.Option(
+        False,
+        "--allow-loaded-host",
+        help="Take measurements on an oversubscribed host, recording it",
+    ),
 ) -> None:
-    """Run experiment phase through the full pipeline."""
+    """Run experiment phase through the full pipeline.
+
+    Conditions the testbed before every run, the same way `reproduce` does: the
+    node count is converged, residue cleared, and the sanity checks applied. A run
+    only starts when they hold.
+    """
     from rich.console import Console
     from rich.panel import Panel
 
@@ -125,13 +138,23 @@ def run(
 
     console = Console()
 
+    from experiment.conditions import RunConditions
+
+    scenario_list = [s.strip() for s in scenarios.split(",")] if scenarios else list(SCENARIOS)
+    run_conditions = RunConditions.for_scenarios(
+        scenario_list,
+        agents=agents,
+        cluster=os.environ.get("K3D_CLUSTER_NAME", "thesis-hybrid"),
+    )
+    if allow_loaded_host:
+        run_conditions = replace(run_conditions, check_host_load=False)
+
     output_dir = output or _bundle_dir("results/experiments/phase-b", "clarknet-replay", force)
     if output and Path(output).exists() and not force:
         console.print(f"[red]Output bundle already exists: {output}. Pass --force to delete it first.[/red]")
         raise typer.Exit(1)
     if output and force and Path(output).exists():
         shutil.rmtree(output)
-    scenario_list = scenarios.split(",") if scenarios else SCENARIOS
 
     console.print(
         Panel.fit(
@@ -173,7 +196,7 @@ def run(
         if not dry_run:
             _write_bundle_metadata(output_dir, scenario_list, runs, status="in_progress")
         console.print(f"\n[bold cyan]Running {runs * len(scenario_list)} experiments...[/bold cyan]")
-        results = _run_replicated(config, scenario_list, output_dir, dry_run)
+        results = _run_replicated(config, scenario_list, output_dir, dry_run, conditions=run_conditions)
         console.print(f"\n[green]✅ {len(results)} runs completed[/green]")
 
         if phase in ("analysis", "full"):
@@ -232,39 +255,63 @@ def analyze(
 
 
 @app.command()
-def preflight() -> None:
-    """Validate infrastructure readiness."""
+def preflight(
+    profile: Optional[str] = typer.Option(
+        None, "--profile", help=f"Check the conditions this profile declares: {', '.join(profile_names())}"
+    ),
+    agents: int = typer.Option(1, help="Static agent nodes to converge to when no profile is given"),
+    converge: bool = typer.Option(
+        True,
+        "--converge/--no-converge",
+        help="Converge the testbed and clear residue, or only report",
+    ),
+) -> None:
+    """Validate the conditions an experiment will run under.
+
+    The same battery the runner applies before every run, so a person can see the
+    verdict before committing hours to it: testbed converged and cleared, nodes
+    ready, both arms serving, the prediction server present when the design needs
+    it, and the host quiet enough to measure on.
+    """
     from rich.console import Console
     from rich.table import Table
 
+    from experiment.conditions import ConditionsUnmet, RunConditions, apply as apply_conditions
+
     console = Console()
 
-    from experiment.stages.preflight import PreflightStage
-    from shared.models.pipeline import ExperimentConfig, PipelineContext
-
-    stage = PreflightStage(s4_planned=True)  # default plan covers all four scenarios
-    config = ExperimentConfig()
-    ctx = PipelineContext(
-        batch_id="preflight-check",
-        scenario="s1-k8s-only",
-        run_id=0,
-        config=config,
-    )
-    result = stage.execute(ctx)
-
-    if ctx.preflight:
-        table = Table(show_header=True, header_style="bold")
-        table.add_column("Check")
-        table.add_column("Status", justify="center")
-        for k, v in ctx.preflight.checks.items():
-            table.add_row(k, "[green]✅[/green]" if v else "[red]❌[/red]")
-        console.print(table)
-
-    if result.success:
-        console.print("\n[green]All preflight checks passed[/green]")
+    if profile is not None:
+        selected = get_profile(profile)
+        conditions = RunConditions(
+            agents=selected.k8s_agents,
+            needs_prediction_server=selected.prediction_server,
+            cluster=os.environ.get("K3D_CLUSTER_NAME", "thesis-hybrid"),
+        )
     else:
-        console.print(f"\n[red]Preflight failed: {result.error}[/red]")
-        raise typer.Exit(1)
+        conditions = RunConditions(agents=agents, cluster=os.environ.get("K3D_CLUSTER_NAME", "thesis-hybrid"))
+
+    conditions = replace(conditions, converge=converge)
+
+    try:
+        report = apply_conditions(conditions, scenario=profile or "", console=console)
+    except ConditionsUnmet as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
+
+    table = Table(show_header=True, header_style="bold")
+    table.add_column("Check")
+    table.add_column("Status", justify="center")
+    for name, ok in report["checks"].items():
+        table.add_row(name, "[green]pass[/green]" if ok else "[red]fail[/red]")
+    console.print(table)
+
+    load = report["load"]
+    console.print(
+        f"nodes: {report['nodes']} | load {load['load1']:.1f} on {load['cores']:.0f} cores ({load['ratio']:.2f}x)"
+    )
+    for note in report["notes"]:
+        console.print(f"  [yellow]note:[/yellow] {note}")
+    console.print("\n[green]Every condition holds[/green]")
 
 
 @app.command()
@@ -540,9 +587,15 @@ def reproduce(
             console.print(f"  daemon environment: {key}={value}")
         return
 
-    from infra.readiness import ensure_testbed, rebuild_testbed
+    from experiment.conditions import RunConditions, apply as apply_conditions
+    from infra.readiness import rebuild_testbed
 
     cluster = os.environ.get("K3D_CLUSTER_NAME", "thesis-hybrid")
+    run_conditions = RunConditions(
+        agents=selected.k8s_agents,
+        needs_prediction_server=selected.prediction_server,
+        cluster=cluster,
+    )
     stack_rebuild: dict | None = None
 
     if fresh_stack:
@@ -556,8 +609,18 @@ def reproduce(
             raise typer.Exit(1)
         stack_rebuild = {"actions": rebuilt["actions"], "summary": rebuilt["summary"]}
 
-    testbed = ensure_testbed(cluster=cluster, agents=selected.k8s_agents)
+    try:
+        conditions_report = apply_conditions(run_conditions, scenario="bundle start", console=console)
+    except Exception as exc:  # noqa: BLE001 — the report is the message
+        console.print(f"[red]Conditions unmet before the bundle: {exc}[/red]")
+        raise typer.Exit(1) from exc
+
+    testbed = {"nodes": conditions_report["nodes"], "actions": conditions_report["actions"]}
     console.print(f"[cyan]Testbed:[/cyan] {testbed['nodes']} | actions: {testbed['actions'] or 'none needed'}")
+    console.print(
+        f"[cyan]Host:[/cyan] load {conditions_report['load']['load1']:.1f} on "
+        f"{conditions_report['load']['cores']:.0f} cores ({conditions_report['load']['ratio']:.2f}x)"
+    )
 
     server: dict = {"status": "not required"}
     if selected.prediction_server:
@@ -595,6 +658,7 @@ def reproduce(
                     "testbed": testbed,
                     "prediction_server": server,
                     "stack_rebuild": stack_rebuild,
+                    "conditions": conditions_report,
                 },
             )
         )
@@ -609,7 +673,7 @@ def reproduce(
                 config=config,
                 console=console,
                 bundle_journal=bundle_journal,
-                before_run=_condition_testbed(cluster, selected.k8s_agents, bundle_journal),
+                conditions=run_conditions,
             )
 
         s3_results, s4_results, pair_ids = _collect_pairs(bundle_path)
@@ -625,7 +689,14 @@ def reproduce(
         missing = len(selected.scenarios) * run_count - len(existing_runs)
         if missing > 0:
             console.print(f"\n[bold cyan]Running {missing} of {len(selected.scenarios) * run_count} runs[/bold cyan]")
-            _run_replicated(config, list(selected.scenarios), output_dir, dry_run=False, skip=existing_runs)
+            _run_replicated(
+                config,
+                list(selected.scenarios),
+                output_dir,
+                dry_run=False,
+                skip=existing_runs,
+                conditions=run_conditions,
+            )
         else:
             console.print("\n[green]Every requested run is already present[/green]")
 
@@ -825,29 +896,6 @@ def paired_run(
     _write_paired_analysis(output_dir, s3_results, s4_results, pair_ids, console)
 
 
-def _condition_testbed(cluster: str, agents: int, bundle_journal):
-    """Return a callable that re-converges the testbed before each run.
-
-    The run that follows inherits whatever the previous one left: nodes the
-    autoscaler kept and pods still warm from the last workload. Re-asserting the
-    profile's declared shape per run is cheap, and it is what makes two runs in one
-    bundle comparable.
-    """
-
-    def condition(run_index: int) -> None:
-        from infra.readiness import ensure_testbed
-
-        result = ensure_testbed(cluster=cluster, agents=agents)
-        bundle_journal.record(
-            bundle_journal.new_event(
-                "run_conditioned",
-                payload={"run_index": run_index, "nodes": result["nodes"], "actions": result["actions"]},
-            )
-        )
-
-    return condition
-
-
 def _run_pairs(
     output_dir: str,
     *,
@@ -856,7 +904,7 @@ def _run_pairs(
     config: ExperimentConfig,
     console: "Console",
     bundle_journal,
-    before_run=None,
+    conditions: "RunConditions | None" = None,
 ) -> tuple[list, list, list[str], int]:
     """Run counterbalanced S3/S4 pairs, excluding pairs whose treatment did not deliver.
 
@@ -886,10 +934,10 @@ def _run_pairs(
             f"\n[bold cyan]Attempt {attempt}/{max_attempts} (valid pairs: {len(pair_ids)}/{pairs})[/bold cyan]"
         )
 
-        if before_run is not None:
-            before_run((pair_id - 1) * 2)
         console.print(f"  [dim]Running {first_scenario}...[/dim]")
-        r1 = _run_single(first_scenario, pair_id, (pair_id - 1) * 2, config, output_dir, console=console)
+        r1 = _run_single(
+            first_scenario, pair_id, (pair_id - 1) * 2, config, output_dir, console=console, conditions=conditions
+        )
         if r1 is None:
             console.print(f"  [red]First scenario {first_scenario} failed[/red]")
             continue
@@ -897,10 +945,16 @@ def _run_pairs(
         with countdown(console, INTER_RUN_PAUSE_SEC, "Inter-run pause"):
             pass
 
-        if before_run is not None:
-            before_run((pair_id - 1) * 2 + 1)
         console.print(f"  [dim]Running {second_scenario}...[/dim]")
-        r2 = _run_single(second_scenario, pair_id, (pair_id - 1) * 2 + 1, config, output_dir, console=console)
+        r2 = _run_single(
+            second_scenario,
+            pair_id,
+            (pair_id - 1) * 2 + 1,
+            config,
+            output_dir,
+            console=console,
+            conditions=conditions,
+        )
         if r2 is None:
             console.print(f"  [red]Second scenario {second_scenario} failed[/red]")
             continue
@@ -1155,6 +1209,7 @@ def _run_replicated(
     output_dir: str,
     dry_run: bool,
     skip: frozenset[tuple[str, int]] = frozenset(),
+    conditions: "RunConditions | None" = None,
 ) -> list[ExperimentResult]:
     """Run replicated experiments with randomized order.
 
@@ -1206,7 +1261,15 @@ def _run_replicated(
 
             # Full run: execute the per-run protocol
             t0 = time.time()
-            result = _run_single(scenario, run_id, idx, config, output_dir, console=console)
+            result = _run_single(
+                scenario,
+                run_id,
+                idx,
+                config,
+                output_dir,
+                console=console,
+                conditions=conditions,
+            )
             run_dur = time.time() - t0
             run_durations.append(run_dur)
 
@@ -1243,8 +1306,15 @@ def _run_single(
     output_dir: str,
     *,
     console: "Console | None" = None,
+    conditions: "RunConditions | None" = None,
 ) -> Optional[ExperimentResult]:
-    """Execute a single experiment run with full protocol."""
+    """Execute a single experiment run with full protocol.
+
+    Before anything else the testbed is converged, its residue cleared, and the
+    checks applied — the run either starts from the declared conditions or it does
+    not start. This is the only place every path passes through, so no command can
+    skip the conditioning.
+    """
     from datetime import datetime
 
     from rich.console import Console
@@ -1263,6 +1333,30 @@ def _run_single(
 
     run_dir = Path(output_dir) / f"{scenario}_run{run_id}"
     run_dir.mkdir(parents=True, exist_ok=True)
+
+    condition_report: dict = {}
+    if conditions is not None:
+        from experiment.conditions import ConditionsUnmet, apply as apply_conditions
+
+        try:
+            condition_report = apply_conditions(
+                replace(conditions, scenario=scenario), scenario=scenario, console=console
+            )
+        except ConditionsUnmet as exc:
+            console.print(f"  [red]Refusing to run {scenario}: {exc}[/red]")
+            logger.error("run_refused", scenario=scenario, run_id=run_id, reason=str(exc))
+            from shared.storage.journal import ExperimentJournal as _Journal
+
+            refusal_journal = _Journal(run_dir / "events.jsonl", run_dir.name, str(run_dir))
+            refusal_journal.record(
+                refusal_journal.new_event(
+                    "run_refused",
+                    scenario=scenario,
+                    run_id=run_id,
+                    payload={"reason": str(exc)},
+                )
+            )
+            return None
 
     logger.info("run_start", scenario=scenario, run_id=run_id, order=run_order_idx)
     from shared.models.evidence import TreatmentFidelity
@@ -1403,6 +1497,7 @@ def _run_single(
             daemon_config=config.daemon_config,
             scaling_config=config.scaling_config,
             timestamp=datetime.now().isoformat(),
+            conditions=condition_report,
         )
         with open(run_dir / "manifest.json", "w") as f:
             json.dump(manifest.model_dump(), f, indent=2)

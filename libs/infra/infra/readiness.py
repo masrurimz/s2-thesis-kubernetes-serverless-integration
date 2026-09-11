@@ -1,9 +1,11 @@
 """Testbed readiness — converge cluster and support services to a runnable state."""
 
+import json
+
 import structlog
 
 from infra.cluster.k3d.residue import prune_dynamic_nodes, prune_orphaned_pods
-from infra.cluster.k3d.shaping import converge_agent_count, list_nodes
+from infra.cluster.k3d.shaping import converge_agent_count, is_live_k8s_node, list_nodes
 from infra.commands import run
 from infra.networking.haproxy.manager import HAProxyManager
 from infra.observability.prometheus.manager import PrometheusManager
@@ -84,6 +86,86 @@ def rebuild_testbed(
     return {"cluster": cluster, "ready": ready, "actions": actions, "summary": summary}
 
 
+def _wait_for_nodes_to_settle(cluster: str, *, timeout_sec: float = 60.0, interval_sec: float = 2.0) -> None:
+    """Block until every Kubernetes node object belongs to a node k3d still lists."""
+    import time
+
+    live = {node["name"] for node in list_nodes(cluster)}
+    deadline = time.monotonic() + timeout_sec
+    while time.monotonic() < deadline:
+        names = _cluster_node_names(cluster)
+        if names is None:
+            return
+        if all(is_live_k8s_node(name, live) for name in names):
+            return
+        time.sleep(interval_sec)
+    logger.warning("nodes_did_not_settle", cluster=cluster)
+
+
+def _cluster_node_names(cluster: str) -> set[str] | None:
+    listed = run(["kubectl", "--context", f"k3d-{cluster}", "get", "nodes", "-o", "json"])
+    if listed.returncode != 0:
+        return None
+    try:
+        return {item["metadata"]["name"] for item in json.loads(listed.stdout).get("items", [])}
+    except (json.JSONDecodeError, KeyError):
+        return None
+
+
+def cluster_nodes_ready(cluster: str) -> bool:
+    """True when every node that still exists is Ready.
+
+    Node objects outlive the containers they described, so a node k3d no longer
+    lists is ignored rather than reported as a failure.
+    """
+    listed = run(["kubectl", "--context", f"k3d-{cluster}", "get", "nodes", "-o", "json"])
+    if listed.returncode != 0:
+        return False
+    try:
+        nodes = json.loads(listed.stdout).get("items", [])
+    except json.JSONDecodeError:
+        return False
+    if not nodes:
+        return False
+
+    live = {node["name"] for node in list_nodes(cluster)}
+    for node in nodes:
+        name = node.get("metadata", {}).get("name", "")
+        if not is_live_k8s_node(name, live):
+            continue
+        for condition in node.get("status", {}).get("conditions", []):
+            if condition.get("type") == "Ready" and condition.get("status") != "True":
+                return False
+    return True
+
+
+def app_endpoints_serving() -> tuple[bool, bool]:
+    """Probe both arms of the running application. Returns (k8s_ok, knative_ok)."""
+    from infra.workloads.deploy import verify_endpoints
+
+    return verify_endpoints()
+
+
+def inspect_testbed(cluster: str = "thesis-hybrid") -> dict:
+    """Report the testbed's state without changing it."""
+    nodes = list_nodes(cluster)
+    from infra.networking.haproxy.manager import HAProxyManager
+    from infra.observability.prometheus.manager import PrometheusManager
+
+    return {
+        "cluster": cluster,
+        "changed": False,
+        "actions": [],
+        "nodes": {
+            "servers": sum(1 for node in nodes if node["role"] == "server"),
+            "agents": sum(1 for node in nodes if node["role"] == "agent" and "dynamic" not in node["name"]),
+            "dynamic_agents": sum(1 for node in nodes if node["role"] == "agent" and "dynamic" in node["name"]),
+        },
+        "haproxy": HAProxyManager().is_running(),
+        "prometheus": PrometheusManager().is_running(),
+    }
+
+
 def ensure_testbed(
     cluster: str = "thesis-hybrid",
     *,
@@ -133,6 +215,12 @@ def ensure_testbed(
     if prune_dynamic:
         actions.extend(prune_dynamic_nodes(cluster, dry_run=dry_run))
     actions.extend(prune_orphaned_pods(cluster, dry_run=dry_run))
+
+    # k3d removes a node's container immediately, but its Kubernetes node object
+    # lingers briefly and still reads NotReady. Waiting for the two views to agree
+    # keeps the readiness report from failing on a node that is already gone.
+    if not dry_run and actions:
+        _wait_for_nodes_to_settle(cluster)
 
     final_nodes = list_nodes(cluster)
     server_count = sum(1 for node in final_nodes if node["role"] == "server")

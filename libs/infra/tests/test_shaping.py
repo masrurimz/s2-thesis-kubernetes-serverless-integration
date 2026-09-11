@@ -34,6 +34,8 @@ class FakeK3d:
             if not dry_run:
                 self.inventory = [node for node in self.inventory if node["name"] != cmd[3]]
             return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+        if cmd[0] == "kubectl" and "delete" in cmd and "node" in cmd:
+            return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
         if cmd[:3] == ["k3d", "node", "create"]:
             if not dry_run:
                 self.inventory.append({"name": f"k3d-{cmd[3]}-0", "role": "agent", "state": "running"})
@@ -150,3 +152,22 @@ def test_list_nodes_reads_the_state_k3d_actually_reports(monkeypatch):
     assert shaping.list_nodes("thesis-hybrid") == [
         {"name": "k3d-thesis-hybrid-server-0", "role": "server", "state": "running"}
     ]
+
+
+def test_k8s_node_names_cover_both_registration_forms():
+    """A static agent registers without the container's instance suffix; a runtime
+    node keeps it, and a stale object is only cleared if both are tried."""
+    assert shaping.k8s_node_names("k3d-thesis-hybrid-agent-1-0") == [
+        "k3d-thesis-hybrid-agent-1-0",
+        "k3d-thesis-hybrid-agent-1",
+    ]
+    assert shaping.k8s_node_names("k3d-dynamic-workload-4-0") == [
+        "k3d-dynamic-workload-4-0",
+        "k3d-dynamic-workload-4",
+    ]
+
+
+def test_a_node_object_without_a_container_is_not_live():
+    containers = {"k3d-thesis-hybrid-agent-0-0", "k3d-thesis-hybrid-server-0-0"}
+    assert shaping.is_live_k8s_node("k3d-thesis-hybrid-agent-0", containers) is True
+    assert shaping.is_live_k8s_node("k3d-thesis-hybrid-agent-1", containers) is False

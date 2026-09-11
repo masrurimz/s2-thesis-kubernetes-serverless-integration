@@ -33,6 +33,39 @@ def list_nodes(cluster: str) -> list[dict]:
     return parsed
 
 
+def k8s_node_names(container_name: str) -> list[str]:
+    """Candidate Kubernetes node names for a k3d container name.
+
+    k3d appends a per-node instance suffix to the container and Kubernetes does
+    not always carry it: a static agent declared as ``agent-1`` runs in container
+    ``agent-1-0`` and registers as node ``agent-1``, while a node created at
+    runtime registers with the suffix intact. Both are tried.
+    """
+    names = [container_name]
+    if container_name.endswith("-0"):
+        names.append(container_name[:-2])
+    return names
+
+
+def is_live_k8s_node(node_name: str, containers: set[str]) -> bool:
+    """True when some k3d container is this node or is its suffixed counterpart."""
+    return any(name == node_name or name.startswith(f"{node_name}-") for name in containers)
+
+
+def remove_node(cluster: str, name: str, *, dry_run: bool = False) -> None:
+    """Delete a node's container and its Kubernetes node object.
+
+    k3d removes the container and stops there, so the node object stays behind
+    reading NotReady: every readiness check then inherits a node that no longer
+    exists, and the run refuses on a machine that is actually fine.
+    """
+    if dry_run:
+        return
+    run(["k3d", "node", "delete", name, "--cluster", cluster])
+    for k8s_name in k8s_node_names(name):
+        run(["kubectl", "--context", f"k3d-{cluster}", "delete", "node", k8s_name, "--ignore-not-found"])
+
+
 def _agent_index(cluster: str, name: str) -> int | None:
     prefix = f"k3d-{cluster}-agent-"
     if not name.startswith(prefix):
@@ -71,10 +104,9 @@ def converge_agent_count(cluster: str, target: int, *, dry_run: bool = False) ->
 
         victims = sorted(static_agents, key=deletion_order, reverse=True)[: current - target]
         for node in victims:
-            result = run(["k3d", "node", "delete", node["name"]], dry_run=dry_run)
-            if result.returncode != 0:
-                logger.error("k3d_node_delete_failed", node=node["name"], stderr=result.stderr)
-                continue
+            # remove_node clears the container and the node object: k3d alone leaves
+            # the object behind reading NotReady.
+            remove_node(cluster, node["name"], dry_run=dry_run)
             actions.append(f"delete agent {node['name']}")
             current -= 1
     elif current < target:

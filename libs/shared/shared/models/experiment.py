@@ -128,6 +128,9 @@ class RunManifest(BaseModel):
     daemon_config: Dict[str, Any]
     scaling_config: Dict[str, Any]
     timestamp: str
+    # The conditions this run started from: node counts, the load the host carried,
+    # which checks passed. A run whose host was oversubscribed reads differently.
+    conditions: Dict[str, Any] = {}
 
 
 class BatchManifest(BaseModel):

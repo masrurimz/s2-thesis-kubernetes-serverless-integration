@@ -46,3 +46,29 @@ def test_unknown_profile_lists_the_known_ones():
 
 def test_profile_names_are_sorted_and_complete():
     assert profile_names() == sorted(PROFILES)
+
+
+def test_a_profile_declares_the_conditions_its_scenarios_need():
+    """A profile is a claim about the testbed, and the tooling acts on it.
+
+    A hybrid profile that leaves the agent count at zero cannot provision a node,
+    and a predictive profile without a prediction server cannot deliver its
+    treatment: both would produce runs that look complete and measure nothing.
+    """
+    from experiment.conditions import RunConditions
+
+    for profile in PROFILES.values():
+        conditions = RunConditions.for_scenarios(profile.scenarios, agents=profile.k8s_agents)
+        assert conditions.needs_prediction_server == profile.prediction_server, profile.name
+        if any("s3" in s or "s4" in s for s in profile.scenarios):
+            assert profile.k8s_agents >= 1, f"{profile.name} needs a node autoscaler to have capacity to bind"
+        if all("s2" in s for s in profile.scenarios):
+            assert profile.k8s_agents == 0, f"{profile.name} runs no node autoscaler"
+
+
+def test_the_baseline_profile_keeps_a_static_agent():
+    """S1 provisions nodes at one agent, which is what makes it the reactive reference."""
+    baselines = get_profile("baselines")
+
+    assert baselines.k8s_agents == 1
+    assert baselines.prediction_server is False
