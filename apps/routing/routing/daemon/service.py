@@ -172,6 +172,15 @@ class RoutingDaemon:
         # An eligible cycle = use_predictions scenario with >= model_sequence_length history samples.
         self._prediction_eligible_cycles: int = 0
         self._prediction_delivery_failures: int = 0
+        # Under-forecast lever for predictive sizing. 1.0 leaves the forecast as
+        # delivered; below 1.0 asks for slightly less capacity than the forecast
+        # and lets the observed signal carry the correction.
+        self._predictive_shrink: float = float(os.environ.get("ROUTING_PREDICTIVE_SHRINK", "1.0"))
+        # Which forecast quantity sizes capacity. "upper" keeps the historical
+        # behaviour of sizing from the conservative upper envelope, which runs well
+        # above the level being served; "point" sizes from the central forecast at
+        # the provisioning horizon.
+        self._sizing_signal: str = os.environ.get("ROUTING_SIZING_SIGNAL", "upper")
 
         # Model-aware forecast readiness (S4 only).
         # Populated from /model/status on first prediction-eligible cycle.
@@ -435,7 +444,10 @@ class RoutingDaemon:
                         # Select horizon-aligned forecast element for capacity planning.
                         required_steps = self._required_prediction_horizon_steps()
                         upper_fc = pred_result.upper_forecasts or []
-                        if len(upper_fc) >= required_steps:
+                        point_fc = pred_result.point_forecasts or []
+                        if self._sizing_signal == "point" and len(point_fc) >= required_steps:
+                            self._forecast_capacity_signal = float(point_fc[required_steps - 1])
+                        elif len(upper_fc) >= required_steps:
                             self._forecast_capacity_signal = float(
                                 max(upper_fc[required_steps - 1], pred_result.predicted_requests)
                             )
@@ -598,6 +610,11 @@ class RoutingDaemon:
                 if self._forecast_capacity_signal > 0
                 else float(getattr(self.algorithm_controller, "last_predicted_upper", 0.0))
             )
+            # Deliberate under-forecast before sizing, from the capacity-management
+            # literature: forecast-only sizing over-provisions, and a policy that
+            # forecasts slightly low and lets the reactive signal correct upward
+            # beats prediction-only. 1.0 keeps the raw forecast.
+            predicted_upper = predicted_upper * self._predictive_shrink
             predictive_target = scaler.compute_target_replicas(predicted_upper)
             now_ts = time.time()
 
