@@ -52,6 +52,15 @@ def rebuild_testbed(
     manager.create(clean=True)
     manager.create_serverless()
     manager.apply_node_resources()
+
+    for created in (cluster, _SERVERLESS_CLUSTER):
+        if not wait_for_cluster(created):
+            return {
+                "cluster": cluster,
+                "ready": False,
+                "actions": actions,
+                "summary": f"cluster {created} did not become ready",
+            }
     actions.append("recreated the hybrid and serverless clusters")
 
     if not KnativeInstaller(context=f"k3d-{_SERVERLESS_CLUSTER}").install():
@@ -100,6 +109,25 @@ def _wait_for_nodes_to_settle(cluster: str, *, timeout_sec: float = 60.0, interv
             return
         time.sleep(interval_sec)
     logger.warning("nodes_did_not_settle", cluster=cluster)
+
+
+def wait_for_cluster(cluster: str, *, timeout_sec: float = 240.0, interval_sec: float = 5.0) -> bool:
+    """Block until a cluster exists and every node it reports is Ready.
+
+    `k3d cluster create` returns before the cluster is registered, so anything that
+    touches it immediately — an image import, for one — fails with "No nodes found
+    for given cluster". Creation is only half the operation.
+    """
+    import time
+
+    deadline = time.monotonic() + timeout_sec
+    while time.monotonic() < deadline:
+        if list_nodes(cluster) and cluster_nodes_ready(cluster):
+            logger.info("cluster_ready", cluster=cluster)
+            return True
+        time.sleep(interval_sec)
+    logger.error("cluster_not_ready", cluster=cluster)
+    return False
 
 
 def _cluster_node_names(cluster: str) -> set[str] | None:

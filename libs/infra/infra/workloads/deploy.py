@@ -34,7 +34,7 @@ def deploy_test_app(*, skip_build: bool = False) -> dict:
         logger.info("test_app_build_start")
         run(["docker", "build", "-t", IMAGE, str(app_dir)], check=True)
         run(["docker", "push", IMAGE], check=True)
-        run(["k3d", "image", "import", IMAGE, "-c", SERVERLESS_CONTEXT], check=True)
+        _import_image(SERVERLESS_CONTEXT)
         actions.append("built and pushed test-app image")
         logger.info("test_app_build_done")
 
@@ -89,6 +89,17 @@ def deploy_test_app(*, skip_build: bool = False) -> dict:
     k8s_ok, knative_ok = verify_endpoints()
     logger.info("test_app_deployed", k8s_ok=k8s_ok, knative_ok=knative_ok)
     return {"k8s_ok": k8s_ok, "knative_ok": knative_ok, "actions": actions}
+
+
+def _import_image(cluster: str, *, attempts: int = 3) -> None:
+    """Hand the image to a cluster, retrying while k3d finishes registering it."""
+    for attempt in range(1, attempts + 1):
+        result = run(["k3d", "image", "import", IMAGE, "-c", cluster])
+        if result.returncode == 0:
+            return
+        logger.warning("image_import_failed", cluster=cluster, attempt=attempt, stderr=result.stderr.strip())
+        time.sleep(10)
+    result.check_returncode()
 
 
 def verify_endpoints() -> tuple[bool, bool]:
