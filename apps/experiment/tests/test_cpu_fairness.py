@@ -43,32 +43,30 @@ class TestPodCpuParity:
         knative_cpu = knative["spec"]["template"]["spec"]["containers"][0]["resources"]["requests"]["cpu"]
         assert k8s_cpu == knative_cpu
 
-    def test_k8s_and_knative_have_identical_cpu_limit(self):
-        k8s = _load_infra_yaml("workloads/test_app/test-app-warm-deployment.yaml")
-        knative = _load_infra_yaml("workloads/test_app/knative-service.yaml")
-        k8s_cpu = k8s["spec"]["template"]["spec"]["containers"][0]["resources"]["limits"]["cpu"]
-        knative_cpu = knative["spec"]["template"]["spec"]["containers"][0]["resources"]["limits"]["cpu"]
-        assert k8s_cpu == knative_cpu
+    def test_neither_pod_sets_a_cpu_limit(self):
+        """A CPU limit throttles the pod mid-fib and lands in tail latency; the
+        July change removed them on both arms and the asymmetry they caused."""
+        for name in ("workloads/test_app/test-app-warm-deployment.yaml", "workloads/test_app/knative-service.yaml"):
+            manifest = _load_infra_yaml(name)
+            limits = manifest["spec"]["template"]["spec"]["containers"][0]["resources"].get("limits", {})
+            assert "cpu" not in limits, f"{name} sets a cpu limit: {limits}"
 
-    def test_both_pods_use_200m_cpu(self):
+    def test_both_pods_use_300m_cpu(self):
+        """300m is the calibrated request (calibration.py pod_cpu_request 0.3);
+        the value is what the cost model prices and the capacity model sizes."""
         k8s = _load_infra_yaml("workloads/test_app/test-app-warm-deployment.yaml")
         knative = _load_infra_yaml("workloads/test_app/knative-service.yaml")
         k8s_cpu = k8s["spec"]["template"]["spec"]["containers"][0]["resources"]["requests"]["cpu"]
         knative_cpu = knative["spec"]["template"]["spec"]["containers"][0]["resources"]["requests"]["cpu"]
-        # YAML may parse as int (200) or string ("200m")
         for label, val in [("k8s", k8s_cpu), ("knative", knative_cpu)]:
-            assert val in (200, "200m"), f"{label} CPU request is {val}, expected 200 or 200m"
+            assert val in (300, "300m"), f"{label} CPU request is {val}, expected 300m"
 
 
 class TestNodeSelectorIsolation:
-    """Both deployments must have nodeSelectors for scheduling isolation."""
+    """K8s workload pods are isolated by nodeSelector; Knative runs in its own
+    cluster, which is the isolation, so its manifest needs no selector."""
 
     def test_k8s_deployment_targets_workload_nodes(self):
         deploy = _load_infra_yaml("workloads/test_app/test-app-warm-deployment.yaml")
         selector = deploy["spec"]["template"]["spec"].get("nodeSelector", {})
         assert selector.get("node-type") == "workload"
-
-    def test_knative_service_targets_infra_nodes(self):
-        svc = _load_infra_yaml("workloads/test_app/knative-service.yaml")
-        selector = svc["spec"]["template"]["spec"].get("nodeSelector", {})
-        assert selector.get("node-type") == "infra"

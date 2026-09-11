@@ -23,10 +23,13 @@ def _cluster_running() -> bool:
         return False
 
 
-pytestmark = pytest.mark.skipif(
-    not _cluster_running(),
-    reason="E2E requires thesis-hybrid cluster (run: uv run thesis infra setup)",
-)
+pytestmark = [
+    pytest.mark.live,
+    pytest.mark.skipif(
+        not _cluster_running(),
+        reason="E2E requires thesis-hybrid cluster (run: uv run thesis infra setup)",
+    ),
+]
 
 
 class TestDockerCpusConstrainsKubelet:

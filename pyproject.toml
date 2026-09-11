@@ -121,8 +121,12 @@ quote-style = "double"
 # exclude is not a valid top-level field for ty; paths are filtered via CLI args
 
 [tool.pytest.ini_options]
-# importlib: several packages carry a tests/ directory and the default prepend mode
-# lets the first one imported claim the name tests, so the others stop collecting.
-addopts = "--import-mode=importlib"
-# archived/ is a read-only snapshot; its tests reference modules that no longer install.
-norecursedirs = ["archived", ".venv", "build", "dist", "node_modules"]
+# Modern layout per the pytest docs: several packages carry their own tests/
+# directory, and the default prepend import mode lets the first one imported claim
+# the name "tests". importlib derives a unique name from the path instead, with the
+# one trade-off that test modules must not import each other (they don't).
+addopts = "--import-mode=importlib --strict-markers -m 'not live'"
+testpaths = ["apps", "libs"]
+markers = [
+    "live: touches the real k3d clusters and Docker; run explicitly with -m live, never while an experiment is running",
+]
