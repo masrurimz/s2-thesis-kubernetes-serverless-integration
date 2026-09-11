@@ -1,10 +1,11 @@
 """GRU hyperparameter optimization with temporal cross-validation.
 
 Replaces leakage-prone random splits with gap-aware expanding-window temporal CV.
-The production-aligned objective optimizes the actual deployed five-horizon
-output: mean horizon-normalized RMSE + 2 × mean normalized underprediction on
-rising targets. A promotion gate compares the best GRU against persistence and
-linear-trend baselines on an untouched chronological holdout.
+The production-aligned objective optimizes the actual deployed multi-horizon
+output (default horizon 9, the calibration horizon): mean horizon-normalized
+RMSE + 2 × mean normalized underprediction on rising targets. A promotion gate
+compares the best GRU against persistence and linear-trend baselines on an
+untouched chronological holdout.
 
 Per thesis plan §2 (replace leakage-prone GRU selection with temporal model
 selection).
@@ -43,13 +44,14 @@ DEFAULT_HOLDOUT_RATIO = 0.2
 FIXED_EPOCHS = 100
 FIXED_PATIENCE = 15
 FIXED_BATCH_SIZE = 32
-FIXED_HORIZON = 5
+DEFAULT_HORIZON = 9  # Calibration horizon (was 5 in the pre-study HPO run)
 FIXED_SAMPLE_INTERVAL = 15
+EVAL_CHUNK_SIZE = 512  # Match the predictor's chunked eval forwards
 COVERAGE_THRESHOLD = 0.85
 
 # Fixed GRU training parameters (not searched)
 _FIXED_TRAIN_PARAMS: dict[str, Any] = {
-    "prediction_horizon": FIXED_HORIZON,
+    "prediction_horizon": DEFAULT_HORIZON,
     "sample_interval_sec": FIXED_SAMPLE_INTERVAL,
     "epochs": FIXED_EPOCHS,
     "early_stopping_patience": FIXED_PATIENCE,
@@ -81,7 +83,7 @@ class FoldBoundary:
 def temporal_split(
     values: np.ndarray,
     seq_len: int = 30,
-    horizon: int = FIXED_HORIZON,
+    horizon: int = DEFAULT_HORIZON,
     holdout_ratio: float = DEFAULT_HOLDOUT_RATIO,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Split chronologically into development and untouched holdout.
@@ -202,8 +204,11 @@ def _batch_forward(predictor: Any, X_3d: np.ndarray) -> np.ndarray:
         if isinstance(predictor.model, torch_nn.Module):
             predictor.model.eval()
             with torch.no_grad():
+                # Large single forward passes hang some ROCm stacks; eval
+                # math is batch-independent, so slice into fixed chunks.
                 X_t = torch.FloatTensor(X_3d).to(predictor.device)
-                return predictor.model(X_t).cpu().numpy()
+                parts = [predictor.model(X_t[i : i + EVAL_CHUNK_SIZE]) for i in range(0, len(X_t), EVAL_CHUNK_SIZE)]
+                return torch.cat(parts).cpu().numpy()
     except (ImportError, RuntimeError):
         pass
 
@@ -244,7 +249,7 @@ def compute_objective(
     preds: np.ndarray,
     targets: np.ndarray,
     last_inputs: np.ndarray,
-    horizon: int = FIXED_HORIZON,
+    horizon: int = DEFAULT_HORIZON,
 ) -> tuple[float, dict[str, Any]]:
     """Compute the predeclared scalar objective.
 
@@ -336,6 +341,43 @@ def linear_trend_baseline(
     return preds, targets, last_inputs
 
 
+def seasonal_naive_baseline(
+    values: np.ndarray,
+    seq_len: int,
+    horizon: int,
+    season: int = 5760,
+    eval_start: int = 0,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Seasonal naive: predict the value observed one season earlier.
+
+    ``values`` is the full series including history before the evaluation
+    region; ``eval_start`` marks the first evaluation origin. For origin *t*
+    and horizon step *h* (1-based), the prediction is
+    ``values[t + seq_len - 1 + h - season]`` — the target index shifted back
+    one season. Targets and last inputs come from ``_make_sequences`` exactly
+    as in the other baselines; only the prediction source differs.
+
+    A seasonal baseline needs *series history*, not window room: the model is
+    limited to ``seq_len`` inputs, the baseline is limited by how much of the
+    series precedes the evaluation region. Hence ``eval_start >= season``.
+
+    Returns:
+        (preds, targets, last_inputs) for origins ``t >= eval_start`` — the
+        same origins the other baselines see on ``values[eval_start:]``.
+    """
+    if eval_start < season:
+        raise ValueError(
+            f"eval_start ({eval_start}) must be >= season ({season}) so a full "
+            "season of history exists before the evaluation region"
+        )
+
+    X, targets, last_inputs = _make_sequences(values, seq_len, horizon)
+    idx = np.arange(eval_start, len(X), dtype=np.int64)
+    pred_idx = idx[:, np.newaxis] + seq_len - 1 + np.arange(1, horizon + 1, dtype=np.int64)[np.newaxis, :] - season
+    preds = values[pred_idx]
+    return preds.astype(np.float32), targets[idx], last_inputs[idx]
+
+
 # ── Promotion gate ───────────────────────────────────────────────────────────
 
 
@@ -366,26 +408,48 @@ def evaluate_promotion_gate(
 
 def run_baseline_comparison(
     predictor: Any,
-    holdout_values: np.ndarray,
+    values: np.ndarray,
     seq_len: int,
-    horizon: int = FIXED_HORIZON,
+    horizon: int = DEFAULT_HORIZON,
+    season: int = 5760,
+    eval_start: int = 0,
 ) -> dict[str, Any]:
-    """Compare GRU against persistence and linear-trend baselines on holdout.
+    """Compare GRU against persistence, linear-trend, and seasonal-naive baselines.
 
-    The holdout is the untouched final chronological 20% — never seen during
-    HPO. If the GRU fails the promotion gate, ``promoted_model`` is ``None``.
+    ``values`` includes at least *season* samples of history before
+    *eval_start*; all baselines and the model are evaluated on exactly the
+    same origins and targets (model windows over ``values[eval_start:]``,
+    seasonal naive restricted to origins ``>= eval_start`` with access to the
+    preceding history). If the history is too short, the seasonal baseline is
+    skipped and ``seasonal_naive_unavailable`` records the reason instead of
+    failing the run. If the GRU fails the promotion gate, ``promoted_model``
+    is ``None``.
     """
-    # GRU predictions on holdout
-    gru_preds, gru_targets, gru_last_inputs = evaluate_on_values(predictor, holdout_values)
+    eval_values = values[eval_start:]
+
+    # GRU predictions on the evaluation region
+    gru_preds, gru_targets, gru_last_inputs = evaluate_on_values(predictor, eval_values)
     _, gru_detail = compute_objective(gru_preds, gru_targets, gru_last_inputs, horizon)
 
     # Persistence baseline
-    pers_preds, _, pers_last_inputs = persistence_baseline(holdout_values, seq_len, horizon)
+    pers_preds, _, pers_last_inputs = persistence_baseline(eval_values, seq_len, horizon)
     _, pers_detail = compute_objective(pers_preds, gru_targets, pers_last_inputs, horizon)
 
     # Linear-trend baseline
-    trend_preds, _, trend_last_inputs = linear_trend_baseline(holdout_values, seq_len, horizon)
+    trend_preds, _, trend_last_inputs = linear_trend_baseline(eval_values, seq_len, horizon)
     _, trend_detail = compute_objective(trend_preds, gru_targets, trend_last_inputs, horizon)
+
+    # Seasonal-naive baseline (same origins and targets, longer history)
+    seas_detail: dict[str, Any] | None = None
+    unavailable: str | None = None
+    if eval_start >= season:
+        seas_preds, _, seas_last_inputs = seasonal_naive_baseline(values, seq_len, horizon, season, eval_start)
+        _, seas_detail = compute_objective(seas_preds, gru_targets, seas_last_inputs, horizon)
+    else:
+        unavailable = (
+            f"eval_start ({eval_start}) < season ({season}): not enough series history before the evaluation region"
+        )
+        logger.warning("seasonal_naive_unavailable", reason=unavailable)
 
     # Upper-envelope coverage on rising targets
     upper_forecasts = gru_preds + predictor.upper_offsets[np.newaxis, :]
@@ -400,10 +464,112 @@ def run_baseline_comparison(
         "gru": gru_detail,
         "persistence": pers_detail,
         "linear_trend": trend_detail,
+        "seasonal_naive": seas_detail,
+        "seasonal_naive_unavailable": unavailable,
         "gru_coverage": coverage,
         "n_rising_targets": n_rising,
         "promotion_gate": gate,
         "promoted_model": "gru" if gate["promoted"] else None,
+    }
+
+
+def locate_replay_window(
+    series: Any,
+    manifest_path: str | Path,
+    holdout_start: int,
+    embargo: int,
+    sample_interval_sec: int = FIXED_SAMPLE_INTERVAL,
+) -> tuple[int, int]:
+    """Map the trace-replay window onto indices of the 15 s training series.
+
+    The window is located by *time* from the replay manifest
+    (``window_start_time`` + ``duration_sec``), then converted to sample
+    indices on the same resampled series the model trains on.
+
+    Raises:
+        ValueError: if the window is not aligned to the sample grid, or does
+            not lie strictly inside the test portion (after
+            ``holdout_start + embargo``).
+
+    Returns:
+        (start_idx, end_idx) with end exclusive.
+    """
+    import json
+
+    manifest = json.loads(Path(manifest_path).read_text())
+    start_time = pd.Timestamp(manifest["window_start_time"])
+    duration_sec = int(manifest["duration_sec"])
+
+    t0 = series.index[0]
+    offset_sec = (start_time - t0).total_seconds()
+    if offset_sec < 0:
+        raise ValueError(f"Replay window starts before the series: {start_time} < {t0}")
+    if offset_sec % sample_interval_sec != 0:
+        raise ValueError(
+            f"Replay window start {start_time} is not aligned to the "
+            f"{sample_interval_sec}s sample grid anchored at {t0}"
+        )
+
+    start_idx = int(offset_sec // sample_interval_sec)
+    end_idx = start_idx + int(np.ceil(duration_sec / sample_interval_sec))
+
+    earliest_allowed = holdout_start + embargo
+    if start_idx <= earliest_allowed:
+        raise ValueError(
+            f"Replay window start index {start_idx} must lie strictly after "
+            f"holdout_start + embargo = {holdout_start} + {embargo} = {earliest_allowed}"
+        )
+    if end_idx > len(series):
+        raise ValueError(f"Replay window end index {end_idx} exceeds series length {len(series)}")
+
+    return start_idx, end_idx
+
+
+def rolling_origin_evaluation(
+    predictor: Any,
+    test_values: np.ndarray,
+    seq_len: int,
+    horizon: int = DEFAULT_HORIZON,
+    n_blocks: int = 5,
+) -> dict[str, Any]:
+    """Evaluate a frozen model on rolling origins across the test portion.
+
+    The test portion is cut into *n_blocks* contiguous blocks; per-block
+    per-horizon RMSE and overall RMSE/MAE are reported together with their
+    mean and standard deviation across blocks (stability check — the model is
+    never retrained).
+    """
+    n = len(test_values)
+    min_block = seq_len + horizon + 1
+    if n < n_blocks * min_block:
+        raise ValueError(f"Test portion ({n}) too small for {n_blocks} rolling blocks of ≥ {min_block} samples")
+
+    edges = np.linspace(0, n, n_blocks + 1, dtype=int)
+    folds: list[dict[str, Any]] = []
+    for k in range(n_blocks):
+        block = test_values[edges[k] : edges[k + 1]]
+        preds, targets, last_inputs = evaluate_on_values(predictor, block)
+        residuals = targets - preds
+        folds.append(
+            {
+                "block": k,
+                "start_idx": int(edges[k]),
+                "end_idx": int(edges[k + 1]),
+                "rmse_per_horizon": [float(np.sqrt(np.mean(residuals[:, h] ** 2))) for h in range(horizon)],
+                "rmse": float(np.sqrt(np.mean(residuals**2))),
+                "mae": float(np.mean(np.abs(residuals))),
+            }
+        )
+
+    rmses = np.array([f["rmse"] for f in folds], dtype=np.float64)
+    maes = np.array([f["mae"] for f in folds], dtype=np.float64)
+    return {
+        "n_blocks": n_blocks,
+        "folds": folds,
+        "rmse_mean": float(rmses.mean()),
+        "rmse_std": float(rmses.std(ddof=1)) if len(rmses) > 1 else 0.0,
+        "mae_mean": float(maes.mean()),
+        "mae_std": float(maes.std(ddof=1)) if len(maes) > 1 else 0.0,
     }
 
 
@@ -465,7 +631,7 @@ def _train_and_evaluate_fold(
 
 def create_gru_objective(
     dev_values: np.ndarray,
-    horizon: int = FIXED_HORIZON,
+    horizon: int = DEFAULT_HORIZON,
     n_folds: int = DEFAULT_N_FOLDS,
     seed: int = HPO_SEED,
 ) -> Callable[[optuna.Trial], float]:
@@ -616,7 +782,7 @@ def _build_hpo_report(
     best_objective: float,
     holdout_values: np.ndarray,
     seq_len: int,
-    horizon: int = FIXED_HORIZON,
+    horizon: int = DEFAULT_HORIZON,
 ) -> dict[str, Any]:
     """Build HPO report with per-horizon holdout metrics and ramp-only error."""
     preds, targets, last_inputs = evaluate_on_values(predictor, holdout_values)
@@ -680,6 +846,7 @@ def run_gru_hpo(
     seed: int = HPO_SEED,
     n_folds: int = DEFAULT_N_FOLDS,
     holdout_ratio: float = DEFAULT_HOLDOUT_RATIO,
+    horizon: int = DEFAULT_HORIZON,
 ) -> dict[str, Any]:
     """Run full GRU HPO pipeline with temporal CV and baseline comparison.
 
@@ -718,7 +885,7 @@ def run_gru_hpo(
         direction="minimize",
         sampler=optuna.samplers.TPESampler(seed=seed),
     )
-    objective = create_gru_objective(dev_values, FIXED_HORIZON, n_folds, seed)
+    objective = create_gru_objective(dev_values, horizon, n_folds, seed)
     study.optimize(objective, n_trials=n_trials, show_progress_bar=True)
 
     best = study.best_trial
@@ -743,7 +910,9 @@ def run_gru_hpo(
     train_metrics = best_predictor.train(dev_df, val_ratio=0.15)
 
     # ── Baseline comparison on untouched holdout ──
-    comparison = run_baseline_comparison(best_predictor, holdout_values, best_config.sequence_length, FIXED_HORIZON)
+    comparison = run_baseline_comparison(
+        best_predictor, values, best_config.sequence_length, horizon, eval_start=holdout_start
+    )
 
     if comparison["promoted_model"] is None:
         logger.warning(

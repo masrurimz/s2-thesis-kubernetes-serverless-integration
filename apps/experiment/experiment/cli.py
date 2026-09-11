@@ -693,36 +693,107 @@ def paired_run(
 
 @app.command(name="gru-hpo")
 def gru_hpo(
-    data: str = typer.Option("clarknet", help="Dataset: clarknet or calgary"),
-    trials: int = typer.Option(30, help="Number of Optuna trials"),
-    output_dir: str = typer.Option("results/models/gru/hpo", help="Output directory"),
-    seed: int = typer.Option(42, help="Random seed"),
+    data_sources: str = typer.Option("clarknet", help="Comma-separated arms: clarknet,synthetic"),
+    cells: str = typer.Option("gru,lstm", help="Comma-separated recurrent cells: gru,lstm"),
+    seeds: str = typer.Option("42,43,44,45,46", help="Comma-separated training/refit seeds"),
+    n_trials: int = typer.Option(30, help="Optuna trials per cell (identical budget for all cells)"),
+    horizon: int = typer.Option(9, help="Prediction horizon (calibration default 9)"),
+    window: int = typer.Option(30, help="Input-window length defining the split derivation (30 = frozen boundaries)"),
+    output_dir: str = typer.Option("results/models/gru/study", help="Output bundle directory"),
+    promote: bool = typer.Option(
+        False, help="Back up data/models/gru_model.pt and promote the winning clarknet artifact"
+    ),
 ) -> None:
-    """GRU hyperparameter optimization with temporal cross-validation.
+    """Leak-free GRU/LSTM study at the calibration horizon (default 9).
 
-    Expanding-window temporal CV on the first 80% of data, with a promotion
-    gate comparing the best GRU against persistence and linear-trend baselines
-    on the untouched final 20% holdout.
+    Chronological splits with embargo = sequence_length + horizon - 1 at every
+    boundary. Hyperparameters and the epoch budget are selected on the
+    validation portion only, the winner is refit on train+validation at the
+    frozen budget, and the test portion is evaluated once per seed. Writes a
+    bundle with meta.yaml, study.json, metrics.json, report.md, per-horizon
+    CSVs, and hashed artifacts. The ClarkNet arm multiplies the series by the
+    replay manifest scale_factor so the scaler matches serving amplitude.
     """
     from rich.console import Console
 
-    from experiment.tuning.gru_hpo import run_gru_hpo
+    from experiment.tuning.gru_study import run_study
+
+    def _csv_list(value: str, cast: type) -> list:
+        return [cast(v.strip()) for v in value.split(",") if v.strip()]
 
     console = Console()
-    console.print(f"[bold cyan]GRU HPO[/bold cyan]  data={data}  trials={trials}  seed={seed}")
-
-    result = run_gru_hpo(
-        data_source=data,
-        n_trials=trials,
-        output_dir=output_dir,
-        seed=seed,
+    console.print(
+        f"[bold cyan]GRU study[/bold cyan]  sources={data_sources}  cells={cells}  "
+        f"seeds={seeds}  trials={n_trials}  horizon={horizon}  window={window}  promote={promote}"
     )
 
-    console.print("\n[green]✅ HPO complete[/green]")
-    console.print(f"  Best trial:    #{result['best_trial']}")
-    console.print(f"  Best objective: {result['best_objective']:.4f}")
-    console.print(f"  Promoted:       {result['promoted_model'] or 'NONE (gate failed)'}")
-    console.print(f"[dim]Results: {result['output_dir']}[/dim]")
+    result = run_study(
+        data_sources=_csv_list(data_sources, str),
+        cells=_csv_list(cells, str),
+        seeds=_csv_list(seeds, int),
+        n_trials=n_trials,
+        horizon=horizon,
+        window=window,
+        output_dir=output_dir,
+        promote=promote,
+    )
+
+    console.print("\n[green]✅ Study complete[/green]")
+    winner = result["winner"]
+    if winner:
+        console.print(f"  Winner:        {winner['source']}/{winner['cell']} (mean RMSE {winner['mean_rmse']:.3f})")
+        console.print(f"  Artifact:      {winner['artifact']}")
+    else:
+        console.print("  Winner:        NONE")
+    console.print(f"  Bundle:        {result['bundle']}")
+    if result["promoted"]:
+        console.print(f"  Promoted to:   {result['promoted']['promoted_to']} (backup: {result['promoted']['backup']})")
+
+
+@app.command(name="gru-probe")
+def gru_probe(
+    variant: str = typer.Option(
+        "baseline", help="Probe variant: baseline,window120,calendar,revin,log_target,pinball,ensemble"
+    ),
+    seeds: str = typer.Option("42,43,44", help="Comma-separated training seeds"),
+    epochs: int = typer.Option(200, help="Training epoch budget per seed"),
+    patience: int = typer.Option(25, help="Early-stopping patience"),
+    output_dir: Optional[str] = typer.Option(None, help="Output directory (required unless --dry-run)"),
+    study_bundle: Optional[str] = typer.Option(None, help="Study bundle dir for ensemble artifact reuse"),
+    dry_run: bool = typer.Option(False, help="Score OLS and statistical baselines only; no training, no writes"),
+) -> None:
+    """One-lever-at-a-time GRU probe against the OLS autoregression.
+
+    Trains one variant under the frozen measurement contract (ClarkNet at the
+    replay amplitude, train [0, 26205), test [26243, end)) and writes
+    <output-dir>/<variant>.json plus one row in <output-dir>/probes.md. The
+    OLS autoregression is fitted on the training region only and scored on
+    the same windows as a first-class arm in every variant's JSON.
+    """
+    from rich.console import Console
+
+    import experiment.tuning.gru_probe as gru_probe_mod
+
+    console = Console()
+    console.print(
+        f"[bold cyan]GRU probe[/bold cyan]  variant={variant}  seeds={seeds}  "
+        f"epochs={epochs}  patience={patience}  dry_run={dry_run}"
+    )
+
+    seed_list = tuple(int(s.strip()) for s in seeds.split(",") if s.strip())
+    result = gru_probe_mod.run_probe(
+        variant=variant,
+        seeds=seed_list,
+        output_dir=output_dir,
+        epochs=epochs,
+        patience=patience,
+        dry_run=dry_run,
+        study_bundle=study_bundle,
+    )
+    if dry_run:
+        console.print("[green]Dry run complete (linear arms only)[/green]")
+    else:
+        console.print(f"[green]Probe complete:[/green] {result.get('variant')} -> {output_dir}")
 
 
 def _make_ctx(
