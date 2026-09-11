@@ -207,6 +207,60 @@ def cluster(
         raise typer.Exit(1)
 
 
+@app.command()
+def ensure(
+    cluster: str = typer.Option("thesis-hybrid", help="k3d cluster name"),
+    agents: int = typer.Option(1, help="Static agent nodes the cluster should carry"),
+    servers: int = typer.Option(1, help="Server nodes the cluster should carry"),
+) -> None:
+    """Converge the testbed to a runnable state: clusters, HAProxy, Prometheus, node count.
+
+    Idempotent. Prints only the actions it had to take, so a second run with the
+    same arguments reports none.
+    """
+    from infra.readiness import ensure_testbed
+
+    console.rule("[bold]Ensure Testbed")
+    result = ensure_testbed(cluster=cluster, servers=servers, agents=agents)
+
+    for action in result["actions"]:
+        console.print(f"  [yellow]changed[/yellow] {action}")
+    if not result["actions"]:
+        console.print("  [green]already in the requested state[/green]")
+
+    console.print(
+        f"  nodes: servers={result['nodes']['servers']} agents={result['nodes']['agents']}"
+        f"  |  haproxy={'up' if result['haproxy'] else 'down'}"
+        f"  |  prometheus={'up' if result['prometheus'] else 'down'}"
+    )
+
+    if not (result["haproxy"] and result["prometheus"]):
+        raise typer.Exit(1)
+
+
+@app.command(name="shape-nodes")
+def shape_nodes(
+    cluster: str = typer.Option("thesis-hybrid", help="k3d cluster name"),
+    agents: int = typer.Option(1, help="Static agent nodes to converge to"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Report the change without making it"),
+) -> None:
+    """Converge the number of static agent nodes.
+
+    The node count decides whether the experiment exercises node provisioning at
+    all: with spare agents the node autoscaler never fires, which changes what a
+    predictive-scheduling comparison can measure.
+    """
+    from infra.cluster.k3d.shaping import converge_agent_count
+
+    result = converge_agent_count(cluster, agents, dry_run=dry_run)
+    verb = "would change" if dry_run else "changed"
+    console.print(f"  agents: {result['before']} -> {result['after']} ({result['dynamic_agents']} dynamic untouched)")
+    for action in result["actions"]:
+        console.print(f"  [yellow]{verb}[/yellow] {action}")
+    if not result["actions"]:
+        console.print("  [green]already at the requested count[/green]")
+
+
 @app.command(name="deploy-app")
 def deploy_app(
     skip_build: bool = typer.Option(False, "--skip-build", help="Skip Docker build (use existing image)"),
