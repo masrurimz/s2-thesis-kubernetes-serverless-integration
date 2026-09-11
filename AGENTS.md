@@ -98,6 +98,39 @@ uv run thesis-experiment             # Experiment runner
 
 ### Reproduction
 
+An experiment is only repeatable if the conditions it ran under are part of it. Two runs of the same scenarios differ in result when the cluster happens to carry a spare node that absorbs the ramp, or when the prediction server is missing or serving a different artifact. `reproduce` makes those conditions explicit, converges the testbed to them, runs the design, and writes a summary a person can read.
+
+```bash
+# Counterbalanced S3/S4 pairs with one static agent node: the regime H2 is about.
+uv run thesis experiment reproduce --profile h2-pair
+
+# What would happen, changing nothing.
+uv run thesis experiment reproduce --profile h2-pair --dry-run
+
+# One pair, to check the testbed before a long run.
+uv run thesis experiment reproduce --profile smoke
+
+# Read a finished bundle without touching it.
+uv run thesis experiment summary results/experiments/phase-b/<bundle>
+
+# Converge the testbed alone (clusters, HAProxy, Prometheus, node count).
+uv run thesis infra ensure --agents 1
+uv run thesis infra shape-nodes --agents 1 --dry-run
+```
+
+Profiles live in `apps/experiment/experiment/profiles.py`: `h2-pair`, `h2-pair-abundant`, `s4-point-sizing`, `s4-point-sizing-shrink`, `baselines`, `quad`, `smoke`. Each names its scenarios, design, static agent count, whether it needs the prediction server, and any controller environment it sets.
+
+Guarantees:
+
+- **Idempotent.** A bundle that already holds every requested pair or run is left alone and only re-analysed. A partial bundle continues from where it stopped, appending rather than overwriting. `--resume` is the default; `--force` replaces the bundle.
+- **Scriptable.** Non-interactive, with exit code 1 when a run or pair fails its gate, so a wrapper can chain profiles.
+- **Conditions recorded.** The profile, the testbed convergence result, and the prediction server's artifact hash land in the bundle's `events.jsonl` as a `profile_applied` event.
+- **Readable.** Every bundle gets `SUMMARY.md`: what ran, the headline table per arm, the paired verdict, forecast fidelity, and the reasons any run was rejected.
+
+The agent count is not decoration. On 2026-09-11 a pair ran against a cluster with two static agents, no node was provisioned, the reactive arm paid no provisioning penalty, and the predictive arm's over-provisioning showed up as pure cost. The same design with one static agent on 2026-07-14 provisioned two nodes per run, each costing 59 to 122 seconds, and the predictive arm won. Same code, different regime, opposite answer.
+
+Older invocations remain available for ad-hoc work:
+
 ```bash
 # Full 4-scenario experiment
 uv run thesis-experiment run --controller v3 --runs 5 \
