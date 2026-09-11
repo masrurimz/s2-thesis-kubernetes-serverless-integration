@@ -227,7 +227,6 @@ class WorkloadStage(BaseStage):
         m = raw.get("metrics", {})
         dur = m.get("http_req_duration", {}).get("values", {})
         reqs = m.get("http_reqs", {}).get("values", {})
-        errs = m.get("errors", {})
         slo = m.get("slo_violations", {}).get("values", {})
         failed = m.get("http_req_failed", {}).get("values", {})
 
@@ -251,7 +250,7 @@ class WorkloadStage(BaseStage):
                 "avg_latency_ms": dur.get("avg") or 0,
                 "max_latency_ms": dur.get("max") or 0,
                 # Availability: did the request complete? (Google SRE availability SLI)
-                "error_rate": errs.get("rate", 0) if isinstance(errs, dict) else 0,
+                "error_rate": failed.get("rate", 0),
                 "total_requests": total_reqs,
                 "failed_requests": failed_reqs,
                 "successful_requests": successful_reqs,

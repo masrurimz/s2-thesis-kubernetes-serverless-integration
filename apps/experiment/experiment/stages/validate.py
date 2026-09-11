@@ -16,6 +16,11 @@ from shared.models.evidence import TreatmentFidelity
 from shared.models.experiment import ExperimentResult
 
 
+# Mirrors the canonical k6 threshold ``http_req_failed: rate<0.10``
+# (load_tests/canonical/clarknet_replay.js); k6 crosses it at rate >= 0.10.
+REQUEST_FAILURE_RATE_TOLERANCE = 0.10
+
+
 def _is_predictive_scenario(scenario: str) -> bool:
     """True for S4 / predictive scenarios only."""
     s = scenario.lower()
@@ -43,6 +48,14 @@ def evaluate_run_validity(
     gated.
     """
     daemon_status = daemon_status or {}
+
+    if result.error_rate >= REQUEST_FAILURE_RATE_TOLERANCE:
+        result.run_validity_passed = False
+        result.validity_gate_passed = False
+        result.run_validity_notes = [
+            *result.run_validity_notes,
+            f"request failure rate {result.error_rate:.2%} exceeds k6 threshold http_req_failed: rate<0.10",
+        ]
 
     if not _is_predictive_scenario(scenario):
         result.treatment_fidelity = TreatmentFidelity()
