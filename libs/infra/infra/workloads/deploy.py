@@ -25,6 +25,10 @@ SERVERLESS_CONTEXT = f"k3d-{SERVERLESS_CLUSTER}"
 K8S_DEPLOYMENT = "test-app-warm"
 # Both probes retry; a cold start or a rescheduled pod is not a broken arm.
 PROBE_ATTEMPTS = 6
+# A freshly installed Knative pulls its gateway image and starts the service load
+# balancer pods after the manifests apply, so the serverless arm can answer minutes
+# after everything else looks ready. That is installation time, not a broken arm.
+FRESH_PROBE_ATTEMPTS = 30
 PROBE_PAUSE_SEC = 5.0
 FALLBACK_KNATIVE_HOST = "test-app.default.192.168.0.2.sslip.io"
 
@@ -179,20 +183,22 @@ def _import_image(cluster: str, *, attempts: int = 3) -> None:
     result.check_returncode()
 
 
-def verify_endpoints() -> tuple[bool, bool]:
+def verify_endpoints(
+    *, k8s_attempts: int = PROBE_ATTEMPTS, knative_attempts: int = FRESH_PROBE_ATTEMPTS
+) -> tuple[bool, bool]:
     """Request one fib from each path, requiring the I/O wait the workload declares.
 
     Both probes retry: the first request to a scaled-to-zero revision pays a cold
     start, and a pod rescheduled by a node change is briefly unreachable. Neither is
     a verdict on the arm, and a single attempt would report both as broken.
     """
-    k8s_ok = _probe(lambda: _k8s_payload(), endpoint="k8s")
-    knative_ok = _probe(_knative_payload, endpoint="knative")
+    k8s_ok = _probe(lambda: _k8s_payload(), endpoint="k8s", attempts=k8s_attempts)
+    knative_ok = _probe(_knative_payload, endpoint="knative", attempts=knative_attempts)
     return k8s_ok, knative_ok
 
 
-def _probe(fetch, *, endpoint: str) -> bool:
-    for attempt in range(1, PROBE_ATTEMPTS + 1):
+def _probe(fetch, *, endpoint: str, attempts: int = PROBE_ATTEMPTS) -> bool:
+    for attempt in range(1, attempts + 1):
         try:
             payload = fetch()
             if payload.get("io_wait_ms", 0) > 0:

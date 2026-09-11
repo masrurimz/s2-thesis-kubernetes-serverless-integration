@@ -119,3 +119,10 @@ quote-style = "double"
 
 [tool.ty]
 # exclude is not a valid top-level field for ty; paths are filtered via CLI args
+
+[tool.pytest.ini_options]
+# importlib: several packages carry a tests/ directory and the default prepend mode
+# lets the first one imported claim the name tests, so the others stop collecting.
+addopts = "--import-mode=importlib"
+# archived/ is a read-only snapshot; its tests reference modules that no longer install.
+norecursedirs = ["archived", ".venv", "build", "dist", "node_modules"]
