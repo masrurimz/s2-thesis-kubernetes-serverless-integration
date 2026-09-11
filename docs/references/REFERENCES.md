@@ -101,6 +101,15 @@ All papers downloaded as PDF for offline access. Located in `docs/references/`.
 - Lambda on-demand: $0.0000166667/GB-s
 - Lambda requests: $0.20/1M
 
+## Forecasting Methodology References
+
+| Paper | File | arxiv/DOI | Key Insight |
+|-------|------|-----------|-------------|
+| **Hewamalage et al.** — Recurrent Neural Networks for Time Series Forecasting: Current Status and Future Directions | `hewamalage-recurrent-networks-time-series-forecasting-2021.pdf` | arXiv:1909.00590 / DOI 10.1016/j.ijforecast.2020.06.008 | Survey of recurrent forecasters and the evaluation traps: compared against naive baselines the advantage is often small, hyperparameter search on the test set is the commonest way results inflate, and multiple rolling-origin folds are expected rather than a single split. |
+| **Sculley et al.** — Hidden Technical Debt in Machine Learning Systems | `sculley-hidden-technical-debt-machine-learning-2015.pdf` | NeurIPS 2015, proceedings.neurips.cc/paper/2015/hash/86df7dcfd896fcaf2674f757a2463eba | Names training-serving skew as a first-class failure mode. The deployed model here predicts from a live signal whose level sits well below its training level, which is the mechanism behind the +30 rps bias the controller consumed. |
+| **Makridakis et al.** — Statistical and Machine Learning forecasting methods: Concerns and ways forward | `makridakis-statistical-machine-learning-forecasting-concerns-2018.pdf` | DOI 10.1371/journal.pone.0194889 | Large-scale evidence that machine learning methods rarely beat well-specified statistical and naive baselines across many series, which is the expected frame for reporting that the GRU only matches a linear autoregression. |
+| **Elsayed et al.** — Do We Really Need Deep Learning Models for Time Series Forecasting? | `elsayed-do-we-need-deep-learning-time-series-2021.pdf` | arXiv:2101.02118 | Gradient-boosted trees match or beat deep models on standard benchmarks under a controlled comparison, so architecture choice needs justification beyond fitting a single dataset. |
+
 ## Thesis-Specific References
 
 - ClarkNet HTTP trace (August 1995): Used for trace-driven replay
