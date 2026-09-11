@@ -8,6 +8,7 @@ from pathlib import Path
 from statistics import fmean, stdev
 
 import yaml
+from shared.models.evidence import NodeEngagement
 
 NA = "n/a"
 _PERMUTATION_MAX_PAIRS = 20
@@ -58,6 +59,7 @@ def build_summary(bundle_dir: Path) -> str:
     if len(scenarios) == 2:
         lines.extend(_paired(scenarios[0], scenarios[1], by_scenario))
     lines.extend(_forecast_fidelity(scenarios, by_scenario))
+    lines.extend(_node_engagement(scenarios, by_scenario))
     lines.extend(_caveats(runs))
     return "\n".join(lines).rstrip() + "\n"
 
@@ -406,6 +408,68 @@ def _forecast_fidelity(scenarios: list[str], by_scenario: dict[str, list[Run]]) 
     ]
 
 
+def _engagement_of(run: Run) -> dict | None:
+    """Engagement recorded at run time, or derived from the run's provisioner events.
+
+    Older bundles predate the recorded field; reading their event stream classifies
+    them by the same rule as a fresh run, so the whole corpus can be filtered.
+    """
+    recorded = run.result.get("node_engagement")
+    if isinstance(recorded, dict):
+        return recorded
+
+    scenario = run.result.get("scenario") or run.scenario
+    recorded_path = run.result.get("provision_log_path")
+    events: list[str] = []
+    if isinstance(recorded_path, str) and Path(recorded_path).exists():
+        events = _read_event_names(Path(recorded_path))
+    return NodeEngagement.from_provision_events(
+        scenario,
+        events,
+        nodes_provisioned=int(run.result.get("nodes_provisioned") or 0),
+        first_provision_delay_sec=float(run.result.get("first_provision_delay_sec") or 0.0),
+    ).model_dump()
+
+
+def _read_event_names(path: Path) -> list[str]:
+    try:
+        payload = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return []
+    if isinstance(payload, dict):
+        payload = payload.get("events", [])
+    if not isinstance(payload, list):
+        return []
+    return [str(entry.get("event", "")) for entry in payload if isinstance(entry, dict)]
+
+
+def _node_engagement(scenarios: list[str], by_scenario: dict[str, list[Run]]) -> list[str]:
+    """Report whether the node tier — the capacity the hybrid design adds — was exercised."""
+    rows = []
+    for scenario in scenarios:
+        carrying = [e for run in by_scenario[scenario] if (e := _engagement_of(run)) is not None]
+        if not carrying:
+            continue
+        required = all(f.get("required") for f in carrying)
+        engaged = all(f.get("autoscaler_engaged") for f in carrying)
+        pending = sum(f.get("pending_events", 0) for f in carrying)
+        provisioned = sum(f.get("nodes_provisioned", 0) for f in carrying)
+        delays = [f.get("first_provision_delay_sec", 0.0) for f in carrying if f.get("first_provision_delay_sec")]
+        delay = format(sum(delays) / len(delays), ".1f") if delays else NA
+        verdict = "not required" if not required else ("yes" if engaged else "no")
+        rows.append(f"| {scenario} | {verdict} | {pending} | {provisioned} | {delay} |")
+    if not rows:
+        return []
+    return [
+        "## Node tier",
+        "",
+        "| Scenario | node tier exercised | pending events | nodes provisioned | mean provisioning delay (s) |",
+        "|---|---|---|---|---|",
+        *rows,
+        "",
+    ]
+
+
 def _caveats(runs: list[Run]) -> list[str]:
     caveats = []
     for run in sorted(runs, key=lambda r: (r.scenario, r.run_id)):
@@ -415,4 +479,7 @@ def _caveats(runs: list[Run]) -> list[str]:
         fidelity = run.result.get("treatment_fidelity")
         if isinstance(fidelity, dict) and fidelity.get("delivered") is False:
             caveats.append(f"- {run.scenario} run {run.run_id} treatment_fidelity.delivered is false.")
+        engagement = _engagement_of(run)
+        if isinstance(engagement, dict) and engagement.get("required") and not engagement.get("autoscaler_engaged"):
+            caveats.append(f"- {run.scenario} run {run.run_id} never exercised the node tier.")
     return ["## Caveats", "", *(caveats or ["None."]), ""]

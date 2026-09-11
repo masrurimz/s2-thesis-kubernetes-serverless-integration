@@ -8,7 +8,7 @@ from typing import Any, Dict, List
 
 from pydantic import BaseModel, Field
 
-from shared.models.evidence import TreatmentFidelity
+from shared.models.evidence import NodeEngagement, TreatmentFidelity
 
 
 class ExperimentResult(BaseModel):
@@ -111,6 +111,7 @@ class ExperimentResult(BaseModel):
     stress_validity_passed: bool = True
     stress_validity_notes: List[str] = Field(default_factory=list)
     treatment_fidelity: TreatmentFidelity | None = None
+    node_engagement: NodeEngagement | None = None
 
 
 class RunManifest(BaseModel):

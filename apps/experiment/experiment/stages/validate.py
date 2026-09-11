@@ -10,9 +10,10 @@ S1-S3 (non-predictive) runs are untouched: they receive default fidelity.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Any, Mapping
 
-from shared.models.evidence import TreatmentFidelity
+from shared.models.evidence import NodeEngagement, TreatmentFidelity
 from shared.models.experiment import ExperimentResult
 
 
@@ -25,6 +26,39 @@ def _is_predictive_scenario(scenario: str) -> bool:
     """True for S4 / predictive scenarios only."""
     s = scenario.lower()
     return "s4" in s or "predictive" in s
+
+
+def evaluate_node_engagement(
+    result: ExperimentResult,
+    *,
+    scenario: str,
+    events: Sequence[str],
+    nodes_provisioned: int,
+) -> ExperimentResult:
+    """Record whether the node tier was exercised and tighten validity when it was not.
+
+    A scenario that runs the node autoscaler measures the capacity dimension the
+    hybrid design adds. When no pod ever goes pending, that dimension is absent:
+    the reactive arm pays no provisioning penalty and the predictive arm has
+    nothing to warm, so the run cannot support a claim about the node tier. Such a
+    run is marked invalid with the reason, rather than silently counting as a
+    comparison. S2 has no node autoscaler and is never required to engage one.
+    """
+    engagement = NodeEngagement.from_provision_events(
+        scenario,
+        events,
+        nodes_provisioned=nodes_provisioned,
+        first_provision_delay_sec=result.first_provision_delay_sec,
+    )
+
+    result.node_engagement = engagement
+
+    if engagement.reasons:
+        result.run_validity_passed = False
+        result.validity_gate_passed = False
+        result.run_validity_notes = [*result.run_validity_notes, *engagement.reasons]
+
+    return result
 
 
 def evaluate_run_validity(

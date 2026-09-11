@@ -43,6 +43,7 @@ def _install_stages(
     *,
     preflight_ok: bool,
     daemon_status: dict | None = None,
+    provision_events: list[tuple[float, str, dict]] | None = None,
 ) -> dict:
     """Replace the heavy stages used by _run_single with controllable fakes.
 
@@ -107,7 +108,7 @@ def _install_stages(
         def stop(self) -> None: ...
 
         def get_log(self):
-            return []
+            return provision_events if provision_events is not None else []
 
     monkeypatch.setattr("experiment.stages.reset.ResetStage", _FakeReset)
     monkeypatch.setattr("experiment.stages.daemon.DaemonStage", _FakeDaemon)
@@ -187,6 +188,12 @@ class TestS4HealthyCompletes:
                 "forecast_actionable_cycles": 2,
                 "proactive_scaleups": 1,
             },
+            provision_events=[
+                (0.0, "autoscaler_started", {}),
+                (10.0, "pending_detected", {}),
+                (110.0, "node_created", {}),
+                (110.0, "autoscaler_stopped", {}),
+            ],
         )
         out_dir = tmp_path / "bundle"
         out_dir.mkdir()
@@ -206,6 +213,10 @@ class TestS4HealthyCompletes:
         assert result.treatment_fidelity.delivered is True
         assert result.treatment_fidelity.delivery_rate == 1.0
         assert result.treatment_fidelity.eligible_cycles == 5
+        assert result.node_engagement is not None
+        assert result.node_engagement.autoscaler_engaged is True
+        assert result.node_engagement.nodes_provisioned == 1
+        assert result.first_provision_delay_sec == 100.0
 
         run_dir = out_dir / "s4-hybrid-predictive_run1"
         events = _read_events(run_dir, out_dir)

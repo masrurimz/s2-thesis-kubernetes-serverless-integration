@@ -189,3 +189,73 @@ def test_write_summary_writes_file_and_returns_path(tmp_path: Path) -> None:
     assert path == bundle / "SUMMARY.md"
     assert path.exists()
     assert path.read_text() == build_summary(bundle)
+
+
+def test_summary_reports_a_hybrid_run_that_never_reached_the_node_tier(tmp_path: Path) -> None:
+    bundle = tmp_path / "2026-01-01_node-tier-empty"
+    bundle.mkdir()
+    (bundle / "meta.yaml").write_text(
+        "bundle_schema_version: 2\nname: node-tier-empty\ndate: 2026-01-01\n"
+        "scenarios: ['s3-hybrid-reactive', 's4-hybrid-predictive']\nruns: 1\nstatus: complete\n"
+    )
+    _make_run(
+        bundle,
+        "s3-hybrid-reactive",
+        1,
+        node_engagement={
+            "required": True,
+            "autoscaler_engaged": True,
+            "pending_events": 2,
+            "nodes_provisioned": 2,
+            "first_provision_delay_sec": 95.0,
+            "reasons": [],
+        },
+    )
+    _make_run(
+        bundle,
+        "s4-hybrid-predictive",
+        1,
+        node_engagement={
+            "required": True,
+            "autoscaler_engaged": False,
+            "pending_events": 0,
+            "nodes_provisioned": 0,
+            "first_provision_delay_sec": 0.0,
+            "reasons": ["node tier not exercised"],
+        },
+    )
+
+    summary = build_summary(bundle)
+
+    assert "## Node tier" in summary
+    assert "| s3-hybrid-reactive | yes | 2 | 2 | 95.0 |" in summary
+    assert "| s4-hybrid-predictive | no | 0 | 0 | n/a |" in summary
+    assert "s4-hybrid-predictive run 1 never exercised the node tier." in summary
+
+
+def test_summary_derives_engagement_for_bundles_that_predate_the_field(tmp_path: Path) -> None:
+    """Older bundles carry no node_engagement: their provisioner events classify them."""
+    bundle = tmp_path / "2026-01-01_legacy-n5"
+    bundle.mkdir()
+    (bundle / "meta.yaml").write_text(
+        "bundle_schema_version: 2\nname: legacy-n5\ndate: 2026-01-01\n"
+        "scenarios: ['s3-hybrid-reactive']\nruns: 1\nstatus: complete\n"
+    )
+    _make_run(bundle, "s3-hybrid-reactive", 1)
+    run_dir = bundle / "s3-hybrid-reactive_run1"
+    result = json.loads((run_dir / "result.json").read_text())
+    result["nodes_provisioned"] = 0
+    result["provision_log_path"] = str(run_dir / "provision_events.json")
+    (run_dir / "result.json").write_text(json.dumps(result))
+    (run_dir / "provision_events.json").write_text(
+        json.dumps(
+            [
+                {"ts": 0.0, "event": "autoscaler_started", "data": {}},
+                {"ts": 1.0, "event": "autoscaler_stopped", "data": {}},
+            ]
+        )
+    )
+
+    summary = build_summary(bundle)
+
+    assert "| s3-hybrid-reactive | no | 0 | 0 | n/a |" in summary

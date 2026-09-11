@@ -1210,7 +1210,7 @@ def _run_single(
     logger.info("run_start", scenario=scenario, run_id=run_id, order=run_order_idx)
     from shared.models.evidence import TreatmentFidelity
     from shared.storage.journal import ExperimentJournal
-    from experiment.stages.validate import evaluate_run_validity
+    from experiment.stages.validate import evaluate_node_engagement, evaluate_run_validity
 
     journal = ExperimentJournal(
         run_dir / "events.jsonl",
@@ -1420,6 +1420,7 @@ def _run_single(
         result.maintain_count = daemon_status.get("maintain_count", 0)
         result.scale_out_count = daemon_status.get("scale_out_count", 0)
         # Set node provisioning data
+        prov_log: list[tuple[float, str, dict]] = []
         if scenario != "s2-serverless-only":
             prov_log = provisioner.get_log()
             prov_success_events = {"node_created", "node_provisioned"}
@@ -1443,6 +1444,15 @@ def _run_single(
             preflight_passed=True,
             daemon_status=daemon_status,
         )
+
+        # Node tier: a scenario that runs the node autoscaler is only measuring the
+        # capacity dimension the hybrid design adds when a pod actually goes pending.
+        result = evaluate_node_engagement(
+            result,
+            scenario=scenario,
+            events=[event_type for _, event_type, _ in prov_log],
+            nodes_provisioned=result.nodes_provisioned,
+        )
         journal.record(
             journal.new_event(
                 "validity_evaluated",
@@ -1453,6 +1463,7 @@ def _run_single(
                     "treatment_fidelity": (
                         result.treatment_fidelity.model_dump() if result.treatment_fidelity else None
                     ),
+                    "node_engagement": (result.node_engagement.model_dump() if result.node_engagement else None),
                 },
             )
         )
