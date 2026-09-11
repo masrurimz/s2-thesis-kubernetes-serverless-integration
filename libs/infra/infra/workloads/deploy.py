@@ -7,6 +7,7 @@ rebuild that precedes a headline experiment. Idempotent: safe to re-run.
 from __future__ import annotations
 
 import importlib.resources
+import json
 import os
 import time
 
@@ -22,6 +23,11 @@ IMAGE = "k3d-registry.localhost:5000/test-app:latest"
 SERVERLESS_CLUSTER = "thesis-serverless"
 SERVERLESS_CONTEXT = f"k3d-{SERVERLESS_CLUSTER}"
 K8S_DEPLOYMENT = "test-app-warm"
+# The first request to a scaled-to-zero revision pays its cold start, so the probe
+# gives it a few chances before calling the arm broken.
+KNATIVE_PROBE_ATTEMPTS = 6
+KNATIVE_PROBE_PAUSE_SEC = 5.0
+FALLBACK_KNATIVE_HOST = "test-app.default.192.168.0.2.sslip.io"
 
 
 def deploy_test_app(*, skip_build: bool = False) -> dict:
@@ -94,7 +100,7 @@ def deploy_test_app(*, skip_build: bool = False) -> dict:
     return {"k8s_ok": k8s_ok, "knative_ok": knative_ok, "actions": actions}
 
 
-def _wait_for_knative_webhook(*, timeout_sec: float = 300.0, interval_sec: float = 5.0) -> None:
+def _wait_for_knative_webhook(*, timeout_sec: float = 600.0, interval_sec: float = 5.0) -> None:
     """Block until the Knative admission webhook has endpoints.
 
     Applying a Service before its webhook is reachable fails with "no endpoints
@@ -103,25 +109,57 @@ def _wait_for_knative_webhook(*, timeout_sec: float = 300.0, interval_sec: float
     """
     deadline = time.monotonic() + timeout_sec
     while time.monotonic() < deadline:
-        endpoints = run(
-            [
-                "kubectl",
-                "--context",
-                SERVERLESS_CONTEXT,
-                "get",
-                "endpoints",
-                "webhook",
-                "-n",
-                "knative-serving",
-                "-o",
-                "json",
-            ]
-        )
-        if endpoints.returncode == 0 and '"addresses"' in endpoints.stdout:
+        if _webhook_has_addresses():
             logger.info("knative_webhook_ready")
             return
         time.sleep(interval_sec)
     logger.warning("knative_webhook_timeout")
+
+
+def _apply_knative_service(manifest, *, attempts: int = 3, pause_sec: float = 20.0) -> None:
+    """Apply the Knative Service, retrying while the admission webhook spins up.
+
+    A freshly installed Knative pulls its images on first use, so the webhook can
+    take minutes to answer. The precondition is re-checked rather than assumed, and
+    the failure is only reported when the retries are exhausted.
+    """
+    for attempt in range(1, attempts + 1):
+        result = run(["kubectl", "--context", SERVERLESS_CONTEXT, "apply", "-f", str(manifest)])
+        if result.returncode == 0:
+            return
+        logger.warning("knative_apply_failed", attempt=attempt, stderr=result.stderr.strip()[:200])
+        if attempt < attempts:
+            _wait_for_knative_webhook(timeout_sec=pause_sec * 3)
+    result.check_returncode()
+
+
+def _webhook_has_addresses() -> bool:
+    """True only when the endpoints object carries addresses.
+
+    The object exists from the moment its Service does, with `addresses: null`, so
+    its mere presence proves nothing.
+    """
+    endpoints = run(
+        [
+            "kubectl",
+            "--context",
+            SERVERLESS_CONTEXT,
+            "get",
+            "endpoints",
+            "webhook",
+            "-n",
+            "knative-serving",
+            "-o",
+            "json",
+        ]
+    )
+    if endpoints.returncode != 0:
+        return False
+    try:
+        subsets = json.loads(endpoints.stdout).get("subsets") or []
+    except json.JSONDecodeError:
+        return False
+    return any(subset.get("addresses") for subset in subsets)
 
 
 def _import_image(cluster: str, *, attempts: int = 3) -> None:
@@ -158,23 +196,26 @@ def verify_endpoints() -> tuple[bool, bool]:
         logger.error("endpoint_verify_failed", endpoint="k8s", error=str(exc))
 
     knative_ok = False
-    try:
-        from infra.networking.haproxy.render import knative_host
+    for attempt in range(1, KNATIVE_PROBE_ATTEMPTS + 1):
+        try:
+            from infra.networking.haproxy.render import knative_host
 
-        host = knative_host() or "test-app.default.192.168.0.2.sslip.io"
-        payload = requests.get(
-            "http://localhost:8083/fib?n=33",
-            headers={"Host": host},
-            timeout=10,
-        ).json()
-        knative_ok = payload.get("io_wait_ms", 0) > 0
-        logger.info(
-            "endpoint_verified",
-            endpoint="knative",
-            duration_ms=payload.get("duration_ms"),
-            io_wait_ms=payload.get("io_wait_ms"),
-        )
-    except Exception as exc:  # noqa: BLE001 — an unreachable endpoint is the signal
-        logger.error("endpoint_verify_failed", endpoint="knative", error=str(exc))
+            host = knative_host() or FALLBACK_KNATIVE_HOST
+            payload = requests.get(
+                "http://localhost:8083/fib?n=33",
+                headers={"Host": host},
+                timeout=10,
+            ).json()
+            knative_ok = payload.get("io_wait_ms", 0) > 0
+            logger.info(
+                "endpoint_verified",
+                endpoint="knative",
+                duration_ms=payload.get("duration_ms"),
+                io_wait_ms=payload.get("io_wait_ms"),
+            )
+            break
+        except Exception as exc:  # noqa: BLE001 — an unreachable endpoint is the signal
+            logger.warning("endpoint_probe_retry", endpoint="knative", attempt=attempt, error=str(exc)[:120])
+            time.sleep(KNATIVE_PROBE_PAUSE_SEC)
 
     return k8s_ok, knative_ok
