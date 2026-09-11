@@ -94,6 +94,36 @@ def deploy_test_app(*, skip_build: bool = False) -> dict:
     return {"k8s_ok": k8s_ok, "knative_ok": knative_ok, "actions": actions}
 
 
+def _wait_for_knative_webhook(*, timeout_sec: float = 300.0, interval_sec: float = 5.0) -> None:
+    """Block until the Knative admission webhook has endpoints.
+
+    Applying a Service before its webhook is reachable fails with "no endpoints
+    available for service webhook", which is a race against the install, not a
+    problem with the manifest.
+    """
+    deadline = time.monotonic() + timeout_sec
+    while time.monotonic() < deadline:
+        endpoints = run(
+            [
+                "kubectl",
+                "--context",
+                SERVERLESS_CONTEXT,
+                "get",
+                "endpoints",
+                "webhook",
+                "-n",
+                "knative-serving",
+                "-o",
+                "json",
+            ]
+        )
+        if endpoints.returncode == 0 and '"addresses"' in endpoints.stdout:
+            logger.info("knative_webhook_ready")
+            return
+        time.sleep(interval_sec)
+    logger.warning("knative_webhook_timeout")
+
+
 def _import_image(cluster: str, *, attempts: int = 3) -> None:
     """Hand the image to a cluster, retrying while k3d finishes registering it.
 
@@ -129,9 +159,12 @@ def verify_endpoints() -> tuple[bool, bool]:
 
     knative_ok = False
     try:
+        from infra.networking.haproxy.render import knative_host
+
+        host = knative_host() or "test-app.default.192.168.0.2.sslip.io"
         payload = requests.get(
             "http://localhost:8083/fib?n=33",
-            headers={"Host": "test-app.default.192.168.0.2.sslip.io"},
+            headers={"Host": host},
             timeout=10,
         ).json()
         knative_ok = payload.get("io_wait_ms", 0) > 0

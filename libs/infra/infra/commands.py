@@ -14,6 +14,7 @@ def run(
     cwd: str | None = None,
     check: bool = False,
     input_text: str | None = None,
+    env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Run a command with Rich logging and optional dry-run.
 
@@ -27,6 +28,7 @@ def run(
         cwd: Working directory for the subprocess.
         check: If True, raise on non-zero exit.
         input_text: Text to feed the command's stdin.
+        env: Environment for the subprocess; the current one when omitted.
     """
     console.print(f"[dim]$ {' '.join(cmd)}[/dim]")
     if dry_run:
@@ -37,6 +39,7 @@ def run(
         text=True,
         cwd=cwd,
         input=input_text,
+        env=env,
         stdin=subprocess.DEVNULL if input_text is None else None,
         check=False,  # noqa: S603 — cmd is always a list, never shell=True
     )

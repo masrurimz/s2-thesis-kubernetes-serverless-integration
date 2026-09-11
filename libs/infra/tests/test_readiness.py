@@ -76,7 +76,7 @@ class FakeCompose:
         self.service = service
         self.calls: list[list[str]] = []
 
-    def __call__(self, cmd, dry_run=False, cwd=None, check=False):
+    def __call__(self, cmd, dry_run=False, cwd=None, check=False, env=None):
         self.calls.append(list(cmd))
         if "ps" in cmd:
             return subprocess.CompletedProcess(cmd, 0, stdout=self.service if self.running else "", stderr="")
@@ -93,7 +93,7 @@ class FakeClusterStart:
         self.k3d = k3d
         self.calls: list[list[str]] = []
 
-    def __call__(self, cmd, dry_run=False, cwd=None, check=False):
+    def __call__(self, cmd, dry_run=False, cwd=None, check=False, env=None):
         self.calls.append(list(cmd))
         if cmd[0] == "kubectl" and "get" in cmd and "nodes" in cmd:
             names = [node["name"] for node in (self.k3d.inventory if self.k3d else [])]

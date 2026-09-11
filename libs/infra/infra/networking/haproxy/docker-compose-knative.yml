@@ -8,7 +8,7 @@ services:
       - "18404:8404"
       - "19999:9999"
     volumes:
-      - ./haproxy-knative.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ${HAPROXY_CFG:-./haproxy-knative.cfg}:/usr/local/etc/haproxy/haproxy.cfg:ro,z
       - /tmp:/tmp
     deploy:
       resources:
