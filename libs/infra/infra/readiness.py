@@ -68,23 +68,29 @@ def rebuild_testbed(
         return {"cluster": cluster, "ready": False, "actions": actions, "summary": "knative install failed"}
     actions.append("installed knative")
 
-    deployed = deploy_test_app(skip_build=skip_build)
-    actions.extend(deployed["actions"])
-    if not (deployed["k8s_ok"] and deployed["knative_ok"]):
-        return {
-            "cluster": cluster,
-            "ready": False,
-            "actions": actions,
-            "summary": f"deploy failed: k8s={deployed['k8s_ok']} knative={deployed['knative_ok']}",
-        }
-
     # The proxy is started after the application so its first render can name the
-    # Knative host; starting it earlier leaves it routing to the previous cluster.
+    # Knative host, and the application is verified after the proxy is up because the
+    # K8s probe goes through it.
+    deployed = deploy_test_app(skip_build=skip_build, verify=False)
+    actions.extend(deployed["actions"])
+
     if not HAProxyManager().start():
         logger.error("haproxy_start_failed")
         return {"cluster": cluster, "ready": False, "actions": actions, "summary": "haproxy did not start"}
     PrometheusManager().start()
     actions.append("started haproxy and prometheus")
+
+    from infra.readiness import app_endpoints_serving
+
+    k8s_ok, knative_ok = app_endpoints_serving()
+    if not (k8s_ok and knative_ok):
+        return {
+            "cluster": cluster,
+            "ready": False,
+            "actions": actions,
+            "summary": f"endpoints not serving: k8s={k8s_ok} knative={knative_ok}",
+        }
+    actions.append("verified both arms serving")
 
     converged = ensure_testbed(cluster, agents=agents)
     actions.extend(converged["actions"])

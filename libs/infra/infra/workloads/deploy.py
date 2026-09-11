@@ -30,11 +30,13 @@ KNATIVE_PROBE_PAUSE_SEC = 5.0
 FALLBACK_KNATIVE_HOST = "test-app.default.192.168.0.2.sslip.io"
 
 
-def deploy_test_app(*, skip_build: bool = False) -> dict:
+def deploy_test_app(*, skip_build: bool = False, verify: bool = True) -> dict:
     """Build, push, and deploy test-app to the K8s and Knative clusters.
 
-    Returns {"k8s_ok": bool, "knative_ok": bool, "actions": [str, ...]}. A False
-    endpoint is a real failure: the runs that follow measure whatever is serving.
+    Returns {"k8s_ok": bool, "knative_ok": bool, "actions": [str, ...], "verified": bool}.
+    A False endpoint is a real failure: the runs that follow measure whatever is
+    serving. `verify` is skipped when the caller still has to start the proxy the K8s
+    probe goes through, and the caller verifies with the same function afterwards.
     """
     app_dir = importlib.resources.files("infra").joinpath("workloads", "test_app")
     actions: list[str] = []
@@ -93,9 +95,12 @@ def deploy_test_app(*, skip_build: bool = False) -> dict:
     )
     time.sleep(5)
 
+    if not verify:
+        return {"k8s_ok": True, "knative_ok": True, "actions": actions, "verified": False}
+
     k8s_ok, knative_ok = verify_endpoints()
     logger.info("test_app_deployed", k8s_ok=k8s_ok, knative_ok=knative_ok)
-    return {"k8s_ok": k8s_ok, "knative_ok": knative_ok, "actions": actions}
+    return {"k8s_ok": k8s_ok, "knative_ok": knative_ok, "actions": actions, "verified": True}
 
 
 def _wait_for_knative_webhook(*, timeout_sec: float = 600.0, interval_sec: float = 5.0) -> None:
