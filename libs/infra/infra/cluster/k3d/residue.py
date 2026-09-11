@@ -39,6 +39,61 @@ def prune_dynamic_nodes(cluster: str, *, dry_run: bool = False) -> list[str]:
     return actions
 
 
+def settle_workload(
+    cluster: str,
+    *,
+    namespace: str = "default",
+    deployment: str = "test-app-warm",
+    timeout_sec: float = 240.0,
+    interval_sec: float = 5.0,
+) -> list[str]:
+    """Clear pods left on deleted nodes and wait for the deployment to recover.
+
+    Deleting a node moves the pods that were on it, and k3d reports the node gone
+    before Kubernetes has rescheduled anything: the pod keeps reading Running on a
+    node that no longer exists, so nothing moves it and the workload stops answering
+    while still looking healthy. This removes those pods and waits for the
+    deployment to have all of its replicas ready.
+    """
+    import time
+
+    actions: list[str] = []
+    deadline = time.monotonic() + timeout_sec
+    while time.monotonic() < deadline:
+        pruned = prune_orphaned_pods(cluster, namespace=namespace)
+        actions.extend(pruned)
+        if _deployment_ready(cluster, namespace, deployment) and not pruned:
+            return actions
+        time.sleep(interval_sec)
+    logger.warning("workload_did_not_settle", cluster=cluster, deployment=deployment)
+    return actions
+
+
+def _deployment_ready(cluster: str, namespace: str, deployment: str) -> bool:
+    result = run(
+        [
+            "kubectl",
+            "--context",
+            f"k3d-{cluster}",
+            "-n",
+            namespace,
+            "get",
+            "deployment",
+            deployment,
+            "-o",
+            "json",
+        ]
+    )
+    if result.returncode != 0:
+        return False
+    try:
+        status = json.loads(result.stdout).get("status", {})
+    except json.JSONDecodeError:
+        return False
+    desired = status.get("replicas") or 0
+    return desired > 0 and (status.get("readyReplicas") or 0) >= desired
+
+
 def prune_orphaned_pods(cluster: str, *, namespace: str = "default", dry_run: bool = False) -> list[str]:
     """Delete workload pods whose node no longer exists."""
     live = {node["name"] for node in list_nodes(cluster)}

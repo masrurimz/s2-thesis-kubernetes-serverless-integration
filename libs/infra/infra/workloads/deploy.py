@@ -23,10 +23,9 @@ IMAGE = "k3d-registry.localhost:5000/test-app:latest"
 SERVERLESS_CLUSTER = "thesis-serverless"
 SERVERLESS_CONTEXT = f"k3d-{SERVERLESS_CLUSTER}"
 K8S_DEPLOYMENT = "test-app-warm"
-# The first request to a scaled-to-zero revision pays its cold start, so the probe
-# gives it a few chances before calling the arm broken.
-KNATIVE_PROBE_ATTEMPTS = 6
-KNATIVE_PROBE_PAUSE_SEC = 5.0
+# Both probes retry; a cold start or a rescheduled pod is not a broken arm.
+PROBE_ATTEMPTS = 6
+PROBE_PAUSE_SEC = 5.0
 FALLBACK_KNATIVE_HOST = "test-app.default.192.168.0.2.sslip.io"
 
 
@@ -181,44 +180,48 @@ def _import_image(cluster: str, *, attempts: int = 3) -> None:
 
 
 def verify_endpoints() -> tuple[bool, bool]:
-    """Request one fib from each path, requiring the I/O wait the workload declares."""
+    """Request one fib from each path, requiring the I/O wait the workload declares.
+
+    Both probes retry: the first request to a scaled-to-zero revision pays a cold
+    start, and a pod rescheduled by a node change is briefly unreachable. Neither is
+    a verdict on the arm, and a single attempt would report both as broken.
+    """
+    k8s_ok = _probe(lambda: _k8s_payload(), endpoint="k8s")
+    knative_ok = _probe(_knative_payload, endpoint="knative")
+    return k8s_ok, knative_ok
+
+
+def _probe(fetch, *, endpoint: str) -> bool:
+    for attempt in range(1, PROBE_ATTEMPTS + 1):
+        try:
+            payload = fetch()
+            if payload.get("io_wait_ms", 0) > 0:
+                logger.info(
+                    "endpoint_verified",
+                    endpoint=endpoint,
+                    duration_ms=payload.get("duration_ms"),
+                    io_wait_ms=payload.get("io_wait_ms"),
+                )
+                return True
+            logger.warning("endpoint_probe_unexpected_payload", endpoint=endpoint, payload=str(payload)[:120])
+        except Exception as exc:  # noqa: BLE001 — an unreachable endpoint is the signal
+            logger.warning("endpoint_probe_retry", endpoint=endpoint, attempt=attempt, error=str(exc)[:120])
+        time.sleep(PROBE_PAUSE_SEC)
+    logger.error("endpoint_verify_failed", endpoint=endpoint)
+    return False
+
+
+def _k8s_payload() -> dict:
     import requests
 
     haproxy_port = os.environ.get("HAPROXY_HTTP_PORT", "18082")
-    k8s_ok = False
-    try:
-        payload = requests.get(f"http://localhost:{haproxy_port}/fib?n=33", timeout=10).json()
-        k8s_ok = payload.get("io_wait_ms", 0) > 0
-        logger.info(
-            "endpoint_verified",
-            endpoint="k8s",
-            duration_ms=payload.get("duration_ms"),
-            io_wait_ms=payload.get("io_wait_ms"),
-        )
-    except Exception as exc:  # noqa: BLE001 — an unreachable endpoint is the signal
-        logger.error("endpoint_verify_failed", endpoint="k8s", error=str(exc))
+    return requests.get(f"http://localhost:{haproxy_port}/fib?n=33", timeout=10).json()
 
-    knative_ok = False
-    for attempt in range(1, KNATIVE_PROBE_ATTEMPTS + 1):
-        try:
-            from infra.networking.haproxy.render import knative_host
 
-            host = knative_host() or FALLBACK_KNATIVE_HOST
-            payload = requests.get(
-                "http://localhost:8083/fib?n=33",
-                headers={"Host": host},
-                timeout=10,
-            ).json()
-            knative_ok = payload.get("io_wait_ms", 0) > 0
-            logger.info(
-                "endpoint_verified",
-                endpoint="knative",
-                duration_ms=payload.get("duration_ms"),
-                io_wait_ms=payload.get("io_wait_ms"),
-            )
-            break
-        except Exception as exc:  # noqa: BLE001 — an unreachable endpoint is the signal
-            logger.warning("endpoint_probe_retry", endpoint="knative", attempt=attempt, error=str(exc)[:120])
-            time.sleep(KNATIVE_PROBE_PAUSE_SEC)
+def _knative_payload() -> dict:
+    import requests
 
-    return k8s_ok, knative_ok
+    from infra.networking.haproxy.render import knative_host
+
+    host = knative_host() or FALLBACK_KNATIVE_HOST
+    return requests.get("http://localhost:8083/fib?n=33", headers={"Host": host}, timeout=10).json()

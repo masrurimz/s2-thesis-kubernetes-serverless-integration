@@ -4,7 +4,7 @@ import json
 
 import structlog
 
-from infra.cluster.k3d.residue import prune_dynamic_nodes, prune_orphaned_pods
+from infra.cluster.k3d.residue import prune_dynamic_nodes, prune_orphaned_pods, settle_workload
 from infra.cluster.k3d.shaping import converge_agent_count, is_live_k8s_node, list_nodes
 from infra.commands import run
 from infra.networking.haproxy.manager import HAProxyManager
@@ -61,7 +61,8 @@ def rebuild_testbed(
                 "actions": actions,
                 "summary": f"cluster {created} did not become ready",
             }
-    actions.append("recreated the hybrid and serverless clusters")
+    converge_agent_count(cluster, agents)
+    actions.append(f"recreated the hybrid and serverless clusters at {agents} static agent(s)")
 
     if not KnativeInstaller(context=f"k3d-{_SERVERLESS_CLUSTER}").install():
         logger.error("knative_install_failed")
@@ -277,13 +278,20 @@ def ensure_testbed(
         prometheus_up = True
         actions.append("started prometheus")
 
-    actions.extend(converge_agent_count(cluster, agents, dry_run=dry_run)["actions"])
+    converged = converge_agent_count(cluster, agents, dry_run=dry_run)
+    actions.extend(converged["actions"])
 
     # Residue from earlier runs: a dynamic node left behind is free capacity, and a
     # pod left behind on a deleted node still holds CPU on the nodes that remain.
     if prune_dynamic:
         actions.extend(prune_dynamic_nodes(cluster, dry_run=dry_run))
     actions.extend(prune_orphaned_pods(cluster, dry_run=dry_run))
+
+    # A node that was just removed takes its pods with it, and Kubernetes needs a
+    # moment to place them elsewhere. Converged means the application is answering,
+    # not merely that the node count matches.
+    if not dry_run and converged["actions"]:
+        actions.extend(settle_workload(cluster))
 
     # k3d removes a node's container immediately, but its Kubernetes node object
     # lingers briefly and still reads NotReady. Waiting for the two views to agree

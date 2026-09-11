@@ -47,6 +47,9 @@ class FakeK3d:
                 {"items": [{"metadata": {"name": pod["name"]}, "spec": {"nodeName": pod["node"]}} for pod in self.pods]}
             )
             return subprocess.CompletedProcess(cmd, 0, stdout=stdout, stderr="")
+        if cmd[0] == "kubectl" and "get" in cmd and "deployment" in cmd:
+            stdout = json.dumps({"status": {"replicas": 1, "readyReplicas": 1}})
+            return subprocess.CompletedProcess(cmd, 0, stdout=stdout, stderr="")
         if cmd[0] == "kubectl" and "delete" in cmd and "node" in cmd:
             return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
         if cmd[0] == "kubectl" and "delete" in cmd and "pod" in cmd:
@@ -65,7 +68,11 @@ class FakeK3d:
         ]
 
     def kubectl_deletes(self) -> list[str]:
-        return [cmd[cmd.index("pod") + 1] for cmd, _ in self.calls if cmd[0] == "kubectl" and "delete" in cmd]
+        return [
+            cmd[cmd.index("pod") + 1]
+            for cmd, _ in self.calls
+            if cmd[0] == "kubectl" and "delete" in cmd and "pod" in cmd
+        ]
 
 
 class FakeCompose:
@@ -292,3 +299,21 @@ def test_the_proxy_is_left_alone_when_its_config_already_matches(monkeypatch, tm
 
     assert calls == []
     assert actions == []
+
+
+def test_a_deleted_node_is_waited_out_before_the_testbed_is_called_converged(monkeypatch):
+    """The pods on a removed node keep reading Running there, so nothing moves them
+    and the workload stops answering while still looking healthy."""
+    fake_k3d, _, _, _ = patch_all(
+        monkeypatch,
+        [server(), agent(0), agent(1)],
+        haproxy_running=True,
+        prometheus_running=True,
+        pods=[{"name": "test-app-warm-on-agent-1", "node": f"k3d-{CLUSTER}-agent-1-0"}],
+    )
+
+    result = readiness.ensure_testbed(agents=1)
+
+    assert "test-app-warm-on-agent-1" in fake_k3d.kubectl_deletes()
+    assert fake_k3d.pods == []
+    assert any("delete agent" in action for action in result["actions"])
