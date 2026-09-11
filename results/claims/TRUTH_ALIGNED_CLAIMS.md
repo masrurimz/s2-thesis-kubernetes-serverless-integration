@@ -3,6 +3,8 @@
 **Date**: 2026-02-13  
 **Purpose**: Final validation that all thesis claims match evidence
 
+> **Superseded for every predictor claim, 2026-09-11.** The GRU numbers in this document (6.01%, 4.91%, 0.72 to 0.88 confidence) come from a pre-leak-free protocol at horizon 5 with a synthetic-trained model. The current predictor evidence is the leak-free study in `results/models/gru/2026-09-10_clarknet-15s-h9-leakfree`, summarised in the predictor section of `FINAL_NUMBERS.md`: GRU holdout RMSE 29.635 against LSTM 29.917 on the real deployment arm, 5.2% of the mean load on the synthetic arm, and a linear autoregression at 29.465 on the same window. The H1 and H2 framing rules below remain current.
+
 ---
 
 ## Core Research Question Alignment

@@ -207,3 +207,74 @@ Per-pair p99 values:
 S4 won all 5 pairs. predictive_count=4-5 in every S4 run (GRU forecast consistently triggered proactive routing decisions). forecast_horizon_sufficient=True in all 5 S4 runs.
 
 **Why this is the definitive result:** Unlike the earlier n=5 (2026-07-12_paired-h2-clean-v2) which used h=5 model, no consolidation, and untuned S3 (scale_down_cooldown=300s dead zone), this experiment uses: (1) h=9 model covering provisioning delays, (2) utilization-based node consolidation matching K8s CA semantics, (3) tuned S3 reactive controller (120s cooldown, 0.75 threshold), (4) ClarkNet variable load allowing proactive scaling. The result reverses the earlier non-significant finding: S4 is now 33.1% better on p99 (was 5.9% better, p=0.38 nonsig).
+
+## Predictor model — leak-free ClarkNet study (2026-09-10)
+
+**Source:** `results/models/gru/2026-09-10_clarknet-15s-h9-leakfree` (registry `role: final`, `status: current`, notes carry the same numbers).
+**Design:** ClarkNet resampled to 15 s at the replay amplitude (scale factor 33), chronological splits with a 38-sample embargo, train 0 to 22500, validation 22539 to 26205, test 26243 to 40315. Hyperparameters and epoch budget selected on the validation portion only, at horizon 9. Refit on train plus validation, three seeds, test evaluated once. The replay window, samples 28940 to 29020, lies inside the test portion and was never trained on.
+**Supersedes** `models.2026-02-10-training-synthetic` and `models.2026-02-13-training-clarknet-calgary` for every predictor claim.
+
+| Metric | Value |
+|---|---|
+| GRU holdout RMSE | 29.635 ± 0.016 |
+| GRU holdout MAE | 22.486 ± 0.079 |
+| Normalised RMSE (RMSE / mean target) | 0.396 |
+| Skill against persistence | 0.216 |
+| Upper-envelope coverage on rising targets | 0.921 |
+| Rolling-origin over the test region, 5 blocks | 29.039 ± 6.893 |
+
+Baselines on identical windows: persistence RMSE 37.813, linear trend 46.534, seasonal naive with a one-day season 53.688. A linear autoregression on the same 30-sample window reaches 29.46, within noise of the GRU, so no GRU accuracy advantage may be claimed at this resolution. Out-of-distribution archetypes, never used for selection: spike 26.58, ramp 24.27, periodic 25.42, stationary 4.74.
+
+**Numbers not to quote any more.** The synthetic 4.75% and 6.01% RMSE and the ClarkNet 5-minute 17.78% come from pre-leak-free protocols at horizon 5 and at different aggregation. The harness now has a synthetic arm that re-derives the H3 figure under the clean protocol, and a predictor improvement round is queued that may replace these values.
+
+**LSTM comparison arm:** `results/models/gru/2026-09-10_clarknet-15s-h9-lstm`, same protocol, same trial budget, same seeds.
+
+| Metric | GRU | LSTM |
+|---|---|---|
+| Holdout RMSE | **29.635 ± 0.016** | 29.917 ± 0.159 |
+| Holdout MAE | **22.486 ± 0.079** | 23.202 ± 0.243 |
+| Normalised RMSE | **0.3961** | 0.3999 |
+| Skill vs persistence | **0.216** | 0.209 |
+| Upper-envelope coverage | 0.921 | **0.927** |
+| Archetype spike RMSE | **26.58** | 36.78 |
+| Archetype ramp RMSE | 24.27 | **23.18** |
+
+Paired comparison across the three matched seeds: GRU is better on every seed (differences 0.42, 0.30, 0.12), paired Cohen's d 1.86, bootstrap CI [0.121, 0.422] entirely above zero, one-sided permutation p = 0.1255, which is the smallest value attainable with three pairs. So GRU wins consistently and by a large paired effect, but three seeds cannot establish significance. GRU also has ten times lower seed variance (0.016 against 0.159) and a much better spike-archetype error.
+
+**Neither cell beats a linear autoregression** on the same input window (29.465), so the architecture choice is not justified by accuracy at this resolution. The defensible claim is GRU over LSTM by a small consistent margin, with the linear parity disclosed.
+
+**Protocol note, arm asymmetry (2026-09-11).** The two arms were produced by different revisions of the refit call, and the difference is disclosed rather than hidden. The GRU bundle refits on the training portion and uses the validation portion as its early-stopping slice, so it trains on roughly 15% fewer samples than the stated design; the LSTM bundle refits on the training plus validation portions at the frozen budget, exactly as the design specifies. Both are leak-free: neither can see the test region for training, early stopping, offsets, or metrics, which the refit-isolation test enforces. The asymmetry therefore works against the headline comparison, since the GRU wins on every seed despite the smaller training set. A consistent re-run with both cells in one invocation is in flight as `results/models/gru/2026-09-11_clarknet-15s-h9-final`, and it will also persist the harness's own paired test; when it completes, its numbers replace these.
+
+The 2026-09-10 GRU bundle's artifacts also stored an error metric equal to their holdout RMSE, which means the pre-fix refit wrote a test-region value into artifact metadata. That is a second face of the same leak and is why those artifacts are superseded rather than re-used. The fix, carrying the selection fit's validation metric into the artifact instead, landed with a test that asserts the artifact value equals the validation RMSE and differs from the holdout RMSE.
+
+### Synthetic arm, pre-registered H3 target re-derived under the clean protocol (2026-09-11)
+
+**Source:** `results/models/gru/2026-09-11_synthetic-15s-h9-leakfree`, one seed, six trials, identical harness.
+**Data:** synthetic generator, seed 42, 72 hours at 1-minute resolution, each minute held across its four 15-second buckets, 17,280 samples. Splits 9644 / 9682 / 11253 / 11291 with the same embargo rule.
+
+| Metric | Value |
+|---|---|
+| Holdout RMSE | 6.063 |
+| Holdout MAE | 4.122 |
+| RMSE as percent of mean load | **5.2%** |
+| MAE as percent of mean load | **4.1%** |
+| Skill against persistence | 0.219 |
+| Baselines on identical windows | persistence 7.768, linear trend 12.152, seasonal naive 11.297 |
+
+**Verdict on H3:** the pre-registered target, RMSE under 10% of the mean and MAE under 5%, **is met on synthetic data** under the leak-free protocol at horizon 9, with 5.2% and 4.1% respectively. It is **not met on the real deployment trace**, where RMSE is 39.6% of the mean. These two numbers are the honest pair to report: 5.2% on synthetic, 39.6% on amplified ClarkNet. The superseded figures of 4.75% and 6.01% should not be quoted; 5.2% replaces them, and the gap between synthetic and real is now measured under one protocol rather than across two.
+
+### Modern lever screening (2026-09-11), single seed, one lever at a time
+
+| Variant | Model RMSE | OLS on same windows | skill vs persistence | Outcome |
+|---|---|---|---|---|
+| baseline, 30-window | 29.6612 | 29.4649 | 0.2156 | reference |
+| **120-window** | **28.2156** | 28.1172 | **0.2333** | best lever, 4.9% lower error, not adopted |
+| RevIN | 29.5852 | 29.4649 | 0.2176 | neutral |
+| seed ensemble, 3 seeds | 29.6051 | 29.4649 | — | neutral |
+| log target | 30.0321 | 29.4649 | 0.2058 | worse |
+| calendar features, raw sin/cos | 40.6016 | 29.4649 | −0.0737 | harmful, 37% worse |
+| pinball loss at q=0.9 | 50.4815 | 29.4649 | −0.3350 | mis-specified for a point head, 70% worse |
+
+**Not one variant beats the linear autoregression on the same windows.** The 120-window is the only lever that lowers absolute error, and it lowers the linear arm by the same amount, so model parity is structural rather than a tuning artefact. It was not adopted into the registered bundle because the study-protocol run costs six to twelve hours at this window; the probe evidence is recorded here and the adoption is future work.
+
+

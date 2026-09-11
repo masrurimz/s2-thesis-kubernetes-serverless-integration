@@ -75,7 +75,9 @@ All papers downloaded as PDF for offline access. Located in `docs/references/`.
 |-------|------|-----------|-------------|
 | **FaaSRail** — Representative Serverless Load | `faasrail-representative-serverless-load-2024.pdf` | zenodo.org/records/12735009 | Generates statistically representative scaled FaaS workloads |
 | **In-Vitro** — Serverless Trace Synthesis | `invitro-serverless-trace-synthesis-2023.pdf` | doi:10.1145/3605181.3626191 | Synthesizes representative traces at configurable scales |
-| **Mondal et al.** — GRU for Kubernetes Load Prediction | `mondal-gru-kubernetes-load-prediction-2023.pdf` | doi:10.3390/math11122675 | Uses GRU-based prediction for Kubernetes resource management |
+| **Mondal et al.** — GRU for Kubernetes Load Prediction | `mondal-gru-kubernetes-load-prediction-2023.pdf` | doi:10.3390/math11122675 | Uses GRU-based prediction for Kubernetes resource management. Trains LSTM, BiLSTM, and GRU under one protocol on real Google clusterdata-2011-2; GRU best on all three accuracy metrics (MSE 0.00194 vs 0.00195 both) with roughly half the training time (0.75 s vs 1.44 s, 2.41 s) |
+| **Chung et al.** — GRU vs LSTM Empirical Evaluation | `chung-empirical-evaluation-gated-recurrent-2014.pdf` | arXiv:1412.3555 | Canonical head-to-head: GRU comparable to LSTM across sequence-modeling tasks, and on some datasets faster to converge in CPU time |
+| **Cho et al.** — GRU Origin | `cho-learning-phrase-representations-rnn-2014.pdf` | arXiv:1406.1078 | Introduces the gated recurrent unit (reset and update gates, single hidden state) |
 | **QoS vs Auto-Scaling Policy** | `qos-vs-autoscaling-policy-2024.pdf` | doi:10.3390/s24123774 | Repeats scaling-policy trials and compares latency percentiles |
 
 ## Dataset References

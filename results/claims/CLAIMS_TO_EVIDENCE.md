@@ -61,23 +61,13 @@
 ## H3: GRU Prediction Adequacy
 
 ### Claim 6: RMSE below 10% target
-- **Evidence (synthetic):** `results/models/gru/2026-02-10_training-synthetic/report.md`
-- **⚠️ Superseded by Bugs 8-13. See INCONSISTENCIES.md 2026-07-11 entry.** (Model training is infra-independent; flagged because live prediction was not re-validated on the fixed stack.)
-- **Registry ID:** `models.2026-02-10-training-synthetic` (superseded)
-- **Evidence (real traces):** `results/models/gru/2026-02-13_training-clarknet-calgary/report.md`
-- **⚠️ Superseded by Bugs 8-13. See INCONSISTENCIES.md 2026-07-11 entry.**
-- **Registry ID:** `models.2026-02-13-training-clarknet-calgary` (superseded)
-- **Results (synthetic):**
-  - Test RMSE% = 6.01% manual tuning (target <10%) ✅
-  - Test RMSE% = 4.75% post-HPO (target <10%) ✅
-  - Test MAE% = 4.91% (target <5%) ✅
-  - Inference latency ≈ 40 ms (target <50 ms) ✅
-- **Results (real — ClarkNet 5-min, best):**
-  - Test RMSE% = 17.78% (target <10%) ❌
-  - Test MAE% = 14.48% (target <5%) ❌
-  - MAPE = 18.74% ❌
-- **Note:** GRU outperforms baselines on real data (baseline MAPE ~65% vs GRU 18.74%) but does not meet original thresholds. Gap is expected: real traces have non-stationarity and irregular bursts absent in synthetic data.
-- **Status:** ⚠️ Partially validated — synthetic accuracy meets all targets; real-trace accuracy below target thresholds. Mechanism works on both; thresholds not met on real data.
+- **Primary evidence (leak-free retrain, 2026-09-10):** `results/models/gru/2026-09-10_clarknet-15s-h9-leakfree/report.md`
+- **Registry ID:** `models.2026-09-10-clarknet-15s-h9-leakfree` (role final, status current)
+- **Protocol:** ClarkNet resampled to 15 s at the replay amplitude (scale factor 33), chronological splits with a 38-sample embargo, hyperparameters and epoch budget selected on the validation portion only at horizon 9, refit on train plus validation, three seeds, test evaluated once. The replay window, samples 28940 to 29020, lies inside the test portion and is never trained on.
+- **Result:** holdout RMSE 29.635 ± 0.016, MAE 22.486 ± 0.079, normalised RMSE 0.396, skill against persistence 0.216, upper-envelope coverage 0.921, rolling-origin over five blocks 29.039 ± 6.893. Baselines on identical windows: persistence 37.813, linear trend 46.534, seasonal naive 53.688, and an OLS autoregression on the same 30-sample window 29.465.
+- **Verdict:** the under-10% target is **not met** on the real 15-second deployment series, and the GRU does **not** beat a linear autoregression (29.635 against 29.465, within noise). The skill over persistence, about 22%, is real and stable across seeds. Out-of-distribution archetypes: spike 26.58, ramp 24.27, periodic 25.42, stationary 4.74.
+- **Superseded evidence, do not cite:** `results/models/gru/2026-02-10_training-synthetic/report.md` (synthetic, RMSE 6.01% manual and 4.75% post-HPO at horizon 5) and `results/models/gru/2026-02-13_training-clarknet-calgary/report.md` (ClarkNet at 5-minute aggregation, RMSE 17.78%). Both are archived; both predate the leak-free protocol, and the aggregation and horizon differ from the deployment task. The harness carries a synthetic arm that re-derives the synthetic figure under the clean protocol at horizon 9.
+- **Status:** ❌ Not met on real data at deployment resolution. Met on synthetic data only. GRU accuracy parity with a linear autoregression is a disclosed limitation.
 
 ### Claim 7: Live prediction latency acceptable
 - **Evidence:** `results/experiments/phase-a1/2026-02-12_predictive-trigger/report.md`
@@ -90,7 +80,7 @@
 - **Evidence:** `results/experiments/phase-a1/2026-02-12_predictive-trigger/report.md`
 - **⚠️ Superseded by Bugs 8-13. See INCONSISTENCIES.md 2026-07-11 entry.**
 - **Registry ID:** `experiments.2026-02-12-predictive-trigger` (superseded; mechanism demo not recomputed on fixed infra)
-- **Result:** Range 0.72–0.88 during live predictions
+- **Result:** Range 0.72–0.88 during live predictions with the synthetic-trained model of the time. Under the leak-free ClarkNet model the reported confidence is a constant 0.6, because the score is the ratio of validation RMSE to mean load and that ratio now exceeds the 0.15 threshold. The gate still passes its 0.5 default, so predictive scaling remains enabled, but the score no longer varies within a run.
 - **Status:** ✅ Validated (pre-fix infra)
 
 ---
@@ -230,8 +220,9 @@ These remain the only demonstrations of their respective mechanisms, but their n
 | Bundle | Registry ID | Why still referenced |
 |---|---|---|
 | `phase-a1/2026-02-12_predictive-trigger` | `experiments.2026-02-12-predictive-trigger` | Unique ramp test demonstrating PREDICTIVE mechanism; no post-fix equivalent yet |
-| `models/gru/2026-02-10_training-synthetic` | `models.2026-02-10-training-synthetic` | GRU synthetic training; infra-independent, no later retraining |
-| `models/gru/2026-02-13_training-clarknet-calgary` | `models.2026-02-13-training-clarknet-calgary` | GRU real-trace validation; no later retraining |
+| `models/gru/2026-02-10_training-synthetic` | `models.2026-02-10-training-synthetic` | GRU synthetic training; superseded by the leak-free retrain on 2026-09-10 |
+| `models/gru/2026-02-13_training-clarknet-calgary` | `models.2026-02-13-training-clarknet-calgary` | GRU real-trace validation at 5-minute aggregation; superseded by the leak-free retrain on 2026-09-10 |
+| `models/gru/2026-09-10_clarknet-15s-h9-leakfree` | `models.2026-09-10-clarknet-15s-h9-leakfree` | Leak-free ClarkNet 15 s study, horizon 9, replay window held out; current predictor evidence |
 | `validation/2026-02-13_infrastructure-validation` | `validation/*` | HPA/KPA testbed validation; superseded by Bug 8/11 fixes but no post-fix re-validation exists |
 
 ---
@@ -253,12 +244,13 @@ This single command reproduces H1 (S4 vs S1), H2 (S4 vs S3), and the live-predic
 
 ---
 
-## Training Data Note
+## Training Data Note (superseded 2026-09-11)
 
-- GRU trained on **synthetic data** → RMSE% 4.75% post-HPO, MAE% 4.91% ✅
-- GRU retrained on **real ClarkNet/Calgary traces** (2026-02-13) → best RMSE% 17.78%, MAE% 14.48% ❌
-- ClarkNet provides usable signal at 5-min+ aggregation; Calgary too sparse for GRU
-- Real-data results are a known limitation to acknowledge in thesis
+- GRU, synthetic arm, leak-free protocol at horizon 9: RMSE 5.2% of the mean load, MAE 4.1%. Target met.
+- GRU, real deployment arm, amplified ClarkNet at 15 s with the replay window held out: RMSE 39.6% of the mean load, skill 0.216 against persistence. Target not met.
+- LSTM under the identical protocol: RMSE 29.917 against the GRU's 29.635, GRU better on every seed. A linear autoregression on the same window reaches 29.465, so GRU parity with linear is disclosed.
+- Superseded figures, do not quote: 4.75%, 6.01%, 17.78%, 14.48%. They come from pre-leak-free protocols at horizon 5 and at 5-minute aggregation.
+- Source of record: the predictor section of `results/claims/FINAL_NUMBERS.md` and the bundle `results/models/gru/2026-09-10_clarknet-15s-h9-leakfree`.
 
 ---
 
