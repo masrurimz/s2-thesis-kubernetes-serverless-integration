@@ -1,0 +1,542 @@
+2026-09-11 08:04:29 [info     ] SLOMonitor initialized         threshold_ms=200.0 violation_window=30
+2026-09-11 08:04:29 [info     ] Algorithm1ControllerV3 initialized max_knative=50 r_saturation=33.3 target_cpu_util=0.5 total_budget=1000
+2026-09-11 08:04:29 [info     ] Using V3 controller (Capacity-Driven) scenario=s4-hybrid-predictive version=v3
+2026-09-11 08:04:29 [info     ] HAProxyWeightAdjuster initialized backend=servers host=localhost port=19999
+2026-09-11 08:04:29 [info     ] GRUClient initialized          base_url=http://localhost:8090
+2026-09-11 08:04:29 [info     ] K8sScaler initialized          deployment=test-app-warm namespace=default
+2026-09-11 08:04:29 [info     ] RoutingDaemon initialized      decision_interval=15 description='Algorithm 1 with GRU predictions (Algorithm 2)' scenario=s4-hybrid-predictive use_algorithm=True use_predictions=True
+2026-09-11 08:04:29 [info     ] Starting routing daemon        interval=15 scenario=s4-hybrid-predictive
+2026-09-11 08:04:29 [info     ] Weights updated                k3s=80 knative=20
+2026-09-11 08:04:29 [info     ] Initial weights applied        k3s=80 knative=20
+2026-09-11 08:04:30 [debug    ] HAProxy fallback primed        total_requests=0
+2026-09-11 08:04:30 [info     ] Model status validated         prediction_horizon=9 sample_interval_sec=15 sequence_length=30
+2026-09-11 08:04:30 [info     ] Model status validated on first eligible cycle prediction_horizon=9 sequence_length=30
+2026-09-11 08:04:30 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-09-11 08:04:30 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=3 hold_until=0.0 observed_load=0.0 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:04:30 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=225.13 p99=0.0
+2026-09-11 08:04:45 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-09-11 08:04:45 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=3 hold_until=0.0 observed_load=0.0 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:04:45 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=303.26 p99=0.0
+2026-09-11 08:05:00 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=3 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-09-11 08:05:00 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=3 hold_until=0.0 observed_load=0.0 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:05:00 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=226.93 p99=0.0
+2026-09-11 08:05:15 [debug    ] HAProxy fallback latency       delta_requests=663 interval_avg_ms=69.0 max_rtime_ms=97.0 p99_est=97.0
+2026-09-11 08:05:15 [info     ] controller_decision_v3         action=RECOVERY available_replicas=3 budget_remaining=1000 burn_adjustment=0 burst_ratio=0 capacity_deficit=False confidence=0 current_load=43.31340052220342 decision_id=03e7792e k8s_capacity=49.9 k8s_weight=100 knative_weight=0 p99=97.0 predicted_load=0 r_effective=16.6 serverless_enabled=False total_load=43.3 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 80, 'knative': 20}
+2026-09-11 08:05:15 [info     ] Weights updated                k3s=100 knative=0
+2026-09-11 08:05:15 [info     ] Weights updated                action=RECOVERY reason='load=43RPS | k8s_cap=50RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-09-11 08:05:16 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=3 predicted_load=21.65670026110171 required_resources=1.301 target_replicas=3
+2026-09-11 08:05:16 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=3 hold_until=0.0 observed_load=21.66 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:05:16 [debug    ] Decision loop completed        action=RECOVERY latency_ms=264.19 p99=97.0
+2026-09-11 08:05:31 [debug    ] HAProxy fallback latency       delta_requests=672 interval_avg_ms=67.01 max_rtime_ms=97.0 p99_est=97.0
+2026-09-11 08:05:31 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=3 predicted_load=43.64697530155518 required_resources=2.621 target_replicas=3
+2026-09-11 08:05:31 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=3 hold_until=0.0 observed_load=43.65 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:05:31 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=218.51 p99=97.0
+2026-09-11 08:05:46 [debug    ] HAProxy fallback latency       delta_requests=726 interval_avg_ms=70.84 max_rtime_ms=97.0 p99_est=97.0
+2026-09-11 08:05:46 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=3 predicted_load=45.84025466618952 required_resources=2.753 target_replicas=3
+2026-09-11 08:05:46 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=3 hold_until=0.0 observed_load=45.84 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:05:46 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=196.69 p99=97.0
+2026-09-11 08:06:01 [debug    ] HAProxy fallback latency       delta_requests=834 interval_avg_ms=69.0 max_rtime_ms=97.0 p99_est=97.0
+2026-09-11 08:06:01 [info     ] Knative pre-warm OK            cold_start_ms=3.6
+2026-09-11 08:06:01 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=1000 burn_adjustment=0 burst_ratio=0.0871 capacity_deficit=False confidence=0 current_load=54.71702213137582 decision_id=828046df k8s_capacity=49.9 k8s_weight=91 knative_weight=9 p99=97.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=54.7 weights_after={'k3s': 91, 'knative': 9} weights_before={'k3s': 100, 'knative': 0}
+2026-09-11 08:06:01 [info     ] Weights updated                k3s=91 knative=9
+2026-09-11 08:06:01 [info     ] Weights updated                action=REACTIVE reason='load=55RPS | k8s_cap=50RPS | (burst-routing)' weights={'k3s': 91, 'knative': 9}
+2026-09-11 08:06:01 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=3 predicted_load=51.20849069142397 required_resources=3.076 target_replicas=4
+2026-09-11 08:06:01 [info     ] algorithm2_decision            action=SCALE_UP applied_target=4 current_replicas=3 hold_until=0.0 observed_load=51.21 observed_target=4 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=4 upper_forecasts=None
+2026-09-11 08:06:01 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=4
+2026-09-11 08:06:01 [debug    ] Decision loop completed        action=REACTIVE latency_ms=348.86 p99=97.0
+2026-09-11 08:06:16 [debug    ] HAProxy fallback latency       delta_requests=764 interval_avg_ms=73.79 max_rtime_ms=138.0 p99_est=138.0
+2026-09-11 08:06:16 [info     ] controller_decision_v3         action=RECOVERY available_replicas=4 budget_remaining=1000 burn_adjustment=0 burst_ratio=0 capacity_deficit=False confidence=0 current_load=49.93318147259637 decision_id=2c913df7 k8s_capacity=66.6 k8s_weight=100 knative_weight=0 p99=138.0 predicted_load=0 r_effective=16.6 serverless_enabled=False total_load=49.9 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 91, 'knative': 9}
+2026-09-11 08:06:17 [info     ] Weights updated                k3s=100 knative=0
+2026-09-11 08:06:17 [info     ] Weights updated                action=RECOVERY reason='load=50RPS | k8s_cap=67RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-09-11 08:06:17 [info     ] Scale readiness observed       elapsed_sec=15.3 ewma_delay=46.6 samples=1 target=4
+2026-09-11 08:06:17 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=52.325101801986094 required_resources=3.143 target_replicas=4
+2026-09-11 08:06:17 [info     ] algorithm2_decision            action=MAINTAIN applied_target=4 current_replicas=4 hold_until=0.0 observed_load=52.33 observed_target=4 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=4 upper_forecasts=None
+2026-09-11 08:06:17 [debug    ] Decision loop completed        action=RECOVERY latency_ms=315.65 p99=138.0
+2026-09-11 08:06:32 [debug    ] HAProxy fallback latency       delta_requests=537 interval_avg_ms=70.0 max_rtime_ms=138.0 p99_est=138.0
+2026-09-11 08:06:32 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=42.558195284055806 required_resources=2.556 target_replicas=3
+2026-09-11 08:06:32 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=42.56 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:06:32 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=271.96 p99=138.0
+2026-09-11 08:06:47 [debug    ] HAProxy fallback latency       delta_requests=410 interval_avg_ms=58.77 max_rtime_ms=138.0 p99_est=117.53
+2026-09-11 08:06:47 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=31.050141328646596 required_resources=1.865 target_replicas=3
+2026-09-11 08:06:47 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=31.05 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:06:47 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=198.7 p99=117.53170731707317
+2026-09-11 08:07:02 [debug    ] HAProxy fallback latency       delta_requests=358 interval_avg_ms=69.0 max_rtime_ms=138.0 p99_est=138.0
+2026-09-11 08:07:02 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=25.201742101691593 required_resources=1.514 target_replicas=3
+2026-09-11 08:07:02 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=25.2 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:07:02 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=206.18 p99=138.0
+2026-09-11 08:07:17 [debug    ] HAProxy fallback latency       delta_requests=518 interval_avg_ms=58.42 max_rtime_ms=138.0 p99_est=116.83
+2026-09-11 08:07:18 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=28.708728900375057 required_resources=1.724 target_replicas=3
+2026-09-11 08:07:18 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=28.71 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:07:18 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=234.06 p99=116.83397683397683
+2026-09-11 08:07:33 [debug    ] HAProxy fallback latency       delta_requests=807 interval_avg_ms=68.0 max_rtime_ms=138.0 p99_est=136.0
+2026-09-11 08:07:33 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=43.38734100047656 required_resources=2.606 target_replicas=3
+2026-09-11 08:07:33 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=43.39 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:07:33 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=259.05 p99=136.0
+2026-09-11 08:07:48 [debug    ] HAProxy fallback latency       delta_requests=797 interval_avg_ms=68.0 max_rtime_ms=138.0 p99_est=136.0
+2026-09-11 08:07:48 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=52.63372319424538 required_resources=3.161 target_replicas=4
+2026-09-11 08:07:48 [info     ] algorithm2_decision            action=MAINTAIN applied_target=4 current_replicas=4 hold_until=0.0 observed_load=52.63 observed_target=4 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=4 upper_forecasts=None
+2026-09-11 08:07:48 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=193.74 p99=136.0
+2026-09-11 08:08:03 [debug    ] HAProxy fallback latency       delta_requests=625 interval_avg_ms=68.0 max_rtime_ms=138.0 p99_est=136.0
+2026-09-11 08:08:03 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=46.772994530930035 required_resources=2.809 target_replicas=3
+2026-09-11 08:08:03 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=46.77 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:08:03 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=189.83 p99=136.0
+2026-09-11 08:08:18 [debug    ] HAProxy fallback latency       delta_requests=684 interval_avg_ms=68.0 max_rtime_ms=138.0 p99_est=136.0
+2026-09-11 08:08:18 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=43.01753783052904 required_resources=2.584 target_replicas=3
+2026-09-11 08:08:18 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=43.02 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:08:18 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=255.45 p99=136.0
+2026-09-11 08:08:33 [debug    ] HAProxy fallback latency       delta_requests=859 interval_avg_ms=78.77 max_rtime_ms=138.0 p99_est=138.0
+2026-09-11 08:08:34 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=50.64166683188793 required_resources=3.042 target_replicas=4
+2026-09-11 08:08:34 [info     ] algorithm2_decision            action=MAINTAIN applied_target=4 current_replicas=4 hold_until=0.0 observed_load=50.64 observed_target=4 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=4 upper_forecasts=None
+2026-09-11 08:08:34 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=220.21 p99=138.0
+2026-09-11 08:08:49 [debug    ] HAProxy fallback latency       delta_requests=924 interval_avg_ms=91.03 max_rtime_ms=138.0 p99_est=138.0
+2026-09-11 08:08:49 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=58.53263126541411 required_resources=3.515 target_replicas=4
+2026-09-11 08:08:49 [info     ] algorithm2_decision            action=MAINTAIN applied_target=4 current_replicas=4 hold_until=0.0 observed_load=58.53 observed_target=4 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=4 upper_forecasts=None
+2026-09-11 08:08:49 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=229.76 p99=138.0
+2026-09-11 08:09:04 [debug    ] HAProxy fallback latency       delta_requests=946 interval_avg_ms=94.52 max_rtime_ms=138.0 p99_est=138.0
+2026-09-11 08:09:04 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=61.29058856739945 required_resources=3.681 target_replicas=4
+2026-09-11 08:09:04 [info     ] algorithm2_decision            action=MAINTAIN applied_target=4 current_replicas=4 hold_until=0.0 observed_load=61.29 observed_target=4 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=4 upper_forecasts=None
+2026-09-11 08:09:04 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=328.09 p99=138.0
+2026-09-11 08:09:19 [debug    ] HAProxy fallback latency       delta_requests=1035 interval_avg_ms=61.25 max_rtime_ms=138.0 p99_est=122.5
+2026-09-11 08:09:19 [info     ] Knative pre-warm OK            cold_start_ms=17.0
+2026-09-11 08:09:19 [info     ] controller_decision_v3         action=REACTIVE available_replicas=4 budget_remaining=1000 burn_adjustment=0 burst_ratio=0.0158 capacity_deficit=False confidence=0 current_load=67.6695821185617 decision_id=9bcb14c8 k8s_capacity=66.6 k8s_weight=98 knative_weight=2 p99=122.5 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=67.7 weights_after={'k3s': 98, 'knative': 2} weights_before={'k3s': 100, 'knative': 0}
+2026-09-11 08:09:19 [info     ] Weights updated                k3s=98 knative=2
+2026-09-11 08:09:19 [info     ] Weights updated                action=REACTIVE reason='load=68RPS | k8s_cap=67RPS | (burst-routing)' weights={'k3s': 98, 'knative': 2}
+2026-09-11 08:09:19 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=64.77796612021388 required_resources=3.891 target_replicas=4
+2026-09-11 08:09:19 [info     ] algorithm2_decision            action=MAINTAIN applied_target=4 current_replicas=4 hold_until=0.0 observed_load=64.78 observed_target=4 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=4 upper_forecasts=None
+2026-09-11 08:09:19 [debug    ] Decision loop completed        action=REACTIVE latency_ms=252.31 p99=122.50434782608696
+2026-09-11 08:09:35 [debug    ] HAProxy fallback latency       delta_requests=1152 interval_avg_ms=83.55 max_rtime_ms=138.0 p99_est=138.0
+2026-09-11 08:09:35 [info     ] controller_decision_v3         action=REACTIVE available_replicas=4 budget_remaining=1000 burn_adjustment=0 burst_ratio=0.1175 capacity_deficit=False confidence=0 current_load=75.46706473946334 decision_id=966689c8 k8s_capacity=66.6 k8s_weight=88 knative_weight=12 p99=138.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=75.5 weights_after={'k3s': 88, 'knative': 12} weights_before={'k3s': 98, 'knative': 2}
+2026-09-11 08:09:35 [info     ] Weights updated                k3s=88 knative=12
+2026-09-11 08:09:35 [info     ] Weights updated                action=REACTIVE reason='load=75RPS | k8s_cap=67RPS | (burst-routing)' weights={'k3s': 88, 'knative': 12}
+2026-09-11 08:09:35 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=71.56832342901252 required_resources=4.298 target_replicas=5
+2026-09-11 08:09:35 [info     ] algorithm2_decision            action=SCALE_UP applied_target=5 current_replicas=4 hold_until=0.0 observed_load=71.57 observed_target=5 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=5 upper_forecasts=None
+2026-09-11 08:09:35 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=5
+2026-09-11 08:09:35 [debug    ] Decision loop completed        action=REACTIVE latency_ms=357.95 p99=138.0
+2026-09-11 08:09:50 [debug    ] HAProxy fallback latency       delta_requests=1327 interval_avg_ms=106.09 max_rtime_ms=162.0 p99_est=162.0
+2026-09-11 08:09:50 [info     ] controller_decision_v3         action=RECOVERY available_replicas=5 budget_remaining=1000 burn_adjustment=0 burst_ratio=0.0373 capacity_deficit=False confidence=0 current_load=86.47304619829356 decision_id=c5aa27ff k8s_capacity=83.2 k8s_weight=96 knative_weight=4 p99=162.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=86.5 weights_after={'k3s': 96, 'knative': 4} weights_before={'k3s': 88, 'knative': 12}
+2026-09-11 08:09:50 [info     ] Weights updated                k3s=96 knative=4
+2026-09-11 08:09:50 [info     ] Weights updated                action=RECOVERY reason='load=86RPS | k8s_cap=83RPS | (reducing-serverless)' weights={'k3s': 96, 'knative': 4}
+2026-09-11 08:09:50 [info     ] Scale readiness observed       elapsed_sec=15.3 ewma_delay=37.2 samples=2 target=5
+2026-09-11 08:09:50 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=5 predicted_load=80.97005546887846 required_resources=4.863 target_replicas=5
+2026-09-11 08:09:50 [info     ] algorithm2_decision            action=MAINTAIN applied_target=5 current_replicas=5 hold_until=0.0 observed_load=80.97 observed_target=5 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=5 upper_forecasts=None
+2026-09-11 08:09:50 [debug    ] Decision loop completed        action=RECOVERY latency_ms=302.08 p99=162.0
+2026-09-11 08:10:05 [debug    ] HAProxy fallback latency       delta_requests=1522 interval_avg_ms=129.09 max_rtime_ms=211.0 p99_est=211.0
+2026-09-11 08:10:05 [info     ] controller_decision_v3         action=REACTIVE available_replicas=5 budget_remaining=999 burn_adjustment=0 burst_ratio=0.1576 capacity_deficit=False confidence=0 current_load=98.82308244677803 decision_id=e987dabb k8s_capacity=83.2 k8s_weight=84 knative_weight=16 p99=211.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=98.8 weights_after={'k3s': 84, 'knative': 16} weights_before={'k3s': 96, 'knative': 4}
+2026-09-11 08:10:05 [info     ] Weights updated                k3s=84 knative=16
+2026-09-11 08:10:05 [info     ] Weights updated                action=REACTIVE reason='load=99RPS | k8s_cap=83RPS | (burst-routing)' weights={'k3s': 84, 'knative': 16}
+2026-09-11 08:10:05 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=5 predicted_load=92.64806432253579 required_resources=5.564 target_replicas=6
+2026-09-11 08:10:05 [info     ] algorithm2_decision            action=SCALE_UP applied_target=6 current_replicas=5 hold_until=0.0 observed_load=92.65 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:10:06 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=6
+2026-09-11 08:10:06 [debug    ] Decision loop completed        action=REACTIVE latency_ms=437.89 p99=211.0
+2026-09-11 08:10:21 [debug    ] HAProxy fallback latency       delta_requests=1751 interval_avg_ms=101.46 max_rtime_ms=211.0 p99_est=202.92
+2026-09-11 08:10:21 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=998 burn_adjustment=0 burst_ratio=0.1211 capacity_deficit=False confidence=0 current_load=113.66187719628846 decision_id=22cb86df k8s_capacity=99.9 k8s_weight=87 knative_weight=13 p99=202.9 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=113.7 weights_after={'k3s': 87, 'knative': 13} weights_before={'k3s': 84, 'knative': 16}
+2026-09-11 08:10:21 [info     ] Weights updated                k3s=87 knative=13
+2026-09-11 08:10:21 [info     ] Weights updated                action=RECOVERY reason='load=114RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 87, 'knative': 13}
+2026-09-11 08:10:21 [info     ] Scale readiness observed       elapsed_sec=15.4 ewma_delay=30.7 samples=3 target=6
+2026-09-11 08:10:21 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=106.24247982153324 required_resources=6.381 target_replicas=6
+2026-09-11 08:10:21 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=106.24 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:10:21 [debug    ] Decision loop completed        action=RECOVERY latency_ms=417.27 p99=202.91604797258708
+2026-09-11 08:10:36 [debug    ] HAProxy fallback latency       delta_requests=1944 interval_avg_ms=52.36 max_rtime_ms=211.0 p99_est=104.72
+2026-09-11 08:10:36 [info     ] controller_decision_v3         action=REACTIVE available_replicas=6 budget_remaining=998 burn_adjustment=0 burst_ratio=0.2072 capacity_deficit=False confidence=0 current_load=126.00646242860321 decision_id=98d2f992 k8s_capacity=99.9 k8s_weight=79 knative_weight=21 p99=104.7 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=126.0 weights_after={'k3s': 79, 'knative': 21} weights_before={'k3s': 87, 'knative': 13}
+2026-09-11 08:10:36 [info     ] Weights updated                k3s=79 knative=21
+2026-09-11 08:10:36 [info     ] Weights updated                action=REACTIVE reason='load=126RPS | k8s_cap=100RPS | (burst-routing)' weights={'k3s': 79, 'knative': 21}
+2026-09-11 08:10:36 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=119.83416981244584 required_resources=7.197 target_replicas=6
+2026-09-11 08:10:36 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=119.83 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:10:36 [debug    ] Decision loop completed        action=REACTIVE latency_ms=237.94 p99=104.71913580246914
+2026-09-11 08:10:51 [debug    ] HAProxy fallback latency       delta_requests=1643 interval_avg_ms=27.66 max_rtime_ms=211.0 p99_est=55.32
+2026-09-11 08:10:52 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=998 burn_adjustment=0 burst_ratio=0.0666 capacity_deficit=False confidence=0 current_load=107.028392056061 decision_id=157c2c0f k8s_capacity=99.9 k8s_weight=93 knative_weight=7 p99=55.3 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=107.0 weights_after={'k3s': 93, 'knative': 7} weights_before={'k3s': 79, 'knative': 21}
+2026-09-11 08:10:52 [info     ] Weights updated                k3s=93 knative=7
+2026-09-11 08:10:52 [info     ] Weights updated                action=RECOVERY reason='load=107RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 93, 'knative': 7}
+2026-09-11 08:10:52 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=116.5174272423321 required_resources=6.998 target_replicas=6
+2026-09-11 08:10:52 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=116.52 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:10:52 [debug    ] Decision loop completed        action=RECOVERY latency_ms=812.52 p99=55.32318928788801
+2026-09-11 08:11:09 [debug    ] HAProxy fallback latency       delta_requests=1417 interval_avg_ms=2032.75 max_rtime_ms=1822.0 p99_est=1822.0
+2026-09-11 08:11:10 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=997 burn_adjustment=0 burst_ratio=0 capacity_deficit=False confidence=0 current_load=81.2178918392145 decision_id=902e4a61 k8s_capacity=99.9 k8s_weight=100 knative_weight=0 p99=1822.0 predicted_load=0 r_effective=16.6 serverless_enabled=False total_load=81.2 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 93, 'knative': 7}
+2026-09-11 08:11:10 [info     ] Weights updated                k3s=100 knative=0
+2026-09-11 08:11:10 [info     ] Weights updated                action=RECOVERY reason='load=81RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-09-11 08:11:10 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=94.12314194763775 required_resources=5.653 target_replicas=6
+2026-09-11 08:11:10 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=94.12 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:11:10 [debug    ] Decision loop completed        action=RECOVERY latency_ms=3342.78 p99=1822.0
+2026-09-11 08:11:26 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=77.20134416555405 required_resources=4.637 target_replicas=5
+2026-09-11 08:11:26 [info     ] algorithm2_decision            action=MAINTAIN applied_target=5 current_replicas=6 hold_until=0.0 observed_load=77.2 observed_target=5 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=5 upper_forecasts=None
+2026-09-11 08:11:26 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=905.07 p99=1822.0
+2026-09-11 08:11:42 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=70.35857647055288 required_resources=4.226 target_replicas=5
+2026-09-11 08:11:42 [info     ] algorithm2_decision            action=MAINTAIN applied_target=5 current_replicas=6 hold_until=0.0 observed_load=70.36 observed_target=5 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=5 upper_forecasts=None
+2026-09-11 08:11:42 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=304.9 p99=1822.0
+2026-09-11 08:11:57 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=61.93260426651936 required_resources=3.72 target_replicas=4
+2026-09-11 08:11:57 [info     ] algorithm2_decision            action=SCALE_DOWN applied_target=4 current_replicas=6 hold_until=0.0 observed_load=61.93 observed_target=4 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=4 upper_forecasts=None
+2026-09-11 08:11:57 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=242.22 p99=1822.0
+2026-09-11 08:12:12 [debug    ] HAProxy fallback latency       delta_requests=946 interval_avg_ms=157.59 max_rtime_ms=1822.0 p99_est=315.17
+2026-09-11 08:12:12 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:12:12 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:12:12 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=58.9772811899062 required_resources=3.542 target_replicas=4
+2026-09-11 08:12:12 [info     ] algorithm2_decision            action=SCALE_DOWN applied_target=4 current_replicas=6 hold_until=0.0 observed_load=58.98 observed_target=4 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=4 upper_forecasts=None
+2026-09-11 08:12:12 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=279.66 p99=315.17124735729385
+2026-09-11 08:12:27 [debug    ] HAProxy fallback latency       delta_requests=1633 interval_avg_ms=302.85 max_rtime_ms=1822.0 p99_est=605.69
+2026-09-11 08:12:27 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:12:27 [info     ] Knative pre-warm OK            cold_start_ms=6.4
+2026-09-11 08:12:27 [info     ] controller_decision_v3         action=REACTIVE available_replicas=6 budget_remaining=992 burn_adjustment=0 burst_ratio=0.06 capacity_deficit=False confidence=0 current_load=106.27811598133631 decision_id=8a171e15 k8s_capacity=99.9 k8s_weight=93 knative_weight=7 p99=605.7 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=106.3 weights_after={'k3s': 93, 'knative': 7} weights_before={'k3s': 100, 'knative': 0}
+2026-09-11 08:12:27 [info     ] Weights updated                k3s=93 knative=7
+2026-09-11 08:12:27 [info     ] Weights updated                action=REACTIVE reason='load=106RPS | k8s_cap=100RPS | (burst-routing)' weights={'k3s': 93, 'knative': 7}
+2026-09-11 08:12:28 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=83.94991313866107 required_resources=5.042 target_replicas=6
+2026-09-11 08:12:28 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=83.95 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:12:28 [debug    ] Decision loop completed        action=REACTIVE latency_ms=409.37 p99=605.692590324556
+2026-09-11 08:12:43 [debug    ] HAProxy fallback latency       delta_requests=1990 interval_avg_ms=149.53 max_rtime_ms=1822.0 p99_est=299.06
+2026-09-11 08:12:43 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:12:43 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:12:43 [info     ] controller_decision_v3         action=REACTIVE available_replicas=6 budget_remaining=991 burn_adjustment=0 burst_ratio=0.2281 capacity_deficit=False confidence=0 current_load=129.42345013395294 decision_id=af53bcb1 k8s_capacity=99.9 k8s_weight=77 knative_weight=23 p99=299.1 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=129.4 weights_after={'k3s': 77, 'knative': 23} weights_before={'k3s': 93, 'knative': 7}
+2026-09-11 08:12:43 [info     ] Weights updated                k3s=77 knative=23
+2026-09-11 08:12:43 [info     ] Weights updated                action=REACTIVE reason='load=129RPS | k8s_cap=100RPS | (burst-routing)' weights={'k3s': 77, 'knative': 23}
+2026-09-11 08:12:43 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=117.85078305764463 required_resources=7.078 target_replicas=6
+2026-09-11 08:12:43 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=117.85 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:12:43 [debug    ] Decision loop completed        action=REACTIVE latency_ms=399.72 p99=299.05929648241204
+2026-09-11 08:12:58 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:12:58 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=990 burn_adjustment=0 burst_ratio=0.0368 capacity_deficit=False confidence=0 current_load=103.71194804278043 decision_id=e9278550 k8s_capacity=99.9 k8s_weight=96 knative_weight=4 p99=299.1 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=103.7 weights_after={'k3s': 96, 'knative': 4} weights_before={'k3s': 77, 'knative': 23}
+2026-09-11 08:12:58 [info     ] Weights updated                k3s=96 knative=4
+2026-09-11 08:12:58 [info     ] Weights updated                action=RECOVERY reason='load=104RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 96, 'knative': 4}
+2026-09-11 08:12:58 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=116.56769908836668 required_resources=7.001 target_replicas=6
+2026-09-11 08:12:58 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=116.57 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:12:58 [debug    ] Decision loop completed        action=RECOVERY latency_ms=342.04 p99=299.05929648241204
+2026-09-11 08:13:13 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:13:13 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:13:13 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=989 burn_adjustment=0 burst_ratio=0 capacity_deficit=False confidence=0 current_load=83.98626753153066 decision_id=4e216d8e k8s_capacity=99.9 k8s_weight=100 knative_weight=0 p99=299.1 predicted_load=0 r_effective=16.6 serverless_enabled=False total_load=84.0 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 96, 'knative': 4}
+2026-09-11 08:13:14 [info     ] Weights updated                k3s=100 knative=0
+2026-09-11 08:13:14 [info     ] Weights updated                action=RECOVERY reason='load=84RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-09-11 08:13:14 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=93.84910778715555 required_resources=5.637 target_replicas=6
+2026-09-11 08:13:14 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=93.85 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:13:14 [debug    ] Decision loop completed        action=RECOVERY latency_ms=353.1 p99=299.05929648241204
+2026-09-11 08:13:29 [debug    ] HAProxy fallback latency       delta_requests=1181 interval_avg_ms=43.64 max_rtime_ms=1822.0 p99_est=87.29
+2026-09-11 08:13:29 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:13:29 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=80.51055241505019 required_resources=4.835 target_replicas=5
+2026-09-11 08:13:29 [info     ] algorithm2_decision            action=MAINTAIN applied_target=5 current_replicas=6 hold_until=0.0 observed_load=80.51 observed_target=5 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=5 upper_forecasts=None
+2026-09-11 08:13:29 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=237.22 p99=87.2870448772227
+2026-09-11 08:13:44 [debug    ] HAProxy fallback latency       delta_requests=1326 interval_avg_ms=72.0 max_rtime_ms=1822.0 p99_est=144.0
+2026-09-11 08:13:44 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:13:44 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:13:44 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=82.00476283650463 required_resources=4.925 target_replicas=5
+2026-09-11 08:13:44 [info     ] algorithm2_decision            action=MAINTAIN applied_target=5 current_replicas=6 hold_until=0.0 observed_load=82.0 observed_target=5 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=5 upper_forecasts=None
+2026-09-11 08:13:44 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=215.2 p99=144.0
+2026-09-11 08:13:59 [debug    ] HAProxy fallback latency       delta_requests=1857 interval_avg_ms=112.77 max_rtime_ms=1822.0 p99_est=225.54
+2026-09-11 08:13:59 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:13:59 [info     ] Knative pre-warm OK            cold_start_ms=4.6
+2026-09-11 08:13:59 [info     ] controller_decision_v3         action=REACTIVE available_replicas=6 budget_remaining=988 burn_adjustment=0 burst_ratio=0.1795 capacity_deficit=False confidence=0 current_load=121.75902781842306 decision_id=cc632586 k8s_capacity=99.9 k8s_weight=82 knative_weight=18 p99=225.5 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=121.8 weights_after={'k3s': 82, 'knative': 18} weights_before={'k3s': 100, 'knative': 0}
+2026-09-11 08:13:59 [info     ] Weights updated                k3s=82 knative=18
+2026-09-11 08:13:59 [info     ] Weights updated                action=REACTIVE reason='load=122RPS | k8s_cap=100RPS | (burst-routing)' weights={'k3s': 82, 'knative': 18}
+2026-09-11 08:13:59 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=104.36685809643129 required_resources=6.268 target_replicas=6
+2026-09-11 08:13:59 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=104.37 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:13:59 [debug    ] Decision loop completed        action=REACTIVE latency_ms=244.86 p99=225.53581044695747
+2026-09-11 08:14:14 [debug    ] HAProxy fallback latency       delta_requests=2245 interval_avg_ms=91.86 max_rtime_ms=1822.0 p99_est=183.72
+2026-09-11 08:14:14 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:14:14 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:14:15 [info     ] controller_decision_v3         action=REACTIVE available_replicas=6 budget_remaining=988 burn_adjustment=0 burst_ratio=0.3188 capacity_deficit=False confidence=0 current_load=146.6460733983018 decision_id=9617401a k8s_capacity=99.9 k8s_weight=68 knative_weight=32 p99=183.7 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=146.6 weights_after={'k3s': 68, 'knative': 32} weights_before={'k3s': 82, 'knative': 18}
+2026-09-11 08:14:15 [info     ] Weights updated                k3s=68 knative=32
+2026-09-11 08:14:15 [info     ] Weights updated                action=REACTIVE reason='load=147RPS | k8s_cap=100RPS | (burst-routing)' weights={'k3s': 68, 'knative': 32}
+2026-09-11 08:14:15 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=134.20255060836243 required_resources=8.06 target_replicas=6
+2026-09-11 08:14:15 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=134.2 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:14:15 [debug    ] Decision loop completed        action=REACTIVE latency_ms=377.96 p99=183.72204899777282
+2026-09-11 08:14:30 [debug    ] HAProxy fallback latency       delta_requests=2424 interval_avg_ms=57.46 max_rtime_ms=1822.0 p99_est=114.92
+2026-09-11 08:14:30 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:14:30 [info     ] controller_decision_v3         action=REACTIVE available_replicas=6 budget_remaining=988 burn_adjustment=0 burst_ratio=0.3674 capacity_deficit=False confidence=0 current_load=157.92045403622174 decision_id=4f2c9e48 k8s_capacity=99.9 k8s_weight=63 knative_weight=37 p99=114.9 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=157.9 weights_after={'k3s': 63, 'knative': 37} weights_before={'k3s': 68, 'knative': 32}
+2026-09-11 08:14:30 [info     ] Weights updated                k3s=63 knative=37
+2026-09-11 08:14:30 [info     ] Weights updated                action=REACTIVE reason='load=158RPS | k8s_cap=100RPS | (burst-routing)' weights={'k3s': 63, 'knative': 37}
+2026-09-11 08:14:30 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=152.28326371726178 required_resources=9.146 target_replicas=6
+2026-09-11 08:14:30 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=152.28 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:14:30 [debug    ] Decision loop completed        action=REACTIVE latency_ms=280.44 p99=114.91584158415841
+2026-09-11 08:14:45 [debug    ] HAProxy fallback latency       delta_requests=2332 interval_avg_ms=74.0 max_rtime_ms=1822.0 p99_est=148.0
+2026-09-11 08:14:45 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:14:45 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:14:45 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=988 burn_adjustment=0 burst_ratio=0.3456 capacity_deficit=False confidence=0 current_load=152.64743115414228 decision_id=96761426 k8s_capacity=99.9 k8s_weight=65 knative_weight=35 p99=148.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=152.6 weights_after={'k3s': 65, 'knative': 35} weights_before={'k3s': 63, 'knative': 37}
+2026-09-11 08:14:45 [info     ] Weights updated                k3s=65 knative=35
+2026-09-11 08:14:45 [info     ] Weights updated                action=RECOVERY reason='load=153RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 65, 'knative': 35}
+2026-09-11 08:14:45 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=155.283942595182 required_resources=9.326 target_replicas=6
+2026-09-11 08:14:45 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=155.28 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:14:45 [debug    ] Decision loop completed        action=RECOVERY latency_ms=359.9 p99=148.0
+2026-09-11 08:15:00 [debug    ] HAProxy fallback latency       delta_requests=1965 interval_avg_ms=26.35 max_rtime_ms=1822.0 p99_est=52.69
+2026-09-11 08:15:00 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:15:01 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=988 burn_adjustment=0 burst_ratio=0.2206 capacity_deficit=False confidence=0 current_load=128.17018552335864 decision_id=f4d0eea5 k8s_capacity=99.9 k8s_weight=77 knative_weight=23 p99=52.7 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=128.2 weights_after={'k3s': 77, 'knative': 23} weights_before={'k3s': 65, 'knative': 35}
+2026-09-11 08:15:01 [info     ] Weights updated                k3s=77 knative=23
+2026-09-11 08:15:01 [info     ] Weights updated                action=RECOVERY reason='load=128RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 77, 'knative': 23}
+2026-09-11 08:15:01 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=140.40880833875048 required_resources=8.433 target_replicas=6
+2026-09-11 08:15:01 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=140.41 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:15:01 [debug    ] Decision loop completed        action=RECOVERY latency_ms=355.33 p99=52.6941475826972
+2026-09-11 08:15:16 [debug    ] HAProxy fallback latency       delta_requests=1802 interval_avg_ms=98.98 max_rtime_ms=1822.0 p99_est=197.96
+2026-09-11 08:15:16 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:15:16 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:15:16 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=988 burn_adjustment=0 burst_ratio=0.1485 capacity_deficit=False confidence=0 current_load=117.31955527779847 decision_id=5b1d6bb6 k8s_capacity=99.9 k8s_weight=85 knative_weight=15 p99=198.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=117.3 weights_after={'k3s': 85, 'knative': 15} weights_before={'k3s': 77, 'knative': 23}
+2026-09-11 08:15:16 [info     ] Weights updated                k3s=85 knative=15
+2026-09-11 08:15:16 [info     ] Weights updated                action=RECOVERY reason='load=117RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 85, 'knative': 15}
+2026-09-11 08:15:16 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=122.74487040057855 required_resources=7.372 target_replicas=6
+2026-09-11 08:15:16 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=122.74 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:15:16 [debug    ] Decision loop completed        action=RECOVERY latency_ms=326.39 p99=197.96337402885683
+2026-09-11 08:15:31 [debug    ] HAProxy fallback latency       delta_requests=1837 interval_avg_ms=155.4 max_rtime_ms=1822.0 p99_est=310.81
+2026-09-11 08:15:31 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:15:31 [info     ] controller_decision_v3         action=REACTIVE available_replicas=6 budget_remaining=987 burn_adjustment=0 burst_ratio=0.1661 capacity_deficit=False confidence=0 current_load=119.7940869275354 decision_id=83e4b9d9 k8s_capacity=99.9 k8s_weight=83 knative_weight=17 p99=310.8 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=119.8 weights_after={'k3s': 83, 'knative': 17} weights_before={'k3s': 85, 'knative': 15}
+2026-09-11 08:15:31 [info     ] Weights updated                k3s=83 knative=17
+2026-09-11 08:15:31 [info     ] Weights updated                action=REACTIVE reason='load=120RPS | k8s_cap=100RPS | (burst-routing)' weights={'k3s': 83, 'knative': 17}
+2026-09-11 08:15:31 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=118.55682110266693 required_resources=7.121 target_replicas=6
+2026-09-11 08:15:31 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=118.56 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:15:31 [debug    ] Decision loop completed        action=REACTIVE latency_ms=304.55 p99=310.8056614044638
+2026-09-11 08:15:46 [debug    ] HAProxy fallback latency       delta_requests=1841 interval_avg_ms=76.0 max_rtime_ms=1822.0 p99_est=152.0
+2026-09-11 08:15:46 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:15:46 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:15:47 [info     ] controller_decision_v3         action=REACTIVE available_replicas=6 budget_remaining=987 burn_adjustment=0 burst_ratio=0.1708 capacity_deficit=False confidence=0 current_load=120.4804608682926 decision_id=72a74c91 k8s_capacity=99.9 k8s_weight=82 knative_weight=18 p99=152.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=120.5 weights_after={'k3s': 82, 'knative': 18} weights_before={'k3s': 83, 'knative': 17}
+2026-09-11 08:15:47 [info     ] Weights updated                k3s=82 knative=18
+2026-09-11 08:15:47 [info     ] Weights updated                action=REACTIVE reason='load=120RPS | k8s_cap=100RPS | (burst-routing)' weights={'k3s': 82, 'knative': 18}
+2026-09-11 08:15:47 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=120.137273897914 required_resources=7.215 target_replicas=6
+2026-09-11 08:15:47 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=120.14 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:15:47 [debug    ] Decision loop completed        action=REACTIVE latency_ms=283.51 p99=152.0
+2026-09-11 08:16:02 [debug    ] HAProxy fallback latency       delta_requests=1828 interval_avg_ms=76.0 max_rtime_ms=1822.0 p99_est=152.0
+2026-09-11 08:16:02 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:16:02 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=987 burn_adjustment=0 burst_ratio=0.1629 capacity_deficit=False confidence=0 current_load=119.34157460465194 decision_id=b000f2b0 k8s_capacity=99.9 k8s_weight=83 knative_weight=17 p99=152.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=119.3 weights_after={'k3s': 83, 'knative': 17} weights_before={'k3s': 82, 'knative': 18}
+2026-09-11 08:16:02 [info     ] Weights updated                k3s=83 knative=17
+2026-09-11 08:16:02 [info     ] Weights updated                action=RECOVERY reason='load=119RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 83, 'knative': 17}
+2026-09-11 08:16:02 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=119.91101773647227 required_resources=7.202 target_replicas=6
+2026-09-11 08:16:02 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=119.91 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:16:02 [debug    ] Decision loop completed        action=RECOVERY latency_ms=369.94 p99=152.0
+2026-09-11 08:16:17 [debug    ] HAProxy fallback latency       delta_requests=1653 interval_avg_ms=8.51 max_rtime_ms=1822.0 p99_est=17.02
+2026-09-11 08:16:17 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:16:17 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:16:17 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=987 burn_adjustment=0 burst_ratio=0.0659 capacity_deficit=False confidence=0 current_load=106.95116250443387 decision_id=1bebc7c5 k8s_capacity=99.9 k8s_weight=93 knative_weight=7 p99=17.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=107.0 weights_after={'k3s': 93, 'knative': 7} weights_before={'k3s': 83, 'knative': 17}
+2026-09-11 08:16:18 [info     ] Weights updated                k3s=93 knative=7
+2026-09-11 08:16:18 [info     ] Weights updated                action=RECOVERY reason='load=107RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 93, 'knative': 7}
+2026-09-11 08:16:18 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=113.1463685545429 required_resources=6.796 target_replicas=6
+2026-09-11 08:16:18 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=113.15 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:16:18 [debug    ] Decision loop completed        action=RECOVERY latency_ms=793.01 p99=17.021173623714457
+2026-09-11 08:16:33 [debug    ] HAProxy fallback latency       delta_requests=1358 interval_avg_ms=74.0 max_rtime_ms=1822.0 p99_est=148.0
+2026-09-11 08:16:33 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:16:33 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=987 burn_adjustment=0 burst_ratio=0 capacity_deficit=False confidence=0 current_load=86.33941055294052 decision_id=417e4e67 k8s_capacity=99.9 k8s_weight=100 knative_weight=0 p99=148.0 predicted_load=0 r_effective=16.6 serverless_enabled=False total_load=86.3 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 93, 'knative': 7}
+2026-09-11 08:16:33 [info     ] Weights updated                k3s=100 knative=0
+2026-09-11 08:16:33 [info     ] Weights updated                action=RECOVERY reason='load=86RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-09-11 08:16:34 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=96.6452865286872 required_resources=5.805 target_replicas=6
+2026-09-11 08:16:34 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=96.65 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:16:34 [debug    ] Decision loop completed        action=RECOVERY latency_ms=747.76 p99=148.0
+2026-09-11 08:16:49 [debug    ] HAProxy fallback latency       delta_requests=1203 interval_avg_ms=4875.13 max_rtime_ms=1822.0 p99_est=1822.0
+2026-09-11 08:16:49 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:16:49 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:16:50 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=80.61532555473954 required_resources=4.842 target_replicas=5
+2026-09-11 08:16:50 [info     ] algorithm2_decision            action=MAINTAIN applied_target=5 current_replicas=6 hold_until=0.0 observed_load=80.62 observed_target=5 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=5 upper_forecasts=None
+2026-09-11 08:16:50 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=1005.82 p99=1822.0
+2026-09-11 08:17:05 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:17:05 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=72.02011106960853 required_resources=4.326 target_replicas=5
+2026-09-11 08:17:05 [info     ] algorithm2_decision            action=MAINTAIN applied_target=5 current_replicas=6 hold_until=0.0 observed_load=72.02 observed_target=5 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=5 upper_forecasts=None
+2026-09-11 08:17:05 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=584.12 p99=1822.0
+2026-09-11 08:17:20 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:17:20 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:17:20 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=73.1149251643975 required_resources=4.391 target_replicas=5
+2026-09-11 08:17:20 [info     ] algorithm2_decision            action=MAINTAIN applied_target=5 current_replicas=6 hold_until=0.0 observed_load=73.11 observed_target=5 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=5 upper_forecasts=None
+2026-09-11 08:17:20 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=261.33 p99=1822.0
+2026-09-11 08:17:36 [debug    ] HAProxy fallback latency       delta_requests=1345 interval_avg_ms=27.93 max_rtime_ms=1822.0 p99_est=55.86
+2026-09-11 08:17:36 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:17:36 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=82.49132942042326 required_resources=4.954 target_replicas=5
+2026-09-11 08:17:36 [info     ] algorithm2_decision            action=MAINTAIN applied_target=5 current_replicas=6 hold_until=0.0 observed_load=82.49 observed_target=5 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=5 upper_forecasts=None
+2026-09-11 08:17:36 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=313.69 p99=55.863197026022306
+2026-09-11 08:17:51 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:17:51 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:17:51 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=80.36585252883494 required_resources=4.827 target_replicas=5
+2026-09-11 08:17:51 [info     ] algorithm2_decision            action=MAINTAIN applied_target=5 current_replicas=6 hold_until=0.0 observed_load=80.37 observed_target=5 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=5 upper_forecasts=None
+2026-09-11 08:17:51 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=195.21 p99=55.863197026022306
+2026-09-11 08:18:06 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:18:06 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=62.14389326110911 required_resources=3.732 target_replicas=4
+2026-09-11 08:18:06 [info     ] algorithm2_decision            action=SCALE_DOWN applied_target=4 current_replicas=6 hold_until=0.0 observed_load=62.14 observed_target=4 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=4 upper_forecasts=None
+2026-09-11 08:18:06 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=4
+2026-09-11 08:18:06 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=325.0 p99=55.863197026022306
+2026-09-11 08:18:21 [debug    ] HAProxy fallback latency       delta_requests=713 interval_avg_ms=69.0 max_rtime_ms=1822.0 p99_est=138.0
+2026-09-11 08:18:21 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:18:21 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:18:21 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=49.007026350256496 required_resources=2.943 target_replicas=3
+2026-09-11 08:18:21 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=49.01 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:18:21 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=232.67 p99=138.0
+2026-09-11 08:18:37 [debug    ] HAProxy fallback latency       delta_requests=701 interval_avg_ms=162.11 max_rtime_ms=1822.0 p99_est=324.21
+2026-09-11 08:18:37 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:18:37 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=46.20031951049239 required_resources=2.775 target_replicas=3
+2026-09-11 08:18:37 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=46.2 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:18:37 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=271.89 p99=324.2111269614836
+2026-09-11 08:18:52 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:18:52 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:18:52 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=44.560069377626405 required_resources=2.676 target_replicas=3
+2026-09-11 08:18:52 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=44.56 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:18:52 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=238.38 p99=324.2111269614836
+2026-09-11 08:19:07 [debug    ] HAProxy fallback latency       delta_requests=642 interval_avg_ms=171.69 max_rtime_ms=1822.0 p99_est=343.37
+2026-09-11 08:19:07 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:19:07 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=42.66968672884461 required_resources=2.563 target_replicas=3
+2026-09-11 08:19:07 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=42.67 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:19:07 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=224.84 p99=343.3738317757009
+2026-09-11 08:19:22 [debug    ] HAProxy fallback latency       delta_requests=850 interval_avg_ms=227.63 max_rtime_ms=1822.0 p99_est=455.26
+2026-09-11 08:19:22 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:19:22 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:19:22 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=48.91124965864289 required_resources=2.938 target_replicas=3
+2026-09-11 08:19:22 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=48.91 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:19:22 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=252.82 p99=455.2564705882353
+2026-09-11 08:19:38 [debug    ] HAProxy fallback latency       delta_requests=1075 interval_avg_ms=134.71 max_rtime_ms=1822.0 p99_est=269.43
+2026-09-11 08:19:38 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:19:38 [info     ] Knative pre-warm OK            cold_start_ms=6.6
+2026-09-11 08:19:38 [info     ] controller_decision_v3         action=REACTIVE available_replicas=4 budget_remaining=979 burn_adjustment=0 burst_ratio=0.0541 capacity_deficit=False confidence=0 current_load=70.40609386826918 decision_id=1ae9738f k8s_capacity=66.6 k8s_weight=94 knative_weight=6 p99=269.4 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=70.4 weights_after={'k3s': 94, 'knative': 6} weights_before={'k3s': 100, 'knative': 0}
+2026-09-11 08:19:38 [info     ] Weights updated                k3s=94 knative=6
+2026-09-11 08:19:38 [info     ] Weights updated                action=REACTIVE reason='load=70RPS | k8s_cap=67RPS | (burst-routing)' weights={'k3s': 94, 'knative': 6}
+2026-09-11 08:19:38 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=63.082450301684176 required_resources=3.789 target_replicas=4
+2026-09-11 08:19:38 [info     ] algorithm2_decision            action=MAINTAIN applied_target=4 current_replicas=4 hold_until=0.0 observed_load=63.08 observed_target=4 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=4 upper_forecasts=None
+2026-09-11 08:19:38 [debug    ] Decision loop completed        action=REACTIVE latency_ms=221.03 p99=269.42697674418605
+2026-09-11 08:19:53 [debug    ] HAProxy fallback latency       delta_requests=1083 interval_avg_ms=72.0 max_rtime_ms=1822.0 p99_est=144.0
+2026-09-11 08:19:53 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:19:53 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:19:53 [info     ] controller_decision_v3         action=REACTIVE available_replicas=4 budget_remaining=979 burn_adjustment=0 burst_ratio=0.0622 capacity_deficit=False confidence=0 current_load=71.02046352242994 decision_id=e5716945 k8s_capacity=66.6 k8s_weight=93 knative_weight=7 p99=144.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=71.0 weights_after={'k3s': 93, 'knative': 7} weights_before={'k3s': 94, 'knative': 6}
+2026-09-11 08:19:53 [info     ] Weights updated                k3s=93 knative=7
+2026-09-11 08:19:53 [info     ] Weights updated                action=REACTIVE reason='load=71RPS | k8s_cap=67RPS | (burst-routing)' weights={'k3s': 93, 'knative': 7}
+2026-09-11 08:19:53 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=70.71327869534956 required_resources=4.247 target_replicas=5
+2026-09-11 08:19:53 [info     ] algorithm2_decision            action=SCALE_UP applied_target=5 current_replicas=4 hold_until=0.0 observed_load=70.71 observed_target=5 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=5 upper_forecasts=None
+2026-09-11 08:19:53 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=5
+2026-09-11 08:19:53 [debug    ] Decision loop completed        action=REACTIVE latency_ms=490.26 p99=144.0
+2026-09-11 08:20:08 [debug    ] HAProxy fallback latency       delta_requests=1075 interval_avg_ms=6.28 max_rtime_ms=1822.0 p99_est=12.56
+2026-09-11 08:20:08 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:20:08 [info     ] controller_decision_v3         action=RECOVERY available_replicas=5 budget_remaining=979 burn_adjustment=0 burst_ratio=0 capacity_deficit=False confidence=0 current_load=69.5343459476034 decision_id=e935583f k8s_capacity=83.2 k8s_weight=100 knative_weight=0 p99=12.6 predicted_load=0 r_effective=16.6 serverless_enabled=False total_load=69.5 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 93, 'knative': 7}
+2026-09-11 08:20:08 [info     ] Weights updated                k3s=100 knative=0
+2026-09-11 08:20:08 [info     ] Weights updated                action=RECOVERY reason='load=70RPS | k8s_cap=83RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-09-11 08:20:09 [info     ] Scale readiness observed       elapsed_sec=15.4 ewma_delay=26.1 samples=4 target=5
+2026-09-11 08:20:09 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=5 predicted_load=70.27740473501666 required_resources=4.221 target_replicas=5
+2026-09-11 08:20:09 [info     ] algorithm2_decision            action=MAINTAIN applied_target=5 current_replicas=5 hold_until=0.0 observed_load=70.28 observed_target=5 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=5 upper_forecasts=None
+2026-09-11 08:20:09 [debug    ] Decision loop completed        action=RECOVERY latency_ms=359.1 p99=12.55813953488372
+2026-09-11 08:20:24 [debug    ] HAProxy fallback latency       delta_requests=1092 interval_avg_ms=71.0 max_rtime_ms=1822.0 p99_est=142.0
+2026-09-11 08:20:24 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:20:24 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:20:24 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=5 predicted_load=70.30464705574187 required_resources=4.223 target_replicas=5
+2026-09-11 08:20:24 [info     ] algorithm2_decision            action=MAINTAIN applied_target=5 current_replicas=5 hold_until=0.0 observed_load=70.3 observed_target=5 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=5 upper_forecasts=None
+2026-09-11 08:20:24 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=265.93 p99=142.0
+2026-09-11 08:20:39 [debug    ] HAProxy fallback latency       delta_requests=1163 interval_avg_ms=259.06 max_rtime_ms=1822.0 p99_est=518.12
+2026-09-11 08:20:39 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:20:39 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=5 predicted_load=73.51878385191036 required_resources=4.416 target_replicas=5
+2026-09-11 08:20:39 [info     ] algorithm2_decision            action=MAINTAIN applied_target=5 current_replicas=5 hold_until=0.0 observed_load=73.52 observed_target=5 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=5 upper_forecasts=None
+2026-09-11 08:20:39 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=273.85 p99=518.122098022356
+2026-09-11 08:20:54 [debug    ] HAProxy fallback latency       delta_requests=1443 interval_avg_ms=331.62 max_rtime_ms=1822.0 p99_est=663.23
+2026-09-11 08:20:54 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:20:54 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:20:54 [info     ] Knative pre-warm OK            cold_start_ms=3.9
+2026-09-11 08:20:54 [info     ] controller_decision_v3         action=REACTIVE available_replicas=5 budget_remaining=977 burn_adjustment=0 burst_ratio=0.1196 capacity_deficit=False confidence=0 current_load=94.5594445628407 decision_id=02731047 k8s_capacity=83.2 k8s_weight=88 knative_weight=12 p99=663.2 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=94.6 weights_after={'k3s': 88, 'knative': 12} weights_before={'k3s': 100, 'knative': 0}
+2026-09-11 08:20:54 [info     ] Weights updated                k3s=88 knative=12
+2026-09-11 08:20:54 [info     ] Weights updated                action=REACTIVE reason='load=95RPS | k8s_cap=83RPS | (burst-routing)' weights={'k3s': 88, 'knative': 12}
+2026-09-11 08:20:54 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=5 predicted_load=85.26103205139053 required_resources=5.121 target_replicas=6
+2026-09-11 08:20:54 [info     ] algorithm2_decision            action=SCALE_UP applied_target=6 current_replicas=5 hold_until=0.0 observed_load=85.26 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:20:54 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=6
+2026-09-11 08:20:54 [debug    ] Decision loop completed        action=REACTIVE latency_ms=360.25 p99=663.2321552321553
+2026-09-11 08:21:10 [debug    ] HAProxy fallback latency       delta_requests=1663 interval_avg_ms=79.0 max_rtime_ms=1822.0 p99_est=158.0
+2026-09-11 08:21:10 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:21:10 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=977 burn_adjustment=0 burst_ratio=0.0763 capacity_deficit=False confidence=0 current_load=108.14636447491498 decision_id=1d7f9e95 k8s_capacity=99.9 k8s_weight=92 knative_weight=8 p99=158.0 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=108.1 weights_after={'k3s': 92, 'knative': 8} weights_before={'k3s': 88, 'knative': 12}
+2026-09-11 08:21:10 [info     ] Weights updated                k3s=92 knative=8
+2026-09-11 08:21:10 [info     ] Weights updated                action=RECOVERY reason='load=108RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 92, 'knative': 8}
+2026-09-11 08:21:10 [info     ] Scale readiness observed       elapsed_sec=15.4 ewma_delay=22.9 samples=5 target=6
+2026-09-11 08:21:10 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=101.35290451887784 required_resources=6.087 target_replicas=6
+2026-09-11 08:21:10 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=101.35 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:21:10 [debug    ] Decision loop completed        action=RECOVERY latency_ms=354.52 p99=158.0
+2026-09-11 08:21:25 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:21:25 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:21:25 [info     ] controller_decision_v3         action=RECOVERY available_replicas=6 budget_remaining=977 burn_adjustment=0 burst_ratio=0 capacity_deficit=False confidence=0 current_load=93.38884136436978 decision_id=baff0cd6 k8s_capacity=99.9 k8s_weight=100 knative_weight=0 p99=158.0 predicted_load=0 r_effective=16.6 serverless_enabled=False total_load=93.4 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 92, 'knative': 8}
+2026-09-11 08:21:25 [info     ] Weights updated                k3s=100 knative=0
+2026-09-11 08:21:25 [info     ] Weights updated                action=RECOVERY reason='load=93RPS | k8s_cap=100RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-09-11 08:21:25 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=100.76760291964237 required_resources=6.052 target_replicas=6
+2026-09-11 08:21:25 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=100.77 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:21:25 [debug    ] Decision loop completed        action=RECOVERY latency_ms=522.15 p99=158.0
+2026-09-11 08:21:40 [debug    ] HAProxy fallback latency       delta_requests=1169 interval_avg_ms=144.25 max_rtime_ms=1822.0 p99_est=288.5
+2026-09-11 08:21:40 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:21:41 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=84.39931543634944 required_resources=5.069 target_replicas=6
+2026-09-11 08:21:41 [info     ] algorithm2_decision            action=MAINTAIN applied_target=6 current_replicas=6 hold_until=0.0 observed_load=84.4 observed_target=6 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=6 upper_forecasts=None
+2026-09-11 08:21:41 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=391.66 p99=288.4961505560308
+2026-09-11 08:21:56 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:21:56 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:21:56 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=66.64702995462144 required_resources=4.003 target_replicas=5
+2026-09-11 08:21:56 [info     ] algorithm2_decision            action=MAINTAIN applied_target=5 current_replicas=6 hold_until=0.0 observed_load=66.65 observed_target=5 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=5 upper_forecasts=None
+2026-09-11 08:21:56 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=323.46 p99=288.4961505560308
+2026-09-11 08:22:11 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:22:11 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=51.29168748414365 required_resources=3.081 target_replicas=4
+2026-09-11 08:22:11 [info     ] algorithm2_decision            action=SCALE_DOWN applied_target=4 current_replicas=6 hold_until=0.0 observed_load=51.29 observed_target=4 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=4 upper_forecasts=None
+2026-09-11 08:22:11 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=213.29 p99=288.4961505560308
+2026-09-11 08:22:26 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:22:26 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:22:26 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=44.040186820164266 required_resources=2.645 target_replicas=3
+2026-09-11 08:22:27 [info     ] algorithm2_decision            action=SCALE_DOWN applied_target=3 current_replicas=6 hold_until=0.0 observed_load=44.04 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:22:27 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=256.57 p99=288.4961505560308
+2026-09-11 08:22:42 [debug    ] HAProxy fallback latency       delta_requests=689 interval_avg_ms=68.0 max_rtime_ms=1822.0 p99_est=136.0
+2026-09-11 08:22:42 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:22:42 [info     ] algorithm2_scaling_decision    action=SCALE_DOWN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=6 predicted_load=44.296047582251504 required_resources=2.66 target_replicas=3
+2026-09-11 08:22:42 [info     ] algorithm2_decision            action=SCALE_DOWN applied_target=3 current_replicas=6 hold_until=0.0 observed_load=44.3 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:22:42 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=3
+2026-09-11 08:22:42 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=277.27 p99=136.0
+2026-09-11 08:22:57 [debug    ] HAProxy fallback latency       delta_requests=814 interval_avg_ms=169.17 max_rtime_ms=1822.0 p99_est=338.33
+2026-09-11 08:22:57 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:22:57 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:22:57 [info     ] Knative pre-warm OK            cold_start_ms=6.0
+2026-09-11 08:22:57 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=972 burn_adjustment=0 burst_ratio=0.0604 capacity_deficit=False confidence=0 current_load=53.1608053030207 decision_id=38561a7f k8s_capacity=49.9 k8s_weight=93 knative_weight=7 p99=338.3 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=53.2 weights_after={'k3s': 93, 'knative': 7} weights_before={'k3s': 100, 'knative': 0}
+2026-09-11 08:22:57 [info     ] Weights updated                k3s=93 knative=7
+2026-09-11 08:22:57 [info     ] Weights updated                action=REACTIVE reason='load=53RPS | k8s_cap=50RPS | (burst-routing)' weights={'k3s': 93, 'knative': 7}
+2026-09-11 08:22:57 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=3 predicted_load=49.185815697284355 required_resources=2.954 target_replicas=3
+2026-09-11 08:22:57 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=3 hold_until=0.0 observed_load=49.19 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:22:57 [debug    ] Decision loop completed        action=REACTIVE latency_ms=302.27 p99=338.33169533169536
+2026-09-11 08:23:12 [debug    ] HAProxy fallback latency       delta_requests=848 interval_avg_ms=167.11 max_rtime_ms=1822.0 p99_est=334.22
+2026-09-11 08:23:12 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:23:12 [info     ] controller_decision_v3         action=REACTIVE available_replicas=3 budget_remaining=971 burn_adjustment=0 burst_ratio=0.0998 capacity_deficit=False confidence=0 current_load=55.48511833921784 decision_id=f4917976 k8s_capacity=49.9 k8s_weight=90 knative_weight=10 p99=334.2 predicted_load=0 r_effective=16.6 serverless_enabled=True total_load=55.5 weights_after={'k3s': 90, 'knative': 10} weights_before={'k3s': 93, 'knative': 7}
+2026-09-11 08:23:12 [info     ] Weights updated                k3s=90 knative=10
+2026-09-11 08:23:12 [info     ] Weights updated                action=REACTIVE reason='load=55RPS | k8s_cap=50RPS | (burst-routing)' weights={'k3s': 90, 'knative': 10}
+2026-09-11 08:23:12 [info     ] algorithm2_scaling_decision    action=SCALE_UP alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=3 predicted_load=54.32296182111927 required_resources=3.263 target_replicas=4
+2026-09-11 08:23:12 [info     ] algorithm2_decision            action=SCALE_UP applied_target=4 current_replicas=3 hold_until=0.0 observed_load=54.32 observed_target=4 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=4 upper_forecasts=None
+2026-09-11 08:23:12 [info     ] k8s_scale_executed             deployment=test-app-warm replicas=4
+2026-09-11 08:23:12 [debug    ] Decision loop completed        action=REACTIVE latency_ms=319.78 p99=334.2193396226415
+2026-09-11 08:23:28 [debug    ] HAProxy fallback latency       delta_requests=685 interval_avg_ms=70.0 max_rtime_ms=1822.0 p99_est=140.0
+2026-09-11 08:23:28 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:23:28 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:23:28 [info     ] controller_decision_v3         action=RECOVERY available_replicas=4 budget_remaining=971 burn_adjustment=0 burst_ratio=0 capacity_deficit=False confidence=0 current_load=44.70650366980697 decision_id=d7c89322 k8s_capacity=66.6 k8s_weight=100 knative_weight=0 p99=140.0 predicted_load=0 r_effective=16.6 serverless_enabled=False total_load=44.7 weights_after={'k3s': 100, 'knative': 0} weights_before={'k3s': 90, 'knative': 10}
+2026-09-11 08:23:28 [info     ] Weights updated                k3s=100 knative=0
+2026-09-11 08:23:28 [info     ] Weights updated                action=RECOVERY reason='load=45RPS | k8s_cap=67RPS | (reducing-serverless)' weights={'k3s': 100, 'knative': 0}
+2026-09-11 08:23:28 [info     ] Scale readiness observed       elapsed_sec=15.3 ewma_delay=20.6 samples=6 target=4
+2026-09-11 08:23:28 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=50.095811004512406 required_resources=3.009 target_replicas=4
+2026-09-11 08:23:28 [info     ] algorithm2_decision            action=MAINTAIN applied_target=4 current_replicas=4 hold_until=0.0 observed_load=50.1 observed_target=4 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=4 upper_forecasts=None
+2026-09-11 08:23:28 [debug    ] Decision loop completed        action=RECOVERY latency_ms=318.15 p99=140.0
+2026-09-11 08:23:43 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:23:43 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=41.190237135676036 required_resources=2.474 target_replicas=3
+2026-09-11 08:23:43 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=41.19 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:23:43 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=250.22 p99=140.0
+2026-09-11 08:23:58 [debug    ] HAProxy fallback latency       delta_requests=596 interval_avg_ms=69.0 max_rtime_ms=1822.0 p99_est=138.0
+2026-09-11 08:23:58 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:23:58 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:23:58 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=38.34461170512245 required_resources=2.303 target_replicas=3
+2026-09-11 08:23:58 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=38.34 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:23:58 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=253.21 p99=138.0
+2026-09-11 08:24:13 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:24:13 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=39.79656362450389 required_resources=2.39 target_replicas=3
+2026-09-11 08:24:13 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=39.8 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:24:13 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=267.84 p99=138.0
+2026-09-11 08:24:29 [debug    ] HAProxy fallback latency       delta_requests=642 interval_avg_ms=202.45 max_rtime_ms=1822.0 p99_est=404.89
+2026-09-11 08:24:29 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:24:29 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:24:29 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=41.308272934865116 required_resources=2.481 target_replicas=3
+2026-09-11 08:24:29 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=41.31 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:24:29 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=304.59 p99=404.8940809968847
+2026-09-11 08:24:44 [debug    ] HAProxy fallback latency       delta_requests=692 interval_avg_ms=446.2 max_rtime_ms=1822.0 p99_est=892.4
+2026-09-11 08:24:44 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:24:44 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=43.59162040606685 required_resources=2.618 target_replicas=3
+2026-09-11 08:24:44 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=43.59 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:24:44 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=231.08 p99=892.3959537572255
+2026-09-11 08:24:59 [debug    ] HAProxy fallback latency       delta_requests=773 interval_avg_ms=72.0 max_rtime_ms=1822.0 p99_est=144.0
+2026-09-11 08:24:59 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:24:59 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:24:59 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=47.957559498915785 required_resources=2.88 target_replicas=3
+2026-09-11 08:24:59 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=47.96 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:24:59 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=235.01 p99=144.0
+2026-09-11 08:25:14 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:25:14 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=27.583961365202796 required_resources=1.657 target_replicas=3
+2026-09-11 08:25:14 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=27.58 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:25:14 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=231.54 p99=144.0
+2026-09-11 08:25:30 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:25:30 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:25:30 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=2.1986865576427266 required_resources=0.132 target_replicas=3
+2026-09-11 08:25:30 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=2.2 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:25:30 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=210.21 p99=144.0
+2026-09-11 08:25:45 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:25:45 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-09-11 08:25:45 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=0.0 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:25:45 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=239.9 p99=144.0
+2026-09-11 08:26:00 [debug    ] GRU health check failed        error='HTTPConnectionPool(host=\'localhost\', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError("HTTPConnection(host=\'localhost\', port=8090): Failed to establish a new connection: [Errno 111] Connection refused"))'
+2026-09-11 08:26:00 [debug    ] GRU unavailable for eligible cycle
+2026-09-11 08:26:00 [info     ] algorithm2_scaling_decision    action=MAINTAIN alpha=0.060060060060060066 beta=0.0 buffer=1.0 current_replicas=4 predicted_load=0.0 required_resources=0.0 target_replicas=3
+2026-09-11 08:26:00 [info     ] algorithm2_decision            action=MAINTAIN applied_target=3 current_replicas=4 hold_until=0.0 observed_load=0.0 observed_target=3 point_forecasts=None prediction_age_sec=None predictive_target=3 proactive=False scenario=s4-hybrid-predictive target_replicas=3 upper_forecasts=None
+2026-09-11 08:26:00 [debug    ] Decision loop completed        action=MAINTAIN latency_ms=188.57 p99=144.0
+2026-09-11 08:26:03 [info     ] Received shutdown signal
+2026-09-11 08:26:03 [info     ] Stopping routing daemon...
+2026-09-11 08:26:03 [info     ] Routing daemon stopped
