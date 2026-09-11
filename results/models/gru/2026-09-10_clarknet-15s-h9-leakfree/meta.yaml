@@ -1,0 +1,49 @@
+bundle_schema_version: 2
+study: gru-leakfree-horizon9
+created: '2026-09-10T22:43:53'
+git:
+  revision: f4f2c44ebd6a346b0377b69e379bc7ca3334273c
+  dirty: 'true'
+device: cpu
+horizon: 9
+sequence_lengths_searched:
+- 20
+- 30
+embargo_rule: sequence_length + horizon - 1 at every boundary
+seeds:
+- 42
+- 43
+- 44
+cells:
+- gru
+n_trials: 6
+seasonal_naive_season: 5760
+rolling_blocks: 5
+data:
+  clarknet:
+    path: data/processed/clarknet_real_rps.parquet
+    n_samples: 40315
+    scale_factor: 33.0
+    amplitude: "series \xD7 scale_factor (RPS) before splitting; scaler on amplified\
+      \ train portion"
+    replay_window_idx:
+    - 28940
+    - 29020
+    splits:
+      n_total: 40315
+      train_end: 22500
+      val_start: 22539
+      val_end: 26205
+      test_start: 26243
+      embargo: 38
+winner:
+  source: clarknet
+  cell: gru
+  mean_rmse: 29.635487238566082
+  seed: 44
+  artifact: results/models/gru/2026-09-10_clarknet-15s-h9-leakfree/artifacts/clarknet_gru_s44.pt
+  sha256: 20623c19c8407b116dcbcffe12a79a58fbedf24c4e731b8659206b5cb77032e5
+artifacts:
+  clarknet_gru_s42.pt: 58ded38806103d20eee628bc1e27e68eb12b45c78c1115454fa98cab5bd0a9be
+  clarknet_gru_s43.pt: 933fc7c18d8324223e6d1c8741bce976cc9595fda09c6d78ac4f9dd7e106eaeb
+  clarknet_gru_s44.pt: 20623c19c8407b116dcbcffe12a79a58fbedf24c4e731b8659206b5cb77032e5
