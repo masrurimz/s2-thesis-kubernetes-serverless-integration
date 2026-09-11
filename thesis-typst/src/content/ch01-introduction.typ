@@ -39,7 +39,7 @@ The research questions are operationalized as three testable hypotheses:
 
   - #strong[H2 (predictive vs reactive)]: Adding GRU-based workload prediction to the hybrid controller (predictive scaling) outperforms the same controller driven by observed load only (reactive scaling) on tail latency and SLO compliance at equal cost. Tested as S4 vs S3; the primary p99 comparison supports H2 (p = 0.0304, d = -1.26).
 
-  - #strong[H3 (predictor adequacy)]: A GRU workload predictor achieves the pre-registered accuracy target (RMSE < 10% of normalized range, MAE < 5%, inference < 50 ms) on synthetic test data. The target is supported on synthetic data and only partially validated on real traces.
+  - #strong[H3 (predictor adequacy)]: A GRU workload predictor achieves the pre-registered accuracy target (RMSE < 10% of normalized range, MAE < 5%, inference < 50 ms) on synthetic test data. The target is met on synthetic data under the leak-free protocol (RMSE 5.2% of the mean, MAE 4.1%) and is not met on the real deployment trace (RMSE 39.6% of the mean), where the network matches a linear autoregression on the same input window.
 
 
 == #H("ch1-objectives")
@@ -60,7 +60,7 @@ The objectives of this research are:
 
 == #H("ch1-contribution")
 
-1. GRU-Based Workload Predictor for HTTP Traffic (30-sample input window at 15 s, 9-step / 135 s horizon, test RMSE 4.75% post-HPO with 6.01% as the pre-HPO manual baseline, ~40 ms inference).
+1. GRU-Based Workload Predictor for HTTP Traffic (30-sample input window at 15 s, 9-step / 135 s horizon). Under the leak-free protocol it reaches 5.2% RMSE on the synthetic arm and 39.6% on the real deployment trace, at about 40 ms inference.
 
 2. Extended ElaX hybrid controller: prediction drives Kubernetes replica scaling (Algorithm 2). Algorithm 1 does SLO-aware routing using observed load and capacity. It uses graduated weight shifts and a priority hierarchy.
 

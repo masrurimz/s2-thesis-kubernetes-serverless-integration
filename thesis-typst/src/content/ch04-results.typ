@@ -12,26 +12,35 @@ This chapter presents the experimental results for the hybrid Kubernetes-serverl
 
 == #H("ch4-gru")
 
-Hyperparameter optimization with Optuna @optuna2019 tuned the GRU prediction model. Optuna is a next-generation framework that uses the Tree-structured Parzen Estimator (TPE) algorithm. On synthetic validation data, optimization reduced the root-mean-square error from 6.01% under manual tuning to 4.75%, with a mean absolute error of 4.91%. The study considered the risk of overfitting in model selection @cawley2010overfitting. The holdout validation approach follows best practices for non-stationary workloads @nonstationary2022 @falkner2018bohb. During live experiments the model issued predictions with a confidence range of 0.72 to 0.88 and an inference latency of about 40 ms. This latency sits within the controller's decision interval. On real ClarkNet traces the error is substantially higher (RMSE 17.78%, MAPE 18.74%). These errors are substantially above the synthetic accuracy. Prediction on real traffic is therefore a partial validation rather than a confirmed target. The SeBS benchmark suite @sebs2020 informed the workload characterization methodology. The synthetic metrics come from the final training bundle; the ClarkNet metrics come from the real-trace evaluation bundle.
+The prediction model is trained and evaluated under a leak-free chronological protocol. ClarkNet is resampled to 15 seconds and scaled by the same factor the replay applies, so the model trains at the amplitude it later serves. The training, validation, and test portions are separated by an embargo of `sequence_length + horizon - 1` samples, the normalisation statistics come from the training portion alone, and no input or target window crosses a boundary. Hyperparameters and the epoch budget are selected on the validation portion, the model is refitted on the training and validation portions at that budget, and the test portion is scored once per seed. The replay window lies inside the test portion, so the model is never trained on the traffic it later serves.
+
+The Tree-structured Parzen Estimator search @optuna2019 selected a two-layer network with 256 hidden units, a 30-sample input window, head dropout 0.055, and a learning rate of $1.53 times 10^(-4)$, at a frozen budget of 23 epochs. Table @tab:gru-performance reports the held-out accuracy over three seeds, and the baselines scored on identical windows.
 
 #figure(
   kind: table,
   table(
     columns: (auto, auto),
     [Metric], [Value],
-    [Synthetic RMSE (manual tuning)], [6.01%],
-    [Synthetic RMSE (post-HPO)], [4.75%],
-    [Synthetic MAE], [4.91%],
+    [Holdout RMSE], [29.635 $\pm$ 0.016],
+    [Holdout MAE], [22.486 $\pm$ 0.079],
+    [RMSE as percent of mean load], [39.6%],
+    [Skill against persistence], [0.216],
+    [Upper-envelope coverage on rising targets], [0.921],
+    [Rolling-origin RMSE over the test region], [29.039 $\pm$ 6.893],
+    [Persistence baseline RMSE], [37.813],
+    [Linear trend baseline RMSE], [46.534],
+    [Seasonal naive baseline RMSE], [53.688],
+    [Linear autoregression, same window, RMSE], [29.465],
     [Inference latency], [~40 ms],
-    [Confidence range (live)], [0.72 to 0.88],
-    [ClarkNet RMSE (5-min, best)], [17.78%],
-    [ClarkNet MAE], [14.48%],
-    [ClarkNet MAPE], [18.74%],
   ),
-  caption: cap([GRU model performance], [Kinerja model GRU]),
+  caption: cap([GRU model performance under the leak-free protocol], [Kinerja model GRU pada protokol bebas kebocoran]),
 ) <tab:gru-performance>
 
-An operational finding shaped the design of the predictive controller. During live experiments the GRU predictions lagged behind actual load surges. The forecast therefore feeds Algorithm 2's Kubernetes replica planning through a confidence-gated upper envelope. Algorithm 1 routes from observed load, ready-replica capacity, and SLO status. The GRU confidence score gates predictive scaling; it does not directly set the routing split.
+Two conclusions follow, and the second is uncomfortable. First, the forecast carries real signal. It reduces error by 21.6 percent against persistence, the reduction is stable across seeds (standard deviation 0.016), and the model transfers to synthetic archetypes it never saw (spike 26.58, ramp 24.27, periodic 25.42, stationary 4.74). A rolling-origin pass over the test region reproduces the same level, 29.039 against 29.635. Second, the network does not beat a linear autoregression on the same 30-sample window: 29.635 against 29.465. No accuracy advantage over a linear model may therefore be claimed at 15-second resolution. The absolute error is also far above the pre-registered target, since RMSE is 39.6 percent of the mean load against a target of 10 percent. The gap is a property of the task rather than of the network: a persistence forecast, which repeats the last observation, already reaches 50.5 percent of the mean load at this resolution.
+
+An operational finding shaped the design of the predictive controller. During live experiments the GRU predictions lagged behind actual load surges. The forecast therefore feeds Algorithm 2's Kubernetes replica planning through a confidence-gated upper envelope. Algorithm 1 routes from observed load, ready-replica capacity, and SLO status. The GRU confidence score gates predictive scaling; it does not directly set the routing split. Under the leak-free model the reported confidence is 0.6, because the score is derived from the ratio of validation RMSE to mean load and that ratio now exceeds the 0.15 threshold. The gate still passes its 0.5 default, so predictive scaling remains enabled, but the score no longer varies within a run.
+
+The synthetic arm of the same harness re-derives the pre-registered accuracy target under the identical protocol, and its result is reported with the study bundle rather than mixed into the table above.
 
 == #H("ch4-phasea1")
 
@@ -283,7 +292,7 @@ The substantive lesson is methodological rather than numerical. On a shared-reso
 
 The experimental evaluation validates two things. It validates the mechanistic correctness of the hybrid architecture. Under the correctly bounded infrastructure, it also validates a clear performance advantage for hybrid routing over pure Kubernetes.
 
-The study validated several mechanisms. The GRU model meets its accuracy target on synthetic data. It achieves a validation RMSE of 4.75% after hyperparameter optimization and an MAE of 4.91%, at an inference latency of about 40 ms. On real ClarkNet traces the error is substantially higher (RMSE 17.78%, MAPE 18.74%). Real-traffic prediction is therefore a partial validation. The routing controller correctly implements the priority-based decision framework and exhibits all four action types. The confidence-gated forecast feeds Algorithm 2's replica planning. The corrected predictive mechanism fired 9 forecast-driven routing decisions in the S4 diagnostic run.
+The study validated several mechanisms. The GRU model meets its accuracy target on synthetic data. It achieves RMSE 5.2% of the mean load on the synthetic arm under the leak-free protocol, meeting the target, and 39.6% on the real deployment trace, where the target is not met and the model matches a linear autoregression on the same input window. Inference latency is about 40 ms. Real-traffic prediction is therefore a partial validation. The routing controller correctly implements the priority-based decision framework and exhibits all four action types. The confidence-gated forecast feeds Algorithm 2's replica planning. The corrected predictive mechanism fired 9 forecast-driven routing decisions in the S4 diagnostic run.
 
 For the hybrid-versus-pure-Kubernetes comparison (H1), the result is directionally positive at n = 1. S4 reduced p99 latency by 95.1% (2,421.3 ms -> 118.2 ms) and SLO violations by 98.5% (6,717 -> 104) relative to S1. The previous negative finding was an infrastructure artifact (un-enforced CPU limits and S1 dynamic-node over-provisioning). It was not a property of the hybrid mechanism. The n = 1 result does not establish inferential significance. The n = 5 four-scenario replication did not reproduce this advantage. It used `max_k8s_replicas = 10`, so S1 did not saturate (p99 110.3 ms). S4 versus S1 was not significant (p = 0.24). The hybrid's advantage therefore appears when the baseline is capacity-constrained, not when HPA has ample headroom.
 

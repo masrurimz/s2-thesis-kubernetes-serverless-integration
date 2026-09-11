@@ -105,6 +105,7 @@
 - Attachments: none (offer handout + PDF in-message)
 - Evidence for factual claims:
   - "empat skenario dijalankan dan diulang, hasil konsisten": final bundle `results/experiments/phase-b/2026-07-14_clarknet-tuned-paired-n5/` (p=0.0304) + replication bundles `2026-08-07_paired-h2_060200/` & `2026-08-07_paired-h2_104918/` (9/10 pairs, pooled p=0.003) — [../../results/claims/FINAL_NUMBERS.md](../../results/claims/FINAL_NUMBERS.md)
+  - Correction 2026-09-10: the earlier note cited `2026-08-07_paired-h2_060200` and `2026-08-07_paired-h2_104918` (9/10 pairs, pooled p=0.003). Those two batches were deleted before commit and are excluded from the evidence record (thesis ch04 sec:replication). Retained replication is the 2026-08-08 batches (RUN1 p=0.436, RUN2 p=0.062, both S4-favorable) and the 2026-08-09 four-scenario replication (paired analysis p=0.032; per-scenario mean p99 S1 110.3, S2 79.7, S3 151.6, S4 99.1 ms). The sent message text above is unchanged history.
   - FRS blocked in My ITS Academica: user-reported (no repo evidence) — `unverified`
   - `progress-summary.md` finalized 2026-09-10; PDF `thesis-typst/build/thesis.pdf` (4.1 MB) present
 

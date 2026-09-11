@@ -7,9 +7,13 @@ This research designed, implemented, and evaluated a hybrid Kubernetes-serverles
 
 === #H("ch5-rq1")
 
-A GRU (Gated Recurrent Unit) neural network was designed and optimized through hyperparameter optimization (HPO) using Optuna TPE. The optimal configuration uses one recurrent layer with 128 hidden units, learning rate 0.000380, sequence length 30, and dropout 0.104. Post-HPO accuracy improved from 6.01% to 4.75% RMSE.
+A GRU (Gated Recurrent Unit) neural network was designed and tuned with a Tree-structured Parzen Estimator search under a leak-free chronological protocol. The selection chose two recurrent layers with 256 hidden units, a 30-sample input window, head dropout 0.055, and a learning rate of 0.000153, at a frozen budget of 23 epochs. Model selection used expanding-window folds that carry the same embargo as the training split, and the replay window lies inside the test portion, so the model is never trained on the traffic it later serves.
 
-The GRU predictor achieves target accuracy on synthetic workload patterns: RMSE 4.75% post-HPO (manual baseline 6.01%, target under 10%) with confidence scores 0.72-0.88 during live predictions. Validation against the ClarkNet HTTP trace yielded RMSE 17.78% at 5-minute aggregation. This is meaningful generalization, though below original thresholds. The gap comes from non-stationarity and irregular burst patterns that do not appear in synthetic training data.
+On synthetic workload patterns the pre-registered target is met: RMSE 5.2% of the mean load and MAE 4.1%, against targets of 10% and 5% respectively. The network beats persistence by 21.9% on that arm.
+
+On the real deployment trace the picture differs and must be stated plainly. Trained on the amplified ClarkNet series and scored on a held-out portion that contains the replay window, the model reaches RMSE 29.6 RPS, which is 39.6% of the mean load, with skill 0.216 against persistence. The target is therefore not met on real traffic at 15-second resolution. A persistence forecast, which repeats the last observation, already sits at 50.5%, so the task itself is hard at this granularity, and the error is a property of the signal rather than of the network alone.
+
+Two comparisons bound the architecture choice. Trained under the identical protocol, same budget, same seeds, an LSTM reaches 29.917 and the GRU 29.635, with the GRU better on every seed, a paired effect size of 1.86, and ten times lower seed variance; three seeds give a one-sided permutation p of 0.125, the smallest value attainable, so the advantage is consistent but not significant. Against a linear autoregression on the same 30-sample window, which reaches 29.465, the network holds no advantage. The accurate formulation of the result is that GRU is preferable to LSTM by a small margin and equivalent to a linear model at this resolution.
 
 === #H("ch5-rq2")
 
@@ -27,7 +31,7 @@ H1 (hybrid architecture outperforms the pure Kubernetes baseline): *Directional 
 
 H2 (predictive scaling outperforms reactive): *Statistically supported (p = 0.030, d = -1.26, large effect).* The definitive paired experiment (n = 5 counterbalanced pairs, `2026-07-14_clarknet-tuned-paired-n5`) finds S4 mean p99 126.0 ms versus 188.5 ms for S3 (mean difference -62.5 ms, 95% CI [-100.9, -26.2], p = 0.030, Cohen's d = -1.26). S4 wins all 5 pairs and shows 80.2% fewer SLO violations (130 vs 656) at identical monthly cost (USD 163). The GRU forecast triggered 4--5 predictive decisions per S4 run. This result reverses the earlier non-significant finding (p = 0.38, d = -0.241). It includes three necessary conditions: an extended 9-step forecast horizon (135 s), utilization-based node consolidation matching Kubernetes Cluster Autoscaler semantics, and a tuned reactive baseline.
 
-H3 (GRU prediction adequacy): Validated on synthetic data at 4.75% RMSE post-HPO with confidence 0.72-0.88. Partial on real traces: ClarkNet RMSE 17.78% falls below original thresholds due to workload non-stationarity.
+H3 (GRU prediction adequacy): *Met on synthetic data, not met on real traces.* Under the leak-free protocol the synthetic arm reaches RMSE 5.2% of the mean load and MAE 4.1%, against pre-registered targets of 10% and 5%. The real deployment arm reaches RMSE 39.6% of the mean with skill 0.216 against persistence, and the model matches a linear autoregression on the same input window rather than beating it, which is disclosed as a limitation. The architecture comparison is our own: GRU 29.635 against LSTM 29.917 across three matched seeds, GRU better on every seed, paired effect size 1.86, one-sided permutation p 0.125.
 
 The n = 1 diagnostic cost projection (S1 = USD 132/mo, S2 = USD 394/mo, S3 = USD 147/mo, S4 = USD 142/mo) is a *directional estimate only* and must not be used to rank S3 and S4 or claim monthly savings. S1 is cheapest but fails the SLO (p99 = 2,421 ms); S2 is fastest but most expensive; the hybrid scenarios occupy a middle band.
 
@@ -47,7 +51,7 @@ Based on the limitations identified during evaluation, six directions are recomm
 
 3. *Dynamic workload experiments with extended ramp periods:* PREDICTIVE requires a healthy observation window longer than the ramp duration to build trend predictions. Future experiments should use workload patterns with gradual ramps (90+ seconds) and longer baseline periods.
 
-4. *GRU retraining on production HTTP traces:* Real-trace performance (17.78% RMSE) falls short of thresholds due to non-stationarity. Future work could retrain on production traces with time-of-day encoding, day-of-week seasonality, and online learning. This would improve applicability.
+4. *Predictor improvements beyond the window:* the deployment model now trains on the trace it serves, with the replay window held out. A screening of longer windows, calendar features, reversible instance normalisation, a log target, a quantile loss, and seed ensembling found the longer window to be the only gain, at 4.9% lower error, and it lowers a linear autoregression by the same amount. Adopting the 120-sample window under the full study protocol, and testing a linear skip connection, remain future work.
 
 5. *Knative minScale configuration:* Setting minScale=1 would maintain a warm serverless instance. This would remove cold start latency and isolate the routing mechanism's contribution to performance.
 

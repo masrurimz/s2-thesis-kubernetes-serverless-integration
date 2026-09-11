@@ -22,7 +22,7 @@ This is an append-only record of experiments, advisor communication, publication
 - **Proposal-to-delivered rationale**: `../DRIFT_ANALYSIS.md` (D1–D13, §6b).
 - `../../results/EXPERIMENT_JOURNAL.md` is **generated/read-only**; `catalog.duckdb` is a local cache. Neither is hand-edited.
 
-**Evidence roles** (from the registry): `final` = the thesis claim (currently only `2026-07-14_clarknet-tuned-paired-n5`, H2 p=0.0304); `diagnostic` = supporting/replication (all 2026-08-* bundles; pooled p=0.0030 is replication-tier); `archived` = superseded. A draft may cite diagnostic bundles only as *replication*, never as the thesis result.
+- **Evidence roles** (from the registry): `final` = the thesis claim (currently only `2026-07-14_clarknet-tuned-paired-n5`, H2 p=0.0304); `diagnostic` = supporting/replication. Retained replication is the 2026-08-08 paired batches (RUN1 p=0.436, RUN2 p=0.062) and the 2026-08-09 four-scenario replication (p=0.032). The two 2026-08-07 batches were deleted before commit and are excluded per thesis ch04 sec:replication — never cite them. `archived` = superseded. A draft may cite diagnostic bundles only as *replication*, never as the thesis result.
 
 ## Entry rules
 
