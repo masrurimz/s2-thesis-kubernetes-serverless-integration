@@ -74,10 +74,8 @@ def deploy_test_app(*, skip_build: bool = False) -> dict:
         ["kubectl", "--context", SERVERLESS_CONTEXT, "delete", "ksvc", "test-app", "--ignore-not-found"],
         check=False,
     )
-    run(
-        ["kubectl", "--context", SERVERLESS_CONTEXT, "apply", "-f", str(app_dir.joinpath("knative-service.yaml"))],
-        check=True,
-    )
+    _wait_for_knative_webhook()
+    _apply_knative_service(app_dir.joinpath("knative-service.yaml"))
     actions.append("recreated the Knative service")
 
     run(["kubectl", "rollout", "status", f"deployment/{K8S_DEPLOYMENT}", "--timeout=90s"], check=True)
