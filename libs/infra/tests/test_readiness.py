@@ -4,7 +4,7 @@ import json
 import subprocess
 
 from infra import readiness
-from infra.cluster.k3d import shaping
+from infra.cluster.k3d import residue, shaping
 from infra.networking.haproxy import manager as haproxy_manager
 from infra.observability.prometheus import manager as prometheus_manager
 
@@ -14,8 +14,9 @@ CLUSTER = "thesis-hybrid"
 class FakeK3d:
     """Stateful k3d fake: `node list` is read, `node create/delete` mutate the inventory."""
 
-    def __init__(self, nodes):
+    def __init__(self, nodes, pods=None):
         self.inventory = [dict(node) for node in nodes]
+        self.pods = [dict(pod) for pod in (pods or [])]
         self.calls: list[tuple[list[str], bool]] = []
 
     def __call__(self, cmd, dry_run=False, cwd=None, check=False):
@@ -41,10 +42,28 @@ class FakeK3d:
             if not dry_run:
                 self.inventory.append({"name": f"k3d-{cmd[3]}-0", "role": "agent", "state": "running"})
             return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+        if cmd[0] == "kubectl" and cmd[-4:] == ["get", "pods", "-o", "json"]:
+            stdout = json.dumps(
+                {"items": [{"metadata": {"name": pod["name"]}, "spec": {"nodeName": pod["node"]}} for pod in self.pods]}
+            )
+            return subprocess.CompletedProcess(cmd, 0, stdout=stdout, stderr="")
+        if cmd[0] == "kubectl" and "delete" in cmd and "pod" in cmd:
+            target = cmd[cmd.index("pod") + 1]
+            if not dry_run:
+                self.pods = [pod for pod in self.pods if pod["name"] != target]
+            return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
         raise AssertionError(f"unexpected command: {cmd}")
 
     def mutating_calls(self) -> list[tuple[list[str], bool]]:
-        return [(cmd, dry_run) for cmd, dry_run in self.calls if cmd[:3] != ["k3d", "node", "list"]]
+        reads = (["k3d", "node", "list"], ["kubectl"])
+        return [
+            (cmd, dry_run)
+            for cmd, dry_run in self.calls
+            if not (cmd[:3] == reads[0] or (cmd[0] == "kubectl" and "get" in cmd))
+        ]
+
+    def kubectl_deletes(self) -> list[str]:
+        return [cmd[cmd.index("pod") + 1] for cmd, _ in self.calls if cmd[0] == "kubectl" and "delete" in cmd]
 
 
 class FakeCompose:
@@ -82,12 +101,13 @@ def agent(number):
     return {"name": f"k3d-{CLUSTER}-agent-{number}-0", "role": "agent", "state": "running"}
 
 
-def patch_all(monkeypatch, nodes, *, haproxy_running, prometheus_running):
-    fake_k3d = FakeK3d(nodes)
+def patch_all(monkeypatch, nodes, *, haproxy_running, prometheus_running, pods=None):
+    fake_k3d = FakeK3d(nodes, pods)
     fake_haproxy = FakeCompose(haproxy_running, "haproxy")
     fake_prometheus = FakeCompose(prometheus_running, "prometheus")
     fake_start = FakeClusterStart()
     monkeypatch.setattr(shaping, "run", fake_k3d)
+    monkeypatch.setattr(residue, "run", fake_k3d)
     monkeypatch.setattr(readiness, "run", fake_start)
     monkeypatch.setattr(haproxy_manager, "run", fake_haproxy)
     monkeypatch.setattr(prometheus_manager, "run", fake_prometheus)
@@ -153,3 +173,57 @@ def test_restarts_cluster_when_server_not_running(monkeypatch):
     assert result["actions"] == [f"started cluster {CLUSTER}"]
     assert fake_start.calls == [["k3d", "cluster", "start", CLUSTER]]
     assert not any("up" in cmd for cmd in fake_haproxy.calls)
+
+
+def test_prunes_pods_left_on_a_node_that_no_longer_exists(monkeypatch):
+    """A pod outliving its node still holds CPU on the nodes that remain."""
+    fake_k3d, _, _, _ = patch_all(
+        monkeypatch,
+        [server(), agent(0)],
+        haproxy_running=True,
+        prometheus_running=True,
+        pods=[
+            {"name": "test-app-warm-live", "node": f"k3d-{CLUSTER}-agent-0-0"},
+            {"name": "test-app-warm-orphan", "node": f"k3d-{CLUSTER}-dynamic-workload-4-0"},
+        ],
+    )
+
+    result = readiness.ensure_testbed()
+
+    assert fake_k3d.kubectl_deletes() == ["test-app-warm-orphan"]
+    assert result["actions"] == [
+        "deleted orphaned pod test-app-warm-orphan (node k3d-thesis-hybrid-dynamic-workload-4-0 is gone)"
+    ]
+    assert result["nodes"]["dynamic_agents"] == 0
+
+
+def test_prunes_a_leftover_dynamic_node_but_never_a_static_one(monkeypatch):
+    fake_k3d, _, _, _ = patch_all(
+        monkeypatch,
+        [server(), agent(0), {"name": f"k3d-{CLUSTER}-dynamic-workload-3-0", "role": "agent", "state": "running"}],
+        haproxy_running=True,
+        prometheus_running=True,
+    )
+
+    result = readiness.ensure_testbed(agents=1)
+
+    assert result["actions"] == [f"deleted leftover dynamic node k3d-{CLUSTER}-dynamic-workload-3-0"]
+    assert [node["name"] for node in fake_k3d.inventory] == [f"k3d-{CLUSTER}-server-0", f"k3d-{CLUSTER}-agent-0-0"]
+    assert result["nodes"] == {"servers": 1, "agents": 1, "dynamic_agents": 0}
+
+
+def test_dry_run_reports_pruning_without_touching_anything(monkeypatch):
+    fake_k3d, _, _, _ = patch_all(
+        monkeypatch,
+        [server(), agent(0), {"name": f"k3d-{CLUSTER}-dynamic-workload-3-0", "role": "agent", "state": "running"}],
+        haproxy_running=True,
+        prometheus_running=True,
+        pods=[{"name": "test-app-warm-orphan", "node": f"k3d-{CLUSTER}-dynamic-workload-4-0"}],
+    )
+
+    result = readiness.ensure_testbed(agents=1, dry_run=True)
+
+    assert len(result["actions"]) == 2
+    assert fake_k3d.kubectl_deletes() == []
+    assert len(fake_k3d.inventory) == 3
+    assert len(fake_k3d.pods) == 1

@@ -474,6 +474,11 @@ def reproduce(
     resume: bool = typer.Option(True, "--resume/--no-resume", help="Continue an existing bundle instead of refusing"),
     force: bool = typer.Option(False, "--force", help="Delete an existing bundle before running"),
     dry_run: bool = typer.Option(False, help="Report what would happen without changing anything"),
+    fresh_stack: bool = typer.Option(
+        False,
+        "--fresh-stack",
+        help="Rebuild both clusters and redeploy the app before running",
+    ),
 ) -> None:
     """Run an experiment under a named profile, end to end.
 
@@ -484,6 +489,10 @@ def reproduce(
     Idempotent: a bundle that already holds every requested pair or run is left
     alone and only re-analysed, and a partial bundle continues from where it stopped
     rather than starting over.
+
+    The testbed is re-converged before every run, and --fresh-stack additionally
+    tears both clusters down and redeploys the application first, so a headline
+    experiment does not inherit the nodes, pods, and objects earlier ones left.
     """
     from rich.console import Console
     from rich.panel import Panel
@@ -531,9 +540,23 @@ def reproduce(
             console.print(f"  daemon environment: {key}={value}")
         return
 
-    from infra.readiness import ensure_testbed
+    from infra.readiness import ensure_testbed, rebuild_testbed
 
-    testbed = ensure_testbed(cluster=os.environ.get("K3D_CLUSTER_NAME", "thesis-hybrid"), agents=selected.k8s_agents)
+    cluster = os.environ.get("K3D_CLUSTER_NAME", "thesis-hybrid")
+    stack_rebuild: dict | None = None
+
+    if fresh_stack:
+        console.print("[cyan]Rebuilding the testbed...[/cyan]")
+        rebuilt = rebuild_testbed(agents=selected.k8s_agents)
+        for action in rebuilt["actions"]:
+            console.print(f"  [yellow]{action}[/yellow]")
+        console.print(f"[cyan]Testbed rebuilt:[/cyan] {rebuilt['summary']}")
+        if not rebuilt["ready"]:
+            console.print("[red]Rebuilt testbed is not ready; not starting the experiment.[/red]")
+            raise typer.Exit(1)
+        stack_rebuild = {"actions": rebuilt["actions"], "summary": rebuilt["summary"]}
+
+    testbed = ensure_testbed(cluster=cluster, agents=selected.k8s_agents)
     console.print(f"[cyan]Testbed:[/cyan] {testbed['nodes']} | actions: {testbed['actions'] or 'none needed'}")
 
     server: dict = {"status": "not required"}
@@ -567,7 +590,12 @@ def reproduce(
         bundle_journal.record(
             bundle_journal.new_event(
                 "profile_applied",
-                payload={"profile": selected.as_dict(), "testbed": testbed, "prediction_server": server},
+                payload={
+                    "profile": selected.as_dict(),
+                    "testbed": testbed,
+                    "prediction_server": server,
+                    "stack_rebuild": stack_rebuild,
+                },
             )
         )
 
@@ -581,6 +609,7 @@ def reproduce(
                 config=config,
                 console=console,
                 bundle_journal=bundle_journal,
+                before_run=_condition_testbed(cluster, selected.k8s_agents, bundle_journal),
             )
 
         s3_results, s4_results, pair_ids = _collect_pairs(bundle_path)
@@ -796,6 +825,29 @@ def paired_run(
     _write_paired_analysis(output_dir, s3_results, s4_results, pair_ids, console)
 
 
+def _condition_testbed(cluster: str, agents: int, bundle_journal):
+    """Return a callable that re-converges the testbed before each run.
+
+    The run that follows inherits whatever the previous one left: nodes the
+    autoscaler kept and pods still warm from the last workload. Re-asserting the
+    profile's declared shape per run is cheap, and it is what makes two runs in one
+    bundle comparable.
+    """
+
+    def condition(run_index: int) -> None:
+        from infra.readiness import ensure_testbed
+
+        result = ensure_testbed(cluster=cluster, agents=agents)
+        bundle_journal.record(
+            bundle_journal.new_event(
+                "run_conditioned",
+                payload={"run_index": run_index, "nodes": result["nodes"], "actions": result["actions"]},
+            )
+        )
+
+    return condition
+
+
 def _run_pairs(
     output_dir: str,
     *,
@@ -804,6 +856,7 @@ def _run_pairs(
     config: ExperimentConfig,
     console: "Console",
     bundle_journal,
+    before_run=None,
 ) -> tuple[list, list, list[str], int]:
     """Run counterbalanced S3/S4 pairs, excluding pairs whose treatment did not deliver.
 
@@ -833,6 +886,8 @@ def _run_pairs(
             f"\n[bold cyan]Attempt {attempt}/{max_attempts} (valid pairs: {len(pair_ids)}/{pairs})[/bold cyan]"
         )
 
+        if before_run is not None:
+            before_run((pair_id - 1) * 2)
         console.print(f"  [dim]Running {first_scenario}...[/dim]")
         r1 = _run_single(first_scenario, pair_id, (pair_id - 1) * 2, config, output_dir, console=console)
         if r1 is None:
@@ -842,6 +897,8 @@ def _run_pairs(
         with countdown(console, INTER_RUN_PAUSE_SEC, "Inter-run pause"):
             pass
 
+        if before_run is not None:
+            before_run((pair_id - 1) * 2 + 1)
         console.print(f"  [dim]Running {second_scenario}...[/dim]")
         r2 = _run_single(second_scenario, pair_id, (pair_id - 1) * 2 + 1, config, output_dir, console=console)
         if r2 is None:
