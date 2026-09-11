@@ -17,7 +17,10 @@ from infra.commands import run
 logger = structlog.get_logger(__name__)
 
 IMAGE = "k3d-registry.localhost:5000/test-app:latest"
-SERVERLESS_CONTEXT = "k3d-thesis-serverless"
+# k3d names the cluster `thesis-serverless` and prefixes its contexts and
+# containers with `k3d-`. k3d commands take the name; kubectl takes the context.
+SERVERLESS_CLUSTER = "thesis-serverless"
+SERVERLESS_CONTEXT = f"k3d-{SERVERLESS_CLUSTER}"
 K8S_DEPLOYMENT = "test-app-warm"
 
 
@@ -34,7 +37,7 @@ def deploy_test_app(*, skip_build: bool = False) -> dict:
         logger.info("test_app_build_start")
         run(["docker", "build", "-t", IMAGE, str(app_dir)], check=True)
         run(["docker", "push", IMAGE], check=True)
-        _import_image(SERVERLESS_CONTEXT)
+        _import_image(SERVERLESS_CLUSTER)
         actions.append("built and pushed test-app image")
         logger.info("test_app_build_done")
 
@@ -92,7 +95,11 @@ def deploy_test_app(*, skip_build: bool = False) -> dict:
 
 
 def _import_image(cluster: str, *, attempts: int = 3) -> None:
-    """Hand the image to a cluster, retrying while k3d finishes registering it."""
+    """Hand the image to a cluster, retrying while k3d finishes registering it.
+
+    Takes the k3d cluster name, not the kubectl context: passing the context makes
+    k3d report "No nodes found for given cluster" while the cluster is running.
+    """
     for attempt in range(1, attempts + 1):
         result = run(["k3d", "image", "import", IMAGE, "-c", cluster])
         if result.returncode == 0:
