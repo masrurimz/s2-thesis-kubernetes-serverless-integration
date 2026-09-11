@@ -107,6 +107,11 @@ class GRUModelLoader:
     def val_coverage(self) -> float:
         return self._predictor.val_coverage
 
+    @property
+    def cell(self) -> Optional[str]:
+        """Recurrent cell of the loaded artifact ("gru" or "lstm")."""
+        return self._predictor.config.cell if self.is_loaded else None
+
     # ------------------------------------------------------------------
     # Inference
     # ------------------------------------------------------------------
@@ -150,7 +155,7 @@ class GRUModelLoader:
             "sequence_length": cfg.sequence_length if cfg else None,
             "prediction_horizon": cfg.prediction_horizon if cfg else None,
             "sample_interval_sec": cfg.sample_interval_sec if cfg else None,
-            "hidden_size": cfg.hidden_size if cfg else None,
+            "cell": self.cell,
             "num_layers": cfg.num_layers if cfg else None,
             "rmse": self.rmse,
             "mae": self.mae,
