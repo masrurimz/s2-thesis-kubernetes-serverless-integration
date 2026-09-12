@@ -10,7 +10,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
-from shared.models.routing import StatusResponse, SetScenarioRequest, HealthResponse
+from shared.models.routing import StatusResponse, SetScenarioRequest, RoutingHealthResponse
 
 if TYPE_CHECKING:
     from routing.daemon.service import RoutingDaemon
@@ -46,10 +46,10 @@ def create_app(daemon: "RoutingDaemon") -> FastAPI:
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
-    @app.get("/health", response_model=HealthResponse)
+    @app.get("/health", response_model=RoutingHealthResponse)
     async def health_check():
         """Health check endpoint."""
-        return HealthResponse(
+        return RoutingHealthResponse(
             status="healthy" if daemon._running else "starting",
             scenario=daemon.scenario.value,
             haproxy_connected=daemon.weight_adjuster.socket_available,

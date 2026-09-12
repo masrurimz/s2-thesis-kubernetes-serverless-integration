@@ -30,7 +30,7 @@ class HypothesisResult:
 
 
 @dataclass
-class ScenarioMetrics:
+class HypothesisMetrics:
     """Metrics collected from a scenario run."""
 
     scenario: str
@@ -108,7 +108,7 @@ class HypothesisValidator:
             summary=summary,
         )
 
-    def run_scenario_simulation(self, scenario: str, workload: str = "steady") -> ScenarioMetrics:
+    def run_scenario_simulation(self, scenario: str, workload: str = "steady") -> HypothesisMetrics:
         """Return metrics for a scenario from historical experiment data.
 
         In production this would start the routing daemon, run a load test,
@@ -117,9 +117,9 @@ class HypothesisValidator:
         """
         logger.info(f"Running scenario: {scenario} with workload: {workload}")
 
-        historical_results: dict[str, dict[str, ScenarioMetrics]] = {
+        historical_results: dict[str, dict[str, HypothesisMetrics]] = {
             "s1-k8s-only": {
-                "steady": ScenarioMetrics(
+                "steady": HypothesisMetrics(
                     scenario="s1-k8s-only",
                     workload="steady",
                     p50_latency_ms=23.0,
@@ -132,7 +132,7 @@ class HypothesisValidator:
                 ),
             },
             "s2-serverless-only": {
-                "steady": ScenarioMetrics(
+                "steady": HypothesisMetrics(
                     scenario="s2-serverless-only",
                     workload="steady",
                     p50_latency_ms=0.8,
@@ -145,7 +145,7 @@ class HypothesisValidator:
                 ),
             },
             "s3-hybrid-reactive": {
-                "steady": ScenarioMetrics(
+                "steady": HypothesisMetrics(
                     scenario="s3-hybrid-reactive",
                     workload="steady",
                     p50_latency_ms=500.0,
@@ -158,7 +158,7 @@ class HypothesisValidator:
                 ),
             },
             "s4-hybrid-predictive": {
-                "steady": ScenarioMetrics(
+                "steady": HypothesisMetrics(
                     scenario="s4-hybrid-predictive",
                     workload="steady",
                     p50_latency_ms=450.0,
@@ -175,7 +175,7 @@ class HypothesisValidator:
         if scenario in historical_results and workload in historical_results[scenario]:
             return historical_results[scenario][workload]
 
-        return ScenarioMetrics(
+        return HypothesisMetrics(
             scenario=scenario,
             workload=workload,
             p50_latency_ms=100.0,

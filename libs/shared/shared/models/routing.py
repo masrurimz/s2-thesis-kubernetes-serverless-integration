@@ -45,20 +45,10 @@ class SetScenarioRequest(BaseModel):
     scenario: str
 
 
-class HealthResponse(BaseModel):
+class RoutingHealthResponse(BaseModel):
     """Health check response from the routing daemon."""
 
     status: str
     scenario: str
     haproxy_connected: bool
     gru_available: bool
-
-
-class RoutingDecision(BaseModel):
-    """Output of Algorithm 1 routing decision."""
-
-    action: str  # MAINTAIN, SCALE_OUT, OPTIMIZE_COST, PREDICTIVE
-    k3s_weight: int
-    knative_weight: int
-    reason: str
-    backend_state_changed: bool = False

@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 import requests
 import structlog
 from shared.config import settings
-from shared.models.routing import HealthResponse, StatusResponse
+from shared.models.routing import RoutingHealthResponse, StatusResponse
 
 logger = structlog.get_logger(__name__)
 
@@ -30,12 +30,12 @@ class DaemonClient:
             pass
         return False
 
-    def get_health(self) -> Optional[HealthResponse]:
+    def get_health(self) -> Optional[RoutingHealthResponse]:
         """Get the daemon health response."""
         try:
             r = self._session.get(f"{self._base_url}/health", timeout=5)
             if r.status_code == 200:
-                return HealthResponse(**r.json())
+                return RoutingHealthResponse(**r.json())
         except Exception as e:
             logger.warning("daemon_health_failed", error=str(e))
         return None

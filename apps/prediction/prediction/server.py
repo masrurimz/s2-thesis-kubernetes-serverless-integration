@@ -16,7 +16,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 
-from shared.models.prediction import PredictRequest, PredictResponse, HealthResponse
+from shared.models.prediction import PredictRequest, PredictResponse, PredictionHealthResponse
 
 from .model_loader import GRUModelLoader
 
@@ -82,7 +82,7 @@ app = FastAPI(
 )
 
 
-@app.get("/health", response_model=HealthResponse)
+@app.get("/health", response_model=PredictionHealthResponse)
 async def health_check():
     """
     Health check endpoint.
@@ -91,7 +91,7 @@ async def health_check():
     """
     is_loaded = model_loader is not None and model_loader.is_loaded
 
-    return HealthResponse(
+    return PredictionHealthResponse(
         status="healthy" if is_loaded else "degraded",
         model_loaded=is_loaded,
         model_type=model_loader.model_type if model_loader else None,

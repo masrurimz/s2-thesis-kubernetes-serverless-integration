@@ -35,20 +35,19 @@ class PredictResponse(BaseModel):
     upper_forecasts: Optional[List[float]] = Field(default=None, description="Upper envelope forecasts per horizon")
 
 
-class PredictionResult(BaseModel):
-    """Result from GRU prediction service (used by routing daemon client)."""
+class PredictionResult(PredictResponse):
+    """The same forecast as ``PredictResponse``, plus how the call went.
 
-    predicted_requests: int
-    confidence: float
-    horizon_values: List[int]
-    latency_ms: float
+    The delivery status belongs to the client, not the wire payload: the server
+    answers a failed prediction with an HTTP error, while the client turns that
+    into a result carrying ``success=False``.
+    """
+
     success: bool = True
     error: Optional[str] = None
-    point_forecasts: Optional[List[float]] = None
-    upper_forecasts: Optional[List[float]] = None
 
 
-class HealthResponse(BaseModel):
+class PredictionHealthResponse(BaseModel):
     """Health check response from prediction server."""
 
     status: str
