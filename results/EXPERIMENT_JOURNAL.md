@@ -8,7 +8,7 @@
 > - **Registry:** `results/evidence/registry.yaml`
 > - **Query cache:** `results/evidence/catalog.duckdb` (rebuilt, not canonical)
 
-**Latest audit:** 2026-09-12T09:14:09.982049+00:00
+**Latest audit:** 2026-09-12T10:05:44.569297+00:00
 
 ## Summary
 
@@ -178,6 +178,7 @@
 
 | Timestamp | Event | Experiment | Bundle | Run |
 |-----------|-------|------------|--------|-----|
+| 2026-09-12T10:05:44.569297+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |
 | 2026-09-12T09:14:09.982049+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |
 | 2026-08-09T04:12:35.295807+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |
 | 2026-08-09T04:09:40.523750+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |
