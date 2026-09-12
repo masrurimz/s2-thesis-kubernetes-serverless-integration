@@ -129,6 +129,33 @@ Guarantees:
 
 The agent count is not decoration. On 2026-09-11 a pair ran against a cluster with two static agents, no node was provisioned, the reactive arm paid no provisioning penalty, and the predictive arm's over-provisioning showed up as pure cost. The same design with one static agent on 2026-07-14 provisioned two nodes per run, each costing 59 to 122 seconds, and the predictive arm won. Same code, different regime, opposite answer.
 
+### Conditioning — one gate, every path
+
+A run starts from the conditions `RunConditions` declares or it does not start. `_run_single` calls `experiment/conditions.py::apply` before anything else, and every entry point funnels through `_run_single`, so no command can skip it:
+
+1. **Converge and clean.** `infra.readiness.ensure_testbed` sets the static agent count, deletes leftover dynamic nodes, deletes pods whose node is gone, and waits for the Kubernetes node objects to agree with the containers.
+2. **Check.** Nodes Ready; both arms serving (only the arms the scenario uses — S2 drains K8s on purpose); a prediction port when the design needs one; the host quiet enough to measure on.
+3. **Refuse, loudly.** A failed check raises `ConditionsUnmet`, records `run_refused` in the run's journal, and returns no result, which the pair loop already treats as a failed pair.
+
+```bash
+# The same battery, before committing hours to a run.
+uv run thesis experiment preflight --profile h2-pair
+uv run thesis experiment preflight --profile h2-pair --no-converge   # report only
+
+# Teardown, recreate both clusters, reinstall Knative, redeploy, converge.
+# Minutes, so it belongs before an experiment, not between its runs.
+uv run thesis experiment reproduce --profile h2-pair --fresh-stack
+```
+
+**When an experiment changes, its conditions change with it.** A new profile or scenario set must declare what it needs — static agents, the prediction server, controller environment — and `apps/experiment/tests/test_profiles.py` fails when a hybrid profile leaves no capacity to bind or a predictive one serves no predictor. A new check belongs in `conditions.apply`, next to the others, so both `preflight` and the runner get it.
+
+**Host hygiene is part of the measurement.** The gate reports CPU busy from `/proc/stat` and refuses above full occupancy, naming the processes responsible. Indexers count: `graphify-watcher.service` holds most of a core while it watches the work tree, and any experiment run on the same machine waits for it.
+
+```bash
+systemctl --user stop graphify-watcher.service    # before a measurement window
+systemctl --user start graphify-watcher.service   # after
+```
+
 Older invocations remain available for ad-hoc work:
 
 ```bash

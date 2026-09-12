@@ -1339,9 +1339,7 @@ def _run_single(
         from experiment.conditions import ConditionsUnmet, apply as apply_conditions
 
         try:
-            condition_report = apply_conditions(
-                replace(conditions, scenario=scenario), scenario=scenario, console=console
-            )
+            condition_report = apply_conditions(conditions, scenario=scenario, console=console)
         except ConditionsUnmet as exc:
             console.print(f"  [red]Refusing to run {scenario}: {exc}[/red]")
             logger.error("run_refused", scenario=scenario, run_id=run_id, reason=str(exc))
