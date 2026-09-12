@@ -513,6 +513,86 @@ def summary(
         console.print(path.read_text())
 
 
+@app.command(name="analyze")
+def analyze_bundle(
+    bundle: str = typer.Argument(..., help="Bundle directory with per-run result.json files"),
+    write: bool = typer.Option(False, "--write", help="Rewrite paired_analysis.json and SUMMARY.md"),
+    as_json: bool = typer.Option(False, "--json", help="Emit the verdict as JSON"),
+    print_report: bool = typer.Option(True, "--print/--no-print", help="Print the human verdict"),
+) -> None:
+    """Recompute a bundle's paired verdict from its own runs.
+
+    The runner writes the verdict once, when the stage ends. This recomputes it on
+    demand — after a statistics fix, or to ask a finished bundle the question again —
+    from the same artifacts, so the answer a reader quotes comes from the code in
+    front of them rather than from whatever produced the file.
+    """
+    import json as _json
+
+    from analysis.comparison import run_paired_comparison
+    from experiment.summary import write_summary
+    from rich.console import Console
+
+    console = Console()
+    bundle_path = Path(bundle)
+    s3_results, s4_results, pair_ids = _collect_pairs(bundle_path)
+    if not s3_results:
+        console.print(f"[red]No valid pairs in {bundle}[/red]")
+        raise typer.Exit(1)
+
+    primary = run_paired_comparison(
+        [r.p99_latency_ms for r in s3_results],
+        [r.p99_latency_ms for r in s4_results],
+        metric="p99_latency_ms",
+        pair_ids=pair_ids,
+        label="H2-primary",
+    )
+    payload = {
+        "bundle": str(bundle_path),
+        "n_pairs": primary.n_pairs,
+        "pair_ids": list(primary.pair_ids),
+        "baseline_mean_ms": primary.baseline_mean,
+        "comparison_mean_ms": primary.comparison_mean,
+        "mean_difference_ms": primary.mean_difference,
+        "paired_ci_lower_ms": primary.paired_ci_lower,
+        "paired_ci_upper_ms": primary.paired_ci_upper,
+        "permutation_p_value": primary.permutation_p_value,
+        "cohens_d_paired": primary.cohens_d_paired,
+        "effect_size_interpretation": primary.effect_size_interpretation,
+        "smallest_attainable_p": float(2.0**-primary.n_pairs),
+        "h2_supported": primary.h2_supported,
+        "baseline_values_ms": list(primary.baseline_values),
+        "comparison_values_ms": list(primary.comparison_values),
+    }
+
+    if write:
+        _write_paired_analysis(str(bundle_path), s3_results, s4_results, list(pair_ids), console)
+        payload["summary_path"] = str(write_summary(bundle_path))
+        payload["analysis_path"] = str(bundle_path / "paired_analysis.json")
+
+    if as_json:
+        # typer.echo, not the rich console: a JSON payload a program must parse cannot
+        # come back soft-wrapped to the terminal width.
+        typer.echo(_json.dumps(payload, indent=2, default=str))
+        return
+    if print_report:
+        console.print(f"[bold]H2 paired verdict[/bold] — {bundle_path.name}, {payload['n_pairs']} pair(s)")
+        console.print(
+            f"  S3 mean {payload['baseline_mean_ms']:.1f} ms  vs  S4 mean {payload['comparison_mean_ms']:.1f} ms"
+        )
+        console.print(
+            f"  Δ {payload['mean_difference_ms']:+.1f} ms  95% CI "
+            f"[{payload['paired_ci_lower_ms']:+.1f}, {payload['paired_ci_upper_ms']:+.1f}]"
+        )
+        console.print(
+            f"  permutation p {payload['permutation_p_value']:.4f} (smallest attainable at n={payload['n_pairs']}: "
+            f"{payload['smallest_attainable_p']:.5f})  d {payload['cohens_d_paired']:.3f} "
+            f"({payload['effect_size_interpretation']})"
+        )
+        verdict = "supported" if payload["h2_supported"] else "not supported"
+        console.print(f"  verdict: H2 {verdict}")
+
+
 @app.command()
 def reproduce(
     profile: str = typer.Option(..., "--profile", help=f"Experiment profile: {', '.join(profile_names())}"),
