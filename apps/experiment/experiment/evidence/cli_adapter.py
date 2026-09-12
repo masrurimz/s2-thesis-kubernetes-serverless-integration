@@ -326,3 +326,55 @@ def derive_parquet(
     except ValueError as exc:
         console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1) from exc
+
+
+# ---------------------------------------------------------------------------
+# normalize — legacy utilization JSON -> Parquet
+# ---------------------------------------------------------------------------
+
+
+@evidence_app.command()
+def normalize(
+    apply: bool = typer.Option(False, "--apply", help="Convert and delete the JSON. Default reports only."),
+    as_json: bool = typer.Option(False, "--json", help="Emit the report as JSON"),
+) -> None:
+    """Convert legacy utilization JSON series to Parquet (verified, idempotent)."""
+    from rich.console import Console
+    from rich.table import Table
+
+    from experiment.evidence.normalize import normalize_series_artifacts
+    from shared.output import print_json
+
+    console = Console()
+    report = normalize_series_artifacts(_results_root(), apply=apply)
+
+    if as_json:
+        print_json(report)
+        return
+    elif report["files"]:
+        table = Table(title=f"Utilization series normalization ({'apply' if apply else 'dry run'})")
+        table.add_column("Run", style="dim")
+        table.add_column("Series")
+        table.add_column("Rows", justify="right")
+        table.add_column("Before", justify="right")
+        table.add_column("After", justify="right")
+        table.add_column("Status")
+        for entry in report["files"]:
+            table.add_row(
+                entry["run"],
+                entry["series"],
+                str(entry["rows"]),
+                str(entry["bytes_before"]),
+                str(entry["bytes_after"] or "—"),
+                entry["error"] or entry["status"],
+            )
+        console.print(table)
+    else:
+        console.print("[dim]No legacy utilization JSON found under results/experiments/.[/dim]")
+
+    console.print(
+        f"[green]{report['converted']} converted[/green], "
+        f"{report['would_convert']} pending, [red]{report['failed']} failed[/red]"
+    )
+    if apply and report["failed"]:
+        raise typer.Exit(1)
