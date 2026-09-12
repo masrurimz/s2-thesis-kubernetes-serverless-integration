@@ -11,7 +11,6 @@ from typing import Any, Dict, List, Tuple
 
 import requests
 import structlog
-
 from shared.config import settings
 from shared.models.pipeline import PipelineContext, PreflightResult
 

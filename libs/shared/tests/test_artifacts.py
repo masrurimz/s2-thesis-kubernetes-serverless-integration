@@ -66,7 +66,16 @@ class TestResult:
         result = read_result(tmp_path)
         assert result is not None
 
-        assert read_result_dict(tmp_path) == result.model_dump()
+        assert read_result_dict(tmp_path) == result.model_dump(exclude_unset=True)
+
+    def test_dict_view_does_not_invent_defaults_for_absent_fields(self, tmp_path):
+        """A field the file omits stays omitted: the summary reports n/a, not 0."""
+        (tmp_path / RESULT_FILE).write_text(json.dumps({"scenario": "s3-hybrid-reactive", "run_id": 1}))
+
+        as_dict = read_result_dict(tmp_path)
+
+        assert as_dict["scenario"] == "s3-hybrid-reactive"
+        assert "time_in_serverless_pct" not in as_dict
 
     def test_missing_and_corrupt_are_not_errors(self, tmp_path):
         assert read_result(tmp_path) is None
@@ -88,6 +97,13 @@ class TestManifest:
 
     def test_commit_helper_is_empty_without_a_manifest(self, tmp_path):
         assert read_manifest_git_commit(tmp_path) == ""
+
+    def test_commit_survives_a_manifest_too_old_to_validate(self, tmp_path):
+        """Every bundle records the commit; a manifest missing newer fields still has it."""
+        (tmp_path / MANIFEST_FILE).write_text(json.dumps({"git_commit": "abc1234", "scenario": "alpha"}))
+
+        assert read_manifest(tmp_path) is None
+        assert read_manifest_git_commit(tmp_path) == "abc1234"
 
     def test_round_trip_preserves_the_manifest(self, tmp_path):
         (tmp_path / MANIFEST_FILE).write_bytes(_fixture_bytes(MANIFEST_FILE))

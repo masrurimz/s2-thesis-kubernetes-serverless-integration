@@ -26,9 +26,9 @@ from typing import Dict, List, Optional
 
 import requests
 import structlog
+from shared.config import settings
 
 from experiment.stages.daemon import kill_process_on_port
-from shared.config import settings
 
 logger = structlog.get_logger(__name__)
 
@@ -434,7 +434,6 @@ class DynamicExperimentRunner:
     ) -> List[DynamicExperimentResult]:
         """Run replicated experiments with randomized order."""
         from rich.console import Console
-
         from shared.progress import (
             countdown,
             create_progress,

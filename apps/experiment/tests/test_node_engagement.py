@@ -7,9 +7,8 @@ records engagement and rejects a hybrid run that never reached the node tier.
 
 from __future__ import annotations
 
-from shared.models.experiment import ExperimentResult
-
 from experiment.stages.validate import evaluate_node_engagement
+from shared.models.experiment import ExperimentResult
 
 
 def _result(**fields) -> ExperimentResult:

@@ -8,6 +8,7 @@ from pathlib import Path
 from statistics import fmean, stdev
 
 import yaml
+from shared.artifacts import read_manifest_git_commit, read_result_dict
 from shared.models.evidence import NodeEngagement
 
 NA = "n/a"
@@ -104,8 +105,8 @@ def _read_events(path: Path) -> list[dict]:
 
 
 def _git_commit(run_dir: Path) -> str | None:
-    commit = _read_json(run_dir / "manifest.json").get("git_commit")
-    if isinstance(commit, str) and commit:
+    commit = read_manifest_git_commit(run_dir)
+    if commit:
         return commit
     for event in _read_events(run_dir / "events.jsonl"):
         commit = event.get("git_commit")
@@ -138,7 +139,7 @@ def _discover_runs(bundle_dir: Path) -> list[Run]:
         scenario, sep, suffix = run_dir.name.rpartition("_run")
         if not sep or not suffix.isdigit():
             continue
-        result = _read_json(run_dir / "result.json")
+        result = read_result_dict(run_dir)
         if not result:
             continue
         runs.append(

@@ -17,18 +17,18 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
-import typer
 import structlog
-
+import typer
+from shared.artifacts import read_result, write_manifest, write_provision_events, write_result
 from shared.models.experiment import ExperimentConfig, ExperimentResult
 
 from experiment.profiles import get_profile, profile_names
 
 if TYPE_CHECKING:
     from rich.console import Console
+    from shared.models.pipeline import PipelineContext
 
     from experiment.conditions import RunConditions
-    from shared.models.pipeline import PipelineContext
 
 app = typer.Typer(help="Experiment orchestration")
 logger = structlog.get_logger(__name__)
@@ -276,7 +276,8 @@ def preflight(
     from rich.console import Console
     from rich.table import Table
 
-    from experiment.conditions import ConditionsUnmet, RunConditions, apply as apply_conditions
+    from experiment.conditions import ConditionsUnmet, RunConditions
+    from experiment.conditions import apply as apply_conditions
 
     console = Console()
 
@@ -344,13 +345,10 @@ def validate(
     # Validate each result against ExperimentResult schema
     valid_count = 0
     for rf in result_files:
-        try:
-            with open(rf) as f:
-                data = json.load(f)
-            ExperimentResult(**data)
+        if read_result(rf.parent) is not None:
             valid_count += 1
-        except Exception as e:
-            console.print(f"[red]Invalid result {rf}: {e}[/red]")
+        else:
+            console.print(f"[red]Invalid result {rf}[/red]")
 
     console.print(f"\n[green]{valid_count}/{len(result_files)} results validated[/green]")
 
@@ -409,7 +407,7 @@ def dynamic(
 
     from rich.console import Console
 
-    from experiment.dynamic import RESULTS_BASE, K6_SCRIPT, run_dynamic_experiment
+    from experiment.dynamic import K6_SCRIPT, RESULTS_BASE, run_dynamic_experiment
 
     console = Console()
     scenario_list = [s.strip() for s in scenarios.split(",")]
@@ -587,8 +585,10 @@ def reproduce(
             console.print(f"  daemon environment: {key}={value}")
         return
 
-    from experiment.conditions import RunConditions, apply as apply_conditions
     from infra.readiness import rebuild_testbed
+
+    from experiment.conditions import RunConditions
+    from experiment.conditions import apply as apply_conditions
 
     cluster = os.environ.get("K3D_CLUSTER_NAME", "thesis-hybrid")
     run_conditions = RunConditions(
@@ -732,13 +732,8 @@ def reproduce(
 
 
 def _load_result(run_dir: Path) -> Optional[ExperimentResult]:
-    path = run_dir / "result.json"
-    if not path.exists():
-        return None
-    try:
-        return ExperimentResult(**json.loads(path.read_text()))
-    except Exception:
-        return None
+    """Read a run's result through the artifact loader."""
+    return read_result(run_dir)
 
 
 def _load_run_results(bundle_path: Path) -> list[ExperimentResult]:
@@ -1027,7 +1022,7 @@ def _write_paired_analysis(
     """Write the paired comparison for the collected pairs and report the verdict."""
     from datetime import datetime
 
-    from analysis.comparison import run_paired_comparison, apply_holm_paired
+    from analysis.comparison import apply_holm_paired, run_paired_comparison
 
     s3_p99 = [r.p99_latency_ms for r in s3_results]
     s4_p99 = [r.p99_latency_ms for r in s4_results]
@@ -1220,7 +1215,6 @@ def _run_replicated(
     order identical to a fresh run.
     """
     from rich.console import Console
-
     from shared.progress import (
         countdown,
         create_progress,
@@ -1249,10 +1243,10 @@ def _run_replicated(
 
             if dry_run:
                 from experiment.pipeline import Pipeline
-                from experiment.stages.reset import ResetStage
-                from experiment.stages.daemon import DaemonStage
-                from experiment.stages.workload import WorkloadStage
                 from experiment.stages.collect import CollectStage
+                from experiment.stages.daemon import DaemonStage
+                from experiment.stages.reset import ResetStage
+                from experiment.stages.workload import WorkloadStage
 
                 stages = [ResetStage(), DaemonStage(), WorkloadStage(), CollectStage()]
                 pipeline = Pipeline(stages, ctx)
@@ -1320,25 +1314,26 @@ def _run_single(
     from datetime import datetime
 
     from rich.console import Console
-
     from shared.progress import countdown, run_phase
 
     if console is None:
         console = Console()
 
-    from shared.models.experiment import ExperimentResult, RunManifest
-    from experiment.stages.reset import ResetStage
-    from experiment.stages.daemon import DaemonStage
-    from experiment.stages.workload import WorkloadStage
-    from experiment.stages.collect import CollectStage
     from infra.cluster.k3d.autoscaler import K3dAutoscalerAdapter
+    from shared.models.experiment import ExperimentResult, RunManifest
+
+    from experiment.stages.collect import CollectStage
+    from experiment.stages.daemon import DaemonStage
+    from experiment.stages.reset import ResetStage
+    from experiment.stages.workload import WorkloadStage
 
     run_dir = Path(output_dir) / f"{scenario}_run{run_id}"
     run_dir.mkdir(parents=True, exist_ok=True)
 
     condition_report: dict = {}
     if conditions is not None:
-        from experiment.conditions import ConditionsUnmet, apply as apply_conditions
+        from experiment.conditions import ConditionsUnmet
+        from experiment.conditions import apply as apply_conditions
 
         try:
             condition_report = apply_conditions(conditions, scenario=scenario, console=console)
@@ -1361,6 +1356,7 @@ def _run_single(
     logger.info("run_start", scenario=scenario, run_id=run_id, order=run_order_idx)
     from shared.models.evidence import TreatmentFidelity
     from shared.storage.journal import ExperimentJournal
+
     from experiment.stages.validate import evaluate_node_engagement, evaluate_run_validity
 
     journal = ExperimentJournal(
@@ -1461,7 +1457,7 @@ def _run_single(
                     validity_gate_passed=False,
                     treatment_fidelity=preflight_fidelity,
                 )
-                (run_dir / "result.json").write_text(preflight_result.model_dump_json(indent=2))
+                write_result(run_dir, preflight_result)
                 journal.record(
                     journal.new_event(
                         "run_failed",
@@ -1499,8 +1495,7 @@ def _run_single(
             timestamp=datetime.now().isoformat(),
             conditions=condition_report,
         )
-        with open(run_dir / "manifest.json", "w") as f:
-            json.dump(manifest.model_dump(), f, indent=2)
+        write_manifest(run_dir, manifest)
 
         # (C.warm-up) 30s idle warm-up
         logger.info("warmup_start", seconds=WARMUP_SEC)
@@ -1582,8 +1577,7 @@ def _run_single(
             first_created = next((ts for ts, et, _ in prov_log if et in prov_success_events), None)
             if first_pending and first_created:
                 result.first_provision_delay_sec = first_created - first_pending
-            with open(run_dir / "provision_events.json", "w") as f:
-                json.dump([{"ts": ts, "event": et, "data": d} for ts, et, d in prov_log], f, indent=2)
+            write_provision_events(run_dir, prov_log)
             result.provision_log_path = str(run_dir / "provision_events.json")
         result.predictive_count = daemon_status.get("predictive_count", 0)
         result.optimize_cost_count = daemon_status.get("optimize_cost_count", 0)
@@ -1621,8 +1615,7 @@ def _run_single(
         )
 
         # Save result
-        with open(run_dir / "result.json", "w") as f:
-            json.dump(result.model_dump(), f, indent=2)
+        write_result(run_dir, result)
 
         logger.info("run_complete", scenario=scenario, run_id=run_id, p99=result.p99_latency_ms)
         journal.record(journal.new_event("run_completed", scenario=scenario, run_id=run_id))

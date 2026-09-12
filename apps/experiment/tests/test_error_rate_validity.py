@@ -9,7 +9,6 @@ consulted the request failure rate.
 from __future__ import annotations
 
 import pytest
-
 from experiment.stages.validate import evaluate_run_validity
 from experiment.stages.workload import WorkloadStage
 from shared.models.experiment import ExperimentResult

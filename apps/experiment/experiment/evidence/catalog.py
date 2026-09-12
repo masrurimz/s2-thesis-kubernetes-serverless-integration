@@ -13,7 +13,6 @@ from typing import Any
 
 import pandas as pd
 import pyarrow as pa
-
 from shared.evidence.catalog import EvidenceCatalog
 from shared.storage.parquet import write_table_parquet
 

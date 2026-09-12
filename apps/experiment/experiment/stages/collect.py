@@ -4,8 +4,8 @@ Extracted from scripts/run_phase_b_experiments.py lines 940-1317
 (MetricExporter + ResourcePoller).
 """
 
-import os
 import json
+import os
 import subprocess
 import threading
 import time
@@ -15,8 +15,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import structlog
-
 from shared.config import settings
+from shared.artifacts import write_node_utilization
 from shared.models.metrics import MetricsExport, NodeSample
 from shared.models.pipeline import PipelineContext
 
@@ -411,9 +411,7 @@ class ResourcePoller:
 
         if output_dir:
             output_dir.mkdir(parents=True, exist_ok=True)
-            save_path = output_dir / "node_utilization.json"
-            with open(save_path, "w") as f:
-                json.dump([s.model_dump() for s in node_samples], f, indent=2)
+            write_node_utilization(output_dir, node_samples)
 
         if not node_samples:
             return {

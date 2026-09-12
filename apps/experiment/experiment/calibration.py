@@ -21,7 +21,6 @@ from typing import Dict, List, Tuple
 
 import requests
 import structlog
-
 from shared.config import settings
 
 from experiment.stages.daemon import kill_process_on_port
@@ -262,7 +261,6 @@ def run_full_calibration(scenarios: List[str], rps_levels: List[int], duration_s
     """Run full calibration across scenarios and RPS levels."""
     from rich.console import Console
     from rich.table import Table
-
     from shared.progress import countdown, create_progress, run_phase
 
     console = Console()

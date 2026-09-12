@@ -118,9 +118,10 @@ def apply(conditions: RunConditions, *, scenario: str = "", console: Any = None)
     Returns {"ok", "checks", "nodes", "actions", "load", "notes"}. Raises
     ConditionsUnmet when a check fails, so a caller cannot ignore it by accident.
     """
-    from experiment.stages.daemon import is_port_listening
     from infra.readiness import ensure_testbed, inspect_testbed
     from shared.config import settings
+
+    from experiment.stages.daemon import is_port_listening
 
     checks: dict[str, bool] = {}
     notes: list[str] = []

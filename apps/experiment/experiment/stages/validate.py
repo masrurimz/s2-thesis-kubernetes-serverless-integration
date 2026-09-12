@@ -16,7 +16,6 @@ from typing import Any, Mapping
 from shared.models.evidence import NodeEngagement, TreatmentFidelity
 from shared.models.experiment import ExperimentResult
 
-
 # Mirrors the canonical k6 threshold ``http_req_failed: rate<0.10``
 # (load_tests/canonical/clarknet_replay.js); k6 crosses it at rate >= 0.10.
 REQUEST_FAILURE_RATE_TOLERANCE = 0.10

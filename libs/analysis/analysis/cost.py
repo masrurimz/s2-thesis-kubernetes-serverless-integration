@@ -9,17 +9,19 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Sequence
 
 import numpy as np
 from shared.models.calibration import CALIBRATION
+from shared.models.provisioning import ProvisionEvent
+from shared.scenarios import SCENARIO_ORDER
 
 from analysis.constants import (
     BETA_VALUES,
     CLOUD_NODES,
     DEFAULT_CLOUD_NODE,
-    EKS_CONTROL_PLANE_RATE,
     EC2_T3_MEDIUM_RATE,
+    EKS_CONTROL_PLANE_RATE,
     LAMBDA_MEM_GB,
     LAMBDA_ONDEMAND_RATE,
     LAMBDA_OVERHEAD_SEC,
@@ -31,7 +33,6 @@ from analysis.constants import (
     TARGET_MEM_UTIL,
 )
 from analysis.data_loaders import ScenarioMetrics
-from shared.scenarios import SCENARIO_ORDER
 
 
 @dataclass(frozen=True)
@@ -72,7 +73,9 @@ class CostBreakdown:
     vs_s2_percent: float | None = None
 
 
-def analyze_from_experiment(metrics: ScenarioMetrics, provision_events: list[dict] | None = None) -> dict[str, Any]:
+def analyze_from_experiment(
+    metrics: ScenarioMetrics, provision_events: Sequence[ProvisionEvent] | None = None
+) -> dict[str, Any]:
     """Unified AWS cost model mapping experiment architecture to AWS services.
 
     Architecture mapping:
@@ -162,10 +165,10 @@ def analyze_from_experiment(metrics: ScenarioMetrics, provision_events: list[dic
             node_created_ts: dict[str, float] = {}
             node_deleted_ts: dict[str, float] = {}
             for ev in provision_events:
-                ev_type = ev.get("event", ev.get("et", ""))
-                ev_data = ev.get("data", ev.get("d", {}))
+                ev_type = ev.event
+                ev_data = ev.data
                 node_name = ev_data.get("node", "")
-                ev_ts = ev.get("ts", 0.0)
+                ev_ts = ev.ts
                 if ev_type == "node_created" and node_name:
                     node_created_ts[node_name] = ev_ts
                 elif ev_type == "node_deleted" and node_name:
@@ -173,7 +176,7 @@ def analyze_from_experiment(metrics: ScenarioMetrics, provision_events: list[dic
 
             if node_created_ts:
                 # Nodes alive at run end use the last event timestamp as their end.
-                last_ts = max(ev.get("ts", 0.0) for ev in provision_events)
+                last_ts = max(ev.ts for ev in provision_events)
                 dynamic_hours = sum(
                     (node_deleted_ts.get(name, last_ts) - created) / 3600 for name, created in node_created_ts.items()
                 )

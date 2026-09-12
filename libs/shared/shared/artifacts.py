@@ -75,10 +75,12 @@ def read_result_dict(run_dir: Path) -> dict:
 
     The summary renders from a dict; going through the model means a field the
     summary reads is a field the model declares, so a renamed field cannot leave a
-    silent gap in the table.
+    silent gap in the table. Only fields the file actually carries are returned:
+    a measurement that was never taken must stay absent rather than becoming the
+    model's default zero, which the table reports differently.
     """
     result = read_result(run_dir)
-    return result.model_dump() if result is not None else {}
+    return result.model_dump(exclude_unset=True) if result is not None else {}
 
 
 def write_result(run_dir: Path, result: ExperimentResult) -> Path:
@@ -105,9 +107,21 @@ def write_manifest(run_dir: Path, manifest: RunManifest) -> Path:
 
 
 def read_manifest_git_commit(run_dir: Path) -> str:
-    """The commit a run ran from, or "" when the manifest is absent."""
+    """The commit a run ran from, or "" when it cannot be read.
+
+    A manifest written by an older version may not satisfy today's model; the
+    commit is the one field every run records and every reader of a bundle needs,
+    so it is recovered from the raw document when validation refuses the rest.
+    """
     manifest = read_manifest(run_dir)
-    return manifest.git_commit if manifest is not None else ""
+    if manifest is not None:
+        return manifest.git_commit
+    raw = _read_json(run_dir / MANIFEST_FILE)
+    if isinstance(raw, dict):
+        commit = raw.get("git_commit")
+        if isinstance(commit, str):
+            return commit
+    return ""
 
 
 # ---------------------------------------------------------------------------

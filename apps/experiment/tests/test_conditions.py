@@ -8,7 +8,6 @@ where the run would mean anything, and say which check failed when it does.
 from __future__ import annotations
 
 import pytest
-
 from experiment import conditions as conditions_module
 from experiment.conditions import ConditionsUnmet, RunConditions, apply
 
@@ -23,8 +22,8 @@ CLEAN_TESTBED = {
 
 
 def _patch(monkeypatch, *, testbed=None, nodes_ready=True, endpoints=(True, True), load_ratio=0.2, port_open=True):
-    from infra import readiness as readiness_module
     from experiment.stages import daemon as daemon_stage
+    from infra import readiness as readiness_module
 
     monkeypatch.setattr(readiness_module, "ensure_testbed", lambda **kw: testbed or dict(CLEAN_TESTBED))
     monkeypatch.setattr(readiness_module, "cluster_nodes_ready", lambda cluster: nodes_ready)

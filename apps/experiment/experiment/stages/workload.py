@@ -12,9 +12,7 @@ import time
 from pathlib import Path
 from typing import Callable, Dict, Optional
 
-
 import structlog
-
 from shared.config import settings
 from shared.models.calibration import get_calibration
 from shared.models.pipeline import PipelineContext, WorkloadResult

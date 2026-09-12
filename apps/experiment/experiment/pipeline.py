@@ -11,7 +11,6 @@ if TYPE_CHECKING:
     from rich.console import Console
 
 import structlog
-
 from shared.models.pipeline import PipelineContext, StageResult
 
 from experiment.stages.base import Stage

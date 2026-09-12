@@ -14,8 +14,6 @@ from pathlib import Path
 import numpy as np
 import structlog
 import typer
-from scipy import stats as scipy_stats
-
 from analysis.cold_start import (
     analyze_phase_a1_transition,
     compute_scenario_stats,
@@ -43,6 +41,8 @@ from analysis.constants import (
 from analysis.cost import analyze_from_experiment, compute_cost_proxy
 from analysis.data_loaders import build_results_final, group_by_scenario, load_experiment_metrics, load_phase_b_data
 from analysis.report import generate_report
+from scipy import stats as scipy_stats
+from shared.artifacts import read_provision_events, read_result_dict
 from shared.scenarios import SCENARIO_ORDER
 from shared.stats import bootstrap_ci, cohens_d, effect_size_label
 
@@ -363,8 +363,12 @@ def cost(
     ),
 ) -> None:
     """Unified AWS cloud cost analysis from experiment results."""
-    from analysis_cli.crossover import CF_BASE_FEE, CF_CPU_MS_RATE, CF_FREE_CPU_MS, CF_FREE_REQUESTS, CF_REQUEST_RATE
     from analysis_cli.crossover import (
+        CF_BASE_FEE,
+        CF_CPU_MS_RATE,
+        CF_FREE_CPU_MS,
+        CF_FREE_REQUESTS,
+        CF_REQUEST_RATE,
         GCP_FREE_GB_SEC,
         GCP_FREE_REQUESTS,
         GCP_FREE_VCPU_SEC,
@@ -393,16 +397,11 @@ def cost(
         metrics = load_experiment_metrics(rf)
 
         # Load provision events for per-node lifetime computation (scale-down aware)
-        provision_events_path = rf.parent / "provision_events.json"
-        provision_events = None
-        if provision_events_path.exists():
-            with open(provision_events_path) as pf:
-                provision_events = json.load(pf)
+        provision_events = read_provision_events(rf.parent)
 
         analysis = analyze_from_experiment(metrics, provision_events=provision_events)
         # Attach cluster utilization from result.json (not in ScenarioMetrics)
-        with open(rf) as f:
-            raw_result = json.load(f)
+        raw_result = read_result_dict(rf.parent)
         analysis["avg_cluster_cpu_pct"] = raw_result.get("avg_cluster_cpu_utilization_pct", 0)
         analysis["peak_cluster_cpu_pct"] = raw_result.get("peak_cluster_cpu_utilization_pct", 0)
         analysis["avg_cluster_mem_pct"] = raw_result.get("avg_cluster_mem_utilization_pct", 0)

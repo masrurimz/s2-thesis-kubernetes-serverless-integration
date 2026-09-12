@@ -7,7 +7,6 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 import structlog
-
 from shared.models.experiment import ExperimentResult, StatisticalComparison
 from shared.models.pipeline import PipelineContext
 
