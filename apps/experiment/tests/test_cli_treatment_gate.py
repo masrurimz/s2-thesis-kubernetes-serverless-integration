@@ -13,9 +13,8 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
-from rich.console import Console
-
 from experiment.cli import _run_single
+from rich.console import Console
 from shared.models.experiment import ExperimentConfig
 from shared.storage.journal import ExperimentJournal
 

@@ -10,7 +10,6 @@ from typing import Sequence
 
 import numpy as np
 from scipy import stats as scipy_stats
-
 from shared.models.experiment import PairedComparison, StatisticalComparison
 from shared.stats import (
     bootstrap_ci_diff,

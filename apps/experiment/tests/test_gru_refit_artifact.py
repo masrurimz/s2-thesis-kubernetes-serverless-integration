@@ -13,7 +13,6 @@ from __future__ import annotations
 import json
 
 import numpy as np
-
 from experiment.tuning.gru_study import build_splits, refit_and_evaluate
 
 

@@ -18,7 +18,6 @@ Domain-driven infrastructure package. Manages cluster lifecycle, serverless infr
 | `networking/haproxy/` | `HAProxyClient` + `HAProxyManager` + HAProxy configs |
 | `observability/prometheus/` | `PrometheusClient` + `PrometheusManager` + Prometheus configs |
 | `workloads/test_app/` | Go module: HTTP test app + `TestAppManager` |
-| `workloads/k6/` | `K6Runner` — k6 load test runner |
 | `diagnostics/` | `HealthChecker` — HTTP health checks |
 
 ## Design Principle: Domain-Driven

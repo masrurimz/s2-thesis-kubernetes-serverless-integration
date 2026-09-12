@@ -22,14 +22,14 @@ import structlog
 import uvicorn
 
 from routing.monitoring.slo_monitor import SLOMonitor, SLOConfig
-from routing.algorithm.algorithm1_v1 import Algorithm1Controller, Algorithm1Config
-from routing.algorithm.algorithm1_v2 import Algorithm1ControllerV2, Algorithm1ConfigV2
-from routing.algorithm.algorithm1_v3 import Algorithm1ControllerV3, Algorithm1ConfigV3
+from routing.algorithm.algorithm1_v3 import Algorithm1ControllerV3
+from routing.algorithm.registry import ControllerDeps, select_controller
 from routing.algorithm.weight_adjuster import HAProxyWeightAdjuster
 from routing.clients.gru_client import GRUClient
 from routing.scaling.cluster_controller import ClusterController, ScalingConfig
 from infra.cluster.k8s import K8sScaler
 from shared.models.calibration import get_calibration
+from shared.protocols.prediction import PredictionClient
 from shared.scenarios import Scenario, SCENARIO_CONFIGS
 from routing.daemon.metrics import (
     daemon_decision_total,
@@ -63,6 +63,7 @@ class RoutingDaemon:
         haproxy_stats_url: str = "http://localhost:8404/stats;csv",
         gru_server_url: str = "http://localhost:8090",
         api_port: int = 9104,
+        prediction_client: Optional[PredictionClient] = None,
     ):
         """
         Initialize the routing daemon.
@@ -95,31 +96,23 @@ class RoutingDaemon:
 
         controller_version = os.environ.get("CONTROLLER_VERSION", "v3")
 
-        if self.scenario in (Scenario.S3_HYBRID_REACTIVE, Scenario.S4_HYBRID_PREDICTIVE) and controller_version == "v3":
-            self.algorithm_controller = Algorithm1ControllerV3(
+        self.algorithm_controller = select_controller(
+            self.scenario,
+            controller_version,
+            ControllerDeps(
                 slo_monitor=self.slo_monitor,
-                config=Algorithm1ConfigV3(cooldown_sec=decision_interval, **get_calibration().to_v3_config_overrides()),
-            )
-            logger.info("Using V3 controller (Capacity-Driven)", scenario=scenario, version=controller_version)
-        elif self.scenario == Scenario.S4_HYBRID_PREDICTIVE and controller_version == "v2":
-            self.algorithm_controller = Algorithm1ControllerV2(
-                slo_monitor=self.slo_monitor,
-                config=Algorithm1ConfigV2(
-                    cooldown_sec=decision_interval,
-                    default_serverless_weight=self.scenario_config.knative_weight,
-                ),
-            )
-            logger.info("Using V2 controller (PID + Feedforward) for S4", scenario=scenario, version=controller_version)
-        else:
-            self.algorithm_controller = Algorithm1Controller(
-                slo_monitor=self.slo_monitor,
-                config=Algorithm1Config(
-                    cooldown_sec=decision_interval,
-                    default_k3s_weight=self.scenario_config.k3s_weight,
-                    default_knative_weight=self.scenario_config.knative_weight,
-                    load_change_threshold=0.15 if self.scenario_config.use_predictions else 0.3,
-                ),
-            )
+                decision_interval=decision_interval,
+                default_k3s_weight=self.scenario_config.k3s_weight,
+                default_knative_weight=self.scenario_config.knative_weight,
+                use_predictions=self.scenario_config.use_predictions,
+            ),
+        )
+        logger.info(
+            "controller_selected",
+            scenario=scenario,
+            version=controller_version,
+            kind=type(self.algorithm_controller).__name__,
+        )
 
         self.weight_adjuster = HAProxyWeightAdjuster(
             tcp_socket_host=haproxy_socket_host,
@@ -127,7 +120,9 @@ class RoutingDaemon:
             stats_url=haproxy_stats_url,
         )
 
-        self.gru_client = GRUClient(base_url=gru_server_url)
+        # The predictor is a seam: a test or a different model server supplies a
+        # client that satisfies PredictionClient, and the default stays the GRU one.
+        self.gru_client: PredictionClient = prediction_client or GRUClient(base_url=gru_server_url)
 
         self.current_weights = {
             "k3s": self.scenario_config.k3s_weight,
@@ -150,8 +145,10 @@ class RoutingDaemon:
         # Algorithm 2 scaling logic only runs when use_algorithm=True.
         self.k8s_scaler = K8sScaler()
         if self.scenario_config.use_algorithm:
-            controller_ver = os.environ.get("CONTROLLER_VERSION", "v3")
-            if controller_ver == "v3" and self.scenario in (Scenario.S3_HYBRID_REACTIVE, Scenario.S4_HYBRID_PREDICTIVE):
+            if controller_version == "v3" and self.scenario in (
+                Scenario.S3_HYBRID_REACTIVE,
+                Scenario.S4_HYBRID_PREDICTIVE,
+            ):
                 self.cluster_controller = ClusterController(
                     config=ScalingConfig(**get_calibration().to_scaling_config_overrides())
                 )

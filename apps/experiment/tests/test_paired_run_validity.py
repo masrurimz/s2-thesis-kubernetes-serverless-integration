@@ -15,7 +15,6 @@ from unittest.mock import MagicMock
 
 import pytest
 import typer
-
 from experiment.cli import paired_run
 from shared.models.evidence import TreatmentFidelity
 from shared.models.experiment import ExperimentResult

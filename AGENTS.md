@@ -156,6 +156,36 @@ systemctl --user stop graphify-watcher.service    # before a measurement window
 systemctl --user start graphify-watcher.service   # after
 ```
 
+### Reading a finished bundle
+
+A bundle is evidence other people and agents have to read. Three commands answer the
+questions it exists to answer, each with a table for a person and `--json` for a
+program; nothing about a bundle should need a script written beside it.
+
+```bash
+# What each run measured, and the conditions it was measured under.
+uv run thesis analysis runs results/experiments/phase-b/<bundle>
+# When the node tier arrived relative to the load, beside the tail it explains.
+uv run thesis analysis mechanism results/experiments/phase-b/<bundle>
+# How far each arm moved run to run, and the smallest p the design can attain (2^-n).
+uv run thesis analysis variance results/experiments/phase-b/<bundle>
+
+# Recompute the paired verdict from the bundle's own runs (--write updates the
+# artifacts; the runner's verdict is written once and can go stale against a fix).
+uv run thesis experiment analyze results/experiments/phase-b/<bundle> --json
+```
+
+A series of stages is a command too, rather than a shell loop beside the repo:
+
+```bash
+uv run thesis experiment series \
+  --stage h2-pair:pairs=5 --stage s4-point-sizing --stage baselines:runs=5 \
+  --json
+```
+
+It retries a failed stage once, stops the chain when a stage fails every attempt, and
+pauses the work-tree indexer for the whole window, restoring it even if a stage dies.
+
 Older invocations remain available for ad-hoc work:
 
 ```bash
@@ -181,9 +211,9 @@ uv run ruff format --check   # CI / hook verification
 uv run ty check              # type-check — do not add NEW errors
 ```
 
-* Baseline: `ruff check` is clean; `ty check` reports ~80 pre-existing diagnostics, almost all in `archived/` legacy code. Do not regress `ty`'s count; fix any `ty` error in code you touch.
-* Enforcement: a `prek` git hook (`.pre-commit-config.yaml`) runs `ruff check` and `ruff format --check` automatically on commit. Install once after cloning: `uv run prek install`.
-* `ty check` is wired as a **manual-stage** hook — it does NOT block commits (the `archived/` diagnostics otherwise would). Run it manually for type-sensitive changes: `uv run prek run --hook-stage manual ty-check`.
+* Baseline: `ruff check` and `ty check` are both clean. `archived/` is excluded from every tool (`pyproject.toml` `[tool.ty.src]`, ruff's `extend-exclude`, pytest's `norecursedirs`): it is a frozen pre-refactor snapshot, so its diagnostics are history rather than work.
+* Enforcement: a `prek` git hook (`.pre-commit-config.yaml`) runs `ruff check`, `ruff format --check` and `ty check` on commit. Install once after cloning: `uv run prek install`.
+* Import boundaries are enforced by `lint-imports` contracts in `pyproject.toml` (`[tool.importlinter]`), asserted by `libs/shared/tests/test_architecture.py` so the normal test run catches a boundary crossed. The protected contract bounds *importers* of `shared.artifacts`; it cannot see a module that opens the files directly, and `apps/dashboard/dashboard/loader.py` still does (deferred work, listed in the refactor design).
 * `prek` is a Rust drop-in for `pre-commit`, added as a dev dependency; `uv sync` installs it. Docs: https://prek.j178.dev
 
 ---

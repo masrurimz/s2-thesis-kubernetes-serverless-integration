@@ -26,9 +26,9 @@ Standalone Go module with `go.mod`. Built via `docker build`, deployed as both K
 
 ## k6
 
-The k6 JavaScript load test scripts are NOT here — they live in `apps/experiment/experiment/load_tests/` because they're experiment-specific workloads (ClarkNet replay, calibration, etc.). This package only contains the `K6Runner` Python class that executes k6 as a subprocess.
+The k6 JavaScript load test scripts are NOT here — they live in `apps/experiment/experiment/load_tests/` because they're experiment-specific workloads (ClarkNet replay, calibration, etc.). The stage that executes them is `apps/experiment/experiment/stages/workload.py`; this package holds deployment manifests, not the runner.
 
 ## Related packages
 
-- `apps/experiment/experiment/stages/workload.py` — Uses `K6Runner` to run experiments
+- `apps/experiment/experiment/stages/workload.py` — runs k6 itself and parses its handleSummary output
 - `apps/experiment/experiment/load_tests/` — k6 JavaScript scripts (canonical, calibration, legacy)

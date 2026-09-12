@@ -13,7 +13,6 @@ from typing import Any, Dict, List, Optional
 
 import requests
 import structlog
-
 from shared.config import settings
 from shared.models.calibration import get_calibration
 from shared.models.pipeline import PipelineContext

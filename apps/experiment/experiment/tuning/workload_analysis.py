@@ -10,12 +10,13 @@ AND forecast degradation (HyPA pattern, IEEE NFV-SDN 2023).
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Dict, List
 
 import numpy as np
 import structlog
+
+from shared.artifacts import read_prometheus_export, read_result
 
 logger = structlog.get_logger(__name__)
 
@@ -106,40 +107,28 @@ def detect_workload_shift(
 def analyze_workload_from_experiment(experiment_dir: str) -> Dict:
     """Analyze workload characteristics from experiment results.
 
-    Reads k6 result JSONs or resource utilization data to compute DCI
-    for the workload observed during an experiment.
+    DCI needs a demand series, and the demand series this repo records is the
+    exported ``prom_rps`` query — requests per second over the run window. The
+    utilization samples are capacity, not demand, and reading them here once
+    produced a zero DCI for every run whose resource file existed, because the keys
+    it looked for are not written by any producer.
     """
     exp_path = Path(experiment_dir)
 
-    # Try loading resource utilization JSON
-    resource_path = exp_path / "resource_utilization.json"
-    if resource_path.exists():
-        with open(resource_path) as f:
-            data = json.load(f)
+    series = read_prometheus_export(exp_path)
+    demand = [value for _, value in series.get("prom_rps", [])]
+    if demand:
+        return compute_dci(np.array(demand))
 
-        if isinstance(data, list) and len(data) > 0:
-            values = []
-            for entry in data:
-                rps = entry.get("haproxy_total_requests", entry.get("request_rate", entry.get("rps", 0)))
-                values.append(float(rps))
-
-            if values:
-                return compute_dci(np.array(values))
-
-    # Fallback: use result.json summary
-    result_path = exp_path / "result.json"
-    if result_path.exists():
-        with open(result_path) as f:
-            result = json.load(f)
-
-        throughput = result.get("throughput_rps", 0)
-
+    # Fallback: the run summary carries a single throughput figure, not a series.
+    result = read_result(exp_path)
+    if result is not None:
         return {
             "cv": 0.0,
             "zero_ratio": 0.0,
             "spikiness": 0.0,
             "dci_composite": 0.0,
-            "mean": round(throughput, 2),
+            "mean": round(result.throughput_rps, 2),
             "n_samples": 0,
             "note": "Estimated from summary metrics — no per-interval data available",
         }

@@ -14,7 +14,6 @@ matplotlib.use("Agg")
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
-
 from analysis.data_loaders import is_outlier, load_outliers, load_phase_b_data
 from shared.scenarios import SCENARIO_ORDER
 

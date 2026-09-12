@@ -7,7 +7,6 @@ from typing import Any, Dict, Optional
 
 import requests
 import structlog
-
 from shared.config import settings
 from shared.models.routing import HealthResponse, StatusResponse
 

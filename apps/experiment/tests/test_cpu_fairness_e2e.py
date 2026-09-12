@@ -25,6 +25,9 @@ def _cluster_running() -> bool:
 
 pytestmark = [
     pytest.mark.live,
+    # These drive real clusters and provision nodes; the hermetic timeout does not
+    # apply to work measured in minutes.
+    pytest.mark.timeout(0),
     pytest.mark.skipif(
         not _cluster_running(),
         reason="E2E requires thesis-hybrid cluster (run: uv run thesis infra setup)",

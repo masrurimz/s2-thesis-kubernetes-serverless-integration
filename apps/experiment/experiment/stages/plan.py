@@ -10,7 +10,6 @@ from datetime import datetime
 from pathlib import Path
 
 import structlog
-
 from shared.models.experiment import BatchManifest, RunManifest
 from shared.models.pipeline import PipelineContext
 

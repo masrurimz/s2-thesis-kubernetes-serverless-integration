@@ -79,6 +79,8 @@ def effect_size_label(d: float) -> str:
 
     Thresholds follow Cohen (1988): 0.2 / 0.5 / 0.8.
     """
+    if not np.isfinite(d):
+        return "undefined"
     ad = abs(d)
     if ad < 0.2:
         return "negligible"
@@ -148,34 +150,78 @@ def paired_bootstrap_ci(
     return float(lo), float(hi)
 
 
+# Above this many pairs the sign-flip space is enumerated by sampling instead of in
+# full: 2^20 arrangements is the last one that fits in a loop a person will wait for.
+_EXACT_PERMUTATION_MAX_PAIRS = 20
+
+
+def paired_permutation_p_from_diffs(
+    diffs: Sequence[float],
+    n_permutations: int = 10000,
+    seed: int = 42,
+) -> float:
+    """One-sided paired permutation p for H1: mean(comparison - baseline) < 0.
+
+    The statistic is the mean difference; the null distribution comes from flipping
+    each pair's sign, the observed arrangement included, so the smallest attainable
+    p is 2^-n — five pairs all in the hypothesised direction give 0.03125.
+
+    Exact for up to ``_EXACT_PERMUTATION_MAX_PAIRS`` pairs; larger samples are
+    sampled, seeded, so a rerun over the same data gives the same answer.
+    """
+    values = np.asarray(diffs, dtype=float)
+    n = len(values)
+    if n == 0:
+        return 1.0
+    observed = float(np.mean(values))
+
+    if n <= _EXACT_PERMUTATION_MAX_PAIRS:
+        totals = np.zeros(1, dtype=float)
+        for value in values:
+            totals = np.concatenate([totals + value, totals - value])
+        count = int(np.count_nonzero(totals / n <= observed))
+        return count / len(totals)
+
+    rng = np.random.default_rng(seed=seed)
+    count = 0
+    for _ in range(n_permutations):
+        signs = rng.choice([-1, 1], size=n)
+        if np.mean(values * signs) <= observed:
+            count += 1
+    # The observed arrangement is always one of the possibilities, so it counts:
+    # without it a maximal effect would be reported as p = 0, which no permutation
+    # test can attain.
+    return (count + 1) / (n_permutations + 1)
+
+
 def paired_permutation_test(
     baseline: Sequence[float],
     comparison: Sequence[float],
     n_permutations: int = 10000,
     seed: int = 42,
 ) -> float:
-    """One-sided paired permutation test: H0: mean(comparison - baseline) >= 0.
+    """One-sided paired permutation test: H1: comparison < baseline.
 
-    Under H0, swapping within pairs doesn't change the distribution.
-    Returns the fraction of permutations where the mean difference is <= 0
-    (i.e. p-value for the one-sided alternative that comparison < baseline).
+    ``paired_permutation_p_from_diffs`` on the per-pair differences; see it for the
+    exact/sampled split.
     """
     diffs = np.asarray(comparison, dtype=float) - np.asarray(baseline, dtype=float)
-    observed = np.mean(diffs)
-    rng = np.random.default_rng(seed=seed)
-    count = 0
-    n = len(diffs)
-    for _ in range(n_permutations):
-        signs = rng.choice([-1, 1], size=n)
-        if np.mean(diffs * signs) <= observed:
-            count += 1
-    return count / n_permutations
+    return paired_permutation_p_from_diffs(diffs, n_permutations=n_permutations, seed=seed)
 
 
 def cohens_d_paired(baseline: Sequence[float], comparison: Sequence[float]) -> float:
-    """Cohen's d for paired samples (mean_diff / sd_diff)."""
+    """Cohen's d for paired samples (mean_diff / sd_diff).
+
+    Undefined — NaN — for a single pair: the standard deviation of one difference is
+    not zero, it is unknown, and reporting a number there would let a one-pair bundle
+    name an effect size it cannot support.
+    """
     diffs = np.asarray(comparison, dtype=float) - np.asarray(baseline, dtype=float)
-    sd = np.std(diffs, ddof=1)
+    if len(diffs) < 2:
+        return float("nan")
+    sd = float(np.std(diffs, ddof=1))
+    if not np.isfinite(sd):
+        return float("nan")
     if sd == 0:
         return 0.0
     return float(np.mean(diffs) / sd)

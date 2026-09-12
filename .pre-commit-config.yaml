@@ -21,12 +21,19 @@ repos:
         types: ["python"]
         pass_filenames: false
         require_serial: true
+      - id: import-contracts
+        name: lint-imports
+        description: "Architecture contracts — layers and the one artifact loader. Config in pyproject.toml [tool.importlinter]."
+        entry: uv run lint-imports
+        language: system
+        types: ["python"]
+        pass_filenames: false
+        require_serial: true
       - id: ty-check
-        name: ty check (manual)
-        description: "Type-check. Not blocking (pre-existing archived/ diagnostics). Run: uv run prek run --hook-stage manual ty-check"
+        name: ty check
+        description: "Type-check — must be 0 errors. Config in pyproject.toml [tool.ty.src]."
         entry: uv run ty check
         language: system
         types: ["python"]
         pass_filenames: false
         require_serial: true
-        stages: ["manual"]

@@ -108,8 +108,8 @@ def reconcile(
     append_registry_audited_event(events_path, root, recon)
 
     # Regenerate the journal
-    from experiment.evidence.renderer import render_experiment_journal
     from experiment.evidence.registry import read_governance_events
+    from experiment.evidence.renderer import render_experiment_journal
 
     entries = list(recon.merged.values())
     events = read_governance_events(events_path)

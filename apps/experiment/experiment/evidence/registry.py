@@ -20,7 +20,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 import yaml
-
+from shared.artifacts import read_manifest_git_commit, read_result
 from shared.models.evidence import (
     ExperimentJournalEvent,
     ExperimentRegistryEntry,
@@ -106,21 +106,13 @@ def _make_bundle_id(root_name: str, dirname: str) -> str:
 
 
 def _read_result(path: Path) -> ExperimentResult | None:
-    """Read and parse a result.json into an ExperimentResult."""
-    try:
-        data = json.loads(path.read_text())
-        return ExperimentResult(**data)
-    except Exception:
-        return None
+    """Read a run's result through the artifact loader."""
+    return read_result(path.parent)
 
 
 def _read_git_commit(manifest_path: Path) -> str:
-    """Extract git_commit from a manifest.json."""
-    try:
-        data = json.loads(manifest_path.read_text())
-        return data.get("git_commit", "")
-    except Exception:
-        return ""
+    """Read the commit a run ran from through the artifact loader."""
+    return read_manifest_git_commit(manifest_path.parent)
 
 
 def _derive_run_fidelity(result: ExperimentResult) -> TreatmentFidelity | None:

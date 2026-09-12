@@ -14,8 +14,6 @@ from pathlib import Path
 import numpy as np
 import structlog
 import typer
-from scipy import stats as scipy_stats
-
 from analysis.cold_start import (
     analyze_phase_a1_transition,
     compute_scenario_stats,
@@ -43,6 +41,8 @@ from analysis.constants import (
 from analysis.cost import analyze_from_experiment, compute_cost_proxy
 from analysis.data_loaders import build_results_final, group_by_scenario, load_experiment_metrics, load_phase_b_data
 from analysis.report import generate_report
+from scipy import stats as scipy_stats
+from shared.artifacts import read_provision_events, read_result_dict
 from shared.scenarios import SCENARIO_ORDER
 from shared.stats import bootstrap_ci, cohens_d, effect_size_label
 
@@ -363,8 +363,12 @@ def cost(
     ),
 ) -> None:
     """Unified AWS cloud cost analysis from experiment results."""
-    from analysis_cli.crossover import CF_BASE_FEE, CF_CPU_MS_RATE, CF_FREE_CPU_MS, CF_FREE_REQUESTS, CF_REQUEST_RATE
     from analysis_cli.crossover import (
+        CF_BASE_FEE,
+        CF_CPU_MS_RATE,
+        CF_FREE_CPU_MS,
+        CF_FREE_REQUESTS,
+        CF_REQUEST_RATE,
         GCP_FREE_GB_SEC,
         GCP_FREE_REQUESTS,
         GCP_FREE_VCPU_SEC,
@@ -393,16 +397,11 @@ def cost(
         metrics = load_experiment_metrics(rf)
 
         # Load provision events for per-node lifetime computation (scale-down aware)
-        provision_events_path = rf.parent / "provision_events.json"
-        provision_events = None
-        if provision_events_path.exists():
-            with open(provision_events_path) as pf:
-                provision_events = json.load(pf)
+        provision_events = read_provision_events(rf.parent)
 
         analysis = analyze_from_experiment(metrics, provision_events=provision_events)
         # Attach cluster utilization from result.json (not in ScenarioMetrics)
-        with open(rf) as f:
-            raw_result = json.load(f)
+        raw_result = read_result_dict(rf.parent)
         analysis["avg_cluster_cpu_pct"] = raw_result.get("avg_cluster_cpu_utilization_pct", 0)
         analysis["peak_cluster_cpu_pct"] = raw_result.get("peak_cluster_cpu_utilization_pct", 0)
         analysis["avg_cluster_mem_pct"] = raw_result.get("avg_cluster_mem_utilization_pct", 0)
@@ -874,6 +873,94 @@ def gru_metrics(
     from analysis_cli.gru_metrics import compute_percentage_metrics
 
     compute_percentage_metrics(output_dir.resolve() if output_dir else None)
+
+
+# ---------------------------------------------------------------------------
+# Bundle evidence: the tables a reader asks a finished bundle for
+# ---------------------------------------------------------------------------
+
+
+def _emit_json(payload) -> None:
+    """The machine-readable half: the same fields the table prints, as data."""
+    typer.echo(json.dumps(payload, indent=2, default=str))
+
+
+@app.command()
+def runs(
+    bundle: Path = typer.Argument(..., help="Bundle directory holding per-run result.json files"),
+    as_json: bool = typer.Option(False, "--json", help="Emit the payload as JSON instead of a table"),
+) -> None:
+    """What each run measured, and the conditions it was measured under."""
+    from analysis.bundle_evidence import as_payload, run_evidence
+
+    rows = run_evidence(bundle)
+    if as_json:
+        _emit_json(as_payload(rows))
+        return
+    header = (
+        f"{'scenario':22} {'run':>3} {'valid':>5} {'p99 ms':>8} {'slo':>6} "
+        f"{'nodes':>5} {'delay s':>7} {'delivered':>9} {'load':>5}"
+    )
+    typer.echo(header)
+    for row in rows:
+        typer.echo(
+            f"{row.scenario:22} {row.run_id:3} {str(row.valid):>5} {row.p99_latency_ms:8.1f} "
+            f"{row.slo_violations:6} {row.nodes_provisioned:5} {row.first_provision_delay_sec:7.1f} "
+            f"{str(row.prediction_delivered):>9} "
+            f"{(f'{row.host_load_ratio:.3f}' if row.host_load_ratio is not None else 'n/a'):>5}"
+        )
+    typer.echo(f"\n{len(rows)} run(s); host load is the conditions gate's busy-to-cores ratio.")
+
+
+@app.command()
+def mechanism(
+    bundle: Path = typer.Argument(..., help="Bundle directory holding per-run artifacts"),
+    as_json: bool = typer.Option(False, "--json", help="Emit the payload as JSON"),
+) -> None:
+    """When the node tier arrived relative to the load, beside the tail it explains."""
+    from analysis.bundle_evidence import as_payload, mechanism_rows
+
+    rows = mechanism_rows(bundle)
+    if as_json:
+        _emit_json(as_payload(rows))
+        return
+    typer.echo(f"{'scenario':22} {'run':>3} {'p99 ms':>8} {'prov delay s':>12} {'node at +s':>10} {'% serverless':>12}")
+    for row in rows:
+        offset = f"{row.node_arrival_offset_sec:.1f}" if row.node_arrival_offset_sec is not None else "n/a"
+        share = f"{row.serverless_share_pct:.1f}" if row.serverless_share_pct is not None else "n/a"
+        typer.echo(
+            f"{row.scenario:22} {row.run_id:3} {row.p99_latency_ms:8.1f} "
+            f"{row.provisioning_delay_sec:12.1f} {offset:>10} {share:>12}"
+        )
+    typer.echo("\nnode at +s is measured from the run's first provisioner event.")
+
+
+@app.command()
+def variance(
+    bundle: Path = typer.Argument(..., help="Bundle directory holding per-run result.json files"),
+    as_json: bool = typer.Option(False, "--json", help="Emit the payload as JSON"),
+) -> None:
+    """How far each arm moved run to run, and what n pairs can resolve."""
+    from analysis.bundle_evidence import as_payload, variance_summary
+
+    summary = variance_summary(bundle)
+    if as_json:
+        _emit_json(as_payload(summary))
+        return
+    typer.echo(f"{'scenario':22} {'n':>3} {'mean p99':>9} {'sd':>7} {'min':>8} {'max':>8}")
+    for arm in summary.arms:
+        typer.echo(
+            f"{arm.scenario:22} {arm.n:3} {arm.mean_p99_ms:9.1f} {arm.sd_p99_ms:7.1f} "
+            f"{arm.min_p99_ms:8.1f} {arm.max_p99_ms:8.1f}"
+        )
+    if summary.n_pairs:
+        diffs = " ".join(f"{d:+.1f}" for d in summary.pair_differences_ms)
+        typer.echo(f"\npaired differences (ms): {diffs}")
+        typer.echo(f"mean {summary.mean_difference_ms:+.1f} ms", nl=False)
+        if summary.sd_difference_ms is not None:
+            typer.echo(f", sd {summary.sd_difference_ms:.1f} ms", nl=False)
+        typer.echo(f"; smallest attainable p at {summary.n_pairs} pairs: {summary.smallest_attainable_p:.5f}")
+    typer.echo(f"\n{summary.note}")
 
 
 if __name__ == "__main__":

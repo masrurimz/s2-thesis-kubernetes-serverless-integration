@@ -6,9 +6,12 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 from statistics import fmean, stdev
+from typing import TypeGuard
 
 import yaml
+from shared.artifacts import read_manifest_git_commit, read_result_dict
 from shared.models.evidence import NodeEngagement
+from shared.stats import paired_permutation_p_from_diffs
 
 NA = "n/a"
 _PERMUTATION_MAX_PAIRS = 20
@@ -104,8 +107,8 @@ def _read_events(path: Path) -> list[dict]:
 
 
 def _git_commit(run_dir: Path) -> str | None:
-    commit = _read_json(run_dir / "manifest.json").get("git_commit")
-    if isinstance(commit, str) and commit:
+    commit = read_manifest_git_commit(run_dir)
+    if commit:
         return commit
     for event in _read_events(run_dir / "events.jsonl"):
         commit = event.get("git_commit")
@@ -138,7 +141,7 @@ def _discover_runs(bundle_dir: Path) -> list[Run]:
         scenario, sep, suffix = run_dir.name.rpartition("_run")
         if not sep or not suffix.isdigit():
             continue
-        result = _read_json(run_dir / "result.json")
+        result = read_result_dict(run_dir)
         if not result:
             continue
         runs.append(
@@ -194,12 +197,18 @@ def _fmt(value: float | None, spec: str = ".1f") -> str:
     return NA if value is None else format(value, spec)
 
 
-def _numeric(value: object) -> bool:
+def _numeric(value: object) -> TypeGuard[float]:
+    """True when the value is a real number a table may aggregate."""
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
 def _mean_over(runs: list[Run], field: str) -> float | None:
-    values = [v for run in runs if _numeric(v := run.result.get(field))]
+    """Mean of a numeric field across runs; None when no run recorded one."""
+    values: list[float] = []
+    for run in runs:
+        value = run.result.get(field)
+        if _numeric(value):
+            values.append(float(value))
     return fmean(values) if values else None
 
 
@@ -272,20 +281,16 @@ def _cohens_d_paired(diffs: list[float]) -> float | None:
 
 
 def _permutation_p_one_sided(diffs: list[float]) -> float | None:
+    """The paired permutation p for H1: S4 faster than S3.
+
+    Same definition the paired analysis writes into ``paired_analysis.json`` — one
+    implementation, so a bundle cannot report two p-values for the same pairs. An
+    effect running the other way scores 1.0, which is what "no evidence for H2"
+    looks like.
+    """
     if not diffs or len(diffs) > _PERMUTATION_MAX_PAIRS:
         return None
-    observed_total = sum(diffs)
-    if observed_total == 0:
-        return 1.0
-    sums = [0.0]
-    for diff in diffs:
-        sums = [s + diff for s in sums] + [s - diff for s in sums]
-    at_least_as_extreme = (
-        sum(1 for s in sums if s >= observed_total)
-        if observed_total > 0
-        else sum(1 for s in sums if s <= observed_total)
-    )
-    return at_least_as_extreme / len(sums)
+    return paired_permutation_p_from_diffs(diffs)
 
 
 @dataclass
@@ -353,7 +358,7 @@ def _paired(baseline: str, comparison: str, by_scenario: dict[str, list[Run]]) -
         lines.append(
             f"- Mean Δ{metric.label}: {_fmt(mean_diff, '+.1f')}{unit}, "
             f"paired Cohen's d: {_fmt(_cohens_d_paired(diffs), '.2f')}, "
-            f"exact one-sided permutation p: {_fmt(_permutation_p_one_sided(diffs), '.4f')} "
+            f"exact one-sided permutation p (H1: S4 faster): {_fmt(_permutation_p_one_sided(diffs), '.4f')} "
             f"({_significance(diffs)} 0.05)."
         )
     lines.append("")

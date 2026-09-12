@@ -6,18 +6,23 @@ HTTP client for querying GRU prediction server at localhost:8090.
 """
 
 import time
-from typing import List, Optional
+from typing import Optional, Sequence
 
 import requests
 import structlog
 
 from shared.models.prediction import PredictionResult
+from shared.protocols.prediction import PredictionClient
 
 logger = structlog.get_logger(__name__)
 
 
-class GRUClient:
-    """HTTP client for GRU prediction server."""
+class GRUClient(PredictionClient):
+    """HTTP client for GRU prediction server.
+
+    Subclasses the protocol so a missing or mismatched member is a type error
+    rather than a surprise the first time a substitution is tried.
+    """
 
     def __init__(
         self,
@@ -76,7 +81,7 @@ class GRUClient:
 
     def predict(
         self,
-        history: List[float],
+        history: Sequence[float],
         horizon: int = 5,
     ) -> PredictionResult:
         """

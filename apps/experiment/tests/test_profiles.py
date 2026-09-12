@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from experiment.profiles import PROFILES, get_profile, profile_names
 
 

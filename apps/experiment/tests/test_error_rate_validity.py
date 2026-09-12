@@ -9,9 +9,8 @@ consulted the request failure rate.
 from __future__ import annotations
 
 import pytest
-
 from experiment.stages.validate import evaluate_run_validity
-from experiment.stages.workload import WorkloadStage
+from experiment.stages.workload import K6Summary
 from shared.models.experiment import ExperimentResult
 
 
@@ -66,8 +65,17 @@ def _delivered_daemon() -> dict:
 
 class TestErrorRateExtraction:
     def test_error_rate_comes_from_http_req_failed(self):
-        out = WorkloadStage._extract_metrics(_k6_summary(0.91), "s4-hybrid-predictive", 1)
-        assert out["metrics"]["error_rate"] == pytest.approx(0.91)
+        summary = K6Summary.from_handle_summary(_k6_summary(0.91), "s4-hybrid-predictive", 1)
+        assert summary.metrics.error_rate == pytest.approx(0.91)
+
+    def test_the_tail_falls_back_to_p95_when_k6_omits_p99(self):
+        """A summary without a tail number must not be read as a zero tail."""
+        raw = _k6_summary(0.0)
+        del raw["metrics"]["http_req_duration"]["values"]["p(99)"]
+
+        summary = K6Summary.from_handle_summary(raw, "s3-hybrid-reactive", 2)
+
+        assert summary.metrics.p99_latency_ms == pytest.approx(68.43)
 
 
 class TestFailureRateValidityGate:

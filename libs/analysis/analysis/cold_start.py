@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
+from shared.scenarios import SLO_THRESHOLD_MS
 
 from analysis.constants import (
     COLD_START_MS_S3,
@@ -17,7 +18,6 @@ from analysis.constants import (
     COLD_START_RANGE,
     PHASE_A1_DECISIONS,
 )
-from shared.scenarios import SLO_THRESHOLD_MS
 
 
 @dataclass

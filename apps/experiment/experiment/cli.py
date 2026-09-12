@@ -17,18 +17,24 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
-import typer
 import structlog
-
+import typer
+from shared.artifacts import (
+    read_result,
+    result_validation_error,
+    write_manifest,
+    write_provision_events,
+    write_result,
+)
 from shared.models.experiment import ExperimentConfig, ExperimentResult
 
 from experiment.profiles import get_profile, profile_names
 
 if TYPE_CHECKING:
     from rich.console import Console
+    from shared.models.pipeline import PipelineContext
 
     from experiment.conditions import RunConditions
-    from shared.models.pipeline import PipelineContext
 
 app = typer.Typer(help="Experiment orchestration")
 logger = structlog.get_logger(__name__)
@@ -276,7 +282,8 @@ def preflight(
     from rich.console import Console
     from rich.table import Table
 
-    from experiment.conditions import ConditionsUnmet, RunConditions, apply as apply_conditions
+    from experiment.conditions import ConditionsUnmet, RunConditions
+    from experiment.conditions import apply as apply_conditions
 
     console = Console()
 
@@ -344,13 +351,11 @@ def validate(
     # Validate each result against ExperimentResult schema
     valid_count = 0
     for rf in result_files:
-        try:
-            with open(rf) as f:
-                data = json.load(f)
-            ExperimentResult(**data)
+        reason = result_validation_error(rf.parent)
+        if reason is None:
             valid_count += 1
-        except Exception as e:
-            console.print(f"[red]Invalid result {rf}: {e}[/red]")
+        else:
+            console.print(f"[red]Invalid result {rf}: {reason.splitlines()[0]}[/red]")
 
     console.print(f"\n[green]{valid_count}/{len(result_files)} results validated[/green]")
 
@@ -409,7 +414,7 @@ def dynamic(
 
     from rich.console import Console
 
-    from experiment.dynamic import RESULTS_BASE, K6_SCRIPT, run_dynamic_experiment
+    from experiment.dynamic import K6_SCRIPT, RESULTS_BASE, run_dynamic_experiment
 
     console = Console()
     scenario_list = [s.strip() for s in scenarios.split(",")]
@@ -509,6 +514,146 @@ def summary(
 
 
 @app.command()
+def series(
+    stage: list[str] = typer.Option(
+        ...,
+        "--stage",
+        help="Profile to run, optionally with overrides: profile[:pairs=N,output=PATH,...]. Repeat for a chain.",
+    ),
+    max_attempts: int = typer.Option(2, help="Attempts per stage before the chain stops"),
+    log: Optional[str] = typer.Option(
+        None, help="Log file (default: ~/.local/state/thesis-run/series-<timestamp>.log)"
+    ),
+    pause_indexer: bool = typer.Option(
+        True, "--pause-indexer/--no-pause-indexer", help="Stop the work-tree indexer for the window"
+    ),
+    as_json: bool = typer.Option(False, "--json", help="Emit the stage outcomes as JSON"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Print the commands and run nothing"),
+) -> None:
+    """Run a chain of profiles as one series.
+
+    A stage that fails is retried; one that fails every attempt stops the chain, since
+    the next stage assumes the stack the last one left. The indexer that watches this
+    work tree is paused for the whole window and restored afterwards.
+    """
+    from experiment.series import json_payload, parse_stage, run_series, summarise
+    from rich.console import Console
+
+    console = Console()
+    try:
+        specs = [parse_stage(spec) for spec in stage]
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2) from exc
+
+    if dry_run:
+        for spec in specs:
+            console.print("  " + " ".join(spec.command()))
+        return
+
+    def indexer(action: str) -> bool:
+        if not pause_indexer:
+            return False
+        from experiment.series import _default_indexer
+
+        return _default_indexer(action)
+
+    outcomes = run_series(
+        specs,
+        max_attempts=max_attempts,
+        log_path=Path(log) if log else None,
+        indexer=indexer,
+    )
+    if as_json:
+        typer.echo(json_payload(outcomes))
+    else:
+        console.print(summarise(outcomes))
+        console.print(f"log: {log or '~/.local/state/thesis-run/series-<timestamp>.log'}")
+    if not all(outcome.ok for outcome in outcomes):
+        raise typer.Exit(1)
+
+
+@app.command(name="analyze")
+def analyze_bundle(
+    bundle: str = typer.Argument(..., help="Bundle directory with per-run result.json files"),
+    write: bool = typer.Option(False, "--write", help="Rewrite paired_analysis.json and SUMMARY.md"),
+    as_json: bool = typer.Option(False, "--json", help="Emit the verdict as JSON"),
+    print_report: bool = typer.Option(True, "--print/--no-print", help="Print the human verdict"),
+) -> None:
+    """Recompute a bundle's paired verdict from its own runs.
+
+    The runner writes the verdict once, when the stage ends. This recomputes it on
+    demand — after a statistics fix, or to ask a finished bundle the question again —
+    from the same artifacts, so the answer a reader quotes comes from the code in
+    front of them rather than from whatever produced the file.
+    """
+    import json as _json
+
+    from analysis.comparison import run_paired_comparison
+    from experiment.summary import write_summary
+    from rich.console import Console
+
+    console = Console()
+    bundle_path = Path(bundle)
+    s3_results, s4_results, pair_ids = _collect_pairs(bundle_path)
+    if not s3_results:
+        console.print(f"[red]No valid pairs in {bundle}[/red]")
+        raise typer.Exit(1)
+
+    primary = run_paired_comparison(
+        [r.p99_latency_ms for r in s3_results],
+        [r.p99_latency_ms for r in s4_results],
+        metric="p99_latency_ms",
+        pair_ids=pair_ids,
+        label="H2-primary",
+    )
+    payload = {
+        "bundle": str(bundle_path),
+        "n_pairs": primary.n_pairs,
+        "pair_ids": list(primary.pair_ids),
+        "baseline_mean_ms": primary.baseline_mean,
+        "comparison_mean_ms": primary.comparison_mean,
+        "mean_difference_ms": primary.mean_difference,
+        "paired_ci_lower_ms": primary.paired_ci_lower,
+        "paired_ci_upper_ms": primary.paired_ci_upper,
+        "permutation_p_value": primary.permutation_p_value,
+        "cohens_d_paired": primary.cohens_d_paired,
+        "effect_size_interpretation": primary.effect_size_interpretation,
+        "smallest_attainable_p": float(2.0**-primary.n_pairs),
+        "h2_supported": primary.h2_supported,
+        "baseline_values_ms": list(primary.baseline_values),
+        "comparison_values_ms": list(primary.comparison_values),
+    }
+
+    if write:
+        _write_paired_analysis(str(bundle_path), s3_results, s4_results, list(pair_ids), console)
+        payload["summary_path"] = str(write_summary(bundle_path))
+        payload["analysis_path"] = str(bundle_path / "paired_analysis.json")
+
+    if as_json:
+        # typer.echo, not the rich console: a JSON payload a program must parse cannot
+        # come back soft-wrapped to the terminal width.
+        typer.echo(_json.dumps(payload, indent=2, default=str))
+        return
+    if print_report:
+        console.print(f"[bold]H2 paired verdict[/bold] — {bundle_path.name}, {payload['n_pairs']} pair(s)")
+        console.print(
+            f"  S3 mean {payload['baseline_mean_ms']:.1f} ms  vs  S4 mean {payload['comparison_mean_ms']:.1f} ms"
+        )
+        console.print(
+            f"  Δ {payload['mean_difference_ms']:+.1f} ms  95% CI "
+            f"[{payload['paired_ci_lower_ms']:+.1f}, {payload['paired_ci_upper_ms']:+.1f}]"
+        )
+        console.print(
+            f"  permutation p {payload['permutation_p_value']:.4f} (smallest attainable at n={payload['n_pairs']}: "
+            f"{payload['smallest_attainable_p']:.5f})  d {payload['cohens_d_paired']:.3f} "
+            f"({payload['effect_size_interpretation']})"
+        )
+        verdict = "supported" if payload["h2_supported"] else "not supported"
+        console.print(f"  verdict: H2 {verdict}")
+
+
+@app.command()
 def reproduce(
     profile: str = typer.Option(..., "--profile", help=f"Experiment profile: {', '.join(profile_names())}"),
     pairs: Optional[int] = typer.Option(None, help="Override the profile's pair count"),
@@ -587,8 +732,10 @@ def reproduce(
             console.print(f"  daemon environment: {key}={value}")
         return
 
-    from experiment.conditions import RunConditions, apply as apply_conditions
     from infra.readiness import rebuild_testbed
+
+    from experiment.conditions import RunConditions
+    from experiment.conditions import apply as apply_conditions
 
     cluster = os.environ.get("K3D_CLUSTER_NAME", "thesis-hybrid")
     run_conditions = RunConditions(
@@ -732,13 +879,8 @@ def reproduce(
 
 
 def _load_result(run_dir: Path) -> Optional[ExperimentResult]:
-    path = run_dir / "result.json"
-    if not path.exists():
-        return None
-    try:
-        return ExperimentResult(**json.loads(path.read_text()))
-    except Exception:
-        return None
+    """Read a run's result through the artifact loader."""
+    return read_result(run_dir)
 
 
 def _load_run_results(bundle_path: Path) -> list[ExperimentResult]:
@@ -1027,7 +1169,7 @@ def _write_paired_analysis(
     """Write the paired comparison for the collected pairs and report the verdict."""
     from datetime import datetime
 
-    from analysis.comparison import run_paired_comparison, apply_holm_paired
+    from analysis.comparison import apply_holm_paired, run_paired_comparison
 
     s3_p99 = [r.p99_latency_ms for r in s3_results]
     s4_p99 = [r.p99_latency_ms for r in s4_results]
@@ -1220,7 +1362,6 @@ def _run_replicated(
     order identical to a fresh run.
     """
     from rich.console import Console
-
     from shared.progress import (
         countdown,
         create_progress,
@@ -1249,10 +1390,10 @@ def _run_replicated(
 
             if dry_run:
                 from experiment.pipeline import Pipeline
-                from experiment.stages.reset import ResetStage
-                from experiment.stages.daemon import DaemonStage
-                from experiment.stages.workload import WorkloadStage
                 from experiment.stages.collect import CollectStage
+                from experiment.stages.daemon import DaemonStage
+                from experiment.stages.reset import ResetStage
+                from experiment.stages.workload import WorkloadStage
 
                 stages = [ResetStage(), DaemonStage(), WorkloadStage(), CollectStage()]
                 pipeline = Pipeline(stages, ctx)
@@ -1320,25 +1461,26 @@ def _run_single(
     from datetime import datetime
 
     from rich.console import Console
-
     from shared.progress import countdown, run_phase
 
     if console is None:
         console = Console()
 
-    from shared.models.experiment import ExperimentResult, RunManifest
-    from experiment.stages.reset import ResetStage
-    from experiment.stages.daemon import DaemonStage
-    from experiment.stages.workload import WorkloadStage
-    from experiment.stages.collect import CollectStage
     from infra.cluster.k3d.autoscaler import K3dAutoscalerAdapter
+    from shared.models.experiment import ExperimentResult, RunManifest
+
+    from experiment.stages.collect import CollectStage
+    from experiment.stages.daemon import DaemonStage
+    from experiment.stages.reset import ResetStage
+    from experiment.stages.workload import WorkloadStage
 
     run_dir = Path(output_dir) / f"{scenario}_run{run_id}"
     run_dir.mkdir(parents=True, exist_ok=True)
 
     condition_report: dict = {}
     if conditions is not None:
-        from experiment.conditions import ConditionsUnmet, apply as apply_conditions
+        from experiment.conditions import ConditionsUnmet
+        from experiment.conditions import apply as apply_conditions
 
         try:
             condition_report = apply_conditions(conditions, scenario=scenario, console=console)
@@ -1361,6 +1503,7 @@ def _run_single(
     logger.info("run_start", scenario=scenario, run_id=run_id, order=run_order_idx)
     from shared.models.evidence import TreatmentFidelity
     from shared.storage.journal import ExperimentJournal
+
     from experiment.stages.validate import evaluate_node_engagement, evaluate_run_validity
 
     journal = ExperimentJournal(
@@ -1461,7 +1604,7 @@ def _run_single(
                     validity_gate_passed=False,
                     treatment_fidelity=preflight_fidelity,
                 )
-                (run_dir / "result.json").write_text(preflight_result.model_dump_json(indent=2))
+                write_result(run_dir, preflight_result)
                 journal.record(
                     journal.new_event(
                         "run_failed",
@@ -1499,8 +1642,7 @@ def _run_single(
             timestamp=datetime.now().isoformat(),
             conditions=condition_report,
         )
-        with open(run_dir / "manifest.json", "w") as f:
-            json.dump(manifest.model_dump(), f, indent=2)
+        write_manifest(run_dir, manifest)
 
         # (C.warm-up) 30s idle warm-up
         logger.info("warmup_start", seconds=WARMUP_SEC)
@@ -1582,8 +1724,7 @@ def _run_single(
             first_created = next((ts for ts, et, _ in prov_log if et in prov_success_events), None)
             if first_pending and first_created:
                 result.first_provision_delay_sec = first_created - first_pending
-            with open(run_dir / "provision_events.json", "w") as f:
-                json.dump([{"ts": ts, "event": et, "data": d} for ts, et, d in prov_log], f, indent=2)
+            write_provision_events(run_dir, prov_log)
             result.provision_log_path = str(run_dir / "provision_events.json")
         result.predictive_count = daemon_status.get("predictive_count", 0)
         result.optimize_cost_count = daemon_status.get("optimize_cost_count", 0)
@@ -1621,8 +1762,7 @@ def _run_single(
         )
 
         # Save result
-        with open(run_dir / "result.json", "w") as f:
-            json.dump(result.model_dump(), f, indent=2)
+        write_result(run_dir, result)
 
         logger.info("run_complete", scenario=scenario, run_id=run_id, p99=result.p99_latency_ms)
         journal.record(journal.new_event("run_completed", scenario=scenario, run_id=run_id))

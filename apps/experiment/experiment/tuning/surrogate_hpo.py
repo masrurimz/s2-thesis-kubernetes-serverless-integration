@@ -29,15 +29,15 @@ References:
 """
 
 import json
-import logging
 import pickle
-from typing import Any, Optional
-
 from datetime import datetime
 from pathlib import Path
-import numpy as np
+from typing import Any, Optional
 
-logger = logging.getLogger(__name__)
+import numpy as np
+import structlog
+
+logger = structlog.get_logger(__name__)
 
 # Project root (parent of apps/experiment/)
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
@@ -173,7 +173,7 @@ def fit_gp_surrogate(
         Fitted GaussianProcessRegressor.
     """
     from sklearn.gaussian_process import GaussianProcessRegressor
-    from sklearn.gaussian_process.kernels import ConstantKernel, RBF, WhiteKernel
+    from sklearn.gaussian_process.kernels import RBF, ConstantKernel, WhiteKernel
 
     # Use only 2D (target_cpu_util, kp_burn)
     X_2d = X[:, :2].copy()

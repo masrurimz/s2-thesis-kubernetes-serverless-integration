@@ -10,10 +10,10 @@ from datetime import datetime
 from typing import Any
 
 import numpy as np
-
-from analysis.constants import BETA_VALUES
 from shared.models.experiment import StatisticalComparison
 from shared.scenarios import SCENARIO_LABELS, SCENARIO_ORDER
+
+from analysis.constants import BETA_VALUES
 
 
 def generate_report(

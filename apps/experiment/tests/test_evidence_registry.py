@@ -14,7 +14,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from experiment.evidence.registry import (
     legacy_backfill,
     load_registry,
@@ -23,7 +22,6 @@ from experiment.evidence.registry import (
     write_registry,
 )
 from shared.models.evidence import ExperimentRegistryEntry, TreatmentFidelity
-
 
 # ---------------------------------------------------------------------------
 # Fixture helpers

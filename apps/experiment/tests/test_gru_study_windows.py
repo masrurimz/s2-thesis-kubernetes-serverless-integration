@@ -8,7 +8,6 @@ window strictly inside the test portion.
 """
 
 import pytest
-
 from experiment.tuning.gru_study import CLARKNET_TOTAL, DEFAULT_HORIZON, build_splits
 
 REPLAY_START, REPLAY_END = 28940, 29020  # ticket-frozen replay window, series index space

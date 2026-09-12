@@ -9,7 +9,6 @@ from typing import List
 
 import numpy as np
 import structlog
-
 from shared.models.experiment import ExperimentResult, PairedComparison, StatisticalComparison
 from shared.models.pipeline import PipelineContext
 

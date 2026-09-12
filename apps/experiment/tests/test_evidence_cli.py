@@ -12,16 +12,14 @@ import json
 from pathlib import Path
 
 import pytest
-from typer.testing import CliRunner
-
 from experiment.cli import app
-from experiment.evidence.renderer import render_experiment_journal
 from experiment.evidence.registry import (
     scan_bundles,
     write_registry,
 )
+from experiment.evidence.renderer import render_experiment_journal
 from shared.models.evidence import ExperimentJournalEvent, ExperimentRegistryEntry
-
+from typer.testing import CliRunner
 
 runner = CliRunner()
 

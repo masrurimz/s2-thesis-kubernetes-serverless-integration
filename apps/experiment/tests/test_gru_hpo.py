@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
 from experiment.tuning.gru_hpo import (
     compute_objective,
     evaluate_promotion_gate,
@@ -16,7 +15,6 @@ from experiment.tuning.gru_hpo import (
     persistence_baseline,
     temporal_split,
 )
-
 
 # ── Temporal split ───────────────────────────────────────────────────────────
 

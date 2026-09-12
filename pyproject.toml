@@ -96,7 +96,45 @@ dev = [
     "ruff>=0.15.20",
     "ty>=0.0.56",
     "prek>=0.4",
+    "import-linter",
+    "pytest-timeout",
+    "hypothesis",
+    "mutmut",
 ]
+
+[tool.importlinter]
+# The layering the code actually has, read off the import graph before it was written
+# down: the unified CLI composes apps; apps may use the prediction service, the
+# libraries and shared; libraries use shared; shared uses nothing above it.
+root_packages = [
+    "cli",
+    "experiment",
+    "analysis_cli",
+    "dashboard",
+    "routing",
+    "prediction",
+    "infra",
+    "analysis",
+    "shared",
+]
+exclude_type_checking_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Entry point over apps over libraries over shared"
+type = "layers"
+layers = [
+    "cli",
+    "experiment | analysis_cli | dashboard | routing",
+    "prediction",
+    "infra | analysis",
+    "shared",
+]
+
+[[tool.importlinter.contracts]]
+name = "One loader for run artifacts"
+type = "protected"
+protected_modules = ["shared.artifacts"]
+allowed_importers = ["experiment", "analysis", "analysis_cli"]
 
 [tool.ruff]
 target-version = "py312"
@@ -117,8 +155,11 @@ ignore = ["E402"]
 quote-style = "double"
 
 
-[tool.ty]
-# exclude is not a valid top-level field for ty; paths are filtered via CLI args
+[tool.ty.src]
+# The archived/ snapshot is a frozen pre-refactor copy of the codebase: its diagnostics
+# are history, not work, and they are the only reason the type check used to be a
+# manual-stage hook. Excluding it lets ty gate commits on code that is actually live.
+exclude = ["archived/**"]
 
 [tool.pytest.ini_options]
 # Modern layout per the pytest docs: several packages carry their own tests/
@@ -130,3 +171,20 @@ testpaths = ["apps", "libs"]
 markers = [
     "live: touches the real k3d clusters and Docker; run explicitly with -m live, never while an experiment is running",
 ]
+# A hung test fails instead of stalling a measurement window. The live tier opts out
+# per module; those runs are minutes long by nature.
+timeout = 120
+norecursedirs = ["archived", ".*", "build", "dist", "node_modules", "venv", "{arch}"]
+timeout_method = "signal"
+
+[tool.mutmut]
+# Scope, not a repo-wide gate: these are the modules where a mutation would restore a
+# bug this refactor removed. Run with `uv run mutmut run`. The tests directory is the
+# repo root so a mutant is judged by the whole hermetic suite rather than by one
+# package's tests — the modules under test are consumed from three packages.
+paths_to_mutate = [
+    "libs/shared/shared/artifacts.py",
+    "apps/experiment/experiment/tuning/workload_analysis.py",
+    "apps/routing/routing/algorithm/registry.py",
+]
+tests_dir = "."

@@ -38,13 +38,15 @@ from typing import Any, Callable
 
 import numpy as np
 import structlog
+from prediction.gru_predictor import GRUConfig, GRUPredictor
+from shared.stats import cohens_d_paired, paired_permutation_test
 
 from experiment.tuning.gru_hpo import (
     DEFAULT_HORIZON,
+    EVAL_CHUNK_SIZE,
     FIXED_BATCH_SIZE,
     FIXED_SAMPLE_INTERVAL,
     PROJECT_ROOT,
-    EVAL_CHUNK_SIZE,
     _make_sequences,
     _set_deterministic,
     evaluate_on_values,
@@ -63,8 +65,6 @@ from experiment.tuning.gru_study import (
     load_clarknet_series,
     manifest_scale_factor,
 )
-from prediction.gru_predictor import GRUConfig, GRUPredictor
-from shared.stats import cohens_d_paired, paired_permutation_test
 
 logger = structlog.get_logger(__name__)
 
@@ -472,10 +472,9 @@ def train_probe_model(
 ) -> tuple[Any, int]:
     """Train one seed mirroring the serving trainer: Adam, best-state restore."""
     import torch
+    from prediction.gru_predictor import GRUNetwork
     from torch import nn
     from torch.utils.data import DataLoader, TensorDataset
-
-    from prediction.gru_predictor import GRUNetwork
 
     if config.input_size != arrays.X_fit.shape[2]:
         raise ValueError("config input_size does not match built feature count")

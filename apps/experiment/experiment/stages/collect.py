@@ -4,8 +4,8 @@ Extracted from scripts/run_phase_b_experiments.py lines 940-1317
 (MetricExporter + ResourcePoller).
 """
 
-import os
 import json
+import os
 import subprocess
 import threading
 import time
@@ -15,9 +15,10 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import structlog
-
 from shared.config import settings
-from shared.models.metrics import MetricsExport
+from shared.artifacts import write_node_utilization
+from shared.models.metrics import MetricsExport, NodeSample
+from shared.protocols.metrics import MetricsClient
 from shared.models.pipeline import PipelineContext
 
 from experiment.stages.base import BaseStage
@@ -80,10 +81,17 @@ class MetricExporter:
         "pods_pending_count": 'count(kube_pod_status_phase{phase="Pending",namespace="default"})',
     }
 
-    def __init__(self, prometheus_url: Optional[str] = None):
-        from infra.observability.prometheus import PrometheusClient
+    def __init__(self, metrics_client: MetricsClient | None = None, prometheus_url: Optional[str] = None):
+        """Query through an injected metrics client, or build the Prometheus one.
 
-        self._client = PrometheusClient(prometheus_url or settings.PROMETHEUS_URL)
+        The default keeps every existing caller working; a test or a different
+        metrics backend substitutes the client instead of the transport.
+        """
+        if metrics_client is None:
+            from infra.observability.prometheus import PrometheusClient
+
+            metrics_client = PrometheusClient(prometheus_url or settings.PROMETHEUS_URL)
+        self._client = metrics_client
 
     def export_run(self, t_start: float, t_end: float, output_dir: Path) -> Dict[str, Any]:
         """Export all metrics for [t_start, t_end] window. Returns summary dict."""
@@ -215,7 +223,8 @@ class ResourcePoller:
         self._poll_interval = poll_interval_sec
         self._stop_event = threading.Event()
         self._thread: Optional[threading.Thread] = None
-        self._node_samples: List[Dict[str, Any]] = []
+        self._samples: List[Dict[str, Any]] = []
+        self._node_samples: List[NodeSample] = []
         self._lock = threading.Lock()
 
     @staticmethod
@@ -331,25 +340,13 @@ class ResourcePoller:
                 return
             ts = time.time()
             for line in r.stdout.strip().splitlines():
-                parts = line.split()
-                if len(parts) < 5:
+                sample = NodeSample.from_kubectl_top_row(line, ts)
+                if sample is None:
+                    # No reading yet (a node mid-provision) or a malformed row:
+                    # one missing sample, never a reason to drop the other nodes.
                     continue
-                node_name = parts[0]
-                cpu_cores = self._parse_cpu(parts[1]) / 1000  # millicores → cores
-                cpu_pct = float(parts[2].rstrip("%"))
-                mem_mib = self._parse_memory(parts[3])
-                mem_pct = float(parts[4].rstrip("%"))
                 with self._lock:
-                    self._node_samples.append(
-                        {
-                            "timestamp": ts,
-                            "node": node_name,
-                            "cpu_cores": cpu_cores,
-                            "cpu_pct": cpu_pct,
-                            "memory_mib": mem_mib,
-                            "memory_pct": mem_pct,
-                        }
-                    )
+                    self._node_samples.append(sample)
         except Exception as e:
             logger.debug("node_poll_failed", error=str(e))
 
@@ -422,9 +419,7 @@ class ResourcePoller:
 
         if output_dir:
             output_dir.mkdir(parents=True, exist_ok=True)
-            save_path = output_dir / "node_utilization.json"
-            with open(save_path, "w") as f:
-                json.dump(node_samples if node_samples else [], f, indent=2)
+            write_node_utilization(output_dir, node_samples)
 
         if not node_samples:
             return {
@@ -436,16 +431,16 @@ class ResourcePoller:
             }
 
         # Exclude control-plane nodes
-        workload_nodes = [s for s in node_samples if "server" not in s["node"].lower()]
+        workload_nodes = [s for s in node_samples if "server" not in s.node.lower()]
         if not workload_nodes:
             workload_nodes = node_samples
 
-        cpu_pcts = [s["cpu_pct"] for s in workload_nodes]
-        mem_pcts = [s["memory_pct"] for s in workload_nodes]
+        cpu_pcts = [s.cpu_pct for s in workload_nodes if s.cpu_pct is not None]
+        mem_pcts = [s.memory_pct for s in workload_nodes if s.memory_pct is not None]
 
         # Pod density: count unique workload nodes, then estimate pods per node
         # from total pod samples / total node samples ratio
-        unique_nodes = set(s["node"] for s in workload_nodes)
+        unique_nodes = {s.node for s in workload_nodes}
         with self._lock:
             pod_count = len(self._samples)
         node_poll_count = len(workload_nodes) / max(1, len(unique_nodes))
@@ -454,9 +449,9 @@ class ResourcePoller:
         )
 
         return {
-            "avg_cluster_cpu_pct": float(np.mean(cpu_pcts)),
-            "peak_cluster_cpu_pct": float(max(cpu_pcts)),
-            "avg_cluster_mem_pct": float(np.mean(mem_pcts)),
+            "avg_cluster_cpu_pct": float(np.mean(cpu_pcts)) if cpu_pcts else 0.0,
+            "peak_cluster_cpu_pct": float(max(cpu_pcts)) if cpu_pcts else 0.0,
+            "avg_cluster_mem_pct": float(np.mean(mem_pcts)) if mem_pcts else 0.0,
             "avg_pod_density": round(avg_pod_density, 1),
             "node_utilization_path": str(output_dir / "node_utilization.json") if output_dir else "",
         }
@@ -476,8 +471,8 @@ class CollectStage(BaseStage):
 
     name = "collect"
 
-    def __init__(self, prometheus_url: Optional[str] = None):
-        self._exporter = MetricExporter(prometheus_url)
+    def __init__(self, metrics_client: MetricsClient | None = None, prometheus_url: Optional[str] = None):
+        self._exporter = MetricExporter(metrics_client=metrics_client, prometheus_url=prometheus_url)
         self._resource_poller = ResourcePoller()
 
     def start_resource_polling(self) -> None:
