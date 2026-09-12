@@ -87,6 +87,22 @@ def write_result(run_dir: Path, result: ExperimentResult) -> Path:
     return _write_json(run_dir / RESULT_FILE, result.model_dump())
 
 
+def result_validation_error(run_dir: Path) -> str | None:
+    """Why this run's result was rejected, for a caller that reports it.
+
+    The reader returns None for both "no file" and "bad file"; a validate command
+    that swallowed the difference would tell an operator nothing about a broken run.
+    """
+    raw = _read_json(run_dir / RESULT_FILE)
+    if not isinstance(raw, dict):
+        return None
+    try:
+        ExperimentResult(**raw)
+    except ValidationError as exc:
+        return str(exc)
+    return None
+
+
 # ---------------------------------------------------------------------------
 # manifest.json — the conditions a run started from
 # ---------------------------------------------------------------------------
@@ -144,8 +160,8 @@ def read_provision_events(run_dir: Path) -> list[ProvisionEvent]:
         if not isinstance(item, dict):
             continue
         normalised = {
-            "ts": item.get("ts", item.get("et", 0.0)),
-            "event": item.get("event", ""),
+            "ts": item.get("ts", 0.0),
+            "event": item.get("event") or item.get("et", ""),
             "data": item.get("data", item.get("d", {})),
         }
         try:
@@ -173,7 +189,11 @@ def provision_event_names(events: Sequence[ProvisionEvent]) -> list[str]:
 
 
 def read_resource_utilization(run_dir: Path) -> list[ResourceSample]:
-    return _RESOURCE_SAMPLES.validate_python(_read_json(run_dir / RESOURCE_UTILIZATION_FILE) or [])
+    """The polled samples, or [] when the file is absent or does not validate."""
+    try:
+        return _RESOURCE_SAMPLES.validate_python(_read_json(run_dir / RESOURCE_UTILIZATION_FILE) or [])
+    except ValidationError:
+        return []
 
 
 def write_resource_utilization(run_dir: Path, samples: Sequence[ResourceSample]) -> Path:
@@ -181,7 +201,11 @@ def write_resource_utilization(run_dir: Path, samples: Sequence[ResourceSample])
 
 
 def read_node_utilization(run_dir: Path) -> list[NodeSample]:
-    return _NODE_SAMPLES.validate_python(_read_json(run_dir / NODE_UTILIZATION_FILE) or [])
+    """The node readings, or [] when the file is absent or does not validate."""
+    try:
+        return _NODE_SAMPLES.validate_python(_read_json(run_dir / NODE_UTILIZATION_FILE) or [])
+    except ValidationError:
+        return []
 
 
 def write_node_utilization(run_dir: Path, samples: Sequence[NodeSample]) -> Path:

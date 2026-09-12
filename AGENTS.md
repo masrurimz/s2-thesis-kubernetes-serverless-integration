@@ -183,7 +183,7 @@ uv run ty check              # type-check — do not add NEW errors
 
 * Baseline: `ruff check` and `ty check` are both clean. `archived/` is excluded from every tool (`pyproject.toml` `[tool.ty.src]`, ruff's `extend-exclude`, pytest's `norecursedirs`): it is a frozen pre-refactor snapshot, so its diagnostics are history rather than work.
 * Enforcement: a `prek` git hook (`.pre-commit-config.yaml`) runs `ruff check`, `ruff format --check` and `ty check` on commit. Install once after cloning: `uv run prek install`.
-* Import boundaries are enforced by `lint-imports` contracts in `pyproject.toml` (`[tool.importlinter]`), asserted by `libs/shared/tests/test_architecture.py` so the normal test run catches a boundary crossed.
+* Import boundaries are enforced by `lint-imports` contracts in `pyproject.toml` (`[tool.importlinter]`), asserted by `libs/shared/tests/test_architecture.py` so the normal test run catches a boundary crossed. The protected contract bounds *importers* of `shared.artifacts`; it cannot see a module that opens the files directly, and `apps/dashboard/dashboard/loader.py` still does (deferred work, listed in the refactor design).
 * `prek` is a Rust drop-in for `pre-commit`, added as a dev dependency; `uv sync` installs it. Docs: https://prek.j178.dev
 
 ---

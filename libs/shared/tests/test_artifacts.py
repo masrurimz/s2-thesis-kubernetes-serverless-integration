@@ -24,6 +24,7 @@ from shared.artifacts import (
     read_resource_utilization,
     read_result,
     read_result_dict,
+    result_validation_error,
     write_manifest,
     write_node_utilization,
     write_provision_events,
@@ -126,15 +127,18 @@ class TestProvisionEvents:
         assert "autoscaler_started" in provision_event_names(events)
 
     def test_legacy_key_spelling_still_reads(self, tmp_path):
+        """The older spelling put the event name in ``et`` beside ``ts``, not in it."""
         (tmp_path / PROVISION_EVENTS_FILE).write_text(
-            json.dumps([{"et": 12.5, "event": "node_created", "d": {"k8s_node": "k3d-dynamic-workload-0-0"}}])
+            json.dumps([{"ts": 12.5, "et": "node_created", "d": {"k8s_node": "k3d-dynamic-workload-0-0"}}])
         )
 
         events = read_provision_events(tmp_path)
 
         assert len(events) == 1
         assert events[0].ts == 12.5
+        assert events[0].event == "node_created"
         assert events[0].data["k8s_node"] == "k3d-dynamic-workload-0-0"
+        assert provision_event_names(events) == ["node_created"]
 
     def test_unreadable_entries_are_skipped_not_fatal(self, tmp_path):
         (tmp_path / PROVISION_EVENTS_FILE).write_text(
@@ -212,3 +216,33 @@ def test_readers_never_raise_on_a_half_written_bundle(tmp_path, reader):
     (tmp_path / MANIFEST_FILE).write_bytes(b"\x00\x01binary")
 
     assert reader(tmp_path) is None
+
+
+@pytest.mark.parametrize(
+    ("reader", "filename"),
+    [
+        (read_resource_utilization, RESOURCE_UTILIZATION_FILE),
+        (read_node_utilization, NODE_UTILIZATION_FILE),
+    ],
+)
+def test_sample_readers_never_raise_on_a_file_that_does_not_validate(tmp_path, reader, filename):
+    """Valid JSON of the wrong shape is the same empty answer as a missing file."""
+    (tmp_path / filename).write_text(json.dumps([{"not": "a sample"}]))
+
+    assert reader(tmp_path) == []
+
+
+def test_result_diagnostics_name_the_reason_a_file_was_rejected(tmp_path):
+    """A validate command needs the reason, which the reader deliberately swallows."""
+    (tmp_path / RESULT_FILE).write_text(json.dumps({"run_id": "not-an-int"}))
+
+    assert read_result(tmp_path) is None
+    reason = result_validation_error(tmp_path)
+    assert reason is not None
+    assert "run_id" in reason
+
+
+def test_result_diagnostics_are_quiet_for_a_good_file(tmp_path):
+    (tmp_path / RESULT_FILE).write_bytes(_fixture_bytes(RESULT_FILE))
+
+    assert result_validation_error(tmp_path) is None

@@ -179,10 +179,12 @@ timeout_method = "signal"
 
 [tool.mutmut]
 # Scope, not a repo-wide gate: these are the modules where a mutation would restore a
-# bug this refactor removed. Run with `uv run mutmut run`.
+# bug this refactor removed. Run with `uv run mutmut run`. The tests directory is the
+# repo root so a mutant is judged by the whole hermetic suite rather than by one
+# package's tests — the modules under test are consumed from three packages.
 paths_to_mutate = [
     "libs/shared/shared/artifacts.py",
     "apps/experiment/experiment/tuning/workload_analysis.py",
     "apps/routing/routing/algorithm/registry.py",
 ]
-tests_dir = "libs/shared/tests"
+tests_dir = "."

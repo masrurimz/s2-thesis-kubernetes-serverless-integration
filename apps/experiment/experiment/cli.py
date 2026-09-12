@@ -19,7 +19,13 @@ from typing import TYPE_CHECKING, Optional
 
 import structlog
 import typer
-from shared.artifacts import read_result, write_manifest, write_provision_events, write_result
+from shared.artifacts import (
+    read_result,
+    result_validation_error,
+    write_manifest,
+    write_provision_events,
+    write_result,
+)
 from shared.models.experiment import ExperimentConfig, ExperimentResult
 
 from experiment.profiles import get_profile, profile_names
@@ -345,10 +351,11 @@ def validate(
     # Validate each result against ExperimentResult schema
     valid_count = 0
     for rf in result_files:
-        if read_result(rf.parent) is not None:
+        reason = result_validation_error(rf.parent)
+        if reason is None:
             valid_count += 1
         else:
-            console.print(f"[red]Invalid result {rf}[/red]")
+            console.print(f"[red]Invalid result {rf}: {reason.splitlines()[0]}[/red]")
 
     console.print(f"\n[green]{valid_count}/{len(result_files)} results validated[/green]")
 

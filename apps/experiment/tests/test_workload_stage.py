@@ -71,13 +71,13 @@ class TestConstruction:
             default_stages_path()
 
 
-def _stub_k6(path: Path, summary: dict) -> Path:
+def _stub_k6(path: Path, summary: dict, name: str = "clarknet_replay_stub_run1_1.json") -> Path:
     """A k6 that writes a handleSummary document into RESULTS_DIR and exits 0."""
     path.write_text(
         "#!/bin/sh\n"
         'for arg in "$@"; do case "$arg" in RESULTS_DIR=*) dir="${arg#RESULTS_DIR=}";; esac; done\n'
         'mkdir -p "$dir"\n'
-        f"cat > \"$dir/summary.json\" <<'JSON'\n{json.dumps(summary)}\nJSON\n"
+        f"cat > \"$dir/{name}\" <<'JSON'\n{json.dumps(summary)}\nJSON\n"
         "exit 0\n"
     )
     path.chmod(path.stat().st_mode | stat.S_IXUSR)
@@ -106,6 +106,22 @@ def test_stub_run_populates_the_workload_result(tmp_path):
     assert workload.throughput_rps == 50.0
 
 
+def test_an_unrelated_json_file_is_not_read_as_the_summary(tmp_path):
+    """Only the script's own naming pattern counts; anything else is not this run's."""
+    binary = tmp_path / "k6"
+    binary.write_text(
+        "#!/bin/sh\n"
+        'for arg in "$@"; do case "$arg" in RESULTS_DIR=*) dir="${arg#RESULTS_DIR=}";; esac; done\n'
+        'mkdir -p "$dir"\n'
+        f"cat > \"$dir/injected.json\" <<'JSON'\n{json.dumps(HANDLE_SUMMARY)}\nJSON\n"
+        "exit 0\n"
+    )
+    binary.chmod(binary.stat().st_mode | stat.S_IXUSR)
+    stage = WorkloadStage(k6_path=binary, k6_script=tmp_path / "script.js", k6_stages=tmp_path / "stages.json")
+
+    assert stage._run_k6("s3-hybrid-reactive", 1, tmp_path / "run") is None
+
+
 def test_a_failing_k6_binary_returns_no_summary(tmp_path):
     binary = tmp_path / "k6"
     binary.write_text("#!/bin/sh\nexit 1\n")
@@ -119,7 +135,7 @@ def test_a_summary_from_an_earlier_run_is_not_accepted(tmp_path):
     """Stale files in the run's k6 directory must not be read as this run's output."""
     k6_dir = tmp_path / "run" / "k6"
     k6_dir.mkdir(parents=True)
-    stale = k6_dir / "summary.json"
+    stale = k6_dir / "clarknet_replay_stub_run1_0.json"
     stale.write_text(json.dumps(HANDLE_SUMMARY))
     import os
     import time

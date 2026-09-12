@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from analysis.constants import OUTLIER_RUNS
+from shared.artifacts import read_resource_utilization, read_result_dict
 
 
 def load_outliers(path: Path) -> list[dict]:
@@ -165,19 +166,16 @@ def load_experiment_metrics(result_path: Path) -> ScenarioMetrics:
     over the timestamp axis. Sibling files are resolved relative to
     ``result_path.parent``.
     """
-    with open(result_path) as f:
-        result = json.load(f)
+    run_dir = result_path.parent
+    result = read_result_dict(run_dir)
+    samples = read_resource_utilization(run_dir)
 
-    util_path = result_path.parent / "resource_utilization.json"
     total_cpu_s = k8s_cpu_s = kn_cpu_s = 0.0
     total_mem_gibs = k8s_mem_gibs = kn_mem_gibs = 0.0
     avg_k8s_pods = avg_kn_pods = 0.0
     max_kn_pods = 0
 
-    if util_path.exists():
-        with open(util_path) as f:
-            samples = json.load(f)
-
+    if samples:
         by_ts: dict[float, dict[str, float]] = defaultdict(
             lambda: {
                 "cpu": 0.0,
@@ -191,16 +189,16 @@ def load_experiment_metrics(result_path: Path) -> ScenarioMetrics:
             }
         )
         for s in samples:
-            ts = s["timestamp"]
-            by_ts[ts]["cpu"] += s["cpu_millicores"]
-            by_ts[ts]["mem"] += s["memory_mib"]
-            if s["backend"] == "k8s":
-                by_ts[ts]["k8s_cpu"] += s["cpu_millicores"]
-                by_ts[ts]["k8s_mem"] += s["memory_mib"]
+            ts = s.timestamp
+            by_ts[ts]["cpu"] += s.cpu_millicores
+            by_ts[ts]["mem"] += s.memory_mib
+            if s.backend == "k8s":
+                by_ts[ts]["k8s_cpu"] += s.cpu_millicores
+                by_ts[ts]["k8s_mem"] += s.memory_mib
                 by_ts[ts]["k8s_pods"] += 1
             else:
-                by_ts[ts]["kn_cpu"] += s["cpu_millicores"]
-                by_ts[ts]["kn_mem"] += s["memory_mib"]
+                by_ts[ts]["kn_cpu"] += s.cpu_millicores
+                by_ts[ts]["kn_mem"] += s.memory_mib
                 by_ts[ts]["kn_pods"] += 1
 
         snapshots = sorted(by_ts.items())

@@ -279,15 +279,23 @@ class WorkloadStage(BaseStage):
                 "k6_failed",
                 returncode=proc.returncode,
                 stderr=stderr_text[-500:],
+                stdout="".join(stdout_lines)[-500:],
             )
             return None
+        if proc.returncode == 99:
+            logger.warning("k6_threshold_crossed", scenario=scenario, run_id=run_id)
 
-        # Find the summary file written by this invocation (ignore older runs).
-        fresh_files = [
-            path
-            for path in k6_results_dir.glob("*.json")
-            if path.stat().st_mtime >= t_start and not path.name.endswith("_metadata.json")
-        ]
+        # The script names its summary clarknet_replay_<scenario>_run<id>_<ts>.json;
+        # matching that shape keeps an unrelated file dropped in the directory from
+        # being read as this run's result.
+        k6_files = list(k6_results_dir.glob("clarknet_replay_*.json"))
+        fresh_files = [path for path in k6_files if path.stat().st_mtime >= t_start]
+        if len(fresh_files) != len(k6_files):
+            logger.warning(
+                "k6_stale_summaries_skipped",
+                count=len(k6_files) - len(fresh_files),
+                run_t_start=t_start,
+            )
         if not fresh_files:
             logger.error("k6_no_output_file", dir=str(k6_results_dir), run_t_start=t_start)
             return None
