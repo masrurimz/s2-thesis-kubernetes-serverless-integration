@@ -875,5 +875,93 @@ def gru_metrics(
     compute_percentage_metrics(output_dir.resolve() if output_dir else None)
 
 
+# ---------------------------------------------------------------------------
+# Bundle evidence: the tables a reader asks a finished bundle for
+# ---------------------------------------------------------------------------
+
+
+def _emit_json(payload) -> None:
+    """The machine-readable half: the same fields the table prints, as data."""
+    typer.echo(json.dumps(payload, indent=2, default=str))
+
+
+@app.command()
+def runs(
+    bundle: Path = typer.Argument(..., help="Bundle directory holding per-run result.json files"),
+    as_json: bool = typer.Option(False, "--json", help="Emit the payload as JSON instead of a table"),
+) -> None:
+    """What each run measured, and the conditions it was measured under."""
+    from analysis.bundle_evidence import as_payload, run_evidence
+
+    rows = run_evidence(bundle)
+    if as_json:
+        _emit_json(as_payload(rows))
+        return
+    header = (
+        f"{'scenario':22} {'run':>3} {'valid':>5} {'p99 ms':>8} {'slo':>6} "
+        f"{'nodes':>5} {'delay s':>7} {'delivered':>9} {'load':>5}"
+    )
+    typer.echo(header)
+    for row in rows:
+        typer.echo(
+            f"{row.scenario:22} {row.run_id:3} {str(row.valid):>5} {row.p99_latency_ms:8.1f} "
+            f"{row.slo_violations:6} {row.nodes_provisioned:5} {row.first_provision_delay_sec:7.1f} "
+            f"{str(row.prediction_delivered):>9} "
+            f"{(f'{row.host_load_ratio:.3f}' if row.host_load_ratio is not None else 'n/a'):>5}"
+        )
+    typer.echo(f"\n{len(rows)} run(s); host load is the conditions gate's busy-to-cores ratio.")
+
+
+@app.command()
+def mechanism(
+    bundle: Path = typer.Argument(..., help="Bundle directory holding per-run artifacts"),
+    as_json: bool = typer.Option(False, "--json", help="Emit the payload as JSON"),
+) -> None:
+    """When the node tier arrived relative to the load, beside the tail it explains."""
+    from analysis.bundle_evidence import as_payload, mechanism_rows
+
+    rows = mechanism_rows(bundle)
+    if as_json:
+        _emit_json(as_payload(rows))
+        return
+    typer.echo(f"{'scenario':22} {'run':>3} {'p99 ms':>8} {'prov delay s':>12} {'node at +s':>10} {'% serverless':>12}")
+    for row in rows:
+        offset = f"{row.node_arrival_offset_sec:.1f}" if row.node_arrival_offset_sec is not None else "n/a"
+        share = f"{row.serverless_share_pct:.1f}" if row.serverless_share_pct is not None else "n/a"
+        typer.echo(
+            f"{row.scenario:22} {row.run_id:3} {row.p99_latency_ms:8.1f} "
+            f"{row.provisioning_delay_sec:12.1f} {offset:>10} {share:>12}"
+        )
+    typer.echo("\nnode at +s is measured from the run's first provisioner event.")
+
+
+@app.command()
+def variance(
+    bundle: Path = typer.Argument(..., help="Bundle directory holding per-run result.json files"),
+    as_json: bool = typer.Option(False, "--json", help="Emit the payload as JSON"),
+) -> None:
+    """How far each arm moved run to run, and what n pairs can resolve."""
+    from analysis.bundle_evidence import as_payload, variance_summary
+
+    summary = variance_summary(bundle)
+    if as_json:
+        _emit_json(as_payload(summary))
+        return
+    typer.echo(f"{'scenario':22} {'n':>3} {'mean p99':>9} {'sd':>7} {'min':>8} {'max':>8}")
+    for arm in summary.arms:
+        typer.echo(
+            f"{arm.scenario:22} {arm.n:3} {arm.mean_p99_ms:9.1f} {arm.sd_p99_ms:7.1f} "
+            f"{arm.min_p99_ms:8.1f} {arm.max_p99_ms:8.1f}"
+        )
+    if summary.n_pairs:
+        diffs = " ".join(f"{d:+.1f}" for d in summary.pair_differences_ms)
+        typer.echo(f"\npaired differences (ms): {diffs}")
+        typer.echo(f"mean {summary.mean_difference_ms:+.1f} ms", nl=False)
+        if summary.sd_difference_ms is not None:
+            typer.echo(f", sd {summary.sd_difference_ms:.1f} ms", nl=False)
+        typer.echo(f"; smallest attainable p at {summary.n_pairs} pairs: {summary.smallest_attainable_p:.5f}")
+    typer.echo(f"\n{summary.note}")
+
+
 if __name__ == "__main__":
     app()
