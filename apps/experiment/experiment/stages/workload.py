@@ -12,7 +12,7 @@ import subprocess
 import threading
 import time
 from pathlib import Path
-from typing import Callable, Optional
+from typing import IO, Callable, Optional
 
 import structlog
 from pydantic import BaseModel, Field
@@ -242,8 +242,10 @@ class WorkloadStage(BaseStage):
         stdout_lines: list[str] = []
         stderr_lines: list[str] = []
 
-        def _read_stream(stream: object, sink: list[str], report_progress: bool = False) -> None:
-            for line in stream:  # type: ignore[operator]
+        def _read_stream(stream: Optional[IO[str]], sink: list[str], report_progress: bool = False) -> None:
+            if stream is None:  # subprocess.PIPE implies both, but the types are optional
+                return
+            for line in stream:
                 sink.append(line)
                 if report_progress and on_progress:
                     stripped = line.strip()
