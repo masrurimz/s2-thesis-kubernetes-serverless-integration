@@ -323,7 +323,7 @@ Every paper, dataset, or external work cited or relied upon MUST be archived loc
 * **Location**: `docs/references/` (PDF is the canonical archive format).
 * **Naming**: `<slug>-<short-title>-<year>.pdf` — lowercase, hyphenated, year-suffixed. Example: `aapa-archetype-aware-predictive-autoscaler-2025.pdf`.
 * **Manifest**: every archived paper gets a row in `docs/references/REFERENCES.md` with columns `Paper | File | arxiv/DOI | Key Insight`. No PDF lands in the folder without a manifest row; no manifest row without its PDF.
-* **Binary storage**: ALL PDFs under `docs/references/` are tracked via **Git LFS** (rule lives in `.gitattributes`). Run `git lfs install` once per clone. Do not commit a PDF > 100 MB without LFS.
+* **Binary storage**: **every binary asset is tracked via Git LFS** — PDFs, images, Office documents, Parquet, archives (patterns live in `.gitattributes`). Text does not go to LFS: JSON, JSONL, CSV, YAML, Markdown, logs and SVG are what this repository diffs and greps. Run `git lfs install` once per clone. Do not commit a PDF > 100 MB without LFS.
 * If a paper is only available behind a paywall, archive the arXiv preprint and record the published DOI in the manifest.
 
 ---
