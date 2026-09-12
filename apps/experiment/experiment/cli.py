@@ -609,6 +609,19 @@ def reproduce(
             raise typer.Exit(1)
         stack_rebuild = {"actions": rebuilt["actions"], "summary": rebuilt["summary"]}
 
+    # The gate checks the prediction port when the profile needs one, so the server
+    # has to be up before the gate runs, not after it.
+    server: dict = {"status": "not required"}
+    if selected.prediction_server:
+        from experiment.services import ensure_prediction_server
+
+        server = ensure_prediction_server()
+        console.print(f"[cyan]Prediction server:[/cyan] {server['status']} on port {server.get('port')}")
+        if server["status"] == "unavailable":
+            console.print(f"[red]Prediction server unavailable: {server.get('reason')}[/red]")
+            console.print("[red]S4 runs would be invalid, so the experiment is not started.[/red]")
+            raise typer.Exit(1)
+
     try:
         conditions_report = apply_conditions(run_conditions, scenario="bundle start", console=console)
     except Exception as exc:  # noqa: BLE001 — the report is the message
@@ -621,17 +634,6 @@ def reproduce(
         f"[cyan]Host:[/cyan] load {conditions_report['load']['load1']:.1f} on "
         f"{conditions_report['load']['cores']:.0f} cores ({conditions_report['load']['ratio']:.2f}x)"
     )
-
-    server: dict = {"status": "not required"}
-    if selected.prediction_server:
-        from experiment.services import ensure_prediction_server
-
-        server = ensure_prediction_server()
-        console.print(f"[cyan]Prediction server:[/cyan] {server['status']} on port {server.get('port')}")
-        if server["status"] == "unavailable":
-            console.print(f"[red]Prediction server unavailable: {server.get('reason')}[/red]")
-            console.print("[red]S4 runs would be invalid, so the experiment is not started.[/red]")
-            raise typer.Exit(1)
 
     os.environ["CONTROLLER_VERSION"] = controller
     os.environ["WORKLOAD"] = workload
