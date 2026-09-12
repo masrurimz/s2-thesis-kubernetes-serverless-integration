@@ -306,6 +306,16 @@ Every command may be read by a person or by a program, and both are designed for
 
 ---
 
+### 7. Secrets and credentials
+
+Nothing in this section is a secret that belongs in the repository, and nothing in it does.
+
+* **Cluster client certificates.** `thesis infra monitoring` renders the kubeconfig's client certificate into `libs/infra/infra/observability/prometheus/secrets/`, which is gitignored as a directory. The files stay `0600` on the host and the copy inside the Prometheus container is made readable there, so the readable form never exists on the host.
+* **Credentials, tokens, and `.env` files** are gitignored (`*.key`, `.env`, `.env.local`). Nothing here reads a credential from a file it is not given, and no command prints one: `thesis infra monitoring` reports series counts, never key material.
+* **Model weights** (`*.pt`, `*.pth`) are gitignored. A promoted model is referenced by path and recorded in the run manifest; `data/models/gru_model.pt` is the deployed artifact.
+* **Raw workload blobs** (`k6-results.json`, per-run `prometheus/*.json`) are gitignored or LFS-tracked: large, regenerable, and never hand-edited.
+* **Evidence is not secret but is load-bearing.** Bundle JSON (`result.json`, `manifest.json`, `paired_analysis.json`) is committed, because a deleted worktree once took unversioned analysis with it. Never reinstate a blanket extension ignore; see the incident note in `results/AGENTS.md`.
+
 ## References & Cited Papers — Archive Rule
 
 Every paper, dataset, or external work cited or relied upon MUST be archived locally so it is reusable and traceable — link rot is not an excuse for a missing source.
