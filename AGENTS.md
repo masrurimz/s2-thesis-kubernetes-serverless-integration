@@ -276,6 +276,7 @@ results/experiments/<phase>/<YYYY-MM-DD_slug>/
 - No empty placeholder directories
 - No large binaries in git (models, datasets — gitignored)
 - `.gitignore` covers: `*.log`, `__pycache__/`, `.venv/`, `*.pyc`
+- **Deleting a tracked file does not shrink `.git`**, and `git gc` cannot remove it either: history keeps every version. What history costs is the pack, and consolidation is where the savings are. On 2026-09-12 the pack went from 51.25 MiB to 28.64 MiB with a plain `git gc --prune=now`, which merged four packs and dropped 478 unreachable objects; a history rewrite would have reclaimed only the ~5.8 MB of deleted series JSON that is still reachable, at the cost of orphaning every commit SHA the run manifests record. Keep new evidence in LFS-routed Parquet and the pack stays flat.
 
 ### 4. Module Direction — where new code goes
 | Kind of code | Owner | Rule |
