@@ -17,7 +17,7 @@ import numpy as np
 import structlog
 
 from shared.config import settings
-from shared.models.metrics import MetricsExport
+from shared.models.metrics import MetricsExport, NodeSample
 from shared.models.pipeline import PipelineContext
 
 from experiment.stages.base import BaseStage
@@ -215,7 +215,8 @@ class ResourcePoller:
         self._poll_interval = poll_interval_sec
         self._stop_event = threading.Event()
         self._thread: Optional[threading.Thread] = None
-        self._node_samples: List[Dict[str, Any]] = []
+        self._samples: List[Dict[str, Any]] = []
+        self._node_samples: List[NodeSample] = []
         self._lock = threading.Lock()
 
     @staticmethod
@@ -331,31 +332,13 @@ class ResourcePoller:
                 return
             ts = time.time()
             for line in r.stdout.strip().splitlines():
-                parts = line.split()
-                if len(parts) < 5:
-                    continue
-                node_name = parts[0]
-                try:
-                    cpu_cores = self._parse_cpu(parts[1]) / 1000  # millicores → cores
-                    cpu_pct = float(parts[2].rstrip("%"))
-                    mem_mib = self._parse_memory(parts[3])
-                    mem_pct = float(parts[4].rstrip("%"))
-                except ValueError:
-                    # A node metrics-server has no reading for yet reports
-                    # "<unknown>"; that is one missing sample, not a failed scrape,
-                    # and must not discard the other nodes on the same poll.
+                sample = NodeSample.from_kubectl_top_row(line, ts)
+                if sample is None:
+                    # No reading yet (a node mid-provision) or a malformed row:
+                    # one missing sample, never a reason to drop the other nodes.
                     continue
                 with self._lock:
-                    self._node_samples.append(
-                        {
-                            "timestamp": ts,
-                            "node": node_name,
-                            "cpu_cores": cpu_cores,
-                            "cpu_pct": cpu_pct,
-                            "memory_mib": mem_mib,
-                            "memory_pct": mem_pct,
-                        }
-                    )
+                    self._node_samples.append(sample)
         except Exception as e:
             logger.debug("node_poll_failed", error=str(e))
 
@@ -430,7 +413,7 @@ class ResourcePoller:
             output_dir.mkdir(parents=True, exist_ok=True)
             save_path = output_dir / "node_utilization.json"
             with open(save_path, "w") as f:
-                json.dump(node_samples if node_samples else [], f, indent=2)
+                json.dump([s.model_dump() for s in node_samples], f, indent=2)
 
         if not node_samples:
             return {
@@ -442,16 +425,16 @@ class ResourcePoller:
             }
 
         # Exclude control-plane nodes
-        workload_nodes = [s for s in node_samples if "server" not in s["node"].lower()]
+        workload_nodes = [s for s in node_samples if "server" not in s.node.lower()]
         if not workload_nodes:
             workload_nodes = node_samples
 
-        cpu_pcts = [s["cpu_pct"] for s in workload_nodes]
-        mem_pcts = [s["memory_pct"] for s in workload_nodes]
+        cpu_pcts = [s.cpu_pct for s in workload_nodes if s.cpu_pct is not None]
+        mem_pcts = [s.memory_pct for s in workload_nodes if s.memory_pct is not None]
 
         # Pod density: count unique workload nodes, then estimate pods per node
         # from total pod samples / total node samples ratio
-        unique_nodes = set(s["node"] for s in workload_nodes)
+        unique_nodes = {s.node for s in workload_nodes}
         with self._lock:
             pod_count = len(self._samples)
         node_poll_count = len(workload_nodes) / max(1, len(unique_nodes))
@@ -460,9 +443,9 @@ class ResourcePoller:
         )
 
         return {
-            "avg_cluster_cpu_pct": float(np.mean(cpu_pcts)),
-            "peak_cluster_cpu_pct": float(max(cpu_pcts)),
-            "avg_cluster_mem_pct": float(np.mean(mem_pcts)),
+            "avg_cluster_cpu_pct": float(np.mean(cpu_pcts)) if cpu_pcts else 0.0,
+            "peak_cluster_cpu_pct": float(max(cpu_pcts)) if cpu_pcts else 0.0,
+            "avg_cluster_mem_pct": float(np.mean(mem_pcts)) if mem_pcts else 0.0,
             "avg_pod_density": round(avg_pod_density, 1),
             "node_utilization_path": str(output_dir / "node_utilization.json") if output_dir else "",
         }
