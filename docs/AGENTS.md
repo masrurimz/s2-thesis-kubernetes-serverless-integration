@@ -2,19 +2,27 @@
 
 ## What This Is
 
-Current documentation: setup guides, specs, deployment, architecture. Points to `results/` for experiment evidence.
+Current documentation: setup guides, specs, deployment, references. Points to `results/` for experiment evidence.
 
 ## Document Map
 
 | Document | Purpose |
 |----------|---------|
-| `README.md` | Main doc index |
-| `architecture.md` | Module map, dependency graph, communication patterns |
-| `experiment-guide.md` | How to run experiments (merged from EXPERIMENT_RESULTS.md + RUNNING_EXPERIMENTS.md) |
-| `deployment.md` | VPS deployment guide |
-| `getting-started/` | Step-by-step setup (prerequisites, quick start, architecture overview) |
-| `specs/` | Technical specs (SLO definition, Algorithm 1 spec) |
+| `README.md` | Main doc index with research overview and evaluation snapshot |
+| `getting-started/` | Step-by-step entry: overview, prerequisites, quick start, architecture |
+| `experiments/RUNNING_EXPERIMENTS.md` | Current experiment runbook |
+| `thesis-implementation/` | Experiment plan, methodology, running experiments |
+| `specs/` | Technical specs: Algorithm 1 (`algorithm-1-spec.md`), SLO definition (`slo-definition.md`) |
+| `CALIBRATION_GUIDE.md` | Workload calibration for experiments |
+| `S4_INTEGRATION_GUIDE.md` | Wiring the GRU predictor into the S4 controller |
+| `REALTIME_VALIDATION_GUIDE.md` | Real-time hypothesis validation (H3 GRU check) |
+| `deployment/VPS_DEPLOYMENT.md` | VPS deployment guide (helpers in `deployment/scripts/`) |
+| `plans/` | Dated implementation plans |
+| `references/` | Cited papers, PDF via Git LFS, manifest in `references/REFERENCES.md` |
 | `archived/` | Historical methodology docs |
+| `../archived/docs-historical/` | Superseded setup guides and inventories, with banners |
+
+The architecture walkthrough is `getting-started/03-understanding-architecture.md`. For module-level architecture, read the root `AGENTS.md` repository map and the per-package `AGENTS.md` under `libs/` and `apps/`.
 
 ## Rules
 

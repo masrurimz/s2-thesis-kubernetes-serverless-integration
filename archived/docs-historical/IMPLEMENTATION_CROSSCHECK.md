@@ -1,4 +1,5 @@
 # Implementation Cross-Check Report
+> **Historical.** Superseded 2026-01-15 by the root `AGENTS.md` map and `docs/specs/` (current modules live under `apps/routing`, `apps/prediction`, `libs/infra`). Kept for provenance; do not follow these instructions.
 
 Generated: 2026-01-15
 

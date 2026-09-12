@@ -1,4 +1,5 @@
 # Thesis Project Codebase Inventory
+> **Historical.** Superseded 2026-01-14 by the repository map in the root `AGENTS.md` (workspace packages under `libs/` and `apps/`). Kept for provenance; do not follow these instructions.
 
 **Generated**: January 2026  
 **Project**: Kubernetes & Serverless Integration with Intelligent Routing  

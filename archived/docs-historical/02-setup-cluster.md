@@ -1,4 +1,5 @@
 # Setting Up Kubernetes Clusters
+> **Historical.** Superseded 2025-07-13 by the governed testbed lifecycle (`thesis infra setup`, `thesis infra ensure`; see `docs/getting-started/02-quick-start.md`). Kept for provenance; do not follow these instructions.
 
 This guide walks you through setting up the Kubernetes clusters needed for the experiment.
 

@@ -1,181 +1,94 @@
-# Quick Start: 15-Minute Hybrid Demo
+# Quick Start: One Honest Experiment
 
 ## Goal
 
-Get a basic hybrid k3s-serverless system running in 15 minutes to understand the core concept.
+Bring the governed testbed up, converge it to a known shape, run one smoke pair, and read the bundle it produces. Everything goes through the `thesis` CLI.
 
 ## Prerequisites
 
-- Docker running
-- kubectl installed
-- k3d installed
-- **4GB+ available RAM** (8GB recommended)
+- Docker running, `kubectl` and `k3d` installed, `k6` on PATH
+- 8 GB+ RAM free (the testbed runs two k3d clusters plus Knative)
+- Repo installed: `git lfs install` once per clone, then `uv sync`
 
-## Resource Configurations
+See [Prerequisites](01-prerequisites.md) for details.
 
-**Standard Setup (8GB+ RAM):** Follow all steps as written
-
-**Resource-Constrained Setup (4-6GB RAM):** Use these modifications:
+## Step 1: Bring the testbed up
 
 ```bash
-# Step 1: Create smaller cluster (no agents)
-k3d cluster create demo-hybrid --port "8080:80@loadbalancer"
+# Full setup: clusters (thesis-hybrid + thesis-serverless), Knative, networking, monitoring.
+uv run thesis infra setup
 
-# Step 4: Add resource limits to HAProxy
-docker run -d --name traffic-router \
-  --memory="256m" --cpus="0.25" \
-  -p 8082:8082 \
-  -v /tmp/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg \
-  haproxy:alpine
+# Converge to a runnable state: clusters, HAProxy, Prometheus, node count.
+# Idempotent; prints only the actions it had to take.
+uv run thesis infra ensure --agents 1
+
+# Deploy the deterministic test app (/fib?n=33) to both clusters.
+uv run thesis infra deploy-app
+
+# Check the result.
+uv run thesis infra status
 ```
 
-## Step 1: Setup Basic Infrastructure (3 minutes)
+The static agent count matters. With spare agent nodes the node autoscaler never fires, and a predictive-scheduling comparison measures nothing. One static agent is the shape the H2 experiments run under. `uv run thesis infra shape-nodes --agents 1 --dry-run` reports the change without making it.
+
+## Step 2: Check the conditions
 
 ```bash
-# Create simple k3s cluster
-k3d cluster create demo-hybrid --agents 1 --port "8080:80@loadbalancer"
-
-# Verify cluster
-kubectl get nodes
+uv run thesis experiment preflight --profile smoke
 ```
 
-## Step 2: Deploy Test Application (2 minutes)
+This is the same battery the runner applies before every run: testbed converged and residue cleared, nodes ready, both arms serving, prediction server present when the design needs it, host quiet enough to measure on. Add `--no-converge` to report only.
+
+## Step 3: Run one smoke pair
 
 ```bash
-# Create simple HTTP server
-kubectl create deployment test-app --image=nginx:alpine
-kubectl expose deployment test-app --port=80 --target-port=80
-kubectl create ingress test-app --class=traefik --rule="localhost/*=test-app:80"
-
-# Test application
-curl http://localhost:8080
+uv run thesis experiment reproduce --profile smoke
 ```
 
-## Step 3: Simulate Serverless Environment (3 minutes)
+One S3/S4 pair, end to end: the testbed is re-converged before each run, the design runs, the analysis and a `SUMMARY.md` are written, and the command exits nonzero if a run or pair fails its gate. The bundle lands in `results/experiments/phase-b/` under a dated name like `2026-09-12_smoke-1p`.
+
+A dry run reports what would happen without changing anything:
 
 ```bash
-# Create "serverless" simulation with Docker
-docker run -d --name serverless-sim -p 8081:80 nginx:alpine
-
-# Test serverless simulation
-curl http://localhost:8081
+uv run thesis experiment reproduce --profile smoke --dry-run
 ```
 
-## Step 4: Basic Traffic Router (5 minutes)
-
-Create a simple HAProxy configuration:
+## Step 4: Read the bundle
 
 ```bash
-# Create HAProxy config
-cat > /tmp/haproxy.cfg << 'EOF'
-global
-    daemon
+BUNDLE=results/experiments/phase-b/<your-dated-bundle>
 
-defaults
-    mode http
-    timeout connect 5000ms
-    timeout client 50000ms
-    timeout server 50000ms
+# What each run measured, and the conditions it was measured under.
+uv run thesis analysis runs "$BUNDLE"
 
-frontend main
-    bind *:8082
-    default_backend servers
+# When the node tier arrived relative to the load, beside the tail it explains.
+uv run thesis analysis mechanism "$BUNDLE"
 
-backend servers
-    balance roundrobin
-    server k3s-cluster 127.0.0.1:8080 weight 80 check
-    server serverless-sim 127.0.0.1:8081 weight 20 check
-EOF
+# How far each arm moved run to run, and what n pairs can resolve.
+uv run thesis analysis variance "$BUNDLE"
 
-# Start HAProxy
-docker run -d --name traffic-router \
-  -p 8082:8082 \
-  -v /tmp/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg \
-  haproxy:alpine
+# The human-readable summary: what ran, headline table, pair verdict.
+uv run thesis experiment summary "$BUNDLE"
 ```
 
-## Step 5: Test Hybrid System (2 minutes)
+Each analysis command takes `--json` for program use. Open `$BUNDLE/SUMMARY.md` for the written verdict; `raw/<scenario>_run<N>/` holds the per-run evidence.
+
+## What you just ran
+
+- **S3 (hybrid-reactive)**: Algorithm 2 scales replicas from observed load only; Algorithm 1 (V3) routes by capacity.
+- **S4 (hybrid-predictive)**: same controllers, but a GRU forecast (9 × 15 s = 135 s ahead) gates proactive scaling.
+- Workload: ClarkNet trace replay against `/fib?n=33`, calibrated so p99 lands near the 200 ms SLO.
+- Primary SLO: p99 < 200 ms. A run that fails its treatment-fidelity gate is invalid and excluded.
+
+## Next steps
+
+- The real H2 regime: `uv run thesis experiment reproduce --profile h2-pair` (five counterbalanced S3/S4 pairs).
+- [Understanding Architecture](03-understanding-architecture.md) for the component map.
+- [Running experiments](../experiments/RUNNING_EXPERIMENTS.md) for the full runbook, profiles, and evidence lifecycle.
+- Root [README](../../README.md) for test tiers and evidence rules.
+
+## Teardown
 
 ```bash
-# Test hybrid routing
-for i in {1..10}; do
-  curl -s http://localhost:8082 | grep -o "nginx.*"
-  sleep 1
-done
-
-# You should see traffic distributed between both backends
+uv run thesis infra teardown
 ```
-
-## What You Just Built
-
-🎉 **Congratulations!** You now have a basic hybrid system with:
-
-- **K3s cluster** serving 80% of traffic (baseline warm capacity)
-- **Simulated serverless** handling 20% of traffic (overflow capacity)
-- **Traffic router** distributing load between both systems
-
-## Understanding the Demo
-
-### Traffic Flow
-
-```
-User Request → HAProxy Router → 80% to K3s / 20% to Serverless
-```
-
-### Key Concepts Demonstrated
-
-1. **Traffic Distribution**: Requests split between different compute models
-2. **Independent Scaling**: Each backend can scale independently
-3. **Capacity Balance**: Majority traffic uses baseline k3s while serverless absorbs bursts
-4. **Overflow Capacity**: Serverless provides additional capacity
-
-## Next Steps
-
-### Make It Intelligent (Sprint 1)
-
-- Add load monitoring
-- Implement dynamic weight adjustment
-- Add basic prediction
-
-### Add Sophistication (Later Sprints)
-
-- Machine learning prediction
-- SLO-based routing
-- Real dataset integration
-- Formal evaluation
-
-## Cleanup
-
-```bash
-# Stop everything
-docker stop traffic-router serverless-sim
-docker rm traffic-router serverless-sim
-k3d cluster delete demo-hybrid
-rm /tmp/haproxy.cfg
-```
-
-## Troubleshooting
-
-**HAProxy won't start**: Check if port 8082 is available
-
-```bash
-lsof -i :8082
-```
-
-**K3s cluster issues**: Verify Docker has enough resources
-
-```bash
-docker system df
-```
-
-**Can't access services**: Check cluster status
-
-```bash
-kubectl get pods --all-namespaces
-```
-
-## What's Next?
-
-- **[Understanding Architecture](03-understanding-architecture.md)** - Deep dive into components
-- **[Sprint 1](../incremental-development/phase-1-basic-hybrid.md)** - Build a production-ready version
-- **[Thesis Implementation](../thesis-implementation/)** - Full research system

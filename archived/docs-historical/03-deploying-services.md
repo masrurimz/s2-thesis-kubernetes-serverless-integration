@@ -1,4 +1,5 @@
 # Deploying Services
+> **Historical.** Superseded 2026-02-14 by `thesis infra deploy-app` (test-app to K8s + Knative; see `docs/getting-started/02-quick-start.md`). Kept for provenance; do not follow these instructions.
 
 This guide will show you how to deploy services like PostgreSQL, MinIO, and the Rust app across the Kubernetes clusters.
 

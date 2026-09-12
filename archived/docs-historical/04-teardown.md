@@ -1,4 +1,5 @@
 # Tearing Down the Setup
+> **Historical.** Superseded 2025-07-13 by `thesis infra teardown` (see `docs/getting-started/02-quick-start.md`). Kept for provenance; do not follow these instructions.
 
 Once the experiment is finished, you can tear down the Kubernetes clusters:
 
