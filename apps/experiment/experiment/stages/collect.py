@@ -18,6 +18,7 @@ import structlog
 from shared.config import settings
 from shared.artifacts import write_node_utilization
 from shared.models.metrics import MetricsExport, NodeSample
+from shared.protocols.metrics import MetricsClient
 from shared.models.pipeline import PipelineContext
 
 from experiment.stages.base import BaseStage
@@ -80,10 +81,17 @@ class MetricExporter:
         "pods_pending_count": 'count(kube_pod_status_phase{phase="Pending",namespace="default"})',
     }
 
-    def __init__(self, prometheus_url: Optional[str] = None):
-        from infra.observability.prometheus import PrometheusClient
+    def __init__(self, metrics_client: MetricsClient | None = None, prometheus_url: Optional[str] = None):
+        """Query through an injected metrics client, or build the Prometheus one.
 
-        self._client = PrometheusClient(prometheus_url or settings.PROMETHEUS_URL)
+        The default keeps every existing caller working; a test or a different
+        metrics backend substitutes the client instead of the transport.
+        """
+        if metrics_client is None:
+            from infra.observability.prometheus import PrometheusClient
+
+            metrics_client = PrometheusClient(prometheus_url or settings.PROMETHEUS_URL)
+        self._client = metrics_client
 
     def export_run(self, t_start: float, t_end: float, output_dir: Path) -> Dict[str, Any]:
         """Export all metrics for [t_start, t_end] window. Returns summary dict."""
@@ -463,8 +471,8 @@ class CollectStage(BaseStage):
 
     name = "collect"
 
-    def __init__(self, prometheus_url: Optional[str] = None):
-        self._exporter = MetricExporter(prometheus_url)
+    def __init__(self, metrics_client: MetricsClient | None = None, prometheus_url: Optional[str] = None):
+        self._exporter = MetricExporter(metrics_client=metrics_client, prometheus_url=prometheus_url)
         self._resource_poller = ResourcePoller()
 
     def start_resource_polling(self) -> None:

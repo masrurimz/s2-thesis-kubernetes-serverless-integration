@@ -29,6 +29,7 @@ from routing.clients.gru_client import GRUClient
 from routing.scaling.cluster_controller import ClusterController, ScalingConfig
 from infra.cluster.k8s import K8sScaler
 from shared.models.calibration import get_calibration
+from shared.protocols.prediction import PredictionClient
 from shared.scenarios import Scenario, SCENARIO_CONFIGS
 from routing.daemon.metrics import (
     daemon_decision_total,
@@ -62,6 +63,7 @@ class RoutingDaemon:
         haproxy_stats_url: str = "http://localhost:8404/stats;csv",
         gru_server_url: str = "http://localhost:8090",
         api_port: int = 9104,
+        prediction_client: Optional[PredictionClient] = None,
     ):
         """
         Initialize the routing daemon.
@@ -118,7 +120,9 @@ class RoutingDaemon:
             stats_url=haproxy_stats_url,
         )
 
-        self.gru_client = GRUClient(base_url=gru_server_url)
+        # The predictor is a seam: a test or a different model server supplies a
+        # client that satisfies PredictionClient, and the default stays the GRU one.
+        self.gru_client: PredictionClient = prediction_client or GRUClient(base_url=gru_server_url)
 
         self.current_weights = {
             "k3s": self.scenario_config.k3s_weight,

@@ -50,10 +50,9 @@ def test_all_unknown_yields_no_samples_and_no_raise():
 
 def test_summary_skips_absent_readings_instead_of_counting_them_as_zero(tmp_path):
     poller = ResourcePoller(poll_interval_sec=1)
-    poller._node_samples = [
-        NodeSample.from_kubectl_top_row(READY_ROW, 1.0),
-        NodeSample(timestamp=1.0, node="k3d-dynamic-workload-0-0"),
-    ]
+    readable = NodeSample.from_kubectl_top_row(READY_ROW, 1.0)
+    assert readable is not None
+    poller._node_samples = [readable, NodeSample(timestamp=1.0, node="k3d-dynamic-workload-0-0")]
 
     summary = poller.get_node_summary(tmp_path)
 

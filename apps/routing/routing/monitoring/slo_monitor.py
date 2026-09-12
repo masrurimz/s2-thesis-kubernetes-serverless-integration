@@ -12,6 +12,8 @@ from typing import Optional, Dict
 import requests
 import structlog
 
+from shared.protocols.metrics import MetricsClient
+
 logger = structlog.get_logger(__name__)
 
 
@@ -46,9 +48,15 @@ class SLOMonitor:
     Tracks p99 latency from Prometheus and detects sustained violations.
     """
 
-    def __init__(self, config: Optional[SLOConfig] = None):
-        """Initialize SLO monitor."""
+    def __init__(self, config: Optional[SLOConfig] = None, metrics_client: MetricsClient | None = None):
+        """Initialize SLO monitor.
+
+        The p99 reading comes from an injected metrics client when one is given;
+        otherwise the Prometheus URL in the config is queried directly. The HAProxy
+        fallback stays on its own path — its stats CSV is not a Prometheus query.
+        """
         self.config = config or SLOConfig()
+        self._metrics = metrics_client
         self.violation_start_time: Optional[int] = None
         self._last_p99: float = 0.0
         self._total_checks: int = 0
@@ -120,11 +128,22 @@ class SLOMonitor:
 
         return self._last_p99
 
+    P99_QUERY = "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[30s])) by (le)) * 1000"
+
     def _get_p99_from_prometheus(self) -> float:
-        """Query Prometheus for p99 latency."""
+        """Read the p99 latency, through the metrics seam when one is injected."""
+        if self._metrics is not None:
+            try:
+                value = self._metrics.query_instant(self.P99_QUERY)
+            except Exception as e:  # noqa: BLE001 — a failed reading is a zero, as before
+                logger.debug("Prometheus query failed", error=str(e))
+                return 0.0
+            return float(value) if value and value > 0 else 0.0
+
         try:
-            query = "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[30s])) by (le)) * 1000"
-            response = requests.get(f"{self.config.prometheus_url}/api/v1/query", params={"query": query}, timeout=5)
+            response = requests.get(
+                f"{self.config.prometheus_url}/api/v1/query", params={"query": self.P99_QUERY}, timeout=5
+            )
             response.raise_for_status()
 
             result = response.json()

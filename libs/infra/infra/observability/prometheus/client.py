@@ -5,11 +5,17 @@ from typing import Optional
 import requests
 import structlog
 
+from shared.protocols.metrics import MetricsClient
+
 logger = structlog.get_logger(__name__)
 
 
-class PrometheusClient:
-    """Client for querying Prometheus HTTP API."""
+class PrometheusClient(MetricsClient):
+    """Client for querying Prometheus HTTP API.
+
+    Subclasses the protocol so ty proves the signatures match the seam the
+    experiment stages and the SLO monitor accept.
+    """
 
     def __init__(self, prometheus_url: str = "http://localhost:9090"):
         self.prometheus_url = prometheus_url.rstrip("/")
