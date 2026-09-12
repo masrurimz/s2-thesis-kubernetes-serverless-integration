@@ -10,7 +10,7 @@ This directory contains the formal implementation documentation for the thesis r
 
 The thesis demonstrates a novel hybrid architecture that:
 - Implements **ElaX algorithm** with GRU-based workload prediction
-- Uses **real HTTP trace data** from ClarkNet and Calgary datasets  
+- Trains on **synthetic workload patterns**; validates on **real HTTP traces** (ClarkNet and Calgary), and replays ClarkNet for evaluation
 - Focuses on **tail latency optimization** with SLO-aware routing
 - Employs **formal resource allocation** using R = α·x + β with OLS tuning
 - Provides **comprehensive evaluation** with RMSE accuracy and cost analysis
@@ -48,8 +48,9 @@ The thesis demonstrates a novel hybrid architecture that:
 - **Integration**: Hybrid K8s-serverless routing strategy
 
 ### 2. GRU Workload Predictor
-- **Model**: Multi-point prediction (30 seconds ahead)
-- **Training Data**: ClarkNet and Calgary HTTP traces (4M+ requests)
+- **Model**: Multi-point prediction, 9 direct steps at 15 s sampling (135-second horizon)
+- **Training Data**: Synthetic diurnal, burst, and ramp RPS series
+- **Validation Data**: ClarkNet and Calgary HTTP traces; ClarkNet is replayed as the evaluation workload
 - **Architecture**: GRU layers with dropout for efficiency
 - **Evaluation**: RMSE metric for prediction accuracy
 
@@ -63,7 +64,7 @@ The thesis demonstrates a novel hybrid architecture that:
 - **Metric**: 99th percentile tail latency monitoring
 - **Threshold**: 30-second SLO violation detection window (per `SLOConfig.violation_window_sec`)
 - **Algorithm**: Routing Controller (Algorithm 1 from thesis)
-- **Decision**: Weighted routing between K8s and serverless (5-95% range)
+- **Decision**: Weighted routing between K8s and serverless; the Knative weight is capped at 50% (`max_knative_weight`), and K8s takes the remainder
 
 ### 5. Comprehensive Evaluation
 - **Predictor**: RMSE accuracy measurement
@@ -86,9 +87,10 @@ The thesis demonstrates a novel hybrid architecture that:
 - **Volume**: ~2M HTTP requests  
 - **Pattern**: Academic environment usage patterns
 
-### Processing Pipeline
+Both corpora are validation sets. The GRU trains on synthetic patterns, and ClarkNet is additionally replayed as the evaluation workload.
+
 ```
-Raw HTTP Logs → CLF Parsing → RPS Conversion → Time Series → GRU Training Data
+Raw HTTP Logs → CLF Parsing → RPS Conversion → Time Series → Validation / Replay Corpora
 ```
 
 ## Implementation Phases
@@ -100,7 +102,7 @@ Raw HTTP Logs → CLF Parsing → RPS Conversion → Time Series → GRU Trainin
 - Implement data preprocessing pipeline
 
 ### Phase 2: GRU Model Development  
-- Design GRU architecture for 30-second prediction
+- Design GRU architecture for the 135-second (9 × 15 s) prediction horizon
 - Implement training pipeline with PyTorch
 - Evaluate model performance using RMSE
 - Optimize hyperparameters for accuracy
@@ -112,10 +114,9 @@ Raw HTTP Logs → CLF Parsing → RPS Conversion → Time Series → GRU Trainin
 - Integrate GRU predictions with routing decisions
 
 ### Phase 4: SLO Monitoring System
-- Implement 99th percentile tail latency monitoring
-- Develop 5-second SLO violation detection
-- Create routing decision algorithm (Algorithm 1)
-- Integrate cost tracking and analysis
+- Implemented: 99th percentile tail latency monitoring with a 200 ms threshold, a 30-second violation window, and 15-second scrapes (`apps/routing/routing/monitoring/slo_monitor.py`, `SLOConfig`)
+- Routing decision algorithm (Algorithm 1, V3) implemented in `apps/routing/routing/algorithm/`
+- Cost tracking and analysis implemented: `uv run thesis analysis cost`
 
 ### Phase 5: Formal Evaluation
 - Execute comprehensive experiment scenarios
@@ -142,11 +143,7 @@ Raw HTTP Logs → CLF Parsing → RPS Conversion → Time Series → GRU Trainin
 1. **Review [Experiment Plan](01-experiment-plan.md)** for complete system design
 2. **Study [Methodology](02-methodology-implementation.md)** for technical details
 3. **Follow [Experiment Guide](03-running-experiments.md)** for execution
-4. **Use [Incremental Development](../incremental-development/)** for implementation
-
-## For Development Teams
-
-While this documentation focuses on formal thesis requirements, developers should start with the [incremental development approach](../incremental-development/) to build understanding progressively before implementing the complete thesis system.
+4. **Use the runbook [../experiments/RUNNING_EXPERIMENTS.md](../experiments/RUNNING_EXPERIMENTS.md)** for the current CLI commands
 
 ## Academic References
 

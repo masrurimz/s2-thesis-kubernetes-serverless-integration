@@ -4,11 +4,10 @@ This document explains how to perform actual experiments with real Prometheus me
 
 ## Overview
 
-The `realtime_validation.py` script performs **live experiments** with actual infrastructure:
-- Runs k6 load tests against each scenario
-- Collects real metrics from Prometheus
-- Performs statistical analysis across multiple runs
-- Produces honest validation results
+The `thesis experiment validate-realtime` command validates H3 (GRU prediction adequacy) offline by loading the trained model; it needs no cluster. H1 and H2 require live experiments:
+- Live runs use the experiment CLI (`run`, `paired-run`, `reproduce`) with k6 load against each scenario
+- Metrics are collected from Prometheus and HAProxy during and after each run
+- Post-hoc analysis runs through the analysis CLI (`hypotheses`, `cost`, `runs`, `mechanism`, `variance`)
 
 ## Architecture
 
@@ -20,12 +19,12 @@ The `realtime_validation.py` script performs **live experiments** with actual in
 │  1. CHECK INFRASTRUCTURE                                                    │
 │     ├── Prometheus: curl http://localhost:9090/-/healthy                     │
 │     ├── K3s: kubectl get nodes                                               │
-│     └── HAProxy: curl http://localhost:8404/stats                            │
+│     └── HAProxy: curl http://localhost:18404/stats                         │
 │                                                                              │
 │  2. RUN EXPERIMENT (per scenario, per run)                                   │
 │     ├── Configure routing daemon for scenario (S1/S2/S3/S4)                  │
 │     ├── Start k6 load test (steady/spike/endurance)                        │
-│     ├── Collect Prometheus metrics every 10 seconds                        │
+│     ├── Collect Prometheus metrics every 15 seconds                       │
 │     └── Stop after duration (default: 300 seconds)                         │
 │                                                                              │
 │  3. COLLECT METRICS                                                          │
@@ -48,17 +47,19 @@ The `realtime_validation.py` script performs **live experiments** with actual in
 ### 1. Infrastructure Running
 
 ```bash
-# Check Prometheus
+# Converge the whole stack (clusters, HAProxy, Prometheus, node count), then check it
+uv run thesis infra ensure
+uv run thesis infra health
+
+# Check Prometheus (deployed in the monitoring namespace, NodePort 30090)
 kubectl port-forward svc/prometheus 9090:9090 -n monitoring
 
-# Check K3s
+# Check the K3s cluster
 kubectl get nodes
 # Should show: k3d-thesis-hybrid-server-0 Ready
 
-# Check HAProxy (if using systemd)
-sudo systemctl start haproxy
-# Or check manually:
-curl http://localhost:8404/stats
+# Check HAProxy stats
+curl http://localhost:18404/stats
 ```
 
 ### 2. Scenarios Configured
@@ -75,10 +76,11 @@ Each scenario requires different routing daemon configuration:
 ### 3. GRU Model (for S4)
 
 ```bash
-# Ensure model exists
-ls -la controller/data/models/gru_model.pt
+# Ensure the artifact exists (loaded by apps/prediction/prediction/model_loader.py)
+ls -la data/models/gru_model.pt
 
-# Test prediction server
+# Start the prediction server, then check health
+uv run thesis-prediction-server --port 8090
 curl http://localhost:8090/health
 ```
 
@@ -87,19 +89,22 @@ curl http://localhost:8090/health
 ### Quick Check (No Experiments)
 
 ```bash
-cd controller
-HSA_OVERRIDE_GFX_VERSION=11.0.0 sg render -c \
-  "uv run python ../scripts/realtime_validation.py"
+uv run thesis experiment validate-realtime
 ```
 
-This checks infrastructure and validates H3 only (no live experiments needed).
+This validates H3 only. The GRU check loads the model artifact directly, so no cluster is needed. The command writes a timestamped JSON report under `results/realtime_validation/` and prints the path.
 
-### Full Live Validation (30+ minutes)
+### Full Live Validation (60+ minutes)
 
 ```bash
-cd controller
-HSA_OVERRIDE_GFX_VERSION=11.0.0 sg render -c \
-  "uv run python ../scripts/realtime_validation.py --live --duration 300 --runs 3"
+# All four scenarios, 3 runs each, 300 s per run
+uv run thesis experiment run --phase full --runs 3 --duration 300
+
+# Or all four arms under one named profile
+uv run thesis experiment reproduce --profile quad
+
+# Definitive H2 comparison
+uv run thesis experiment paired-run --pairs 5
 ```
 
 **Timeline:**
@@ -240,19 +245,17 @@ kubectl port-forward svc/prometheus 9090:9090 -n monitoring &
 
 ```bash
 # Check if HAProxy exporter is working
-curl http://localhost:8404/metrics
+curl http://localhost:18404/metrics
 
-# Check if apps are exposing metrics
-curl http://test-app/metrics
+# Make the application and kubelet metrics scrapable
+uv run thesis infra monitoring
 ```
 
 ### Routing Daemon Not Making Decisions
 
 ```bash
-# Check daemon logs
-kubectl logs -f deployment/routing-daemon
-
-# Check if metrics are flowing
+# The daemon runs as a local process; check its health and metrics
+curl http://localhost:9104/health
 curl http://localhost:9104/metrics
 ```
 
@@ -260,35 +263,27 @@ curl http://localhost:9104/metrics
 
 ### JSON Results
 
+`validate-realtime` writes this shape (values illustrative):
+
 ```json
 {
-  "timestamp": "2026-02-12T10:00:00",
-  "h1": {
-    "proven": true,
-    "confidence": "medium",
-    "evidence": {
-      "s1_throughput_mean": 348.5,
-      "s4_throughput_mean": 536.2,
-      "improvement_percent": 53.9,
-      "p_value": 0.03,
-      "significant": true
-    }
-  },
-  "h2": {
-    "proven": false,
-    "confidence": "low",
-    "evidence": {
-      "predictive_decisions": 0,
-      "reason": "No predictive actions triggered"
-    }
-  },
+  "timestamp": "2026-09-12T10:00:00",
   "h3": {
+    "hypothesis": "H3",
     "proven": true,
     "confidence": "high",
     "evidence": {
-      "rmse_percent": 6.01
+      "model_type": "gru",
+      "training_rmse_requests": 6.01,
+      "training_rmse_percent": 6.01,
+      "target_rmse_percent": 10.0,
+      "test_prediction": 742,
+      "test_confidence": 0.83
     }
-  }
+  },
+  "h1": {"status": "pending_live_experiments"},
+  "h2": {"status": "pending_live_experiments"},
+  "report_path": "results/realtime_validation/validation_20260912_100000.json"
 }
 ```
 
@@ -313,24 +308,32 @@ plt.savefig('results/latency_comparison.png')
 
 1. **Start infrastructure:**
    ```bash
-   ./scripts/start-infrastructure.sh
+   uv run thesis infra setup      # first time
+   uv run thesis infra ensure     # converge an existing stack
    ```
 
-2. **Run validation:**
+2. **Run the offline H3 check:**
    ```bash
-   cd controller
-   HSA_OVERRIDE_GFX_VERSION=11.0.0 sg render -c \
-     "uv run python ../scripts/realtime_validation.py --live"
+   uv run thesis experiment validate-realtime
    ```
 
-3. **Analyze results:**
+3. **Run live experiments:**
    ```bash
-   python scripts/analyze_results.py results/realtime_validation/
+   uv run thesis experiment reproduce --profile quad
+   uv run thesis experiment paired-run --pairs 5
    ```
 
-4. **Generate report:**
+4. **Analyze results:**
    ```bash
-   python scripts/generate_report.py --input results/realtime_validation/
+   uv run thesis analysis hypotheses
+   uv run thesis analysis cost --experiment-dir results/experiments/phase-b/<bundle>
+   uv run thesis analysis runs results/experiments/phase-b/<bundle>
+   ```
+
+5. **Write the bundle summary:**
+   ```bash
+   uv run thesis experiment summary results/experiments/phase-b/<bundle>
+   uv run thesis experiment analyze results/experiments/phase-b/<bundle>
    ```
 
 ## Limitations
@@ -347,16 +350,14 @@ Current limitations of real-time validation:
 
 ## Alternative: Simulation Mode
 
-For quick iteration, use simulation mode with historical data:
+For quick iteration, use the offline checks with stored results:
 
 ```bash
-# Fast validation using stress test results
-python scripts/validate_all_hypotheses.py
+# All three hypotheses from stored results, no live experiments
+uv run thesis analysis hypotheses
 ```
-
-This provides approximate validation without running live experiments.
 
 ---
 
-**Last Updated:** 2026-02-12  
-**Status:** Implementation ready, requires infrastructure setup
+**Last Updated:** 2026-09-12  
+**Status:** Commands verified against the current `thesis` CLI
