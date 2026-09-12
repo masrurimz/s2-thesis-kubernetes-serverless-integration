@@ -79,6 +79,22 @@ class TestWriteTableParquet:
         assert meta[b"experiment_id"] == b"phase-b/2026-07-12_h2"
         assert meta[b"scenario"] == b"s4"
 
+    def test_missing_provenance_key_is_rejected(self, sample_table, tmp_path):
+        path = tmp_path / "metrics.parquet"
+        with pytest.raises(ValueError, match="run_id"):
+            write_table_parquet(
+                sample_table,
+                path,
+                schema_version=2,
+                metadata={
+                    "experiment_id": "exp1",
+                    "scenario": "s4",
+                    "producer_git_commit": "abc1234",
+                    "generated_at": "2026-07-12T10:00:00+00:00",
+                },
+            )
+        assert not path.exists()
+
     def test_overwrite_replaces_atomically(self, sample_table, tmp_path):
         path = tmp_path / "metrics.parquet"
         metadata = {

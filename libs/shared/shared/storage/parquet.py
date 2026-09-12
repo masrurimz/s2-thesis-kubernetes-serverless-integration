@@ -23,6 +23,16 @@ REQUIRED_METADATA_KEYS = (
     "generated_at",
 )
 
+#: Provenance the caller must supply. ``evidence_schema_version`` is derived from
+#: ``schema_version``, so it is an output of this function rather than an input.
+REQUIRED_CALLER_KEYS = (
+    "experiment_id",
+    "scenario",
+    "run_id",
+    "producer_git_commit",
+    "generated_at",
+)
+
 
 def write_table_parquet(
     table: pa.Table,
@@ -44,7 +54,19 @@ def write_table_parquet(
         schema_version: Integer schema version (stored as ``evidence_schema_version``).
         metadata: Provenance key-value pairs (experiment_id, scenario, run_id,
             producer_git_commit, generated_at).
+
+    Raises:
+        ValueError: A required provenance key is missing. The keys are the
+            reason a table can be traced to the run that produced it, and a
+            file written without them looks complete while being unauditable.
     """
+    missing = [key for key in REQUIRED_CALLER_KEYS if key not in metadata]
+    if missing:
+        raise ValueError(
+            f"write_table_parquet requires provenance metadata {missing}; "
+            f"a table without it cannot be traced to the run that produced it"
+        )
+
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
 
