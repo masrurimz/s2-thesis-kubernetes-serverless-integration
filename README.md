@@ -188,6 +188,10 @@ uv run python -m pytest -m live  # live tier: creates real k3d nodes; never run 
 - A run that fails its conditions is recorded as `run_refused`, never silently retried.
 - Every claim in the thesis maps to evidence through `results/claims/CLAIMS_TO_EVIDENCE.md`.
 
+## Licence
+
+MIT for the code and the documentation in this repository, copyright Muhammad Zahid Masruri. See [`LICENSE`](LICENSE). The vendored Typst thesis template under `thesis-typst/` carries its own GPL-3.0 licence, and the cited papers archived under `docs/references/` remain under their publishers' terms.
+
 ## Read more
 
 - Documentation index: [`docs/README.md`](docs/README.md)
