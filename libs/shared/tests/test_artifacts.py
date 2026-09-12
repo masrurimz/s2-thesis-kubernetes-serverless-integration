@@ -246,3 +246,53 @@ def test_result_diagnostics_are_quiet_for_a_good_file(tmp_path):
     (tmp_path / RESULT_FILE).write_bytes(_fixture_bytes(RESULT_FILE))
 
     assert result_validation_error(tmp_path) is None
+
+
+# ---------------------------------------------------------------------------
+# The round-trip invariant, for arbitrary samples
+# ---------------------------------------------------------------------------
+
+from hypothesis import HealthCheck, given, settings  # noqa: E402
+from hypothesis import strategies as st  # noqa: E402
+
+
+_bounded_floats = st.floats(min_value=-1e12, max_value=1e12, allow_nan=False, allow_infinity=False, width=64)
+
+
+@settings(max_examples=50, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@given(
+    timestamp=_bounded_floats,
+    node=st.text(min_size=1, max_size=40),
+    cpu_cores=_bounded_floats,
+    memory_mib=_bounded_floats,
+)
+def test_node_sample_survives_json_round_trip(tmp_path, timestamp, node, cpu_cores, memory_mib):
+    """Whatever the poller reads, the artifact returns the same sample.
+
+    A fixed set of examples cannot cover the values metrics-server actually reports
+    (nanocores, fractional cores, text node names), so the invariant is stated over
+    generated ones: model -> dump -> validate is the identity.
+    """
+    sample = NodeSample(timestamp=timestamp, node=node, cpu_cores=cpu_cores, memory_mib=memory_mib)
+
+    write_node_utilization(tmp_path, [sample])
+
+    assert read_node_utilization(tmp_path) == [sample]
+
+
+@settings(max_examples=50, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@given(
+    timestamp=_bounded_floats,
+    pod=st.text(min_size=1, max_size=40),
+    backend=st.sampled_from(["k8s", "knative", ""]),
+    cpu_millicores=_bounded_floats,
+    memory_mib=_bounded_floats,
+)
+def test_resource_sample_survives_json_round_trip(tmp_path, timestamp, pod, backend, cpu_millicores, memory_mib):
+    sample = ResourceSample(
+        timestamp=timestamp, pod=pod, backend=backend, cpu_millicores=cpu_millicores, memory_mib=memory_mib
+    )
+
+    write_resource_utilization(tmp_path, [sample])
+
+    assert read_resource_utilization(tmp_path) == [sample]
