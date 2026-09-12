@@ -161,15 +161,17 @@ def test_build_summary_reports_headline_paired_and_rejections(tmp_path: Path) ->
     assert "| run 2 | 110.0 | 140.0 | +30.0 | 50.0 | 10.0 | -40.0 |" in summary
     assert "| run 3 | 120.0 | 155.0 | +35.0 | 7.0 | 20.0 | +13.0 |" in summary
 
-    # Pair diffs (30, 35): mean +32.5, d = 32.5/3.5355 = 9.19, exact p = 1/4.
+    # Pair diffs (30, 35): mean +32.5, d = 32.5/3.5355 = 9.19. The effect runs
+    # against H1 (S4 slower), so every sign flip is at or below the observed mean and
+    # the exact one-sided p is 1.0 — no evidence for H2, which is the correct reading.
     assert (
         "Mean Δp99 latency: +32.5 ms, paired Cohen's d: 9.19, "
-        "exact one-sided permutation p: 0.2500 (does not clear 0.05)." in summary
+        "exact one-sided permutation p (H1: S4 faster): 1.0000 (does not clear 0.05)." in summary
     )
-    # Pair diffs (4, 13): mean +8.5, d = 8.5/6.3640 = 1.34, exact p = 1/4.
+    # Pair diffs (4, 13): mean +8.5, d = 8.5/6.3640 = 1.34, same adverse direction.
     assert (
         "Mean ΔSLO violations: +8.5, paired Cohen's d: 1.34, "
-        "exact one-sided permutation p: 0.2500 (does not clear 0.05)." in summary
+        "exact one-sided permutation p (H1: S4 faster): 1.0000 (does not clear 0.05)." in summary
     )
 
     assert "Model artifact: n/a" in summary

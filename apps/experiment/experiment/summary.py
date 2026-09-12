@@ -11,6 +11,7 @@ from typing import TypeGuard
 import yaml
 from shared.artifacts import read_manifest_git_commit, read_result_dict
 from shared.models.evidence import NodeEngagement
+from shared.stats import paired_permutation_p_from_diffs
 
 NA = "n/a"
 _PERMUTATION_MAX_PAIRS = 20
@@ -280,20 +281,16 @@ def _cohens_d_paired(diffs: list[float]) -> float | None:
 
 
 def _permutation_p_one_sided(diffs: list[float]) -> float | None:
+    """The paired permutation p for H1: S4 faster than S3.
+
+    Same definition the paired analysis writes into ``paired_analysis.json`` — one
+    implementation, so a bundle cannot report two p-values for the same pairs. An
+    effect running the other way scores 1.0, which is what "no evidence for H2"
+    looks like.
+    """
     if not diffs or len(diffs) > _PERMUTATION_MAX_PAIRS:
         return None
-    observed_total = sum(diffs)
-    if observed_total == 0:
-        return 1.0
-    sums = [0.0]
-    for diff in diffs:
-        sums = [s + diff for s in sums] + [s - diff for s in sums]
-    at_least_as_extreme = (
-        sum(1 for s in sums if s >= observed_total)
-        if observed_total > 0
-        else sum(1 for s in sums if s <= observed_total)
-    )
-    return at_least_as_extreme / len(sums)
+    return paired_permutation_p_from_diffs(diffs)
 
 
 @dataclass
@@ -361,7 +358,7 @@ def _paired(baseline: str, comparison: str, by_scenario: dict[str, list[Run]]) -
         lines.append(
             f"- Mean Δ{metric.label}: {_fmt(mean_diff, '+.1f')}{unit}, "
             f"paired Cohen's d: {_fmt(_cohens_d_paired(diffs), '.2f')}, "
-            f"exact one-sided permutation p: {_fmt(_permutation_p_one_sided(diffs), '.4f')} "
+            f"exact one-sided permutation p (H1: S4 faster): {_fmt(_permutation_p_one_sided(diffs), '.4f')} "
             f"({_significance(diffs)} 0.05)."
         )
     lines.append("")
