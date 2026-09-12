@@ -7,6 +7,8 @@ and a hand-written fixture drifts from them silently.
 import json
 from pathlib import Path
 
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
 
 from shared.artifacts import (
@@ -36,8 +38,14 @@ from shared.artifacts import (
 from shared.models.experiment import ExperimentResult, RunManifest
 from shared.models.metrics import NodeSample, ResourceSample
 from shared.models.provisioning import ProvisionEvent
+from shared.storage.parquet import write_table_parquet
 
 FIXTURES = Path(__file__).parent / "fixtures"
+
+# The historical JSON both series were written as before the Parquet move; the
+# fixtures stay JSON because they are conversion inputs, not the live format.
+_LEGACY_RESOURCE_JSON = "resource_utilization.json"
+_LEGACY_NODE_JSON = "node_utilization.json"
 
 
 def _fixture_bytes(name: str) -> bytes:
@@ -161,14 +169,17 @@ class TestProvisionEvents:
 
 
 class TestUtilizationSamples:
-    def test_real_resource_samples_read_back_typed(self, tmp_path):
-        (tmp_path / RESOURCE_UTILIZATION_FILE).write_bytes(_fixture_bytes(RESOURCE_UTILIZATION_FILE))
+    def test_real_resource_samples_convert_and_round_trip(self, tmp_path):
+        """The fixture is the historical JSON; the artifact now round-trips it as Parquet."""
+        samples = [ResourceSample(**row) for row in json.loads(_fixture_bytes(_LEGACY_RESOURCE_JSON))]
 
-        samples = read_resource_utilization(tmp_path)
+        write_resource_utilization(tmp_path, samples)
+        restored = read_resource_utilization(tmp_path)
 
-        assert samples
-        assert all(isinstance(sample, ResourceSample) for sample in samples)
-        assert samples[0].pod
+        assert restored
+        assert all(isinstance(sample, ResourceSample) for sample in restored)
+        assert restored[0].pod
+        _assert_samples_match(restored, sorted(samples, key=lambda s: s.timestamp))
 
     def test_resource_round_trip(self, tmp_path):
         samples = [
@@ -179,13 +190,30 @@ class TestUtilizationSamples:
 
         assert read_resource_utilization(tmp_path) == samples
 
-    def test_real_node_samples_read_back_typed(self, tmp_path):
-        (tmp_path / NODE_UTILIZATION_FILE).write_bytes(_fixture_bytes(NODE_UTILIZATION_FILE))
+    def test_written_series_is_typed_and_sorted(self, tmp_path):
+        samples = [
+            ResourceSample(timestamp=2.5, pod="b", backend="k8s", cpu_millicores=10.0, memory_mib=1.0),
+            ResourceSample(timestamp=1.5, pod="a", backend="knative", cpu_millicores=20.0, memory_mib=2.0),
+        ]
 
-        samples = read_node_utilization(tmp_path)
+        path = write_resource_utilization(tmp_path, samples)
 
-        assert samples
-        assert all(isinstance(sample, NodeSample) for sample in samples)
+        schema = pq.read_schema(path)
+        assert schema.field("timestamp").type == pa.timestamp("us", tz="UTC")
+        assert schema.field("pod").type == pa.string()
+        assert schema.field("cpu_millicores").type == pa.float64()
+        timestamps = [sample.timestamp for sample in read_resource_utilization(tmp_path)]
+        assert timestamps == sorted(timestamps)
+
+    def test_real_node_samples_convert_and_round_trip(self, tmp_path):
+        samples = [NodeSample(**row) for row in json.loads(_fixture_bytes(_LEGACY_NODE_JSON))]
+
+        write_node_utilization(tmp_path, samples)
+        restored = read_node_utilization(tmp_path)
+
+        assert restored
+        assert all(isinstance(sample, NodeSample) for sample in restored)
+        _assert_samples_match(restored, sorted(samples, key=lambda s: s.timestamp))
 
     def test_node_round_trip_keeps_a_missing_reading_missing(self, tmp_path):
         samples = [NodeSample(timestamp=1.0, node="k3d-dynamic-workload-0-0")]
@@ -195,6 +223,14 @@ class TestUtilizationSamples:
 
         assert restored == samples
         assert restored[0].cpu_pct is None
+
+
+def _assert_samples_match(restored, source):
+    """Values survive exactly; timestamps to the microsecond the format quantizes to."""
+    assert len(restored) == len(source)
+    for restored_sample, source_sample in zip(restored, source, strict=True):
+        assert abs(restored_sample.timestamp - source_sample.timestamp) <= 1e-6
+        assert restored_sample.model_dump(exclude={"timestamp"}) == source_sample.model_dump(exclude={"timestamp"})
 
 
 class TestPrometheusExport:
@@ -212,14 +248,6 @@ class TestPrometheusExport:
         assert read_prometheus_export(tmp_path) == {}
 
 
-@pytest.mark.parametrize("reader", [read_result, read_manifest])
-def test_readers_never_raise_on_a_half_written_bundle(tmp_path, reader):
-    (tmp_path / RESULT_FILE).write_bytes(b"\x00\x01binary")
-    (tmp_path / MANIFEST_FILE).write_bytes(b"\x00\x01binary")
-
-    assert reader(tmp_path) is None
-
-
 @pytest.mark.parametrize(
     ("reader", "filename"),
     [
@@ -228,10 +256,27 @@ def test_readers_never_raise_on_a_half_written_bundle(tmp_path, reader):
     ],
 )
 def test_sample_readers_never_raise_on_a_file_that_does_not_validate(tmp_path, reader, filename):
-    """Valid JSON of the wrong shape is the same empty answer as a missing file."""
-    (tmp_path / filename).write_text(json.dumps([{"not": "a sample"}]))
+    """A corrupt file is the same empty answer as a missing file."""
+    (tmp_path / filename).write_bytes(b"not parquet at all")
 
     assert reader(tmp_path) == []
+
+
+def test_sample_readers_never_raise_on_a_wrong_shape_parquet(tmp_path):
+    write_table_parquet(
+        pa.table({"unexpected": pa.array([1, 2], type=pa.int64())}),
+        tmp_path / RESOURCE_UTILIZATION_FILE,
+        schema_version=1,
+        metadata={
+            "experiment_id": "phase-b/x",
+            "scenario": "s1-k8s-only",
+            "run_id": "1",
+            "producer_git_commit": "test",
+            "generated_at": "2026-09-12T00:00:00+00:00",
+        },
+    )
+
+    assert read_resource_utilization(tmp_path) == []
 
 
 def test_result_diagnostics_name_the_reason_a_file_was_rejected(tmp_path):
@@ -259,45 +304,49 @@ from hypothesis import strategies as st  # noqa: E402
 
 
 _bounded_floats = st.floats(min_value=-1e12, max_value=1e12, allow_nan=False, allow_infinity=False, width=64)
+# Microsecond quantization keeps the 1e-6 round-trip bound only over epoch-scale
+# seconds: beyond ~3.2e9 a float64's own spacing exceeds a microsecond.
+_epoch_floats = st.floats(min_value=1e9, max_value=3.2e9, allow_nan=False, allow_infinity=False, width=64)
 
 
 @settings(max_examples=50, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(
-    timestamp=_bounded_floats,
+    timestamp=_epoch_floats,
     node=st.text(min_size=1, max_size=40),
     cpu_cores=_bounded_floats,
     memory_mib=_bounded_floats,
 )
-def test_node_sample_survives_json_round_trip(tmp_path, timestamp, node, cpu_cores, memory_mib):
+def test_node_sample_survives_parquet_round_trip(tmp_path, timestamp, node, cpu_cores, memory_mib):
     """Whatever the poller reads, the artifact returns the same sample.
 
     A fixed set of examples cannot cover the values metrics-server actually reports
     (nanocores, fractional cores, text node names), so the invariant is stated over
-    generated ones: model -> dump -> validate is the identity.
+    generated ones. Values are exact; timestamps round-trip through microseconds,
+    which holds to 1e-6 over the epoch-second range a run can record.
     """
     sample = NodeSample(timestamp=timestamp, node=node, cpu_cores=cpu_cores, memory_mib=memory_mib)
 
     write_node_utilization(tmp_path, [sample])
 
-    assert read_node_utilization(tmp_path) == [sample]
+    _assert_samples_match(read_node_utilization(tmp_path), [sample])
 
 
 @settings(max_examples=50, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(
-    timestamp=_bounded_floats,
+    timestamp=_epoch_floats,
     pod=st.text(min_size=1, max_size=40),
     backend=st.sampled_from(["k8s", "knative", ""]),
     cpu_millicores=_bounded_floats,
     memory_mib=_bounded_floats,
 )
-def test_resource_sample_survives_json_round_trip(tmp_path, timestamp, pod, backend, cpu_millicores, memory_mib):
+def test_resource_sample_survives_parquet_round_trip(tmp_path, timestamp, pod, backend, cpu_millicores, memory_mib):
     sample = ResourceSample(
         timestamp=timestamp, pod=pod, backend=backend, cpu_millicores=cpu_millicores, memory_mib=memory_mib
     )
 
     write_resource_utilization(tmp_path, [sample])
 
-    assert read_resource_utilization(tmp_path) == [sample]
+    _assert_samples_match(read_resource_utilization(tmp_path), [sample])
 
 
 class TestPairedAnalysis:

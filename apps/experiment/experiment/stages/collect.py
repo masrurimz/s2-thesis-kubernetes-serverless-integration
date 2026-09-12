@@ -16,8 +16,8 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import structlog
 from shared.config import settings
-from shared.artifacts import write_node_utilization
-from shared.models.metrics import MetricsExport, NodeSample
+from shared.artifacts import write_node_utilization, write_resource_utilization
+from shared.models.metrics import MetricsExport, NodeSample, ResourceSample
 from shared.protocols.metrics import MetricsClient
 from shared.models.pipeline import PipelineContext
 
@@ -372,14 +372,11 @@ class ResourcePoller:
             self._thread = None
 
     def get_summary(self, output_dir: Path) -> Dict[str, float | str]:
-        """Compute avg/peak CPU and memory, save raw samples to JSON."""
+        """Compute avg/peak CPU and memory, save raw samples as Parquet."""
         with self._lock:
             samples = list(self._samples)
 
-        output_dir.mkdir(parents=True, exist_ok=True)
-        save_path = output_dir / "resource_utilization.json"
-        with open(save_path, "w") as f:
-            json.dump(samples, f, indent=2)
+        save_path = write_resource_utilization(output_dir, [ResourceSample(**s) for s in samples])
 
         if not samples:
             return {
@@ -409,7 +406,7 @@ class ResourcePoller:
         }
 
     def get_node_summary(self, output_dir: Path) -> Dict[str, Any]:
-        """Compute cluster-level utilization from node polls, save to JSON.
+        """Compute cluster-level utilization from node polls, save as Parquet.
 
         Excludes control-plane nodes (node role contains 'control-plane' or 'master')
         to report only workload-bearing node utilization.
@@ -417,9 +414,9 @@ class ResourcePoller:
         with self._lock:
             node_samples = list(self._node_samples)
 
+        node_path: Path | None = None
         if output_dir:
-            output_dir.mkdir(parents=True, exist_ok=True)
-            write_node_utilization(output_dir, node_samples)
+            node_path = write_node_utilization(output_dir, node_samples)
 
         if not node_samples:
             return {
@@ -427,7 +424,7 @@ class ResourcePoller:
                 "peak_cluster_cpu_pct": 0.0,
                 "avg_cluster_mem_pct": 0.0,
                 "avg_pod_density": 0.0,
-                "node_utilization_path": str(output_dir / "node_utilization.json") if output_dir else "",
+                "node_utilization_path": str(node_path) if node_path else "",
             }
 
         # Exclude control-plane nodes
@@ -453,7 +450,7 @@ class ResourcePoller:
             "peak_cluster_cpu_pct": float(max(cpu_pcts)) if cpu_pcts else 0.0,
             "avg_cluster_mem_pct": float(np.mean(mem_pcts)) if mem_pcts else 0.0,
             "avg_pod_density": round(avg_pod_density, 1),
-            "node_utilization_path": str(output_dir / "node_utilization.json") if output_dir else "",
+            "node_utilization_path": str(node_path) if node_path else "",
         }
 
 

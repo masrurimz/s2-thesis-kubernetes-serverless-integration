@@ -19,21 +19,27 @@ needs rather than what a happy path wants:
 
 from __future__ import annotations
 
+import functools
 import json
+import re
+import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Sequence, TypeVar
 
+import pyarrow as pa
 from pydantic import TypeAdapter, ValidationError
 
 from shared.models.experiment import ExperimentResult, RunManifest
 from shared.models.metrics import NodeSample, ResourceSample
 from shared.models.provisioning import ProvisionEvent
+from shared.storage.parquet import read_table_parquet, write_table_parquet
 
 RESULT_FILE = "result.json"
 MANIFEST_FILE = "manifest.json"
 PROVISION_EVENTS_FILE = "provision_events.json"
-RESOURCE_UTILIZATION_FILE = "resource_utilization.json"
-NODE_UTILIZATION_FILE = "node_utilization.json"
+RESOURCE_UTILIZATION_FILE = "resource_utilization.parquet"
+NODE_UTILIZATION_FILE = "node_utilization.parquet"
 PROMETHEUS_EXPORT_FILE = "prometheus_export.json"
 
 _RESOURCE_SAMPLES = TypeAdapter(list[ResourceSample])
@@ -214,31 +220,129 @@ def provision_event_names(events: Sequence[ProvisionEvent]) -> list[str]:
 
 # ---------------------------------------------------------------------------
 # utilization samples — what the pollers saw
+#
+# Both series are Parquet: a typed UTC-microsecond timestamp column the table
+# is sorted by, dictionary-encoded labels, and provenance metadata derived from
+# the run directory. The round-trip keeps the models' float epoch-second
+# timestamps to within a microsecond.
 # ---------------------------------------------------------------------------
+
+_SERIES_SCHEMA_VERSION = 1
+_TIMESTAMP_TYPE = pa.timestamp("us", tz="UTC")
+_LABEL_COLUMNS = frozenset({"pod", "backend", "node"})
+_RESOURCE_COLUMNS = ("timestamp", "pod", "backend", "cpu_millicores", "memory_mib")
+_NODE_COLUMNS = ("timestamp", "node", "cpu_cores", "cpu_pct", "memory_mib", "memory_pct")
+_RUN_NAME_RE = re.compile(r"^(?P<scenario>.+)_run(?P<run_id>\d+)$")
+
+_SampleT = TypeVar("_SampleT", ResourceSample, NodeSample)
+
+
+@functools.lru_cache(maxsize=1)
+def _repo_head_commit() -> str:
+    """The repository HEAD commit, or "unknown" when run outside a work tree."""
+    try:
+        return subprocess.check_output(["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL, text=True).strip()
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
+
+
+def _experiment_id(run_dir: Path) -> str:
+    """The bundle directory relative to ``results/experiments/``.
+
+    ``results/experiments/<phase>/<batch>/<run>`` yields ``<phase>/<batch>``;
+    a ``raw/`` layout hop (schema v2) is skipped. A run outside that tree (a
+    tmp dir in tests) falls back to the parent directory name.
+    """
+    parts: list[str] = []
+    node = run_dir.parent
+    while node.name and node.name != "experiments" and node != node.parent:
+        parts.append(node.name)
+        node = node.parent
+    if node.name != "experiments":
+        return run_dir.parent.name
+    if parts and parts[0] == "raw":
+        parts.pop(0)
+    return "/".join(reversed(parts))
+
+
+def series_provenance(run_dir: Path) -> dict[str, str]:
+    """Provenance key-value metadata for a run's series Parquet.
+
+    The same stamp fits any artifact written inside a run directory:
+    ``experiment_id`` names the bundle (relative to ``results/experiments/``),
+    ``scenario`` and ``run_id`` parse out of the run directory name
+    (``s1-k8s-only_run1``), ``producer_git_commit`` prefers the run's own
+    manifest snapshot and falls back to the repository HEAD, and
+    ``generated_at`` is UTC now in ISO 8601.
+    """
+    match = _RUN_NAME_RE.match(run_dir.name)
+    return {
+        "experiment_id": _experiment_id(run_dir),
+        "scenario": match.group("scenario") if match else run_dir.name,
+        "run_id": match.group("run_id") if match else "",
+        "producer_git_commit": read_manifest_git_commit(run_dir) or _repo_head_commit(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+def _series_table(samples: Sequence[_SampleT], columns: tuple[str, ...]) -> pa.Table:
+    rows = [sample.model_dump() for sample in samples]
+    arrays: list[pa.Array] = []
+    for column in columns:
+        values = [row[column] for row in rows]
+        if column == "timestamp":
+            # float64 epoch seconds carry sub-microsecond residue (.75) that a
+            # cast refuses to truncate; rounding to integer microseconds first
+            # is exact, and reading back divides to within 1e-6 of the source.
+            micros = pa.array([round(value * 1_000_000) for value in values], type=pa.int64())
+            arrays.append(micros.cast(_TIMESTAMP_TYPE))
+        else:
+            arrays.append(pa.array(values, type=pa.string() if column in _LABEL_COLUMNS else pa.float64()))
+    return pa.Table.from_arrays(arrays, names=list(columns)).sort_by("timestamp")
+
+
+def _write_series_parquet(run_dir: Path, samples: Sequence[_SampleT], filename: str, columns: tuple[str, ...]) -> Path:
+    path = run_dir / filename
+    write_table_parquet(
+        _series_table(samples, columns),
+        path,
+        schema_version=_SERIES_SCHEMA_VERSION,
+        metadata=series_provenance(run_dir),
+    )
+    return path
+
+
+def _read_series_parquet(run_dir: Path, filename: str, adapter: TypeAdapter) -> list[Any]:
+    path = run_dir / filename
+    if not path.is_file():
+        return []
+    try:
+        table = read_table_parquet(path)
+        micros = table.column("timestamp").cast(pa.int64()).to_pylist()
+        rows = table.to_pylist()
+        for row, micro in zip(rows, micros, strict=True):
+            row["timestamp"] = micro / 1_000_000
+        return adapter.validate_python(rows)
+    except (OSError, ValueError, KeyError, ValidationError):
+        return []
 
 
 def read_resource_utilization(run_dir: Path) -> list[ResourceSample]:
     """The polled samples, or [] when the file is absent or does not validate."""
-    try:
-        return _RESOURCE_SAMPLES.validate_python(_read_json(run_dir / RESOURCE_UTILIZATION_FILE) or [])
-    except ValidationError:
-        return []
+    return _read_series_parquet(run_dir, RESOURCE_UTILIZATION_FILE, _RESOURCE_SAMPLES)
 
 
 def write_resource_utilization(run_dir: Path, samples: Sequence[ResourceSample]) -> Path:
-    return _write_json(run_dir / RESOURCE_UTILIZATION_FILE, [s.model_dump() for s in samples])
+    return _write_series_parquet(run_dir, samples, RESOURCE_UTILIZATION_FILE, _RESOURCE_COLUMNS)
 
 
 def read_node_utilization(run_dir: Path) -> list[NodeSample]:
     """The node readings, or [] when the file is absent or does not validate."""
-    try:
-        return _NODE_SAMPLES.validate_python(_read_json(run_dir / NODE_UTILIZATION_FILE) or [])
-    except ValidationError:
-        return []
+    return _read_series_parquet(run_dir, NODE_UTILIZATION_FILE, _NODE_SAMPLES)
 
 
 def write_node_utilization(run_dir: Path, samples: Sequence[NodeSample]) -> Path:
-    return _write_json(run_dir / NODE_UTILIZATION_FILE, [s.model_dump() for s in samples])
+    return _write_series_parquet(run_dir, samples, NODE_UTILIZATION_FILE, _NODE_COLUMNS)
 
 
 # ---------------------------------------------------------------------------
