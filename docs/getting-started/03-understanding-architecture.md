@@ -4,6 +4,47 @@
 
 Kubernetes replicas are warm and economical but have a finite, calibrated capacity. Knative absorbs overflow but has a different cost and startup profile. The experiment compares four designs under one deterministic workload: a K8s baseline, a serverless-only baseline, reactive hybrid control, and predictive hybrid control.
 
+## What runs where
+
+Two k3d clusters, four host processes, three containers. Everything the experiment measures crosses these boundaries.
+
+```mermaid
+flowchart TB
+  subgraph host[Workstation]
+    k6[k6 generator]
+    HAP["HAProxy container<br/>18082 HTTP · 18404 stats · 9999 admin socket"]
+    PROM["Prometheus container<br/>9090"]
+    DAEMON["routing daemon<br/>9104"]
+    PRED["prediction server<br/>8090"]
+    RUNNER["experiment runner<br/>thesis experiment ..."]
+  end
+  subgraph hybrid["k3d cluster thesis-hybrid"]
+    HAPI["API server<br/>6443"]
+    DEP["deployment test-app"]
+    AGENTS["agent nodes<br/>static + k3d-dynamic-*"]
+  end
+  subgraph sless["k3d cluster thesis-serverless"]
+    SAPI["API server"]
+    KOURIER["Kourier gateway"]
+    KSVC["Knative service test-app"]
+  end
+  k6 -->|"requests"| HAP
+  HAP -->|"K8s arm"| DEP
+  HAP -->|"serverless arm"| KOURIER --> KSVC
+  PROM -->|"scrapes pods and kubelets via the published API"| HAPI
+  DAEMON -->|"PromQL: load, ready capacity"| PROM
+  DAEMON -->|"HAProxy stats CSV: rtime p99"| HAP
+  DAEMON -->|"forecast"| PRED
+  DAEMON -->|"weights over the admin socket"| HAP
+  DAEMON -->|"scale the deployment"| HAPI
+  RUNNER -->|"starts and drives"| DAEMON
+  RUNNER -->|"watches Pending pods, creates nodes"| HAPI
+  RUNNER -->|"k3d node create"| AGENTS
+  DEP --- AGENTS
+```
+
+The autoscaler is the experiment runner's job, not the daemon's. The daemon sets a replica target; if the cluster cannot schedule those pods they stay Pending, and the runner's `K3dAutoscaler` adds a node (`libs/infra/infra/cluster/k3d/autoscaler.py`). That indirection is why a run can be valid at the pod tier and still have measured nothing about the node tier, and why node engagement is a recorded gate.
+
 ## The control loop
 
 ```mermaid

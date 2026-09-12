@@ -33,6 +33,12 @@ Every entry names its mode, so you know what you are opening: a **tutorial** tea
 | [S4 integration guide](S4_INTEGRATION_GUIDE.md) | Reference | How the GRU service and the daemon fit together |
 | [Deployment](deployment/VPS_DEPLOYMENT.md) | How-to | Deploying to a VPS, with helpers in `deployment/scripts/` |
 
+## Reference
+
+| Document | Mode | What it is for |
+|---|---|---|
+| [Glossary](GLOSSARY.md) | Reference | The terms this repository uses in a specific way, and where each is defined in code |
+
 ## Evidence and results
 
 | Document | Mode | What it is for |
@@ -51,6 +57,17 @@ Every entry names its mode, so you know what you are opening: a **tutorial** tea
 | [`thesis/chapters/`](../thesis/chapters/) | Explanation | The markdown draft |
 | [References](references/REFERENCES.md) | Reference | Archived cited papers; the PDFs are Git LFS objects |
 | [Plans](plans/) | Explanation | Dated implementation plans, including the [2026-09-10 GRU leak-free retrain](plans/2026-09-10-gru-leakfree-retrain.md) |
+
+## Decisions and known debt
+
+There is no separate architecture decision log. Where those live instead:
+
+| Question | Answer lives in |
+|---|---|
+| Why was this design chosen, and what was rejected? | [Plans](plans/) and the [methodology](thesis-implementation/02-methodology-implementation.md) |
+| Which evidence contradicted which claim? | [`results/claims/INCONSISTENCIES.md`](../results/claims/INCONSISTENCIES.md) |
+| What was deliberately deferred? | [`results/evidence/BACKLOG.md`](../results/evidence/BACKLOG.md), and the deferred-work list in each plan |
+| Which conditions invalidate a bundle? | [`results/AGENTS.md`](../results/AGENTS.md) |
 
 ## Historical
 

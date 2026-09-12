@@ -2,7 +2,13 @@
 
 Master's thesis: *Decision Making and Elastic Scalability Management in Heterogeneous Cloud Environments Based on Workload Prediction*. The research is complete; the harness, the experiments, and the thesis book are in this repository.
 
-This page is the map: what the system is, how to run one experiment, and where to read more. Every command below runs from the repository root.
+This page is the map: what the system is, how to run one experiment, and where to read more. Every command below runs from the repository root. Terms this repository uses in a specific way are in the [glossary](docs/GLOSSARY.md).
+
+**Status.** Research complete. The experiments have run, the thesis book is written, and this harness is kept in working order so the evidence can be reproduced. Superseded material lives under `archived/` with a banner.
+
+**Author and contact.** Muhammad Zahid Masruri. Open an issue on this repository for anything about the code or the evidence.
+
+Contents: [what the system is](#what-the-system-is) · [where things live](#where-things-live) · [run it](#run-it) · [how an experiment runs](#how-an-experiment-runs) · [what you can do](#what-you-can-do) · [tests](#tests) · [evidence rules](#evidence-rules) · [read more](#read-more)
 
 ## What the system is
 
