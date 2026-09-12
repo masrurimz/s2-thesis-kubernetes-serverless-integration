@@ -264,15 +264,45 @@ results/experiments/<phase>/<YYYY-MM-DD_slug>/
 - One report per experiment — no duplicate summaries
 
 ### 2. Package Boundaries
-- `libs/shared` never imports from `apps/` or `libs/clients/`
-- `libs/clients` depends on `shared` only
-- `apps/` packages can import from `libs/`
+- `libs/shared` imports nothing from `libs/` or `apps/` — it is the floor
+- `libs/analysis` and `libs/infra` depend on `shared` only
+- `apps/` packages may import from `libs/`; `libs/` never imports from `apps/`
 - Inter-module communication via HTTP (services) or Protocols (in-process)
+- The importer side is enforced by `lint-imports` contracts in `pyproject.toml` and asserted by `libs/shared/tests/test_architecture.py` in the normal test run
 
 ### 3. Artifact Hygiene
 - No empty placeholder directories
 - No large binaries in git (models, datasets — gitignored)
 - `.gitignore` covers: `*.log`, `__pycache__/`, `.venv/`, `*.pyc`
+
+### 4. Module Direction — where new code goes
+| Kind of code | Owner | Rule |
+|---|---|---|
+| A model, protocol, statistic, storage or artifact reader | `libs/shared/shared/` | Put it here when two packages need it; a helper only one package uses stays in that package |
+| Cluster lifecycle, readiness, residue, deploys, Prometheus config | `libs/infra/infra/`, one domain directory each | Apps reach it through the `thesis infra` CLI or a Protocol, not by importing internals |
+| Reusable analysis: loaders, comparison, cost, cold start, the bundle views | `libs/analysis/analysis/` | Depends on `shared` only; `apps/analysis` is a thin CLI over it |
+| A new experiment stage | `apps/experiment/experiment/stages/` | One file per stage, typed against `stages/base.py` |
+| A new condition the testbed must meet | `apps/experiment/experiment/conditions.py` | One `RunConditions` field and one check in `apply`; every path funnels through it, so `preflight` and the runner both get it |
+| A new named run recipe | `apps/experiment/experiment/profiles.py` | Declare scenarios, design, static agents, whether a predictor is needed, controller environment |
+| A new `thesis` command | The app that owns the behaviour | Register it in `apps/cli/cli/main.py`; the command body calls the package, it does not reimplement it |
+| A test | Beside its package (`apps/*/tests`, `libs/*/tests`) | Hermetic by default; a test that touches a live cluster is marked `live` and stays out of the default run |
+
+### 5. Agent-Facing Output — the CLI contract
+Every command may be read by a person or by a program, and both are designed for:
+- **`--json` prints one line** (`shared.output.json_line`). The indented form costs 27–40% more tokens on this repository's own payloads and buys a parser nothing; `| jq .` is the readable version.
+- **Never a `rich` console for machine output** — it soft-wraps at the terminal width and corrupts a payload mid-token. Use `print`/`typer.echo`, or `soft_wrap=True` where rich is unavoidable.
+- **Lists default to four columns.** The rest are one `--fields` away (`--fields all` for everything); an unknown field names the valid ones and exits 2.
+- **Long text is truncated with its length and a `--full` escape**, never silently cut.
+- **An empty result says so** (`0 run(s)`, "no governance events recorded") — silence is indistinguishable from failure.
+- **A command that answers a question prints `next:` lines** naming the command that follows, with real paths (`shared.output.print_next`).
+- **`thesis` with no arguments prints live state** — path, testbed, predictor, latest bundle — not help text.
+- `apps/cli/tests/test_docs_commands.py` fails when a command documented in the docs stops existing.
+
+### 6. Documentation — where it lives, and what a change owes it
+- **Package behaviour:** the nearest `AGENTS.md`. Root first, then `apps/<package>/` or `libs/<package>/`. Every package doc states its module map, module direction, tests and tiers, the commands it contributes, and its own invariants — that is what makes a stale claim visible.
+- **Running an experiment:** `docs/experiments/RUNNING_EXPERIMENTS.md`. Protocol and method: `docs/thesis-implementation/`. Evidence and bundle rules: `results/AGENTS.md`.
+- **Superseded docs move to `archived/docs-historical/`** with a banner saying what replaced them. A document describing a world that no longer exists is not left in place.
+- **Change a command, a module's home, or a test tier and its doc is part of the change.** Two checks catch the drift: `apps/cli/tests/test_docs_commands.py` (every documented command resolves) and `apps/experiment/tests/test_profiles.py` (a profile that cannot run cannot ship).
 
 ---
 
