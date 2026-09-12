@@ -8,18 +8,29 @@
 > - **Registry:** `results/evidence/registry.yaml`
 > - **Query cache:** `results/evidence/catalog.duckdb` (rebuilt, not canonical)
 
-**Latest audit:** 2026-08-09T04:12:35.295807+00:00
+**Latest audit:** 2026-09-12T09:14:09.982049+00:00
 
 ## Summary
 
-- **Total bundles:** 142
-- **By role:** diagnostic=92, final=6, intermediate=44
-- **By status:** archived=10, current=69, invalidated=63
+- **Total bundles:** 153
+- **By role:** diagnostic=98, final=7, intermediate=48
+- **By status:** archived=11, current=79, invalidated=63
 
 ## Bundles
 
 | Date | ID | Role | Valid/Total | Treatment | Claims | Path |
 |------|----|------|------------|-----------|--------|------|
+| 2026-09-12 | `experiments.2026-09-12-s4-point-sizing-shrink-3r` | intermediate | 3/3 | 171/171 (✓) | — | `experiments/phase-b/2026-09-12_s4-point-sizing-shrink-3r` |
+| 2026-09-12 | `experiments.2026-09-12-s4-point-sizing-3r` | intermediate | 3/3 | 170/170 (✓) | — | `experiments/phase-b/2026-09-12_s4-point-sizing-3r` |
+| 2026-09-12 | `experiments.2026-09-12-h2-pair` | diagnostic | 10/10 | 280/280 (✓) | — | `experiments/phase-b/2026-09-12_h2-pair` |
+| 2026-09-11 | `experiments.2026-09-11-conditioned-baselines-n5` | intermediate | 10/10 | — | — | `experiments/phase-b/2026-09-11_conditioned-baselines-n5` |
+| 2026-09-11 | `experiments.2026-09-11-clarknet-replay-165420` | diagnostic | 0/1 | — | — | `experiments/phase-b/2026-09-11_clarknet-replay_165420` |
+| 2026-09-11 | `experiments.2026-09-11-clarknet-leakfree-paired-n5` | diagnostic | 10/11 | 275/275 (✓) | — | `experiments/phase-b/2026-09-11_clarknet-leakfree-paired-n5` |
+| 2026-09-11 | `experiments.2026-09-11-clarknet-leakfree-paired-n1-invalid` | diagnostic | 0/3 | 0/0 (✗) | — | `experiments/phase-b/2026-09-11_clarknet-leakfree-paired-n1-invalid` |
+| 2026-09-11 | `experiments.2026-09-11-clarknet-leakfree-paired-n1-aborted` | diagnostic | 0/3 | 0/55 (✗) | — | `experiments/phase-b/2026-09-11_clarknet-leakfree-paired-n1-aborted` |
+| 2026-09-11 | `experiments.2026-09-11-clarknet-leakfree-paired-n1` | intermediate | 2/3 | 55/55 (✓) | — | `experiments/phase-b/2026-09-11_clarknet-leakfree-paired-n1` |
+| 2026-09-11 | `experiments.2026-09-11-clarknet-leakfree-baselines-n5` | diagnostic | 9/11 | — | — | `experiments/phase-b/2026-09-11_clarknet-leakfree-baselines-n5` |
+| 2026-09-10 | `models.2026-09-10-clarknet-15s-h9-leakfree` | final | 0/0 | — | — | `models/gru/2026-09-10_clarknet-15s-h9-leakfree` |
 | 2026-08-09 | `experiments.2026-08-09-clarknet-replay-032257` | intermediate | 20/20 | 280/280 (✓) | — | `experiments/phase-b/2026-08-09_clarknet-replay_032257` |
 | 2026-08-08 | `experiments.2026-08-08-paired-h2-233726` | diagnostic | 10/10 | 280/280 (✓) | — | `experiments/phase-b/2026-08-08_paired-h2_233726` |
 | 2026-08-08 | `experiments.2026-08-08-paired-h2-195150` | diagnostic | 10/10 | 280/280 (✓) | — | `experiments/phase-b/2026-08-08_paired-h2_195150` |
@@ -167,6 +178,7 @@
 
 | Timestamp | Event | Experiment | Bundle | Run |
 |-----------|-------|------------|--------|-----|
+| 2026-09-12T09:14:09.982049+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |
 | 2026-08-09T04:12:35.295807+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |
 | 2026-08-09T04:09:40.523750+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |
 | 2026-08-07T16:38:33.937324+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |
