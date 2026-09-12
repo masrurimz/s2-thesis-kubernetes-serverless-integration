@@ -412,3 +412,43 @@ class TestLegacyBackfill:
         assert event["event"] == "legacy_backfilled"
         assert event["payload"]["source_layout"] == "v1"
         assert event["payload"]["raw_artifacts_preserved"] is True
+
+
+class TestPairedAnalysisCounts:
+    """A bundle with a paired analysis is counted wherever that analysis sits.
+
+    Every bundle on disk writes it at the bundle root, while the flag used to check only
+    `derived/`, so the registry reported no paired analysis for any of them.
+    """
+
+    @staticmethod
+    def _bundle(root: Path, name: str, *, layout: str) -> Path:
+        bundle = root / "experiments" / "phase-b" / name
+        bundle.mkdir(parents=True)
+        (bundle / "meta.yaml").write_text("bundle_schema_version: 2\n")
+        analysis = bundle / "paired_analysis.json" if layout == "root" else bundle / "derived" / "paired_analysis.json"
+        analysis.parent.mkdir(parents=True, exist_ok=True)
+        analysis.write_text(json.dumps({"n_pairs": 5, "h2_supported": True}))
+        return bundle
+
+    def test_root_layout_is_counted(self, tmp_path: Path):
+        self._bundle(tmp_path, "2026-09-12_pairs", layout="root")
+
+        entries = scan_bundles(tmp_path)
+
+        assert [entry.has_paired_analysis for entry in entries.values()] == [True]
+
+    def test_derived_layout_is_counted(self, tmp_path: Path):
+        self._bundle(tmp_path, "2026-09-12_pairs", layout="derived")
+
+        entries = scan_bundles(tmp_path)
+
+        assert [entry.has_paired_analysis for entry in entries.values()] == [True]
+
+    def test_no_analysis_is_not_counted(self, tmp_path: Path):
+        bundle = self._bundle(tmp_path, "2026-09-12_baselines", layout="root")
+        (bundle / "paired_analysis.json").unlink()
+
+        entries = scan_bundles(tmp_path)
+
+        assert [entry.has_paired_analysis for entry in entries.values()] == [False]

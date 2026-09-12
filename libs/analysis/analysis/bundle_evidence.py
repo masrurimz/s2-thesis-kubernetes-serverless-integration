@@ -26,7 +26,7 @@ from statistics import mean, stdev
 from typing import Any, Sequence
 
 from pydantic import BaseModel, Field
-from shared.artifacts import read_manifest, read_provision_events, read_result
+from shared.artifacts import read_manifest, read_paired_analysis, read_provision_events, read_result
 
 
 class RunEvidence(BaseModel):
@@ -193,6 +193,16 @@ def variance_summary(bundle: Path) -> VarianceSummary:
             "smallest p the design can produce."
         ),
     )
+
+
+def paired_verdict(bundle: Path) -> dict[str, Any] | None:
+    """The paired analysis a bundle stored, or None when it has none.
+
+    Exists so a caller above the artifact layer (the `thesis` home view) can report a
+    bundle's verdict without importing `shared.artifacts`, which only `experiment`,
+    `analysis` and `analysis_cli` may do.
+    """
+    return read_paired_analysis(bundle)
 
 
 def as_payload(rows: Sequence[BaseModel] | BaseModel) -> Any:

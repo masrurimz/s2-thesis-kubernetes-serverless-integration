@@ -20,7 +20,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 import yaml
-from shared.artifacts import read_manifest_git_commit, read_result
+from shared.artifacts import paired_analysis_path, read_manifest_git_commit, read_result
 from shared.models.evidence import (
     ExperimentJournalEvent,
     ExperimentRegistryEntry,
@@ -244,7 +244,7 @@ def _scan_single_bundle(
     dirname = bundle_dir.name
     has_meta = (bundle_dir / "meta.yaml").exists()
     has_report = (bundle_dir / "report.md").exists()
-    has_paired = (bundle_dir / "derived" / "paired_analysis.json").exists()
+    has_paired = paired_analysis_path(bundle_dir) is not None
 
     run_dirs = _scan_run_dirs(bundle_dir)
 

@@ -141,6 +141,35 @@ def read_manifest_git_commit(run_dir: Path) -> str:
 
 
 # ---------------------------------------------------------------------------
+# paired_analysis.json — the verdict a bundle's pairs produced
+# ---------------------------------------------------------------------------
+
+PAIRED_ANALYSIS_FILE = "paired_analysis.json"
+
+
+def paired_analysis_path(bundle_dir: Path) -> Path | None:
+    """Where this bundle's paired analysis is, whichever layout wrote it.
+
+    The schema puts it under `derived/`, and the paired-run commands write it at the
+    bundle root. Both shapes are on disk in `results/experiments/`, so a reader looks
+    in both places rather than believing one of them.
+    """
+    for candidate in (bundle_dir / PAIRED_ANALYSIS_FILE, bundle_dir / "derived" / PAIRED_ANALYSIS_FILE):
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def read_paired_analysis(bundle_dir: Path) -> dict[str, Any] | None:
+    """The bundle's paired analysis, or None when it has none or cannot be read."""
+    path = paired_analysis_path(bundle_dir)
+    if path is None:
+        return None
+    payload = _read_json(path)
+    return payload if isinstance(payload, dict) else None
+
+
+# ---------------------------------------------------------------------------
 # provision_events.json — the node autoscaler's lifecycle stream
 # ---------------------------------------------------------------------------
 

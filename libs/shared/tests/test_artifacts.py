@@ -30,6 +30,8 @@ from shared.artifacts import (
     write_provision_events,
     write_resource_utilization,
     write_result,
+    paired_analysis_path,
+    read_paired_analysis,
 )
 from shared.models.experiment import ExperimentResult, RunManifest
 from shared.models.metrics import NodeSample, ResourceSample
@@ -296,3 +298,48 @@ def test_resource_sample_survives_json_round_trip(tmp_path, timestamp, pod, back
     write_resource_utilization(tmp_path, [sample])
 
     assert read_resource_utilization(tmp_path) == [sample]
+
+
+class TestPairedAnalysis:
+    """Two on-disk layouts carry a bundle's verdict; a reader finds either.
+
+    Nine bundles write `paired_analysis.json` at the bundle root, the schema says
+    `derived/`, and the registry used to count only the second. A bundle must not become
+    invisible because of where its analysis landed.
+    """
+
+    def test_finds_the_root_layout(self, tmp_path):
+        bundle = tmp_path / "bundle"
+        bundle.mkdir()
+        (bundle / "paired_analysis.json").write_text(json.dumps({"n_pairs": 5}))
+
+        assert read_paired_analysis(bundle) == {"n_pairs": 5}
+
+    def test_finds_the_derived_layout(self, tmp_path):
+        bundle = tmp_path / "bundle"
+        derived = bundle / "derived"
+        derived.mkdir(parents=True)
+        (derived / "paired_analysis.json").write_text(json.dumps({"n_pairs": 3}))
+
+        assert read_paired_analysis(bundle) == {"n_pairs": 3}
+
+    def test_a_bundle_without_one_reads_as_none(self, tmp_path):
+        bundle = tmp_path / "bundle"
+        bundle.mkdir()
+
+        assert paired_analysis_path(bundle) is None
+        assert read_paired_analysis(bundle) is None
+
+    def test_malformed_json_reads_as_none_not_a_crash(self, tmp_path):
+        bundle = tmp_path / "bundle"
+        bundle.mkdir()
+        (bundle / "paired_analysis.json").write_text("{not json")
+
+        assert read_paired_analysis(bundle) is None
+
+    def test_json_of_the_wrong_shape_is_not_a_payload(self, tmp_path):
+        bundle = tmp_path / "bundle"
+        bundle.mkdir()
+        (bundle / "paired_analysis.json").write_text("[1, 2, 3]")
+
+        assert read_paired_analysis(bundle) is None
