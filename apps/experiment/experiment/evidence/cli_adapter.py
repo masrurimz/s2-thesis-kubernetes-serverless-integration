@@ -154,6 +154,9 @@ evidence_app.add_typer(catalog_app, name="catalog", help="Local DuckDB evidence 
 @evidence_app.command()
 def query(
     sql: str = typer.Argument(..., help="SQL query to execute against the catalog"),
+    limit: int = typer.Option(50, "--limit", help="Rows to show before stopping"),
+    full: bool = typer.Option(False, "--full", help="Do not truncate long cell values"),
+    as_json: bool = typer.Option(False, "--json", help="Emit the rows as JSON"),
 ) -> None:
     """Read-only SQL query against the DuckDB catalog."""
 
@@ -161,29 +164,55 @@ def query(
     from rich.table import Table
 
     from experiment.evidence.catalog import EvidenceCatalogAdapter
+    from shared.output import print_json, print_next, truncate
 
     console = Console()
     root = _results_root()
     adapter = EvidenceCatalogAdapter(root)
 
     try:
-        rows = adapter.query(sql)
+        # One row more than asked for is how we know there were more.
+        fetched = adapter.query(sql, max_rows=limit + 1)
     except Exception as exc:
         console.print(f"[red]Query failed:[/red] {exc}")
         console.print("[dim]Hint: run 'thesis experiment evidence catalog refresh' first.[/dim]")
         raise typer.Exit(1) from exc
 
+    hidden = len(fetched) > limit
+    rows = fetched[:limit]
+
+    if as_json:
+        print_json(rows)
+        return
+
     if not rows:
-        console.print("[dim](no rows)[/dim]")
+        console.print("[dim]0 rows[/dim]")
         return
 
     columns = list(rows[0].keys())
-    table = Table(title=f"Query: {sql[:60]}")
-    for col in columns:
-        table.add_column(col)
-    for row in rows:
-        table.add_row(*[str(row.get(c, "")) for c in columns])
-    console.print(table)
+    if full:
+        # A table wraps a long cell at the terminal width and pads every line, so --full
+        # through a table shows the value in pieces. Blocks show it whole.
+        for index, row in enumerate(rows, start=1):
+            console.print(f"[bold]row {index}[/bold]", soft_wrap=True)
+            for col in columns:
+                # soft_wrap: rich would otherwise fold a long value at the console width,
+                # which is the same unreadable result the table gave.
+                console.print(f"  {col}: {row.get(col, '')}", soft_wrap=True)
+    else:
+        # A table wider than the terminal makes rich ellipsize every cell, which tells the
+        # reader nothing. Show what fits and name the way to the whole row.
+        shown, omitted = columns[:8], columns[8:]
+        table = Table(title=f"Query: {sql[:60]}")
+        for col in shown:
+            table.add_column(col)
+        for row in rows:
+            table.add_row(*[truncate(str(row.get(c, ""))) for c in shown])
+        console.print(table)
+        if omitted:
+            console.print(f"[dim]+{len(omitted)} more column(s) — use --json for the full row[/dim]")
+    console.print(f"[dim]{len(rows)} row(s) shown{'; more available — raise --limit' if hidden else ''}[/dim]")
+    print_next(["thesis experiment evidence journal --limit 20"])
 
 
 # ---------------------------------------------------------------------------
@@ -194,12 +223,14 @@ def query(
 @evidence_app.command()
 def journal(
     limit: int = typer.Option(20, "--limit", help="Number of recent events to show"),
+    as_json: bool = typer.Option(False, "--json", help="Emit the events as JSON"),
 ) -> None:
     """Show recent governance events from registry-events.jsonl."""
     from rich.console import Console
     from rich.table import Table
 
     from experiment.evidence.registry import read_governance_events
+    from shared.output import print_json
 
     console = Console()
     root = _results_root()
@@ -207,6 +238,10 @@ def journal(
     events = read_governance_events(events_path)
 
     recent = list(reversed(events))[:limit]
+
+    if as_json:
+        print_json([event.model_dump() for event in recent])
+        return
 
     if not recent:
         console.print("[dim]No governance events recorded.[/dim]")

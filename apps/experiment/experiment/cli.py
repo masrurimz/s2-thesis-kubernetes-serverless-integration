@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Optional
 
 import structlog
 import typer
+from shared.output import json_line, print_next
 from shared.artifacts import (
     read_result,
     result_validation_error,
@@ -587,7 +588,6 @@ def analyze_bundle(
     from the same artifacts, so the answer a reader quotes comes from the code in
     front of them rather than from whatever produced the file.
     """
-    import json as _json
 
     from analysis.comparison import run_paired_comparison
     from experiment.summary import write_summary
@@ -632,8 +632,8 @@ def analyze_bundle(
 
     if as_json:
         # typer.echo, not the rich console: a JSON payload a program must parse cannot
-        # come back soft-wrapped to the terminal width.
-        typer.echo(_json.dumps(payload, indent=2, default=str))
+        # come back soft-wrapped to the terminal width. One line — see shared.output.
+        typer.echo(json_line(payload))
         return
     if print_report:
         console.print(f"[bold]H2 paired verdict[/bold] — {bundle_path.name}, {payload['n_pairs']} pair(s)")
@@ -651,6 +651,7 @@ def analyze_bundle(
         )
         verdict = "supported" if payload["h2_supported"] else "not supported"
         console.print(f"  verdict: H2 {verdict}")
+    print_next([f"thesis experiment summary {bundle_path}", f"thesis analysis mechanism {bundle_path}"])
 
 
 @app.command()

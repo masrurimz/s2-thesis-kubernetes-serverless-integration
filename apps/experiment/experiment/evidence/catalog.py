@@ -57,10 +57,13 @@ class EvidenceCatalogAdapter:
         """Rebuild the local DuckDB catalog from canonical artifacts."""
         self._catalog.refresh()
 
-    def query(self, sql: str) -> list[dict[str, Any]]:
+    def query(self, sql: str, max_rows: int | None = None) -> list[dict[str, Any]]:
         """Execute a read-only SQL query against the catalog.
 
-        Returns rows as a list of dicts.
+        Returns rows as a list of dicts. `max_rows` bounds the fetch: a CLI that shows
+        50 rows should not materialize a whole table to throw the rest away, and an
+        unbounded `SELECT *` over the artifact index is thousands of rows. Callers
+        detect truncation by asking for one row more than they intend to show.
         """
         import duckdb
 
@@ -68,8 +71,8 @@ class EvidenceCatalogAdapter:
         try:
             result = con.execute(sql)
             columns = [d[0] for d in result.description] if result.description else []
-            rows = result.fetchall()
-            return [dict(zip(columns, row, strict=False)) for row in rows]
+            fetched = result.fetchmany(max_rows) if max_rows else result.fetchall()
+            return [dict(zip(columns, row, strict=False)) for row in fetched]
         finally:
             con.close()
 

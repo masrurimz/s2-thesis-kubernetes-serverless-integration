@@ -12,7 +12,7 @@ The runner is injectable so the rules are tested without launching anything.
 
 from __future__ import annotations
 
-import json
+from shared.output import json_line
 import shutil
 import subprocess
 import time
@@ -173,4 +173,5 @@ def as_payload(outcomes: Sequence[StageOutcome]) -> list[dict]:
 
 
 def json_payload(outcomes: Sequence[StageOutcome]) -> str:
-    return json.dumps(as_payload(outcomes), indent=2)
+    """The stage outcomes as one line of JSON — the form every --json here prints."""
+    return json_line(as_payload(outcomes))

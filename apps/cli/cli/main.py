@@ -13,8 +13,20 @@ import typer
 app = typer.Typer(
     name="thesis",
     help="Hybrid k3s-serverless system with GRU workload prediction",
-    no_args_is_help=True,
+    # No help on no arguments: the callback below prints live state instead. A command
+    # run with nothing to go on should say where things stand, not how to use it.
+    no_args_is_help=False,
 )
+
+
+@app.callback(invoke_without_command=True)
+def _home(ctx: typer.Context) -> None:
+    """Show the state of the testbed and the latest experiment, then the next commands."""
+    if ctx.invoked_subcommand is not None:
+        return
+    from cli.home import print_home
+
+    print_home()
 
 
 @app.command()

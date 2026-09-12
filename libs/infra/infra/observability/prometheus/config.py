@@ -21,6 +21,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from infra.commands import console, run
+from shared.output import print_json
 
 SECRETS_DIRNAME = "secrets"
 CONTAINER_SECRETS_DIR = "/etc/prometheus/secrets"
@@ -240,7 +241,7 @@ def apply(reload: bool = True, as_json: bool = False) -> dict:
         "watched": list(SERIES_WATCHED),
     }
     if as_json:
-        print(json.dumps(payload, indent=2))
+        print_json(payload)
     else:
         _console_report(written, valid, detail, state, sync_detail)
     return payload
@@ -260,7 +261,7 @@ def cli(render_only: bool = False, verify_only: bool = False, as_json: bool = Fa
     if verify_only:
         state = series_state()
         if as_json:
-            print(json.dumps({"series": state}, indent=2))
+            print_json({"series": state})
         else:
             for name, count in state.items():
                 console.print(f"  series {name:22} {count}")

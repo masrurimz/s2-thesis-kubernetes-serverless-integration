@@ -44,6 +44,7 @@ from analysis.report import generate_report
 from scipy import stats as scipy_stats
 from shared.artifacts import read_provision_events, read_result_dict
 from shared.scenarios import SCENARIO_ORDER
+from shared.output import json_line, print_next
 from shared.stats import bootstrap_ci, cohens_d, effect_size_label
 
 logger = structlog.get_logger(__name__)
@@ -880,79 +881,174 @@ def gru_metrics(
 # ---------------------------------------------------------------------------
 
 
-def _emit_json(payload) -> None:
-    """The machine-readable half: the same fields the table prints, as data."""
-    typer.echo(json.dumps(payload, indent=2, default=str))
+# The columns each table can print. The first four are the default: a list an agent reads
+# carries the fields that answer the question, and the rest are one --fields away.
+_RUN_COLUMNS: dict[str, str] = {
+    "scenario": "scenario",
+    "run": "run_id",
+    "valid": "valid",
+    "p99_ms": "p99_latency_ms",
+    "p95_ms": "p95_latency_ms",
+    "slo": "slo_violations",
+    "error": "error_rate",
+    "rps": "throughput_rps",
+    "nodes": "nodes_provisioned",
+    "delay_s": "first_provision_delay_sec",
+    "delivered": "prediction_delivered",
+    "eligible": "eligible_cycles",
+    "load": "host_load_ratio",
+    "notes": "validity_notes",
+}
+_MECHANISM_COLUMNS: dict[str, str] = {
+    "scenario": "scenario",
+    "run": "run_id",
+    "p99_ms": "p99_latency_ms",
+    "node_at_s": "node_arrival_offset_sec",
+    "delay_s": "provisioning_delay_sec",
+    "serverless_pct": "serverless_share_pct",
+    "slo": "slo_violations",
+}
+_VARIANCE_COLUMNS: dict[str, str] = {
+    "scenario": "scenario",
+    "n": "n",
+    "mean_p99": "mean_p99_ms",
+    "sd": "sd_p99_ms",
+    "min": "min_p99_ms",
+    "max": "max_p99_ms",
+}
+DEFAULT_FIELDS = 4
+
+
+def _cell(value: object) -> str:
+    """One table cell: floats to one decimal, absent values named as absent."""
+    if value is None:
+        return "n/a"
+    if isinstance(value, bool):
+        return str(value)
+    if isinstance(value, float):
+        return f"{value:.1f}"
+    if isinstance(value, list):
+        return "; ".join(str(item) for item in value) if value else "-"
+    return str(value)
+
+
+def _selected(available: dict[str, str], fields: str | None) -> list[str]:
+    """The column names to print: the first four by default, or what --fields names."""
+    names = list(available)
+    if fields is None:
+        return names[:DEFAULT_FIELDS]
+    if fields.strip() == "all":
+        return names
+    wanted = [name.strip() for name in fields.split(",") if name.strip()]
+    unknown = [name for name in wanted if name not in available]
+    if unknown:
+        typer.echo(f"unknown field(s): {', '.join(unknown)}", err=True)
+        typer.echo(f"valid fields: {', '.join(names)} (or 'all')", err=True)
+        raise typer.Exit(2)
+    return wanted
+
+
+def _table(rows, available: dict[str, str], chosen: list[str]) -> None:
+    """Print rows as a fixed-width table over the chosen columns."""
+    labels = [name.replace("_ms", " ms").replace("_s", " s").replace("_pct", " %").replace("_", " ") for name in chosen]
+    widths = [max(len(label), 6) for label in labels]
+    cells = [[_cell(getattr(row, available[name], None)) for name in chosen] for row in rows]
+    for row_cells in cells:
+        widths = [max(width, len(cell)) for width, cell in zip(widths, row_cells, strict=True)]
+    typer.echo(
+        " ".join(
+            label.rjust(width) if i else label.ljust(width)
+            for i, (label, width) in enumerate(zip(labels, widths, strict=True))
+        )
+    )
+    for row_cells in cells:
+        typer.echo(
+            " ".join(
+                cell.rjust(width) if i else cell.ljust(width)
+                for i, (cell, width) in enumerate(zip(row_cells, widths, strict=True))
+            )
+        )
+
+
+def _projected(rows, available: dict[str, str], chosen: list[str]) -> list[dict]:
+    """The same columns as data, for --json."""
+    return [{name: getattr(row, available[name], None) for name in chosen} for row in rows]
+
+
+def _emit(payload) -> None:
+    """The machine-readable half: one line of JSON, the way every command prints it."""
+    typer.echo(json_line(payload))
 
 
 @app.command()
 def runs(
     bundle: Path = typer.Argument(..., help="Bundle directory holding per-run result.json files"),
+    fields: str = typer.Option(
+        None,
+        "--fields",
+        help=f"Comma-separated columns; default {' '.join(list(_RUN_COLUMNS)[:DEFAULT_FIELDS])}, or 'all'",
+    ),
     as_json: bool = typer.Option(False, "--json", help="Emit the payload as JSON instead of a table"),
 ) -> None:
     """What each run measured, and the conditions it was measured under."""
-    from analysis.bundle_evidence import as_payload, run_evidence
+    from analysis.bundle_evidence import run_evidence
 
     rows = run_evidence(bundle)
+    chosen = _selected(_RUN_COLUMNS, fields)
     if as_json:
-        _emit_json(as_payload(rows))
+        _emit(_projected(rows, _RUN_COLUMNS, chosen))
         return
-    header = (
-        f"{'scenario':22} {'run':>3} {'valid':>5} {'p99 ms':>8} {'slo':>6} "
-        f"{'nodes':>5} {'delay s':>7} {'delivered':>9} {'load':>5}"
-    )
-    typer.echo(header)
-    for row in rows:
-        typer.echo(
-            f"{row.scenario:22} {row.run_id:3} {str(row.valid):>5} {row.p99_latency_ms:8.1f} "
-            f"{row.slo_violations:6} {row.nodes_provisioned:5} {row.first_provision_delay_sec:7.1f} "
-            f"{str(row.prediction_delivered):>9} "
-            f"{(f'{row.host_load_ratio:.3f}' if row.host_load_ratio is not None else 'n/a'):>5}"
-        )
+    _table(rows, _RUN_COLUMNS, chosen)
     typer.echo(f"\n{len(rows)} run(s); host load is the conditions gate's busy-to-cores ratio.")
+    if rows:
+        print_next([f"thesis analysis mechanism {bundle}", f"thesis experiment summary {bundle}"])
 
 
 @app.command()
 def mechanism(
     bundle: Path = typer.Argument(..., help="Bundle directory holding per-run artifacts"),
+    fields: str = typer.Option(
+        None,
+        "--fields",
+        help=f"Comma-separated columns; default {' '.join(list(_MECHANISM_COLUMNS)[:DEFAULT_FIELDS])}, or 'all'",
+    ),
     as_json: bool = typer.Option(False, "--json", help="Emit the payload as JSON"),
 ) -> None:
     """When the node tier arrived relative to the load, beside the tail it explains."""
-    from analysis.bundle_evidence import as_payload, mechanism_rows
+    from analysis.bundle_evidence import mechanism_rows
 
     rows = mechanism_rows(bundle)
+    chosen = _selected(_MECHANISM_COLUMNS, fields)
     if as_json:
-        _emit_json(as_payload(rows))
+        _emit(_projected(rows, _MECHANISM_COLUMNS, chosen))
         return
-    typer.echo(f"{'scenario':22} {'run':>3} {'p99 ms':>8} {'prov delay s':>12} {'node at +s':>10} {'% serverless':>12}")
-    for row in rows:
-        offset = f"{row.node_arrival_offset_sec:.1f}" if row.node_arrival_offset_sec is not None else "n/a"
-        share = f"{row.serverless_share_pct:.1f}" if row.serverless_share_pct is not None else "n/a"
-        typer.echo(
-            f"{row.scenario:22} {row.run_id:3} {row.p99_latency_ms:8.1f} "
-            f"{row.provisioning_delay_sec:12.1f} {offset:>10} {share:>12}"
-        )
+    _table(rows, _MECHANISM_COLUMNS, chosen)
     typer.echo("\nnode at +s is measured from the run's first provisioner event.")
+    if rows:
+        print_next([f"thesis analysis variance {bundle}"])
 
 
 @app.command()
 def variance(
     bundle: Path = typer.Argument(..., help="Bundle directory holding per-run result.json files"),
+    fields: str = typer.Option(
+        None,
+        "--fields",
+        help=f"Comma-separated arm columns; default {' '.join(list(_VARIANCE_COLUMNS)[:DEFAULT_FIELDS])}, or 'all'",
+    ),
     as_json: bool = typer.Option(False, "--json", help="Emit the payload as JSON"),
 ) -> None:
     """How far each arm moved run to run, and what n pairs can resolve."""
     from analysis.bundle_evidence import as_payload, variance_summary
 
     summary = variance_summary(bundle)
+    chosen = _selected(_VARIANCE_COLUMNS, fields)
     if as_json:
-        _emit_json(as_payload(summary))
+        payload = as_payload(summary)
+        payload["arms"] = _projected(summary.arms, _VARIANCE_COLUMNS, chosen)
+        _emit(payload)
         return
-    typer.echo(f"{'scenario':22} {'n':>3} {'mean p99':>9} {'sd':>7} {'min':>8} {'max':>8}")
-    for arm in summary.arms:
-        typer.echo(
-            f"{arm.scenario:22} {arm.n:3} {arm.mean_p99_ms:9.1f} {arm.sd_p99_ms:7.1f} "
-            f"{arm.min_p99_ms:8.1f} {arm.max_p99_ms:8.1f}"
-        )
+    _table(summary.arms, _VARIANCE_COLUMNS, chosen)
     if summary.n_pairs:
         diffs = " ".join(f"{d:+.1f}" for d in summary.pair_differences_ms)
         typer.echo(f"\npaired differences (ms): {diffs}")
@@ -961,6 +1057,7 @@ def variance(
             typer.echo(f", sd {summary.sd_difference_ms:.1f} ms", nl=False)
         typer.echo(f"; smallest attainable p at {summary.n_pairs} pairs: {summary.smallest_attainable_p:.5f}")
     typer.echo(f"\n{summary.note}")
+    print_next([f"thesis experiment analyze {bundle}"])
 
 
 if __name__ == "__main__":

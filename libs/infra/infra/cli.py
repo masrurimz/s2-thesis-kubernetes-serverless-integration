@@ -130,8 +130,9 @@ def verify() -> None:
 def apply_resources() -> None:
     """Apply Docker CPU/memory limits to existing k3d cluster nodes.
 
-    Idempotent: safe to re-run. Enforces CalibrationConfig values for
-    node-level CPU limits on both hybrid and serverless clusters.
+    Idempotent: safe to re-run. The limits are the fixed node sizing in
+    `K3dManager.apply_node_resources` (1.0 CPU, 1 GB per hybrid node), not values
+    from CalibrationConfig; a node only fits the pods the pod request implies.
     Use after cluster creation or after manual changes to restore correct limits.
     """
     from infra.cluster.k3d.manager import K3dManager
@@ -281,8 +282,12 @@ def monitoring(
     while experiments run — and reports how many series each metric now has.
     """
     from infra.observability.prometheus.config import cli as monitoring_cli
+    from shared.output import print_next
 
-    raise typer.Exit(monitoring_cli(render_only=render_only, verify_only=verify_only, as_json=as_json))
+    code = monitoring_cli(render_only=render_only, verify_only=verify_only, as_json=as_json)
+    if not as_json:
+        print_next(["thesis infra status", "thesis experiment preflight --profile h2-pair"])
+    raise typer.Exit(code)
 
 
 @app.command(name="deploy-app")
