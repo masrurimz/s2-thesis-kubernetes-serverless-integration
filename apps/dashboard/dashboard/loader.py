@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+from shared.artifacts import RESOURCE_UTILIZATION_FILE, read_resource_utilization
 
 __all__ = [
     "scan_experiments",
@@ -121,7 +122,7 @@ def scan_experiments(root: Path) -> pd.DataFrame:
 
         has_result = (run_dir / "result.json").is_file()
         has_prom = (run_dir / "prometheus" / "prometheus_export.json").is_file()
-        has_resource = (run_dir / "resource_utilization.json").is_file()
+        has_resource = (run_dir / RESOURCE_UTILIZATION_FILE).is_file()
         has_provision = (run_dir / "provision_events.json").is_file()
         has_daemon_log = (run_dir / "daemon.log").is_file()
         has_k6 = bool(list((run_dir / "k6").glob("*.json"))) if (run_dir / "k6").is_dir() else False
@@ -195,11 +196,12 @@ def load_prom(run_dir: Path | str) -> dict | None:
 
 
 def load_resource(run_dir: Path | str) -> list[dict] | None:
-    """Load ``resource_utilization.json`` (per-pod samples)."""
+    """Load ``resource_utilization.parquet`` (per-pod samples)."""
     run_dir = Path(run_dir)
-    path = run_dir / "resource_utilization.json"
-    raw = _read_json(str(path), _mtime(path))
-    return _sanitize(raw) if raw is not None else None
+    path = run_dir / RESOURCE_UTILIZATION_FILE
+    if not path.is_file():
+        return None
+    return _sanitize([sample.model_dump() for sample in read_resource_utilization(run_dir)])
 
 
 def load_provision(run_dir: Path | str) -> list:

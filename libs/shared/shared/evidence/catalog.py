@@ -147,16 +147,28 @@ class EvidenceCatalog:
             con.execute("CREATE OR REPLACE VIEW run_results AS SELECT * FROM (VALUES (NULL)) t(dummy) WHERE 1=0")
 
     def _refresh_timeseries(self, con: Any) -> None:
-        """View ``timeseries`` from ``results/experiments/**/raw/**/*.parquet``."""
-        # DuckDB doesn't support multiple '**' in one glob, so use Python glob
-        # and pass explicit file list to read_parquet.
-        pattern = str(self.root / "results" / "experiments" / "**" / "raw" / "**" / "*.parquet")
-        matches = sorted(glob.glob(pattern, recursive=True))
+        """View ``timeseries`` from every Parquet a run directory holds.
+
+        Two homes: the ``raw/`` dumps (``results/experiments/**/raw/**/*.parquet``)
+        and the per-run series written beside ``result.json``
+        (``results/experiments/**/*_run*/*.parquet``).
+
+        The files hold three different shapes (pod samples, node readings, k6 points),
+        so every row also carries ``filename``. Without it a consumer sees a table of
+        mostly NULL columns and cannot tell which series a row belongs to.
+        """
+        # DuckDB doesn't support multiple '**' in one glob, so use Python glob and
+        # pass an explicit file list. One pattern covers the whole experiments tree: the
+        # ``raw/`` dumps and the per-run series, at any depth. It does not depend on a
+        # directory being called ``*_run*``, so a series file written somewhere new is
+        # included without editing this list.
+        experiments = self.root / "results" / "experiments"
+        matches = sorted(glob.glob(str(experiments / "**" / "*.parquet"), recursive=True))
         if matches:
             con.execute(
                 f"CREATE OR REPLACE VIEW timeseries AS "
                 f"SELECT * FROM read_parquet({_duckdb_path_list(matches)}, "
-                f"union_by_name=true)"
+                f"union_by_name=true, filename=true)"
             )
         else:
             con.execute("CREATE OR REPLACE VIEW timeseries AS SELECT * FROM (VALUES (NULL)) t(dummy) WHERE 1=0")

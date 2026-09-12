@@ -137,7 +137,10 @@ layers = [
 name = "One loader for run artifacts"
 type = "protected"
 protected_modules = ["shared.artifacts"]
-allowed_importers = ["experiment", "analysis", "analysis_cli"]
+# `dashboard` belongs here: it reads the same artifacts as analysis, and reading the
+# files itself is what let a storage-format change break it silently. Its direct read
+# was the deferred work this contract was written around; it now goes through the loader.
+allowed_importers = ["experiment", "analysis", "analysis_cli", "dashboard"]
 
 [tool.ruff]
 target-version = "py312"

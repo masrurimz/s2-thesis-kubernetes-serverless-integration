@@ -442,7 +442,7 @@ def render_panel5(st_mod, ctx: RunData) -> None:
 def render_panel6(st_mod, ctx: RunData) -> None:
     """Aggregated CPU / memory / pod count by backend."""
     if ctx.resource_agg.empty:
-        st_mod.warning("No resource_utilization.json for this run.")
+        st_mod.warning("No resource_utilization.parquet for this run.")
         return
 
     agg = ctx.resource_agg
