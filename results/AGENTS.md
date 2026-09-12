@@ -57,6 +57,7 @@ Before creating a new experiment or analysis, read these in order:
 | `journal` | Read-only view of recent governance events from `registry-events.jsonl` |
 | `backfill-legacy [--apply]` | Logically backfill legacy v1 bundles into the typed registry; same `--apply` gate as `reconcile` |
 | `derive-parquet` | Writes a provenance-preserving Parquet from a legacy CSV/JSONL source to the explicit `--output` path (no fixed location) |
+| `normalize [--apply] [--json]` | Converts legacy `resource_utilization.json` / `node_utilization.json` to the shared Parquet writer, verifies the read-back, then deletes the JSON. Dry run by default; idempotent |
 | `catalog refresh` | Rebuilds `catalog.duckdb` (ignored, noncanonical); never touches canonical files |
 
 No tests live under `results/`. Registry and catalog behavior is tested where the code lives:
@@ -88,9 +89,11 @@ results/experiments/<phase>/<YYYY-MM-DD_slug>/
       result.json                    # Typed ExperimentResult
       daemon.log                     # Raw diagnostic text log
       k6-summary.json                # k6 summary
-      metrics.parquet                # Queried high-volume metrics (LFS)
-      prediction-actual.parquet      # Prediction vs actual (LFS)
-      system-events.parquet          # Normalized system event projection (LFS)
+      resource_utilization.parquet   # Per-pod utilization series (LFS) — written by every run
+      node_utilization.parquet       # Per-node utilization series (LFS) — written by every run
+      metrics.parquet                # INTENDED schema — no writer emits this today (LFS)
+      prediction-actual.parquet      # INTENDED schema — no writer emits this today (LFS)
+      system-events.parquet          # INTENDED schema — no writer emits this today (LFS)
 ```
 
 **Immutability rules:**
@@ -109,7 +112,7 @@ Canonical v2 layout is as above. What the current writers actually emit differs,
 
 - The paired-run commands (`apps/experiment/experiment/cli.py`) stamp `bundle_schema_version: 2` but create `<scenario>_run<N>/` as direct children of the bundle root and write `paired_analysis.json` and `SUMMARY.md` at the root, not under `derived/`. All nine bundles that carry a paired analysis have this shape; none uses `derived/`.
 - The dynamic workload runner (`apps/experiment/experiment/dynamic.py`) writes runs under `raw/`.
-- The three Parquet tables in the tree above are the intended schema, not what any writer emits today: no `metrics.parquet`, `prediction-actual.parquet`, or `system-events.parquet` exists under `results/experiments/`. The only Parquet in the repository is `data/processed/*.parquet` (four RPS series) plus a derived columnar copy of the phase-c k6 dumps (`k6-results.parquet`). Time series reach an analysis through CSV exports and the raw dumps instead.
+- The utilization series (`resource_utilization.parquet`, `node_utilization.parquet`) sit beside `result.json` in every run directory, written by the collect stage through `shared.artifacts`. The three other Parquet tables in the tree above are the intended schema, not what a writer emits today: no `metrics.parquet`, `prediction-actual.parquet`, or `system-events.parquet` exists under `results/experiments/`. Beyond the series Parquet, the repository's Parquet is `data/processed/*.parquet` (four RPS series, ignored by design) plus a derived columnar copy of the phase-c k6 dumps (`k6-results.parquet`).
 - **A time series gets a typed timestamp column, and is sorted by it.** Parquet carries timestamps as a logical type, so `ts` must be a real timestamp and not a string, and the file must be ordered by it: min/max statistics per row group are what let an engine read one minute out of a run instead of the whole file. A converted k6 stream is written as `<name>-points.parquet` with columns `ts`, `metric`, `value`, `tags`, filtered to the sample rows. The first conversion of these files kept the timestamp as a VARCHAR inside the source's struct: it worked, and it cost 31% of the file size and every reader's ability to filter by time without parsing strings.
 - A k6 dump is the one place where the format is measurably wrong: `k6-results.json` is a per-request stream, 160 MB per phase-c run, and nothing reads it (`dynamic.py` writes it and stops). The same file as `k6-results.parquet` with zstd is 2.9 MB, a factor of 55, and answers a row count in 0.1 s instead of a full parse. That is the tier rule working: volume that is only ever scanned should not be JSON.
 
@@ -150,8 +153,8 @@ Where each experiment artifact lives: three tiers, decided by size, meaning, and
 
 | Tier | Storage | What goes there | Examples |
 |---|---|---|---|
-| **(a) plain git** | tracked, normal diffable text | small, human-meaningful, evidence-critical, must survive | `meta.yaml`, `events.jsonl`, `result.json`, `paired_analysis.json`, `k6-summary.json`, `daemon.log`, `provision_events.json`, `node_utilization.json`, `resource_utilization.json` |
-| **(b) git LFS** | Git LFS (`.gitattributes` filter) | large binary, regenerable | `*.parquet` metrics tables, `prometheus/` raw exports, model weights `*.pt` / `*.pth` |
+| **(a) plain git** | tracked, normal diffable text | small, human-meaningful, evidence-critical, must survive | `meta.yaml`, `events.jsonl`, `result.json`, `paired_analysis.json`, `k6-summary.json`, `daemon.log`, `provision_events.json` |
+| **(b) git LFS** | Git LFS (`.gitattributes` filter) | large binary, regenerable | utilization series `resource_utilization.parquet` / `node_utilization.parquet`, `*.parquet` metrics tables, `prometheus/` raw exports, model weights `*.pt` / `*.pth` |
 | **(c) disk-only** | untracked, ignored, documented in `results/evidence/registry.yaml` | very large, regenerable | phase-c raw k6 blobs (`k6-results.json`, ~160 MB each, ~1 GB total), `data/raw/*.gz` |
 
 **Tier rules**

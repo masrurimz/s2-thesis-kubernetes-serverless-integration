@@ -70,7 +70,7 @@ No circular dependencies. `libs/` never imports from `apps/`.
 Key patterns:
 - **HAProxy weight-time product**: Traffic split = `serverless_weight_time / (k8s_weight_time + serverless_weight_time)`. NOT `time_in_serverless_pct`.
 - **Prometheus Gauge pre-init**: Labeled Gauge children need `.labels(value).set(0)` at import or Prometheus sees nothing on first scrape.
-- **Node utilization**: `kubectl top nodes` polled alongside pods. Stored in `node_utilization.json`.
+- **Node utilization**: `kubectl top nodes` polled alongside pods. Stored in `node_utilization.parquet`.
 - **Provisioning delay**: 45-120s simulated VM boot before k3d node creation.
 - **Inter-module contracts**: Protocols in `libs/shared/shared/protocols/` (PredictionClient, RoutingDaemonClient, MetricsClient, ProvisionerClient). Pydantic models in `libs/shared/shared/models/`.
 ---
@@ -213,7 +213,7 @@ uv run ty check              # type-check — do not add NEW errors
 
 * Baseline: `ruff check` and `ty check` are both clean. `archived/` is excluded from every tool (`pyproject.toml` `[tool.ty.src]`, ruff's `extend-exclude`, pytest's `norecursedirs`): it is a frozen pre-refactor snapshot, so its diagnostics are history rather than work.
 * Enforcement: a `prek` git hook (`.pre-commit-config.yaml`) runs `ruff check`, `ruff format --check` and `ty check` on commit. Install once after cloning: `uv run prek install`.
-* Import boundaries are enforced by `lint-imports` contracts in `pyproject.toml` (`[tool.importlinter]`), asserted by `libs/shared/tests/test_architecture.py` so the normal test run catches a boundary crossed. The protected contract bounds *importers* of `shared.artifacts`; it cannot see a module that opens the files directly, and `apps/dashboard/dashboard/loader.py` still does (deferred work, listed in the refactor design).
+* Import boundaries are enforced by `lint-imports` contracts in `pyproject.toml` (`[tool.importlinter]`), asserted by `libs/shared/tests/test_architecture.py` so the normal test run catches a boundary crossed. That test also fails when one DTO name is defined in two modules, which is how the prediction server and the routing daemon came to describe different `/health` payloads under the same `HealthResponse` name. The protected contract bounds *importers* of `shared.artifacts` — the dashboard is one of them now, and the per-run utilization series it reads are Parquet — but it cannot see a module that opens run artifacts directly, which `apps/dashboard/dashboard/loader.py` still does for `prometheus_export.json` and `k6/*.json`.
 * `prek` is a Rust drop-in for `pre-commit`, added as a dev dependency; `uv sync` installs it. Docs: https://prek.j178.dev
 
 ---
@@ -226,7 +226,7 @@ uv run ty check              # type-check — do not add NEW errors
 | Structured event logs (daemon decisions) | **JSONL** | Append-only, one-line-per-event diffs |
 | Experiment metadata | **YAML** | Human-authored, already used for meta.yaml |
 | Summary reports | **Markdown** | Already used for report.md |
-| Time-series exports | **CSV** | Compact, diffable |
+| Time-series exports (utilization series) | **Parquet** | Typed UTC timestamp, sorted, ~10x smaller than the JSON it replaced (Git LFS) |
 | Model artifacts | **Gitignored** | Large binaries, referenced by path |
 
 ---
@@ -248,9 +248,11 @@ results/experiments/<phase>/<YYYY-MM-DD_slug>/
     result.json                    # Typed ExperimentResult with TreatmentFidelity
     daemon.log                     # Raw diagnostic text log
     k6-summary.json                # k6 summary
-    metrics.parquet                # Parquet — time-series (Git LFS)
-    prediction-actual.parquet      # Parquet — GRU forecast vs actual (Git LFS)
-    system-events.parquet          # Parquet — normalized daemon events (Git LFS)
+    resource_utilization.parquet   # Parquet — per-pod utilization series (Git LFS)
+    node_utilization.parquet       # Parquet — per-node utilization series (Git LFS)
+    metrics.parquet                # Parquet — INTENDED schema, no writer emits it today (Git LFS)
+    prediction-actual.parquet      # Parquet — INTENDED schema, no writer emits it today (Git LFS)
+    system-events.parquet          # Parquet — INTENDED schema, no writer emits it today (Git LFS)
 ```
 
 **Evidence workflow:** `uv run thesis experiment evidence audit` → `reconcile --apply` → `catalog refresh` → `journal --limit 20`. See `results/evidence/README.md` and `results/evidence/BACKLOG.md` for deferred evidence work.

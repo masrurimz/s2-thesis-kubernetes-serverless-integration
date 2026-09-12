@@ -13,7 +13,7 @@ Package source lives under `libs/shared/shared/` (nested package layout).
 | `shared/scenarios.py` | `Scenario` enum, `ScenarioConfig`, `SCENARIO_CONFIGS` (S1-S4), scenario labels/colors/order, `SLO_THRESHOLD_MS` |
 | `shared/output.py` | Machine-readable CLI output: `json_line`/`print_json` (one-line JSON, plain print, never rich), `print_next` |
 | `shared/progress.py` | Rich progress bars, phase spinners, countdowns for experiment CLIs; explicit `Console`, no global state |
-| `shared/artifacts.py` | The one read path for run artifacts: `read_result`, `read_manifest`, `read_provision_events`, `read_resource_utilization`, `write_*` counterparts, `result_validation_error` |
+| `shared/artifacts.py` | The one read path for run artifacts: `read_result`, `read_manifest`, `read_provision_events`, the Parquet utilization series (`read/write_resource_utilization`, `read/write_node_utilization`, `series_provenance`), `write_*` counterparts, `result_validation_error` |
 | `shared/stats.py` | Statistical primitives: Welch t, Mann-Whitney U, bootstrap CI, Holm-Bonferroni, paired bootstrap CI, paired permutation test, paired Cohen's d, effect-size labels |
 | `shared/models/experiment.py` | `ExperimentResult` (nested `TreatmentFidelity`), `RunManifest`, `BatchManifest`, `ExperimentConfig`, `StatisticalComparison`, `PairedComparison` |
 | `shared/models/evidence.py` | Evidence DTOs: `TreatmentFidelity`, `NodeEngagement`, `ExperimentJournalEvent`, `ExperimentRegistryEntry`, `JournalEventName` |
