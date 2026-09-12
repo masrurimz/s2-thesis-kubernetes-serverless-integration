@@ -51,6 +51,11 @@ results/raw/**/*.csv
 *.pt
 *.pth
 controller/prediction/**/*.onnx
+# Exception: the predictor that produced the thesis numbers is evidence, not scratch.
+# A reader has to be able to fetch the network, not only read its metrics, so the
+# deployed artifact and its retrain ancestors are tracked through LFS.
+!data/models/gru_model.pt
+!results/models/**/*.pt
 
 # Load testing (outside bundles)
 results/load-tests/*.json
