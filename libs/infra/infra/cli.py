@@ -263,6 +263,28 @@ def shape_nodes(
         console.print("  [green]already at the requested count[/green]")
 
 
+@app.command()
+def monitoring(
+    render_only: bool = typer.Option(False, "--render-only", help="Render credentials and validate; do not reload"),
+    verify_only: bool = typer.Option(False, "--verify", help="Report the series state without changing anything"),
+    as_json: bool = typer.Option(False, "--json", help="Emit the result as JSON"),
+) -> None:
+    """Make the application and kubelet metrics scrapable.
+
+    Prometheus runs on the host and the application runs inside k3d, so the job set
+    that names the application, the kubelets and kube-state-metrics has never scraped
+    anything: pod IPs are on a docker network this container is not attached to. The
+    Kubernetes API is published by k3d and can proxy to a pod or a kubelet, so the
+    scrape goes through it. This renders the kubeconfig's client certificate into the
+    container's secrets directory, validates the configuration in a throwaway
+    container, reloads the running instance — a reload, not a restart, so it is safe
+    while experiments run — and reports how many series each metric now has.
+    """
+    from infra.observability.prometheus.config import cli as monitoring_cli
+
+    raise typer.Exit(monitoring_cli(render_only=render_only, verify_only=verify_only, as_json=as_json))
+
+
 @app.command(name="deploy-app")
 def deploy_app(
     skip_build: bool = typer.Option(False, "--skip-build", help="Skip Docker build (use existing image)"),

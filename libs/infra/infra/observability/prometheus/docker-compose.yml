@@ -21,6 +21,8 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro,z
       - ./rules.yml:/etc/prometheus/rules.yml:ro,z
+      # Cluster API credentials, rendered by `thesis infra monitoring`; gitignored.
+      - ./secrets:/etc/prometheus/secrets:ro,z
       - prometheus-data:/prometheus
     
     # Command line options for resource constraints

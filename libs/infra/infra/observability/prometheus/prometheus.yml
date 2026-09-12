@@ -38,7 +38,142 @@ scrape_configs:
     metrics_path: '/metrics'
     scheme: 'http'
 
+# --- The application and the kubelets -------------------------------------
+  # Prometheus runs on the host; the application runs inside k3d; pod IPs are on a
+  # docker network this container is not attached to. The Kubernetes API is published
+  # by k3d and can proxy to a pod or a kubelet, so the scrape goes through it. The
+  # credentials beside this file are the kubeconfig's client certificate, rendered by
+  # `thesis infra monitoring` and never committed.
+  - job_name: 'kubernetes-pods-hybrid'
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true
+      cert_file: /etc/prometheus/secrets/thesis-hybrid.crt
+      key_file: /etc/prometheus/secrets/thesis-hybrid.key
+    kubernetes_sd_configs:
+      - role: pod
+        api_server: https://host.docker.internal:6443
+        tls_config:
+          insecure_skip_verify: true
+          cert_file: /etc/prometheus/secrets/thesis-hybrid.crt
+          key_file: /etc/prometheus/secrets/thesis-hybrid.key
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: "true"
+      # The workload namespace only: Knative's own pods carry the annotation and are
+      # not the application (one answers 404 on /metrics, one 503).
+      - source_labels: [__meta_kubernetes_namespace]
+        action: keep
+        regex: default
+      - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_name]
+        action: replace
+        regex: (.+);(.+)
+        replacement: /api/v1/namespaces/$1/pods/$2:8080/proxy/metrics
+        target_label: __metrics_path__
+      - target_label: __address__
+        replacement: host.docker.internal:6443
+      - target_label: __scheme__
+        replacement: https
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+    scrape_interval: 15s
+
+  - job_name: 'kubernetes-pods-serverless'
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true
+      cert_file: /etc/prometheus/secrets/thesis-serverless.crt
+      key_file: /etc/prometheus/secrets/thesis-serverless.key
+    kubernetes_sd_configs:
+      - role: pod
+        api_server: https://host.docker.internal:6444
+        tls_config:
+          insecure_skip_verify: true
+          cert_file: /etc/prometheus/secrets/thesis-serverless.crt
+          key_file: /etc/prometheus/secrets/thesis-serverless.key
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: "true"
+      # The workload namespace only: Knative's own pods carry the annotation and are
+      # not the application (one answers 404 on /metrics, one 503).
+      - source_labels: [__meta_kubernetes_namespace]
+        action: keep
+        regex: default
+      - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_name]
+        action: replace
+        regex: (.+);(.+)
+        replacement: /api/v1/namespaces/$1/pods/$2:8080/proxy/metrics
+        target_label: __metrics_path__
+      - target_label: __address__
+        replacement: host.docker.internal:6444
+      - target_label: __scheme__
+        replacement: https
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+    scrape_interval: 15s
+
+  - job_name: 'kubernetes-nodes-cadvisor-hybrid'
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true
+      cert_file: /etc/prometheus/secrets/thesis-hybrid.crt
+      key_file: /etc/prometheus/secrets/thesis-hybrid.key
+    kubernetes_sd_configs:
+      - role: node
+        api_server: https://host.docker.internal:6443
+        tls_config:
+          insecure_skip_verify: true
+          cert_file: /etc/prometheus/secrets/thesis-hybrid.crt
+          key_file: /etc/prometheus/secrets/thesis-hybrid.key
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_node_name]
+        action: replace
+        regex: (.+)
+        replacement: /api/v1/nodes/$1/proxy/metrics/cadvisor
+        target_label: __metrics_path__
+      - target_label: __address__
+        replacement: host.docker.internal:6443
+      - target_label: __scheme__
+        replacement: https
+      - source_labels: [__meta_kubernetes_node_name]
+        target_label: node
+    scrape_interval: 30s
+
+  - job_name: 'kubernetes-nodes-cadvisor-serverless'
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true
+      cert_file: /etc/prometheus/secrets/thesis-serverless.crt
+      key_file: /etc/prometheus/secrets/thesis-serverless.key
+    kubernetes_sd_configs:
+      - role: node
+        api_server: https://host.docker.internal:6444
+        tls_config:
+          insecure_skip_verify: true
+          cert_file: /etc/prometheus/secrets/thesis-serverless.crt
+          key_file: /etc/prometheus/secrets/thesis-serverless.key
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_node_name]
+        action: replace
+        regex: (.+)
+        replacement: /api/v1/nodes/$1/proxy/metrics/cadvisor
+        target_label: __metrics_path__
+      - target_label: __address__
+        replacement: host.docker.internal:6444
+      - target_label: __scheme__
+        replacement: https
+      - source_labels: [__meta_kubernetes_node_name]
+        target_label: node
+    scrape_interval: 30s
+
 # Storage settings configured via CLI flags in docker-compose.yml
+
 # (--storage.tsdb.retention.time=1h, --storage.tsdb.retention.size=512MB)
 
 # Alertmanager disabled for Sprint 1 simplicity

@@ -37,6 +37,12 @@ def _maintain_decision(daemon):
 
 def _wire_loop(daemon, *, history_len: int, model_seq_len: int = 5):
     daemon._load_history = deque([100.0] * history_len, maxlen=60)
+    # The loop refreshes the history from Prometheus when it can reach it, which adds a
+    # sample to the history this test sets exactly — and makes the result depend on
+    # whether a live Prometheus is answering. It answered for the first time on
+    # 2026-09-12 (the scrape config fed prom_rps at last), and this boundary case
+    # flipped from 0 eligible cycles to 1 without a line of routing code changing.
+    daemon._update_load_history = Mock()
     daemon.algorithm_controller.make_decision = Mock(return_value=_maintain_decision(daemon))
     # Bypass real model-status fetch; simulate a validated model.
     daemon._model_status_validated = True
