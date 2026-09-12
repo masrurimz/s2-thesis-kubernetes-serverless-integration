@@ -335,10 +335,16 @@ class ResourcePoller:
                 if len(parts) < 5:
                     continue
                 node_name = parts[0]
-                cpu_cores = self._parse_cpu(parts[1]) / 1000  # millicores → cores
-                cpu_pct = float(parts[2].rstrip("%"))
-                mem_mib = self._parse_memory(parts[3])
-                mem_pct = float(parts[4].rstrip("%"))
+                try:
+                    cpu_cores = self._parse_cpu(parts[1]) / 1000  # millicores → cores
+                    cpu_pct = float(parts[2].rstrip("%"))
+                    mem_mib = self._parse_memory(parts[3])
+                    mem_pct = float(parts[4].rstrip("%"))
+                except ValueError:
+                    # A node metrics-server has no reading for yet reports
+                    # "<unknown>"; that is one missing sample, not a failed scrape,
+                    # and must not discard the other nodes on the same poll.
+                    continue
                 with self._lock:
                     self._node_samples.append(
                         {
