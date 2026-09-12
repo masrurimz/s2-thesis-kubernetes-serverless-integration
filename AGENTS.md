@@ -156,6 +156,36 @@ systemctl --user stop graphify-watcher.service    # before a measurement window
 systemctl --user start graphify-watcher.service   # after
 ```
 
+### Reading a finished bundle
+
+A bundle is evidence other people and agents have to read. Three commands answer the
+questions it exists to answer, each with a table for a person and `--json` for a
+program; nothing about a bundle should need a script written beside it.
+
+```bash
+# What each run measured, and the conditions it was measured under.
+uv run thesis analysis runs results/experiments/phase-b/<bundle>
+# When the node tier arrived relative to the load, beside the tail it explains.
+uv run thesis analysis mechanism results/experiments/phase-b/<bundle>
+# How far each arm moved run to run, and the smallest p the design can attain (2^-n).
+uv run thesis analysis variance results/experiments/phase-b/<bundle>
+
+# Recompute the paired verdict from the bundle's own runs (--write updates the
+# artifacts; the runner's verdict is written once and can go stale against a fix).
+uv run thesis experiment analyze results/experiments/phase-b/<bundle> --json
+```
+
+A series of stages is a command too, rather than a shell loop beside the repo:
+
+```bash
+uv run thesis experiment series \
+  --stage h2-pair:pairs=5 --stage s4-point-sizing --stage baselines:runs=5 \
+  --json
+```
+
+It retries a failed stage once, stops the chain when a stage fails every attempt, and
+pauses the work-tree indexer for the whole window, restoring it even if a stage dies.
+
 Older invocations remain available for ad-hoc work:
 
 ```bash
