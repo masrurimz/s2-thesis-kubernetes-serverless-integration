@@ -37,6 +37,12 @@ class FakePredictor:
     def is_healthy(self) -> bool:
         return True
 
+    def check_availability(self) -> bool:
+        return True
+
+    def get_model_status(self) -> dict:
+        return {"loaded": True, "sequence_length": 5, "prediction_horizon": 5, "sample_interval_sec": 15}
+
 
 def test_daemon_defaults_to_the_gru_client():
     daemon = RoutingDaemon(scenario="s4-hybrid-predictive")

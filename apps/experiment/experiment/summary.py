@@ -6,6 +6,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 from statistics import fmean, stdev
+from typing import TypeGuard
 
 import yaml
 from shared.artifacts import read_manifest_git_commit, read_result_dict
@@ -195,12 +196,18 @@ def _fmt(value: float | None, spec: str = ".1f") -> str:
     return NA if value is None else format(value, spec)
 
 
-def _numeric(value: object) -> bool:
+def _numeric(value: object) -> TypeGuard[float]:
+    """True when the value is a real number a table may aggregate."""
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
 def _mean_over(runs: list[Run], field: str) -> float | None:
-    values = [v for run in runs if _numeric(v := run.result.get(field))]
+    """Mean of a numeric field across runs; None when no run recorded one."""
+    values: list[float] = []
+    for run in runs:
+        value = run.result.get(field)
+        if _numeric(value):
+            values.append(float(value))
     return fmean(values) if values else None
 
 

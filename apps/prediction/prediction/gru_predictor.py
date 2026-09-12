@@ -559,7 +559,10 @@ class GRUPredictor:
             if self.model is None:
                 raise RuntimeError("No model loaded for prediction")
             X = normalized.reshape(1, -1)
-            pred_norm = self.model.predict(X)[0]  # (horizon,)
+            predict = getattr(self.model, "predict", None)
+            if not callable(predict):
+                raise RuntimeError(f"{type(self.model).__name__} has no predict method")
+            pred_norm = predict(X)[0]  # (horizon,)
 
         point_forecasts = self._denormalize(pred_norm)
         point_forecasts = np.maximum(0, point_forecasts)

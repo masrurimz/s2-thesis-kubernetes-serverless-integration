@@ -72,5 +72,6 @@ class TestNodeSampleRow:
 
     def test_artifact_round_trip_preserves_the_sample(self):
         sample = NodeSample.from_kubectl_top_row(self.ROW, timestamp=123.0)
+        assert sample is not None
 
         assert NodeSample.model_validate(sample.model_dump()) == sample

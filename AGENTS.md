@@ -181,9 +181,9 @@ uv run ruff format --check   # CI / hook verification
 uv run ty check              # type-check — do not add NEW errors
 ```
 
-* Baseline: `ruff check` is clean; `ty check` reports ~80 pre-existing diagnostics, almost all in `archived/` legacy code. Do not regress `ty`'s count; fix any `ty` error in code you touch.
-* Enforcement: a `prek` git hook (`.pre-commit-config.yaml`) runs `ruff check` and `ruff format --check` automatically on commit. Install once after cloning: `uv run prek install`.
-* `ty check` is wired as a **manual-stage** hook — it does NOT block commits (the `archived/` diagnostics otherwise would). Run it manually for type-sensitive changes: `uv run prek run --hook-stage manual ty-check`.
+* Baseline: `ruff check` and `ty check` are both clean. `archived/` is excluded from every tool (`pyproject.toml` `[tool.ty.src]`, ruff's `extend-exclude`, pytest's `norecursedirs`): it is a frozen pre-refactor snapshot, so its diagnostics are history rather than work.
+* Enforcement: a `prek` git hook (`.pre-commit-config.yaml`) runs `ruff check`, `ruff format --check` and `ty check` on commit. Install once after cloning: `uv run prek install`.
+* Import boundaries are enforced by `lint-imports` contracts in `pyproject.toml` (`[tool.importlinter]`), asserted by `libs/shared/tests/test_architecture.py` so the normal test run catches a boundary crossed.
 * `prek` is a Rust drop-in for `pre-commit`, added as a dev dependency; `uv sync` installs it. Docs: https://prek.j178.dev
 
 ---

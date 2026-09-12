@@ -8,6 +8,8 @@ from __future__ import annotations
 import math
 from pathlib import Path
 
+import pytest
+
 from dashboard.loader import (
     _sanitize,
     load_result,
@@ -20,6 +22,13 @@ KNOWN_RUN = (
 )
 
 
+requires_uncommitted_artifacts = pytest.mark.skipif(
+    not (KNOWN_RUN / "prometheus").is_dir(),
+    reason="the fib34 bundle's prometheus/ export is untracked, so a fresh git worktree does not have it",
+)
+
+
+@requires_uncommitted_artifacts
 def test_scan_finds_fib34_run() -> None:
     runs = scan_experiments(REPO_ROOT)
     assert not runs.empty, "scanner returned no runs"

@@ -29,15 +29,15 @@ References:
 """
 
 import json
-import logging
 import pickle
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
 import numpy as np
+import structlog
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # Project root (parent of apps/experiment/)
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
