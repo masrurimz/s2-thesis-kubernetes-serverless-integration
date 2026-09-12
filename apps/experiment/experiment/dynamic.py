@@ -273,7 +273,11 @@ class DynamicExperimentRunner:
             "-e",
             f"RESULTS_DIR={run_results_dir}",
             "--out",
-            f"json={run_results_dir / 'k6-results.json'}",
+            # The per-request stream is not an artifact: nothing reads it, and at a
+            # /fib?n=33 workload it is 160 MB of NDJSON per run (2.9 MB as zstd Parquet).
+            # The paired pipeline already discards it the same way. If a future analysis
+            # needs per-request samples, write them as Parquet, not as this stream.
+            "json=/dev/null",
             "--summary-export",
             str(run_results_dir / "k6-summary.json"),
         ]
