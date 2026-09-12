@@ -2,17 +2,24 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProvisionEvent(BaseModel):
-    """Single node provisioning lifecycle event."""
+    """Single node provisioning lifecycle event, named as it is persisted.
 
-    timestamp: float
-    event_type: (
-        str  # "pending_detected" | "provision_delay_started" | "node_created" | "node_deleted" | "autoscaler_reset"
-    )
-    details: dict[str, Any] = Field(default_factory=dict)
+    The wire shape is ``{"ts", "event", "data"}``; the field names match it so the
+    loader and the writer need no aliases to agree with the file. ``event`` is one of
+    ``autoscaler_started``, ``pending_detected``, ``provision_delay_started``,
+    ``node_created``, ``node_resource_applied``, ``scale_down_detected``,
+    ``node_deleted``, ``autoscaler_reset``, ``autoscaler_stopped``.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    ts: float
+    event: str
+    data: dict[str, Any] = Field(default_factory=dict)
 
 
 class AutoscalerConfig(BaseModel):

@@ -28,12 +28,19 @@ class MetricSeries(BaseModel):
 
 
 class ResourceSample(BaseModel):
-    """A single resource utilization sample from metrics-server."""
+    """A single resource utilization sample from metrics-server.
+
+    Field names are the persisted wire keys, so the artifact and the model cannot
+    disagree about what a sample is.
+    """
+
+    model_config = ConfigDict(extra="ignore")
 
     timestamp: float
+    pod: str
+    backend: str = ""
     cpu_millicores: float
     memory_mib: float
-    pod_name: Optional[str] = None
 
 
 class MetricsExport(BaseModel):
