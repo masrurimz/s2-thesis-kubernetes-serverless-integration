@@ -59,7 +59,7 @@ SCALE_OUT > PREDICTIVE > OPTIMIZE_COST > MAINTAIN
 
 The daemon records observed load, ready replicas, replica targets, decision types, weights, prediction delivery/confidence, and HAProxy latency. The SLO monitor derives p99 from HAProxy `rtime`. k6 reports p50, p95, p99, throughput, failures, and request counts using `summaryTrendStats` that includes `p(95)` and `p(99)`.
 
-For the definitive H2 protocol, five counterbalanced pairs run S3 and S4 on ClarkNet under identical duration and calibration. The primary comparison is paired p99. The final result is S3 188.5 ms versus S4 126.0 ms, p=0.0304, d=-1.26, with both proxy costs USD 163. H1 remains a directional n=1 diagnostic (S4 118.2 ms versus S1 2,421.3 ms).
+For the H2 protocol, five counterbalanced pairs run S3 and S4 on ClarkNet under identical duration and calibration. The primary comparison is paired p99. The result of the 2026-07-14 batch is S3 188.5 ms versus S4 126.0 ms, mean difference -62.5 ms, 95% CI [-100.9, -26.2], exact permutation p = 0.0312, d = -1.26, with both proxy costs USD 163. The batch reached the smallest p that five pairs can produce, and later batches do not reproduce it. The predictor weights of that batch are not recorded, because the deployed artifact entered version control only on 2026-09-12. H1 remains a directional n=1 diagnostic (S4 118.2 ms versus S1 2,421.3 ms).
 
 ## 6. Services and infrastructure
 
@@ -85,4 +85,4 @@ uv run thesis-experiment evidence catalog refresh
 uv run thesis-experiment evidence journal
 ```
 
-Raw and derived artifacts remain under `results/`; this layer documents the protocol and does not replace the evidence registry. Interpret H1 as directional, H2 as the definitive paired result, and proxy cost as directional rather than measured billing.
+Raw and derived artifacts remain under `results/`; this layer documents the protocol and does not replace the evidence registry. Interpret H1 as directional, H2 as one significant paired batch that later batches do not reproduce, and proxy cost as directional rather than measured billing.

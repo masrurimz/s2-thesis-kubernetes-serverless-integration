@@ -10,8 +10,8 @@ This project evaluates a hybrid Kubernetes + serverless control plane for tail-l
 ## Final research configuration
 
 - Workload: deterministic `/fib?n=33` CPU endpoint.
-- GRU training: synthetic diurnal, burst, and ramp series.
-- ClarkNet and Calgary: validation corpora; ClarkNet is also replayed for evaluation.
+- GRU training: the ClarkNet 15 s series, chronological splits, embargo; a synthetic diurnal, burst, and ramp arm is studied beside it.
+- The replayed window, 1995-09-02 04:35 to 04:55 UTC, lies in the held-out test region, so the deployment arm serves out-of-sample load; Calgary is a validation corpus.
 - Forecast: 9 samples × 15 seconds = **135 seconds**.
 - Primary SLO: **p99 < 200 ms**.
 - Scenarios: S1 K8s + HPA, S2 serverless-only, S3 hybrid-reactive, S4 hybrid-predictive.

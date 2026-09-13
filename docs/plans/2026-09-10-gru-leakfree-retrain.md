@@ -135,6 +135,35 @@ Stage 2, only if stage 1 shows a lever that moves the held-out error beyond nois
 
 Gate. A change is kept only when it reduces holdout RMSE against a linear autoregression on identical windows. A change that only closes the gap to linear is reported as a limitation, not a win.
 
+### Addendum 2026-09-13 — the split has no overlapping day types, and the revised priority
+
+Measured on the frozen splits: train (Mon 08-28 04:00 to Fri 09-01 01:45) is 0.0% weekend, validation (Fri 09-01 01:55 to 17:11) is 0.0% weekend, and test (Fri 09-01 17:21 to Mon 09-04 03:59) is 81.9% weekend. Mean RPS falls from 45.70 in train to 34.08 in test.
+
+Consequences.
+
+- Calendar, Fourier, day-of-week, and seasonal-lag inputs are structurally unavailable in this split. The network has never seen a Saturday, and the leakage rule forbids moving the replay window out of the test region, so no configuration of these splits can show it one. The existing calendar probe result, 40.60 RMSE against a 29.46 gate, is explained by this rather than by a defect in the probe.
+- Part of the deployment arm's error is this missing regime, not model capacity. Reported accuracy must therefore state which day types the training region contains.
+- The level drop from 45.70 to 34.08 is why a global scaler and RevIN help only slightly: a constant offset is absorbable, a missing day type is not.
+
+Revised priority for the remaining levers.
+
+1. Capacity-relative target: time until load crosses the capacity threshold, or the probability of crossing within the horizon. A capacity-relative label is far less sensitive to the level shift than an absolute forecast.
+
+Measured 2026-09-13: the crossing target's label frequency depends on the replica cap, and that dependence is decisive. At the code default, 33.3 RPS per replica times six replicas, 199.8 RPS, the selection folds carry 22 to 25 percent crossing windows and more than a thousand positives per fold, so the target is trainable there. At the h2-pair configuration's cap of ten replicas, 333.0 RPS, the replayed window is effectively crossing-free: 0.35 percent of fitting windows crossed, no positive inner-validation windows, 0.15 percent of evaluation windows. The target is therefore trained and judged on the selection folds at the default ceiling, and the paired configuration's ceiling is recorded as a regime in which the capacity boundary is not approached at all. That second fact is independent evidence for the regime that made the September H2 result contradict July: at ten replicas the controller is never close to full, so a forecast has almost no breaches to prevent. A closed-loop test of the crossing target requires the default ceiling or a higher load.
+2. Within-day, scale-free inputs: trailing rolling statistics, EWMA, differences, trend and residual decomposition, sample-interval aggregation, robust normalisation.
+
+Measured 2026-09-13, eight of twelve levers under the fold protocol, all at served amplitude: interval30, interval60, revin_robust, nlinear, diff_target, robust_scale, quantile_norm and nbeats. None beats the per-fold OLS autoregression. Skills range from -0.01 percent (robust_scale) to -3.68 percent (nbeats), and the closest is nlinear at -0.30 percent with a Diebold-Mariano p of 0.29. One fold, b3, shows a single significant flicker (robust_scale, p = 0.018), which the aggregate correctly refuses to promote. Four levers remain queued.
+
+Two consequences follow. First, the deployed point predictor should be the linear autoregression. Twelve gated levers now say the network does not separate from it at this horizon and lookback, and that parity belongs in the thesis as a disclosed limitation rather than a hidden one. Second, coarser sampling lowers absolute error for any model: at 60 second buckets the fold error falls from 36.69 to 25.18 for the autoregression and from 36.69 to 25.30 for the network, because the target becomes coarser and the wall-clock horizon grows from 135 to 180 seconds, not because the model improved. Adopt the 60 second interval for a served predictor if the serving path is changed at all, and state the horizon change alongside it.
+
+The remaining value in this program is the decision layer: the capacity-crossing target, which has measured headroom, and the controller's use of a forecast, which the closed-loop null shows is the binding constraint.
+3. Cross-corpus pretraining on Calgary, the only available corpus long enough to contain weekends, then fine-tune on the ClarkNet training region.
+4. Test metrics are reported split by day type, so the regime claim is quantified rather than argued.
+
+The screening rule is also corrected. Stage 1 screened every lever on the held-out test region and chose by test RMSE, which is selection on the test set. Screening now reports validation metrics with `screen_region: "validation"` and `test_used_for_selection: false`, and test is reserved for a pre-registered final.
+
+The protocol is implemented in `apps/experiment/experiment/tuning/splits.py` and is the contract for every downstream run. Expanding-origin one-day blocks: b2, b3 and b4 are selection folds, b5 is out-of-distribution report only (100% weekend evaluation against a 3.2% weekend training share), and b6 is skipped because its training region would contain the replayed window. The deployment split keeps the frozen test range with the replayed window inside it, marked `used_for_selection=False` and reported separately. Aggregates are mean, standard deviation, minimum and maximum across folds, and fewer than two folds is refused. Normalisation is log1p followed by median and interquartile range with a standard-deviation fallback for degenerate scale, fitted on the training region only, enforced by assertion. Citations for the design: Hyndman and Athanasopoulos, fpp3 chapter 5; Bergmeir and Benitez 2012; Tashman 2000.
+
 ### Refit leak found and fixed mid-run (2026-09-10)
 
 The first LSTM attempt early-stopped on the test region. `GRUPredictor.train` decided `has_val` from the length of the validation slice rather than from `val_ratio`, so the refit call `train(full_df, val_ratio=0.0, train_end=splits.val_end)` still took the early-stopping branch, with the test region as its validation slice. The run was stopped, the contract fixed so `val_ratio=0.0` always uses the no-validation final-fit path, and a unit test added that mutates the test region and asserts the training history is unchanged.

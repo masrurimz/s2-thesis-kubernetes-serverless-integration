@@ -89,7 +89,7 @@ Algorithm 1 V3: capacity-driven routing
  Kubernetes      Knative
 ```
 
-The GRU is trained on synthetic workload patterns. ClarkNet and Calgary are validation corpora; ClarkNet is replayed as the variable evaluation trace. The 135 s forecast window covers the longest measured provisioning delay (120 s) plus the 15 s safety margin in `CalibrationConfig`.
+The GRU trains on the ClarkNet 15 s series under chronological splits and an embargo. The replayed window, 1995-09-02 04:35 to 04:55 UTC, lies in the held-out test region, so the deployment arm serves out-of-sample load. The 135 s forecast window covers the longest measured provisioning delay (120 s) plus the 15 s safety margin in `CalibrationConfig`.
 
 ## Algorithm 1 priority
 

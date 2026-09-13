@@ -147,7 +147,7 @@ uv run thesis analysis variance results/experiments/phase-b/<bundle>
 | S3 | Hybrid-reactive | Algorithm 1 on observed load |
 | S4 | Hybrid-predictive | Algorithm 2 consumes GRU forecast; Algorithm 1 still routes on observed load/trend |
 
-The GRU is trained on synthetic patterns, validated on ClarkNet and Calgary, and ClarkNet is replayed for evaluation. The direct forecast horizon is 9 × 15 s = 135 s.
+The GRU trains on the ClarkNet 15 s series under chronological splits and an embargo. The replayed window is 1995-09-02 04:35 to 04:55 UTC, which lies in the held-out test region, so the deployment arm serves out-of-sample load. The direct forecast horizon is 9 × 15 s = 135 s.
 
 ## Run conditions and validity gates
 

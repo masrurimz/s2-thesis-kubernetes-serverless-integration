@@ -2,7 +2,7 @@
 
 ## Final S4 behavior
 
-S4 is the hybrid-predictive scenario in the current experiment pipeline. The GRU is trained on synthetic workload patterns and emits a direct **9-step × 15-second = 135-second** forecast. The forecast is confidence-gated and feeds Algorithm 2 Kubernetes replica scaling. Algorithm 1 V3 routes with observed load, observed ready capacity, HAProxy `rtime` p99, and confidence-gated observed-load trend extrapolation; the raw forecast does not directly set HAProxy weights.
+S4 is the hybrid-predictive scenario in the current experiment pipeline. The GRU trains on the ClarkNet 15 s series with chronological splits and an embargo, and it emits a direct **9-step × 15-second = 135-second** forecast. The forecast is confidence-gated and feeds Algorithm 2 Kubernetes replica scaling. Algorithm 1 V3 routes with observed load, observed ready capacity, HAProxy `rtime` p99, and confidence-gated observed-load trend extrapolation; the raw forecast does not directly set HAProxy weights.
 
 The primary SLO is p99 < 200 ms. The canonical request is `/fib?n=33` through HAProxy HTTP on port 18082.
 

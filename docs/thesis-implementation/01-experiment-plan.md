@@ -13,15 +13,15 @@ The four scenarios are:
 | S3 | Hybrid-reactive | V3 routing with observed load |
 | S4 | Hybrid-predictive | Same routing plus GRU-informed Algorithm 2 scaling |
 
-H1 is a directional n=1 diagnostic: S4 p99 118.2 ms versus S1 2,421.3 ms. H2 is the definitive counterbalanced paired n=5 S3/S4 comparison: S3 188.5 ms versus S4 126.0 ms, p=0.0304, d=-1.26, with identical USD 163 proxy cost.
+H1 is a directional n=1 diagnostic: S4 p99 118.2 ms versus S1 2,421.3 ms. H2 is the counterbalanced paired n=5 S3/S4 comparison of 2026-07-14: S3 188.5 ms versus S4 126.0 ms, mean difference -62.5 ms, 95% CI [-100.9, -26.2], permutation p = 0.0312, d = -1.26, with identical USD 163 proxy cost. The value 0.0312 is 1/32, the smallest p that n = 5 pairs can produce, so the batch result sits at the design floor. Later batches do not reproduce this significance. The predictor weights for the 2026-07-14 batch are not recorded: the deployed artifact entered version control on 2026-09-12 (commit 98e17d1, the leak-free retrain) and the manifest of that batch has an empty predictor block. Fresh runs record the artifact hash in the manifest.
 
 ## 2. Workload and data roles
 
 The deployed workload is the deterministic CPU-bound `/fib?n=33` endpoint. Workload traces are replayed by k6 and are collected independently from model training.
 
-- **GRU training:** synthetic diurnal, burst, and ramp RPS series.
-- **Validation:** ClarkNet and Calgary HTTP traces.
-- **Replay/evaluation:** ClarkNet variable-load replay (Calgary remains a validation corpus).
+- **GRU training:** the deployed artifact trains on the ClarkNet 15 s resampled series with chronological splits and an embargo (train [0, 22500), validation [22539, 26205), test [26243, 40315)), and the scaler is fitted on the amplified training portion only. A synthetic diurnal, burst, and ramp arm is studied beside it.
+- **Validation:** the ClarkNet validation region, which ends at 1995-09-01 17:11:45 UTC, and the Calgary HTTP trace.
+- **Replay/evaluation:** ClarkNet variable-load replay (Calgary remains a validation corpus). The replayed window is 1995-09-02 04:35 to 04:55 UTC and lies in the held-out test region, so the deployment arm serves load the weights did not train on. The hyperparameter selection region (1995-08-28 to 09-03) did contain that window.
 - **Forecast:** nine direct steps sampled every 15 seconds, giving a **135-second horizon**.
 
 This split avoids presenting validation/replay traces as the training set and makes the predictor mechanism testable under a workload shape not copied into training.
@@ -76,4 +76,4 @@ Collect p50/p95/p99 latency, SLO violations, request rate, errors, backend distr
 
 ## 7. Interpretation constraints
 
-The definitive H2 result supports predictive control for this ClarkNet replay and calibrated testbed. The H1 result is directional because it has n=1. Cost is a proxy model; identical USD 163 values establish no universal cloud-cost claim. Historical proposal documents and superseded result bundles remain historical records and are not this protocol.
+The 2026-07-14 H2 result supports predictive control for this ClarkNet replay and calibrated testbed with the artifact of that time. Later batches do not reproduce it, so the support rests on one batch and not on the current configuration. The H1 result is directional because it has n=1. Cost is a proxy model; identical USD 163 values establish no universal cloud-cost claim. Historical proposal documents and superseded result bundles remain historical records and are not this protocol.

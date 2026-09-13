@@ -67,7 +67,7 @@ Each run performs reset, daemon freshness checks, warmup, k6 measurement, cooldo
 uv run thesis-experiment paired-run --pairs 5
 ```
 
-The paired command counterbalances S3/S4 order and uses the same ClarkNet workload and V3 controller for both members of each pair. The primary endpoint is paired p99. The final evidence is S3 188.5 ms versus S4 126.0 ms, p=0.0304, d=-1.26; both scenarios have the same USD 163 proxy cost.
+The paired command counterbalances S3/S4 order and uses the same ClarkNet workload and V3 controller for both members of each pair. The primary endpoint is paired p99. The result of the 2026-07-14 batch is S3 188.5 ms versus S4 126.0 ms, exact permutation p = 0.0312, d = -1.26; both scenarios have the same USD 163 proxy cost. Later batches do not reproduce this significance, and the predictor weights of that batch are not recorded.
 
 ## Other current pipeline phases
 
@@ -100,7 +100,8 @@ uv run thesis-experiment evidence journal
 ## Interpretation guardrails
 
 - H1 is a directional n=1 diagnostic: S4 118.2 ms versus S1 2,421.3 ms; do not call it statistically established.
-- H2 is the definitive paired n=5 result stated above.
-- GRU training is synthetic; ClarkNet/Calgary are validation data, and ClarkNet is replayed for evaluation.
+- H2 is the paired n=5 result stated above. It is not replicated: later batches are null or they run without an active treatment.
+- The predictor weights of the 2026-07-14 batch are not recorded. Fresh runs record the artifact hash in the manifest.
+- The deployed GRU artifact trains on the ClarkNet 15 s series with chronological splits and an embargo, and the replayed window lies in the held-out test region, so the deployment arm serves out-of-sample load. The synthetic series is the studied second arm.
 - The forecast is 135 seconds (9 × 15 seconds), drives Algorithm 2 replica scaling, and does not directly set routing weights.
 - Cost values are directional proxy estimates, not cloud invoices.
