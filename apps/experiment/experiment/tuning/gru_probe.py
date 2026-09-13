@@ -157,6 +157,7 @@ FEATURE_VARIANTS = ("roll_stats", "ewma", "diff_input", "decomp")
 
 NEW_WAVE_VARIANTS = (
     *INTERVAL_VARIANTS,
+    "calendar",
     "revin_robust",
     "nlinear",
     "diff_target",
@@ -1755,21 +1756,57 @@ def probe_series_index(sample_interval_sec: int = FIXED_SAMPLE_INTERVAL) -> pd.D
     return pd.DatetimeIndex(load_clarknet_series(bucket_sec=sample_interval_sec).index)
 
 
-def _append_probes_row(output_dir: Path, row: dict[str, Any]) -> None:
-    probes_md = output_dir / "probes.md"
-    header = (
-        "| variant | seeds | rmse_mean | rmse_std | mae | rmse_pct_mean | "
-        "skill_vs_persistence | skill_vs_ols | p_paired_vs_ols | test_start |\n"
-        "|---|---|---|---|---|---|---|---|---|---|\n"
-    )
-    if not probes_md.exists():
-        probes_md.write_text(header)
-    with probes_md.open("a") as fh:
-        fh.write(
-            f"| {row['variant']} | {row['seeds']} | {row['rmse_mean']} | {row['rmse_std']} | "
-            f"{row['mae']} | {row['rmse_pct_mean']} | {row['skill_vs_persistence']} | "
-            f"{row['skill_vs_ols']} | {row['p_paired_vs_ols']} | {row['test_start']} |\n"
+PROBES_COLUMNS = (
+    "variant",
+    "seeds",
+    "rmse_mean",
+    "rmse_std",
+    "mae",
+    "rmse_pct_mean",
+    "skill_vs_persistence",
+    "skill_vs_ols",
+    "p_paired_vs_ols",
+    "test_start",
+    "screen_region",
+    "fold_rmse",
+    "fold_ols_rmse",
+    "fold_skill_vs_ols",
+    "fold_beats_ols",
+)
+
+
+def _write_probes_table(output_dir: Path) -> None:
+    """Regenerate probes.md from the variant records beside it.
+
+    Rewritten rather than appended, for two reasons. A re-run of a variant
+    replaces its row instead of adding a second one under the same name, and
+    the header always describes the columns actually written. The fold columns
+    are the point: the deployment-region numbers in the first ten columns are
+    not the selection criterion, and a table that shows only those reports
+    ``ewma +0.53% vs OLS`` for a variant the fold screen rejects at -2.24%.
+    """
+    rows = []
+    for variant in VARIANTS:
+        path = output_dir / f"{variant}.json"
+        if not path.exists():
+            continue
+        record = json.loads(path.read_text())
+        rows.append(
+            _probes_row(
+                variant,
+                tuple(record.get("seeds") or ()),
+                record.get("metric_block"),
+                record.get("aggregate"),
+                record,
+            )
         )
+    lines = [
+        "| " + " | ".join(PROBES_COLUMNS) + " |",
+        "|" + "---|" * len(PROBES_COLUMNS),
+    ]
+    for row in rows:
+        lines.append("| " + " | ".join(str(row.get(c, "n/a")) for c in PROBES_COLUMNS) + " |")
+    (output_dir / "probes.md").write_text("\n".join(lines) + "\n")
 
 
 def run_probe(
@@ -2099,10 +2136,12 @@ def run_probe(
                 }
         metric_block = None
 
+    if metric_block is not None:
+        record["metric_block"] = metric_block
     json_path = out / f"{variant}.json"
     json_path.write_text(json.dumps(record, indent=2, default=float))
 
-    _append_probes_row(out, _probes_row(variant, seeds, windows, metric_block, aggregate, record))
+    _write_probes_table(out)
     logger.info("probe_complete", variant=variant, output=str(json_path))
     return record
 
@@ -2110,12 +2149,27 @@ def run_probe(
 def _probes_row(
     variant: str,
     seeds: tuple[int, ...],
-    windows: ProbeWindows,
     metric_block: dict[str, Any] | None,
     aggregate: dict[str, Any] | None,
     record: dict[str, Any],
 ) -> dict[str, Any]:
-    """One summary row per probe run for probes.md."""
+    """One summary row per probe run for probes.md.
+
+    The first ten columns describe the deployment region, which is where the
+    served model is scored. The last five describe the selection folds, which
+    is where a variant is chosen or rejected; both are reported because they
+    can disagree, and only the fold verdict decides.
+    """
+    test_start = (record.get("splits") or {}).get("test_start", "n/a")
+    screening = record.get("screening") or {}
+    fold_agg = screening.get("aggregate") or {}
+    fold = {
+        "screen_region": screening.get("region", "n/a"),
+        "fold_rmse": _round_or_na(fold_agg.get("variant_rmse", {}).get("mean")),
+        "fold_ols_rmse": _round_or_na(fold_agg.get("ols_rmse", {}).get("mean")),
+        "fold_skill_vs_ols": _round_or_na(fold_agg.get("skill_vs_ols_mean")),
+        "fold_beats_ols": screening.get("beats_ols", "n/a"),
+    }
     if metric_block is not None:
         return {
             "variant": variant,
@@ -2127,7 +2181,8 @@ def _probes_row(
             "skill_vs_persistence": round(metric_block["skill_vs_persistence"], 4),
             "skill_vs_ols": round(metric_block["skill_vs_ols"], 4),
             "p_paired_vs_ols": "n/a",
-            "test_start": windows.test_start,
+            "test_start": test_start,
+            **fold,
         }
     if aggregate is not None:
         paired = record.get("paired_test_vs_ols") or {}
@@ -2149,7 +2204,8 @@ def _probes_row(
             "skill_vs_persistence": round(aggregate["skill_vs_persistence_mean"], 4),
             "skill_vs_ols": round(aggregate["skill_vs_ols_mean"], 4),
             "p_paired_vs_ols": round(paired["p_value"], 4) if paired else dm_p,
-            "test_start": windows.test_start,
+            "test_start": test_start,
+            **fold,
         }
     return {
         "variant": variant,
@@ -2161,9 +2217,14 @@ def _probes_row(
         "skill_vs_persistence": "n/a",
         "skill_vs_ols": "n/a",
         "p_paired_vs_ols": "n/a",
-        "test_start": windows.test_start,
+        "test_start": test_start,
         "note": record.get("note", ""),
+        **fold,
     }
+
+
+def _round_or_na(value: Any) -> Any:
+    return round(float(value), 4) if isinstance(value, (int, float)) else "n/a"
 
 
 def _run_dry_run(variant: str, epochs: int, patience: int) -> dict[str, Any]:
