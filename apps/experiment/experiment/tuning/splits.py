@@ -317,7 +317,38 @@ class SplitSpec:
         assert_replay_placement(self)
         if self.role == "selection":
             assert_day_type_overlap(self)
-        return self
+        return self._with_regime_gap_note()
+
+    def _with_regime_gap_note(self) -> "SplitSpec":
+        """Record on the spec when eval holds a weekend regime train never did.
+
+        On this corpus the weekend is the tail, so a train region that precedes
+        the replay window excludes it entirely (module rationale 1c): the gap
+        is structural, not a configuration error. Selection folds already fail
+        on it via assert_day_type_overlap; for everything else the requirement
+        is disclosure, so the gap lands in ``notes`` where every consumer that
+        serializes the spec carries it beside the numbers. The thresholds are
+        the module's own: a regime counts as unseen in train below
+        SELECTION_MIN_TRAIN_REGIME_SHARE, and as present in eval at
+        DAY_SHARE_EPS. The measured means behind calling this a regime at all
+        are Sat 30.9 and Sun 28.2 counts/bucket against 42-47 on weekdays.
+        """
+        if self.train is None:
+            return self
+        train_profile = self.profiles.get("train")
+        eval_profile = self.profiles.get(self.eval_of_record)
+        if train_profile is None or eval_profile is None:
+            return self
+        unseen_weekend = train_profile.weekend_share < SELECTION_MIN_TRAIN_REGIME_SHARE
+        eval_has_weekend = eval_profile.weekend_share >= DAY_SHARE_EPS
+        if not (unseen_weekend and eval_has_weekend):
+            return self
+        note = (
+            f"regime gap: {self.eval_of_record} evaluates a weekend regime "
+            f"(share {eval_profile.weekend_share:.3f}) that train never saw "
+            f"(share {train_profile.weekend_share:.3f})"
+        )
+        return replace(self, notes=self.notes + (note,))
 
 
 @dataclass(frozen=True)

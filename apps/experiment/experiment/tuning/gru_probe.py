@@ -185,13 +185,18 @@ FOLD_VAL_SPAN = 500
 # the call sites that assumed a present region through it. Every boundary,
 # embargo, fold geometry and normalizer statistic is unchanged; the new method
 # raises where the old code would have raised AttributeError on None.
+# 2026-09-13: d0f28820… → cd7b5266… — validate() now appends a regime-gap note
+# to SplitSpec.notes when an eval region holds a weekend regime its train
+# region never saw. Additive disclosure only: every boundary, embargo, fold
+# geometry and normalizer statistic is unchanged (dry-run table identical);
+# the note fires on deployment, b4 and b5 and nowhere else.
 #
 # Both moves were cosmetic or refactor-only, which is the pin's weakness: it
 # hashes source text, so it cannot tell a renamed local from a moved boundary.
 # A fingerprint over the protocol's *outputs* (the boundary tuples and fold
 # geometry) would fire only on changes that can actually invalidate a record.
 # Worth doing before the next probe wave; not done here.
-SPLITS_PIN_SHA256 = "d0f288203f07c4ff6f7ed64fd7aa0c509a285161b607244966ce7915ad3c9e1c"
+SPLITS_PIN_SHA256 = "cd7b5266635275f1eb2f1176da30f3e93c90f6c3e1524f0c6c22e7e9e400e25a"
 
 _EPS = 1e-8
 
