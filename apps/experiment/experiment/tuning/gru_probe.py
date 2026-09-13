@@ -475,14 +475,61 @@ class VariantArrays:
         return self._denorm(preds_norm, "val")
 
 
-def _calendar_features(base: np.ndarray, seq_len: int) -> np.ndarray:
-    """Sine/cosine time-of-day per step, in [-1, 1], from global indices.
+CALENDAR_FEATURE_NAMES = (
+    "sin_tod",
+    "cos_tod",
+    "sin_dow",
+    "cos_dow",
+    "is_weekend",
+    "is_office_hour",
+    "is_holiday",
+)
 
-    One day = 86400 s / 15 s = 5760 samples, matching DEFAULT_SEASON.
+# The trace runs 1995-08-28 (Mon) to 1995-09-04 (Mon), so day index 7 is Labor
+# Day. The deployment test region reaches it and the training region never
+# does. It is a feature rather than a footnote so the regime gap shows up in
+# the input, not only in the split report.
+_HOLIDAY_DAY_INDICES = frozenset({7})
+_OFFICE_HOUR_START = 13  # UTC; the trace's diurnal peak sits at 19 UTC
+_OFFICE_HOUR_END = 21
+
+
+def _calendar_features(base: np.ndarray, seq_len: int) -> np.ndarray:
+    """Timestamp covariates per step, in [-1, 1] or {0, 1}, from global indices.
+
+    A 30-sample window is 7.5 minutes, so the network cannot see the day of the
+    week, the weekend, or a holiday in the values alone. Every forecaster in
+    the archived literature feeds these in explicitly: DeepAR carries
+    time-dependent covariates, Meta-RL embeds day-of-week and hour-of-day,
+    OptScaler passes date covariates, and Elsayed et al. measure that
+    timestamp-extracted covariates alone raise a GBRT baseline extensively.
+
+    One day is 86400 s / 15 s = 5760 samples, matching DEFAULT_SEASON.
     """
     steps = base[:, None] + np.arange(seq_len, dtype=np.int64)[None, :]
-    phase = (steps * FIXED_SAMPLE_INTERVAL) % 86400 / 86400 * 2.0 * np.pi
-    return np.stack([np.sin(phase), np.cos(phase)], axis=-1).astype(np.float32)
+    seconds = steps * FIXED_SAMPLE_INTERVAL
+    day_index = steps // split_protocol.DAY
+    weekday = day_index % 7  # day 0 of the trace is a Monday
+
+    tod_phase = (seconds % 86400) / 86400 * 2.0 * np.pi
+    dow_phase = weekday / 7.0 * 2.0 * np.pi
+    hour = (seconds % 86400) // 3600
+    is_weekend = (weekday >= 5).astype(np.float64)
+    is_office = ((weekday < 5) & (hour >= _OFFICE_HOUR_START) & (hour < _OFFICE_HOUR_END)).astype(np.float64)
+    is_holiday = np.isin(day_index, tuple(_HOLIDAY_DAY_INDICES)).astype(np.float64)
+
+    return np.stack(
+        [
+            np.sin(tod_phase),
+            np.cos(tod_phase),
+            np.sin(dow_phase),
+            np.cos(dow_phase),
+            is_weekend,
+            is_office,
+            is_holiday,
+        ],
+        axis=-1,
+    ).astype(np.float32)
 
 
 def _revin_normalize(X: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -759,7 +806,7 @@ def build_variant_arrays(
 def variant_input_size(variant: str) -> int:
     """Feature channels per timestep for each variant (1 value + extras)."""
     if variant == "calendar":
-        return 3
+        return 1 + len(CALENDAR_FEATURE_NAMES)
     if variant == "roll_stats":
         return 1 + 2 * 4
     if variant == "ewma":
@@ -1899,7 +1946,7 @@ def run_probe(
         }
         feature_label = feature_labels[arrays.mode]
         if variant == "calendar":
-            record["input_features"] = [feature_label, "sin_tod", "cos_tod"]
+            record["input_features"] = [feature_label, *CALENDAR_FEATURE_NAMES]
         elif variant in FEATURE_VARIANTS:
             _, chan_names = _trailing_feature_channels(variant, values.astype(np.float64))
             record["input_features"] = [feature_label, *chan_names]

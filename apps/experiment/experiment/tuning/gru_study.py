@@ -871,17 +871,61 @@ def _write_report(bundle: Path, meta: dict[str, Any], arm_results: dict[str, Any
 # ── Promotion (off by default, never exercised by the study itself) ─────────
 
 
-def promote_winner(winner_artifact: Path) -> dict[str, str]:
-    """Back up the deployed artifact, then copy the winner into its place."""
-    if not winner_artifact.exists():
-        raise FileNotFoundError(winner_artifact)
+def promote_winner(winner: dict[str, Any]) -> dict[str, str]:
+    """Back up the deployed artifact, then copy the winner into its place.
+
+    The winner's recorded ``sha256`` is the contract. A promotion is refused
+    when the source file's bytes do not hash to it, because the deployed path
+    is what every run manifest records and a silent mismatch makes a batch's
+    verdict describe a model it never loaded. This is the check that was
+    missing on 2026-09-12, when the synthetic-arm artifact was promoted
+    although its study had recorded no winner.
+    """
+    source = Path(winner["artifact"])
+    expected = winner["sha256"]
+    if not source.exists():
+        raise FileNotFoundError(source)
+    actual = hashlib.sha256(source.read_bytes()).hexdigest()
+    if actual != expected:
+        raise ValueError(f"refusing to promote {source}: file hashes to {actual}, the winner record says {expected}")
     DEPLOYED_ARTIFACT.parent.mkdir(parents=True, exist_ok=True)
     backup = None
     if DEPLOYED_ARTIFACT.exists():
         backup = DEPLOYED_ARTIFACT.with_name(f"{DEPLOYED_ARTIFACT.name}.bak-{datetime.now():%Y%m%dT%H%M%S}")
         shutil.copy2(DEPLOYED_ARTIFACT, backup)
-    shutil.copy2(winner_artifact, DEPLOYED_ARTIFACT)
-    return {"promoted_to": str(DEPLOYED_ARTIFACT), "backup": str(backup) if backup else ""}
+    shutil.copy2(source, DEPLOYED_ARTIFACT)
+    deployed = hashlib.sha256(DEPLOYED_ARTIFACT.read_bytes()).hexdigest()
+    if deployed != expected:
+        raise RuntimeError(f"copy verification failed: deployed hashes to {deployed}, expected {expected}")
+    return {
+        "promoted_to": str(DEPLOYED_ARTIFACT),
+        "backup": str(backup) if backup else "",
+        "source": str(source),
+        "sha256": deployed,
+    }
+
+
+def verify_deployed_artifact(manifest_path: Path) -> dict[str, str]:
+    """Compare the artifact a run recorded against the file now on disk.
+
+    A run's verdict describes the model its manifest named, which is not
+    necessarily the file deployed today. This check reads the manifest's
+    ``predictor.reported.artifact_sha256`` and compares it to the deployed
+    artifact, so a batch can be attributed before its numbers are quoted.
+    """
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    recorded = ((manifest.get("predictor") or {}).get("reported") or {}).get("artifact_sha256")
+    if not recorded:
+        raise ValueError(f"{manifest_path} records no predictor artifact hash")
+    if not DEPLOYED_ARTIFACT.exists():
+        raise FileNotFoundError(DEPLOYED_ARTIFACT)
+    on_disk = hashlib.sha256(DEPLOYED_ARTIFACT.read_bytes()).hexdigest()
+    return {
+        "manifest": str(manifest_path),
+        "recorded_sha256": recorded,
+        "deployed_sha256": on_disk,
+        "match": "yes" if recorded == on_disk else "no",
+    }
 
 
 # ── Main study runner ────────────────────────────────────────────────────────
@@ -1119,7 +1163,7 @@ def run_study(
     (bundle / "metrics.json").write_text(json.dumps(metrics_json, indent=2))
     _write_report(bundle, meta, arm_results, metrics_json)
 
-    promoted = promote_winner(Path(winner["artifact"])) if promote and winner else None
+    promoted = promote_winner(winner) if promote and winner else None
 
     logger.info(
         "study_complete",
