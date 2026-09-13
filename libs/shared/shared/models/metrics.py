@@ -150,3 +150,20 @@ class NodeSample(BaseModel):
             memory_mib=memory_mib,
             memory_pct=_parse_percent(parts[4]),
         )
+
+
+class HostSample(BaseModel):
+    """One host CPU-busy reading, sampled between resource polls.
+
+    ``busy_ratio`` is the fraction of all cores busy over the interval since the
+    previous sample, read from ``/proc/stat`` — the same quantity the run gate
+    refuses on, now recorded as a series so a mid-run spike is attributable to a
+    noisy neighbour rather than read as the arm's own tail latency.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    timestamp: float
+    busy_ratio: float
+    load1: float
+    cores: float

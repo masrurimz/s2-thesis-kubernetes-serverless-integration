@@ -82,6 +82,10 @@ class ExperimentResult(BaseModel):
     peak_cluster_cpu_utilization_pct: float = 0.0
     avg_cluster_mem_utilization_pct: float = 0.0
     avg_pod_density: float = 0.0
+    # Host CPU-busy series (the noisy-neighbour signal), sampled each poll.
+    avg_host_busy_ratio: float = 0.0
+    peak_host_busy_ratio: float = 0.0
+    host_load_path: str = ""
 
     # Run metadata
     duration_sec: int = 0

@@ -10,7 +10,7 @@ import subprocess
 from unittest.mock import patch
 
 from experiment.stages.collect import ResourcePoller
-from shared.models.metrics import NodeSample
+from shared.models.metrics import HostSample, NodeSample
 
 READY_ROW = "k3d-thesis-hybrid-agent-0   250m   6%   1024Mi   12%"
 UNKNOWN_ROW = "k3d-dynamic-workload-0-0   <unknown>   <unknown>   <unknown>   <unknown>"
@@ -59,3 +59,33 @@ def test_summary_skips_absent_readings_instead_of_counting_them_as_zero(tmp_path
     assert summary["avg_cluster_cpu_pct"] == 6.0
     assert summary["peak_cluster_cpu_pct"] == 6.0
     assert summary["avg_cluster_mem_pct"] == 12.0
+
+
+def test_host_poll_records_busy_ratio_between_snapshots(tmp_path):
+    """The host series is the busy fraction over the interval, not a point read."""
+    poller = ResourcePoller(poll_interval_sec=1)
+    # Two snapshots: idle rises 40, total rises 100 -> 60% busy over the interval.
+    snaps = iter([(100, 1000), (140, 1100)])
+    with patch("experiment.stages.collect.ResourcePoller._cpu_snapshot", side_effect=lambda: next(snaps)):
+        poller._poll_host()  # primes the counters, records nothing
+        poller._poll_host()  # records the interval
+
+    assert len(poller._host_samples) == 1
+    assert poller._host_samples[0].busy_ratio == 0.6
+
+
+def test_host_summary_writes_a_readable_parquet(tmp_path):
+    from shared.artifacts import read_host_load
+
+    poller = ResourcePoller(poll_interval_sec=1)
+    poller._host_samples = [
+        HostSample(timestamp=1.0, busy_ratio=0.2, load1=3.0, cores=16.0),
+        HostSample(timestamp=2.0, busy_ratio=0.9, load1=14.0, cores=16.0),
+    ]
+
+    summary = poller.get_host_summary(tmp_path)
+
+    assert summary["avg_host_busy_ratio"] == 0.55
+    assert summary["peak_host_busy_ratio"] == 0.9
+    restored = read_host_load(tmp_path)
+    assert [s.busy_ratio for s in restored] == [0.2, 0.9]

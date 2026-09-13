@@ -31,7 +31,7 @@ import pyarrow as pa
 from pydantic import TypeAdapter, ValidationError
 
 from shared.models.experiment import ExperimentResult, RunManifest
-from shared.models.metrics import NodeSample, ResourceSample
+from shared.models.metrics import HostSample, NodeSample, ResourceSample
 from shared.models.provisioning import ProvisionEvent
 from shared.storage.parquet import read_table_parquet, write_table_parquet
 
@@ -40,10 +40,12 @@ MANIFEST_FILE = "manifest.json"
 PROVISION_EVENTS_FILE = "provision_events.json"
 RESOURCE_UTILIZATION_FILE = "resource_utilization.parquet"
 NODE_UTILIZATION_FILE = "node_utilization.parquet"
+HOST_LOAD_FILE = "host_load.parquet"
 PROMETHEUS_EXPORT_FILE = "prometheus_export.json"
 
 _RESOURCE_SAMPLES = TypeAdapter(list[ResourceSample])
 _NODE_SAMPLES = TypeAdapter(list[NodeSample])
+_HOST_SAMPLES = TypeAdapter(list[HostSample])
 
 
 def _read_json(path: Path) -> Any | None:
@@ -232,9 +234,10 @@ _TIMESTAMP_TYPE = pa.timestamp("us", tz="UTC")
 _LABEL_COLUMNS = frozenset({"pod", "backend", "node"})
 _RESOURCE_COLUMNS = ("timestamp", "pod", "backend", "cpu_millicores", "memory_mib")
 _NODE_COLUMNS = ("timestamp", "node", "cpu_cores", "cpu_pct", "memory_mib", "memory_pct")
+_HOST_COLUMNS = ("timestamp", "busy_ratio", "load1", "cores")
 _RUN_NAME_RE = re.compile(r"^(?P<scenario>.+)_run(?P<run_id>\d+)$")
 
-_SampleT = TypeVar("_SampleT", ResourceSample, NodeSample)
+_SampleT = TypeVar("_SampleT", ResourceSample, NodeSample, HostSample)
 
 
 @functools.lru_cache(maxsize=1)
@@ -343,6 +346,15 @@ def read_node_utilization(run_dir: Path) -> list[NodeSample]:
 
 def write_node_utilization(run_dir: Path, samples: Sequence[NodeSample]) -> Path:
     return _write_series_parquet(run_dir, samples, NODE_UTILIZATION_FILE, _NODE_COLUMNS)
+
+
+def read_host_load(run_dir: Path) -> list[HostSample]:
+    """The host CPU-busy readings, or [] when the file is absent or does not validate."""
+    return _read_series_parquet(run_dir, HOST_LOAD_FILE, _HOST_SAMPLES)
+
+
+def write_host_load(run_dir: Path, samples: Sequence[HostSample]) -> Path:
+    return _write_series_parquet(run_dir, samples, HOST_LOAD_FILE, _HOST_COLUMNS)
 
 
 # ---------------------------------------------------------------------------

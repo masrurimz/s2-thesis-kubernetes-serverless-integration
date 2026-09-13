@@ -17,9 +17,15 @@ import numpy as np
 import requests
 import structlog
 from shared.config import settings
-from shared.artifacts import read_manifest, write_manifest, write_node_utilization, write_resource_utilization
+from shared.artifacts import (
+    read_manifest,
+    write_host_load,
+    write_manifest,
+    write_node_utilization,
+    write_resource_utilization,
+)
 from shared.models.experiment import gather_scaling_block
-from shared.models.metrics import MetricsExport, NodeSample, ResourceSample
+from shared.models.metrics import HostSample, MetricsExport, NodeSample, ResourceSample
 from shared.protocols.metrics import MetricsClient
 from shared.models.pipeline import PipelineContext
 
@@ -344,6 +350,8 @@ class ResourcePoller:
         self._thread: Optional[threading.Thread] = None
         self._samples: List[Dict[str, Any]] = []
         self._node_samples: List[NodeSample] = []
+        self._host_samples: List[HostSample] = []
+        self._prev_cpu: Optional[Tuple[int, int]] = None
         self._lock = threading.Lock()
 
     @staticmethod
@@ -376,6 +384,7 @@ class ResourcePoller:
         self._poll_pods()
         self._poll_serverless_pods()
         self._poll_nodes()
+        self._poll_host()
 
     def _poll_pods(self) -> None:
         """Poll per-pod CPU/memory from metrics-server."""
@@ -469,6 +478,47 @@ class ResourcePoller:
         except Exception as e:
             logger.debug("node_poll_failed", error=str(e))
 
+    @staticmethod
+    def _cpu_snapshot() -> Optional[Tuple[int, int]]:
+        """(idle_jiffies, total_jiffies) across all cores from /proc/stat."""
+        try:
+            with open("/proc/stat") as handle:
+                fields = [int(v) for v in handle.readline().split()[1:]]
+        except (OSError, ValueError, IndexError):
+            return None
+        idle = fields[3] + (fields[4] if len(fields) > 4 else 0)
+        return idle, sum(fields)
+
+    def _poll_host(self) -> None:
+        """Record the host CPU-busy fraction over the interval just elapsed.
+
+        The run gate samples this once before the run; recording it every poll
+        makes a mid-run noisy neighbour attributable instead of reading as the
+        arm's own tail latency.
+        """
+        snap = self._cpu_snapshot()
+        if snap is None:
+            return
+        idle, total = snap
+        ts = time.time()
+        prev = self._prev_cpu
+        self._prev_cpu = snap
+        if prev is None:
+            return  # first sample only primes the counters
+        d_idle = idle - prev[0]
+        d_total = total - prev[1]
+        if d_total <= 0:
+            return
+        busy = max(0.0, min(1.0, 1.0 - d_idle / d_total))
+        sample = HostSample(
+            timestamp=ts,
+            busy_ratio=busy,
+            load1=os.getloadavg()[0],
+            cores=float(os.cpu_count() or 1),
+        )
+        with self._lock:
+            self._host_samples.append(sample)
+
     def _poll_loop(self) -> None:
         """Background polling loop."""
         while not self._stop_event.is_set():
@@ -479,6 +529,8 @@ class ResourcePoller:
         with self._lock:
             self._samples = []
             self._node_samples = []
+            self._host_samples = []
+            self._prev_cpu = None
         self._stop_event.clear()
         self._thread = threading.Thread(target=self._poll_loop, daemon=True)
         self._thread.start()
@@ -572,6 +624,27 @@ class ResourcePoller:
             "node_utilization_path": str(node_path) if node_path else "",
         }
 
+    def get_host_summary(self, output_dir: Path) -> Dict[str, Any]:
+        """Write the host CPU-busy series to Parquet and report its mean/peak."""
+        with self._lock:
+            host_samples = list(self._host_samples)
+
+        host_path = write_host_load(output_dir, host_samples)
+
+        if not host_samples:
+            return {
+                "avg_host_busy_ratio": 0.0,
+                "peak_host_busy_ratio": 0.0,
+                "host_load_path": str(host_path),
+            }
+
+        busy = [s.busy_ratio for s in host_samples]
+        return {
+            "avg_host_busy_ratio": float(np.mean(busy)),
+            "peak_host_busy_ratio": float(max(busy)),
+            "host_load_path": str(host_path),
+        }
+
 
 # ---------------------------------------------------------------------------
 # CollectStage
@@ -622,6 +695,9 @@ class CollectStage(BaseStage):
         # Collect node-level utilization
         node_summary = self._resource_poller.get_node_summary(run_dir)
 
+        # Collect host CPU-busy series (the noisy-neighbour signal)
+        host_summary = self._resource_poller.get_host_summary(run_dir)
+
         ctx.metrics = MetricsExport(
             p99_latency_ms=prom_summary.get("prom_p99_ms", 0.0),
         )
@@ -660,6 +736,9 @@ class CollectStage(BaseStage):
             ctx.result.peak_cluster_cpu_utilization_pct = float(node_summary.get("peak_cluster_cpu_pct", 0))
             ctx.result.avg_cluster_mem_utilization_pct = float(node_summary.get("avg_cluster_mem_pct", 0))
             ctx.result.avg_pod_density = float(node_summary.get("avg_pod_density", 0))
+            ctx.result.avg_host_busy_ratio = float(host_summary.get("avg_host_busy_ratio", 0))
+            ctx.result.peak_host_busy_ratio = float(host_summary.get("peak_host_busy_ratio", 0))
+            ctx.result.host_load_path = str(host_summary.get("host_load_path", ""))
             ctx.result.resource_utilization_path = str(resource_summary.get("resource_utilization_path", ""))
             ctx.result.prom_export_path = prom_summary.get("export_path", "")
             ctx.result.replica_timeline_path = str(prom_dir / "prometheus_export.json")
