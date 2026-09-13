@@ -195,6 +195,11 @@ class RoutingDaemon:
         self._provisioning_delay_alpha: float = _cal.provisioning_delay_ewma_alpha
         self._provisioning_delay_safety_sec: float = _cal.provisioning_delay_safety_sec
         self._provisioning_delay_samples: int = 0
+        # Declared provisioning delay: when set, the forecast lead sizes itself
+        # to the node VM boot the prediction must cover, and pod readiness no
+        # longer adapts it. Unset keeps the EWMA path exactly as before.
+        _declared_delay = os.environ.get("ROUTING_PROVISIONING_DELAY_SEC")
+        self._declared_provisioning_delay_sec: Optional[float] = float(_declared_delay) if _declared_delay else None
         self._pending_scale_target: Optional[int] = None
         self._pending_scale_issue_time: Optional[float] = None
 
@@ -345,10 +350,17 @@ class RoutingDaemon:
 
         h* = ceil((delay_estimate + safety_margin) / sample_interval)
         With delay=60s, safety=15s, interval=15s → ceil(75/15) = 5 steps.
+        A declared ROUTING_PROVISIONING_DELAY_SEC replaces the delay estimate
+        outright, so the lead tracks the testbed's boot cost, not pod readiness.
         """
         import math
 
-        delay = estimated_delay_sec if estimated_delay_sec is not None else self._provisioning_delay_ewma
+        if estimated_delay_sec is not None:
+            delay = estimated_delay_sec
+        elif self._declared_provisioning_delay_sec is not None:
+            delay = self._declared_provisioning_delay_sec
+        else:
+            delay = self._provisioning_delay_ewma
         total_sec = delay + self._provisioning_delay_safety_sec
         return max(1, math.ceil(total_sec / self._model_sample_interval_sec))
 
@@ -360,11 +372,12 @@ class RoutingDaemon:
             return
         if dep_status.available_replicas >= self._pending_scale_target:
             elapsed = time.monotonic() - self._pending_scale_issue_time
-            self._provisioning_delay_ewma = (
-                self._provisioning_delay_alpha * elapsed
-                + (1 - self._provisioning_delay_alpha) * self._provisioning_delay_ewma
-            )
-            self._provisioning_delay_samples += 1
+            if self._declared_provisioning_delay_sec is None:
+                self._provisioning_delay_ewma = (
+                    self._provisioning_delay_alpha * elapsed
+                    + (1 - self._provisioning_delay_alpha) * self._provisioning_delay_ewma
+                )
+                self._provisioning_delay_samples += 1
             logger.info(
                 "Scale readiness observed",
                 target=self._pending_scale_target,
@@ -607,10 +620,16 @@ class RoutingDaemon:
                 if self._forecast_capacity_signal > 0
                 else float(getattr(self.algorithm_controller, "last_predicted_upper", 0.0))
             )
-            # Deliberate under-forecast before sizing, from the capacity-management
-            # literature: forecast-only sizing over-provisions, and a policy that
-            # forecasts slightly low and lets the reactive signal correct upward
-            # beats prediction-only. 1.0 keeps the raw forecast.
+            # Deliberate under-forecast before sizing. Forecast-only sizing
+            # over-provisions, and sizing just above need with a reactive signal
+            # that can only correct upward beats prediction-driven and
+            # over-provisioning policies: HyPA composes the two as
+            # max(reactive, proactive), OptScaler gives foreseeable patterns to the
+            # proactive side and deviations to the reactive one, and AutoScale
+            # measures the win for sizing slightly above need (Gandhi et al.,
+            # TOCS 2012, archived in docs/references). No source recommends
+            # forecasting *low*, so this factor scales the margin rather than
+            # claiming to. 1.0 keeps the raw forecast.
             predicted_upper = predicted_upper * self._predictive_shrink
             predictive_target = scaler.compute_target_replicas(predicted_upper)
             now_ts = time.time()
@@ -762,7 +781,13 @@ class RoutingDaemon:
             ),
             "forecast_actionable_cycles": self._forecast_actionable_cycles,
             "forecast_capacity_signal": round(self._forecast_capacity_signal, 1),
-            "provisioning_delay_estimate_sec": round(self._provisioning_delay_ewma, 1),
+            "provisioning_delay_source": ("declared" if self._declared_provisioning_delay_sec is not None else "ewma"),
+            "provisioning_delay_estimate_sec": round(
+                self._declared_provisioning_delay_sec
+                if self._declared_provisioning_delay_sec is not None
+                else self._provisioning_delay_ewma,
+                1,
+            ),
             "provisioning_delay_samples": self._provisioning_delay_samples,
             "forecast_horizon_steps": (
                 self._required_prediction_horizon_steps() if self._model_status_validated else 0

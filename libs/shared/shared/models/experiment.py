@@ -4,10 +4,12 @@ Converted from dataclasses in scripts/run_phase_b_experiments.py to Pydantic Bas
 for schema validation and JSON serialization.
 """
 
-from typing import Any, Dict, List
+import os
+from typing import Any, Dict, List, Mapping
 
 from pydantic import BaseModel, Field
 
+from shared.models.calibration import get_calibration
 from shared.models.evidence import NodeEngagement, TreatmentFidelity
 
 
@@ -124,13 +126,58 @@ class RunManifest(BaseModel):
     git_commit: str
     k6_script: str
     k6_stages_json: str
-    replay_manifest: Dict[str, Any]
-    daemon_config: Dict[str, Any]
-    scaling_config: Dict[str, Any]
     timestamp: str
+    # The four blocks below record the run's inputs with the source each value
+    # came from; they are populated by the gather_* helpers beside the workload
+    # and collect stages, and default to empty so a manifest written before a
+    # block existed still loads instead of failing validation.
+    replay_manifest: Dict[str, Any] = Field(default_factory=dict)
+    daemon_config: Dict[str, Any] = Field(default_factory=dict)
+    scaling_config: Dict[str, Any] = Field(default_factory=dict)
+    predictor: Dict[str, Any] = Field(default_factory=dict)
     # The conditions this run started from: node counts, the load the host carried,
     # which checks passed. A run whose host was oversubscribed reads differently.
     conditions: Dict[str, Any] = {}
+
+
+def gather_scaling_block(
+    declared_capacity: Mapping[str, Any] | None = None,
+    declared_source: str = "caller-provided declared capacity contract",
+) -> Dict[str, Any]:
+    """The capacity numbers a run used, each labelled with its source.
+
+    The resolved calibration comes from the calibration module's own override
+    path (CALIBRATION_OVERRIDE env to file to defaults) and is never re-derived
+    here. ``max_k8s_replicas_applied`` is the ceiling the daemon's
+    ClusterController actually enforced: the daemon constructs its ScalingConfig
+    from exactly this resolved calibration, inheriting the environment the
+    runner passes through when spawning it.
+    """
+    override = os.environ.get("CALIBRATION_OVERRIDE")
+    calibration = get_calibration()
+    return {
+        "calibration": {
+            "resolved": calibration.model_dump(),
+            "source": (
+                f"CALIBRATION_OVERRIDE={override}, resolved by shared.models.calibration.get_calibration"
+                if override
+                else "code defaults (CalibrationConfig()); CALIBRATION_OVERRIDE not set"
+            ),
+        },
+        "declared_capacity": {
+            "values": dict(declared_capacity) if declared_capacity else None,
+            "source": (
+                declared_source if declared_capacity else "absent: no capacity contract was declared for this run"
+            ),
+        },
+        "max_k8s_replicas_applied": {
+            "value": calibration.to_scaling_config_overrides()["max_replicas"],
+            "source": (
+                "resolved calibration -> ScalingConfig(max_replicas) as the daemon "
+                "constructs it (routing/daemon/service.py)"
+            ),
+        },
+    }
 
 
 class BatchManifest(BaseModel):

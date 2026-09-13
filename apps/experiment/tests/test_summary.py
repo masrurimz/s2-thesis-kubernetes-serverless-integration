@@ -150,10 +150,12 @@ def test_build_summary_reports_headline_paired_and_rejections(tmp_path: Path) ->
     assert "- Scenarios: alpha, beta" in summary
 
     # Headline: alpha aggregates cover only gate-passing runs 1 and 3.
-    # p50/p95/p99 over valid runs (60,70)/(80,85)/(100,120).
-    assert "| alpha | 3 | 65.0 | 82.5 | 110.0 | 0.0000 | 71.0 | 6.0 | 1100.0 | 15.0 | 2/3 |" in summary
+    # p50/p95/p99 over valid runs (60,70)/(80,85)/(100,120); ramp p99 is n/a —
+    # this synthetic bundle's k6 summaries predate per-stage recording.
+    assert "| alpha | 3 | 65.0 | 82.5 | 110.0 | n/a | 0.0000 | 71.0 | 6.0 | 1100.0 | 15.0 | 2/3 |" in summary
     # beta has no time_in_serverless_pct anywhere, so that cell must be n/a.
-    assert "| beta | 3 | 63.0 | 92.0 | 141.7 | 0.0000 | 71.5 | 13.0 | 1183.3 | n/a | 3/3 |" in summary
+    assert "| beta | 3 | 63.0 | 92.0 | 141.7 | n/a | 0.0000 | 71.5 | 13.0 | 1183.3 | n/a | 3/3 |" in summary
+    assert "ramp p99 (co-primary): unavailable" in summary
 
     assert "## Paired comparison — beta vs alpha" in summary
     assert "2 of 3 pairs passed" in summary

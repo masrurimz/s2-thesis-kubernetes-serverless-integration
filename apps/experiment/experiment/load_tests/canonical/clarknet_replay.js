@@ -29,6 +29,65 @@ const SLO_THRESHOLD_MS = __ENV.SLO_THRESHOLD_MS ? parseFloat(__ENV.SLO_THRESHOLD
 const stagesPath = __ENV.K6_STAGES_PATH || '../../../../../../data/trace-replay/clarknet_k6_stages.json';
 const stages = JSON.parse(open(stagesPath));
 
+// Stage i covers [stageBounds[i], next bound) seconds of scenario time.
+const stageBounds = [];
+let cumulativeSec = 0;
+for (const s of stages) {
+    stageBounds.push(cumulativeSec);
+    cumulativeSec += parseFloat(s.duration);
+}
+
+// One Trend and Counter per stage. k6 ignores metrics created outside the init
+// context and only warns, so a per-request ReferenceError here would leave the
+// stage series silently absent from the summary while the run still looked valid.
+const stageTrends = stages.map((_, i) => new Trend(`stage_${String(i).padStart(2, '0')}_latency_ms`));
+const stageCounts = stages.map((_, i) => new Counter(`stage_${String(i).padStart(2, '0')}_requests`));
+
+// The ramp window — from the trough that starts the longest strictly rising
+// run of stage targets through the stage holding the global maximum target.
+// That span carries the trace's main ascents and the node-arrival band they
+// force: where the node tier must engage and weight shifting can pay, and the
+// window a whole-run p99 dilutes. Mirrors analysis.k6_stages.ramp_stage_indices
+// (canonical ClarkNet trace: stages 5..18, elapsed 150-570 s).
+function _longerRise(a, b) {
+    if (!b || a.length > b.length || (a.length === b.length && a[0] < b[0])) return a;
+    return b;
+}
+function computeRampStages(stages) {
+    let best = null;
+    let current = null;
+    for (let i = 1; i < stages.length; i++) {
+        if (stages[i].target > stages[i - 1].target) {
+            if (current && i === current[current.length - 1] + 1) {
+                current.push(i);
+            } else {
+                if (current) best = _longerRise(current, best);
+                current = [i];
+            }
+        } else if (current) {
+            best = _longerRise(current, best);
+            current = null;
+        }
+    }
+    if (current) best = _longerRise(current, best);
+    if (!best) return null;
+    let peak = 0;
+    for (let i = 1; i < stages.length; i++) {
+        if (stages[i].target > stages[peak].target) peak = i;
+    }
+    const first = best[0] - 1;
+    const last = Math.max(first, peak);
+    const ramp = new Set();
+    for (let i = first; i <= last; i++) ramp.add(i);
+    return ramp;
+}
+const rampStages = computeRampStages(stages);
+const rampFirst = rampStages ? Math.min(...rampStages) : -1;
+const rampLast = rampStages ? Math.max(...rampStages) : -1;
+const rampTrend = new Trend('ramp_latency_ms');
+const rampCount = new Counter('ramp_requests');
+
+
 export const options = {
     scenarios: {
         clarknet_replay: {
@@ -70,7 +129,7 @@ export function setup() {
     return { startTime: Date.now() };
 }
 
-export default function () {
+export default function (data) {
     const res = http.get(`${BASE_URL}${ENDPOINT}`, {
         headers: {
             'Host': 'test-app.default.127.0.0.1.sslip.io',
@@ -81,6 +140,23 @@ export default function () {
     const duration = res.timings.duration;
     latencyTrend.add(duration);
     requestCounter.add(1);
+    // Attribute the sample to the stage covering this second of scenario time.
+    // data.startTime is setup's clock, a fraction of a second before the
+    // executor starts; stage windows are 30 s wide, so the skew is negligible.
+    const elapsed = (Date.now() - data.startTime) / 1000;
+    if (elapsed >= 0) {
+        let idx = stageBounds.length - 1;
+        while (idx > 0 && elapsed < stageBounds[idx]) {
+            idx--;
+        }
+        stageTrends[idx].add(duration);
+        stageCounts[idx].add(1);
+        if (rampStages.has(idx)) {
+            rampTrend.add(duration);
+            rampCount.add(1);
+        }
+    }
+
 
     if (res.status === 200 && res.body) {
         try {
@@ -126,6 +202,30 @@ export function handleSummary(data) {
     const run = __ENV.RUN_ID || '0';
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 
+    const stageName = (i) => `stage_${String(i).padStart(2, '0')}`;
+    const stageStats = {};
+    stages.forEach((_, i) => {
+        const vals = data.metrics[`${stageName(i)}_latency_ms`]?.values;
+        const count = data.metrics[`${stageName(i)}_requests`]?.values?.count;
+        if (vals) {
+            stageStats[stageName(i)] = {
+                count: count || 0,
+                p50_ms: vals.med || 0,
+                p95_ms: vals['p(95)'] || 0,
+                p99_ms: vals['p(99)'] || 0,
+            };
+        }
+    });
+    const rampVals = data.metrics['ramp_latency_ms']?.values;
+    const rampBlock = rampVals && rampFirst >= 0 ? {
+        stages: Array.from(rampStages).map(stageName),
+        window_sec: [stageBounds[rampFirst], stageBounds[rampLast] + parseFloat(stages[rampLast].duration)],
+        count: data.metrics['ramp_requests']?.values?.count || 0,
+        p50_ms: rampVals.med || 0,
+        p95_ms: rampVals['p(95)'] || 0,
+        p99_ms: rampVals['p(99)'] || 0,
+    } : null;
+
     const summary = {
         scenario: scenario,
         run_id: parseInt(run),
@@ -148,6 +248,12 @@ export function handleSummary(data) {
             app_duration_k8s_avg_ms: data.metrics.app_duration_k8s_ms?.avg || 0,
         },
     };
+    if (Object.keys(stageStats).length) {
+        summary.stages = stageStats;
+    }
+    if (rampBlock) {
+        summary.ramp = rampBlock;
+    }
 
     const outDir = __ENV.RESULTS_DIR || 'results/load-tests';
 

@@ -10,7 +10,13 @@ from __future__ import annotations
 import json
 
 import pytest
-from analysis.bundle_evidence import MechanismRow, RunEvidence, as_payload, variance_summary
+from analysis.bundle_evidence import (
+    MechanismRow,
+    PairMechanism,
+    RunEvidence,
+    as_payload,
+    variance_summary,
+)
 from analysis_cli.cli import app
 from typer.testing import CliRunner
 
@@ -54,6 +60,22 @@ def two_mechanism_rows(monkeypatch: pytest.MonkeyPatch) -> None:
         ),
     ]
     monkeypatch.setattr("analysis.bundle_evidence.mechanism_rows", lambda bundle: rows)
+    pairs = [
+        PairMechanism(
+            run_id=1,
+            baseline_scenario="s3-hybrid-reactive",
+            comparison_scenario="s4-hybrid-predictive",
+            baseline_node_at_s=61.0,
+            comparison_node_at_s=86.0,
+            lead_s=-25.0,
+            baseline_ramp_share_pct=5.8,
+            comparison_ramp_share_pct=3.4,
+            baseline_prediction_use=None,
+            comparison_prediction_use=0.018,
+            prediction_use_source="treatment_fidelity",
+        )
+    ]
+    monkeypatch.setattr("analysis.bundle_evidence.mechanism_pairs", lambda bundle: pairs)
 
 
 class TestDefaultColumns:
@@ -127,10 +149,33 @@ class TestMechanism:
         assert result.exit_code == 0, result.output
         assert result.output.splitlines()[0].split() == ["scenario", "run", "p99", "ms", "node", "at", "s"]
 
-    def test_the_next_step_is_the_variance_table(self, two_mechanism_rows: None):
+    def test_the_pair_table_prints_lead_and_ramp_share_with_units(self, two_mechanism_rows: None):
         result = runner.invoke(app, ["mechanism", "some-bundle"])
 
-        assert "next: thesis analysis variance some-bundle" in result.output
+        assert result.exit_code == 0, result.output
+        assert "lead s" in result.output
+        assert "base ramp %" in result.output and "comp ramp %" in result.output
+        assert "-25.0" in result.output
+        assert "5.8" in result.output and "3.4" in result.output
+        assert "proactive actions per eligible cycle" in result.output
+        assert "0.018" in result.output
+
+    def test_json_carries_the_pair_fields(self, two_mechanism_rows: None):
+        result = runner.invoke(app, ["mechanism", "some-bundle", "--json"])
+
+        assert result.exit_code == 0, result.output
+        payload = json.loads(result.stdout)
+        pair = payload["pairs"][0]
+        assert pair["lead_s"] == -25.0
+        assert pair["baseline_ramp_share_pct"] == 5.8
+        assert pair["comparison_prediction_use"] == 0.018
+        assert pair["prediction_use_source"] == "treatment_fidelity"
+
+    def test_hidden_per_run_columns_open_with_fields(self, two_mechanism_rows: None):
+        result = runner.invoke(app, ["mechanism", "some-bundle", "--fields", "scenario,ramp_pct,pred_use"])
+
+        assert result.exit_code == 0, result.output
+        assert result.output.splitlines()[0].split() == ["scenario", "ramp", "%", "pred", "use"]
 
 
 class TestVariance:

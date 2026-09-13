@@ -14,14 +14,19 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
+import requests
 import structlog
 from shared.config import settings
-from shared.artifacts import write_node_utilization, write_resource_utilization
+from shared.artifacts import read_manifest, write_manifest, write_node_utilization, write_resource_utilization
+from shared.models.experiment import gather_scaling_block
 from shared.models.metrics import MetricsExport, NodeSample, ResourceSample
 from shared.protocols.metrics import MetricsClient
 from shared.models.pipeline import PipelineContext
 
+from experiment.stages.workload import gather_replay_block
+
 from experiment.stages.base import BaseStage
+
 
 logger = structlog.get_logger(__name__)
 
@@ -36,6 +41,120 @@ NAMESPACE = "default"
 DEPLOYMENT = "test-app-warm"
 K8S_DEPLOYMENT_FILTER = f'deployment="{DEPLOYMENT}",namespace="{NAMESPACE}"'
 SERVERLESS_CONTEXT = os.environ.get("K3D_SERVERLESS_CONTEXT", "k3d-thesis-serverless")
+
+DAEMON_STATUS_URL = f"http://localhost:{settings.DAEMON_API_PORT}/status"
+PREDICTOR_STATUS_URL = f"{settings.GRU_SERVICE_URL}/model/status"
+
+
+def fetch_status_payload(url: str, timeout: float = 3.0) -> tuple[Optional[Dict[str, Any]], Optional[str]]:
+    """A status endpoint's JSON object, or the reason it could not be read."""
+    try:
+        response = requests.get(url, timeout=timeout)
+    except requests.RequestException as exc:
+        return None, f"{url} unreachable: {exc}"
+    if response.status_code != 200:
+        return None, f"{url} returned HTTP {response.status_code}"
+    try:
+        payload = response.json()
+    except ValueError as exc:
+        return None, f"{url} returned a non-JSON body: {exc}"
+    if not isinstance(payload, dict):
+        return None, f"{url} returned {type(payload).__name__}, expected a JSON object"
+    return payload, None
+
+
+def gather_daemon_block(
+    status: Optional[Dict[str, Any]] = None,
+    absent_reason: Optional[str] = None,
+    endpoint: str = DAEMON_STATUS_URL,
+) -> Dict[str, Any]:
+    """The routing daemon's configuration as the daemon itself reports it.
+
+    The payload is stored verbatim under ``reported``: every field the daemon
+    reports, including ones added after this code was written, flows through
+    unchanged rather than being re-derived field by field. ``controller_version``
+    comes from the payload when the daemon reports it; the daemon's /status does
+    not carry it today, so the value is recorded from the CONTROLLER_VERSION
+    variable the daemon resolves at startup (routing/daemon/service.py), an
+    environment the runner passes through unmodified when spawning the daemon.
+    """
+    block: Dict[str, Any] = {"endpoint": endpoint}
+    if status is None:
+        block["reported"] = {"absent_reason": absent_reason or "daemon status payload was not provided"}
+    else:
+        block["reported"] = dict(status)
+    reported_version = status.get("controller_version") if status else None
+    if isinstance(reported_version, str) and reported_version:
+        block["controller_version"] = {"value": reported_version, "source": "daemon /status payload"}
+    else:
+        block["controller_version"] = {
+            "value": os.environ.get("CONTROLLER_VERSION", "v3"),
+            "source": (
+                "CONTROLLER_VERSION env, resolved the way the daemon resolves it at "
+                "startup (routing/daemon/service.py); the daemon's /status payload "
+                "does not report controller_version"
+            ),
+        }
+    return block
+
+
+def gather_predictor_block(
+    status: Optional[Dict[str, Any]] = None,
+    absent_reason: Optional[str] = None,
+    endpoint: str = PREDICTOR_STATUS_URL,
+) -> Dict[str, Any]:
+    """The prediction service's own /model/status report, stored verbatim.
+
+    The payload carries artifact_sha256, model_path, sequence_length and
+    prediction_horizon as the serving process reports them, which is the run's
+    proof of which predictor artifact produced its forecasts.
+    """
+    if status is None:
+        reported: Any = {"absent_reason": absent_reason or "prediction service status was not provided"}
+    else:
+        reported = dict(status)
+    return {"endpoint": endpoint, "reported": reported}
+
+
+def record_run_config(run_dir: Path) -> None:
+    """Fill the manifest blocks a run's writer left empty, from live sources.
+
+    Called after the workload with the daemon still up: the k6 script that ran,
+    the daemon's and predictor's self-reported status, and the resolved
+    calibration are all readable then. Blocks the writer already populated are
+    left untouched, so an orchestrator that records more at start-up wins.
+    Recording is best-effort and never raises: it must not invalidate a
+    completed run, only ever leave an explicit absent_reason behind.
+    """
+    try:
+        manifest = read_manifest(run_dir)
+        if manifest is None:
+            logger.warning("run_config_manifest_missing_or_invalid", run_dir=str(run_dir))
+            return
+        changed = False
+        if not manifest.replay_manifest:
+            manifest.replay_manifest = gather_replay_block()
+            changed = True
+        if not manifest.daemon_config:
+            status, reason = fetch_status_payload(DAEMON_STATUS_URL)
+            manifest.daemon_config = gather_daemon_block(status=status, absent_reason=reason)
+            changed = True
+        if not manifest.predictor:
+            status, reason = fetch_status_payload(PREDICTOR_STATUS_URL)
+            manifest.predictor = gather_predictor_block(status=status, absent_reason=reason)
+            changed = True
+        if not manifest.scaling_config:
+            declared = manifest.conditions.get("capacity")
+            manifest.scaling_config = gather_scaling_block(
+                declared_capacity=declared if isinstance(declared, dict) else None,
+                declared_source="run conditions report (manifest.conditions.capacity), declared by the profile",
+            )
+            changed = True
+        if changed:
+            write_manifest(run_dir, manifest)
+            logger.info("run_config_recorded", run_dir=str(run_dir))
+    except Exception as exc:
+        logger.error("run_config_record_failed", run_dir=str(run_dir), error=str(exc))
 
 
 def _run_cmd(cmd: List[str], timeout: int = 30, **kwargs: Any) -> subprocess.CompletedProcess:
@@ -544,3 +663,8 @@ class CollectStage(BaseStage):
             ctx.result.resource_utilization_path = str(resource_summary.get("resource_utilization_path", ""))
             ctx.result.prom_export_path = prom_summary.get("export_path", "")
             ctx.result.replica_timeline_path = str(prom_dir / "prometheus_export.json")
+
+        # The run's config provenance is readable exactly now: the k6 script has
+        # executed, the daemon and predictor are still up, the conditions report
+        # (with the declared capacity contract) is already in the manifest.
+        record_run_config(run_dir)

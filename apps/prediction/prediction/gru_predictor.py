@@ -32,6 +32,46 @@ ARTIFACT_SCHEMA_VERSION = 2
 # some ROCm/gfx1103 stacks; eval math is batch-independent.
 EVAL_CHUNK_SIZE = 512
 
+
+def _sigmoid(x: np.ndarray) -> np.ndarray:
+    """Numerically stable sigmoid for logits -> crossing probabilities."""
+    x = np.asarray(x, dtype=np.float64)
+    out = np.empty_like(x)
+    pos = x >= 0
+    out[pos] = 1.0 / (1.0 + np.exp(-x[pos]))
+    ex = np.exp(x[~pos])
+    out[~pos] = ex / (1.0 + ex)
+    return out
+
+
+def first_crossing(forecasts, capacity: float, interval_sec: int = 15) -> Dict:
+    """First horizon step whose forecast meets or exceeds ``capacity``.
+
+    Pure threshold read-out over any forecast path (point, upper envelope,
+    OLS output). ``crossing_step`` is 1-based; 0 means the horizon never
+    crosses. ``t_cross_sec`` is seconds from now to that step.
+    """
+    arr = np.asarray(forecasts, dtype=np.float64)
+    hit = arr >= float(capacity)
+    peak = float(arr.max()) if arr.size else 0.0
+    if not hit.any():
+        return {
+            "crossed": False,
+            "crossing_step": 0,
+            "t_cross_sec": None,
+            "peak_forecast": peak,
+            "capacity": float(capacity),
+        }
+    k = int(np.argmax(hit))
+    return {
+        "crossed": True,
+        "crossing_step": k + 1,
+        "t_cross_sec": float((k + 1) * interval_sec),
+        "peak_forecast": peak,
+        "capacity": float(capacity),
+    }
+
+
 try:
     import torch
     import torch.nn as nn
@@ -62,6 +102,9 @@ class GRUConfig:
     num_layers: int = 1
     dropout: float = 0.0  # Recurrent dropout (zero for single-layer GRU)
     head_dropout: float = 0.1  # Output head regularization (always active)
+    weight_decay: float = 0.0  # Adam L2 penalty; 0 disables
+    grad_clip: float = 0.0  # Max gradient norm; 0 disables clipping
+    input_dropout: float = 0.0  # Dropout on the input window; 0 disables
     sequence_length: int = 30  # Look-back window
     prediction_horizon: int = 5  # Direct multi-horizon steps
     sample_interval_sec: int = 15  # Sampling resolution matching control loop
@@ -95,6 +138,7 @@ if TORCH_AVAILABLE:
             self.config = config
 
             rnn_cls = nn.LSTM if config.cell == "lstm" else nn.GRU
+            self.input_drop = nn.Dropout(config.input_dropout)
             self.gru = rnn_cls(
                 input_size=config.input_size,
                 hidden_size=config.hidden_size,
@@ -113,6 +157,7 @@ if TORCH_AVAILABLE:
         def forward(self, x: torch.Tensor) -> torch.Tensor:
             # x shape: (batch, seq_len, input_size); nn.LSTM's extra state
             # tuple is discarded the same way as nn.GRU's hidden state.
+            x = self.input_drop(x)
             rnn_out, _ = self.gru(x)
             last_hidden = rnn_out[:, -1, :]
             output = self.fc(last_hidden)
@@ -149,6 +194,9 @@ class GRUPredictor:
         # Metrics
         self.rmse: Optional[float] = None
         self.mae: Optional[float] = None
+        # Head semantics: "point" (RPS forecasts) or "t_cross" (per-step
+        # crossing logits against the calibration capacity threshold).
+        self.target_mode: str = "point"
 
         if TORCH_AVAILABLE:
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -337,7 +385,9 @@ class GRUPredictor:
         y_val_t = torch.FloatTensor(y_val).to(self.device)
 
         self.model = GRUNetwork(self.config).to(self.device)
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.learning_rate)
+        optimizer = torch.optim.Adam(
+            self.model.parameters(), lr=self.config.learning_rate, weight_decay=self.config.weight_decay
+        )
         criterion = nn.MSELoss()
         best_val_loss = float("inf")
         best_state = None
@@ -356,6 +406,8 @@ class GRUPredictor:
                 predictions = self.model(batch_X)  # (batch, horizon)
                 loss = criterion(predictions, batch_y)
                 loss.backward()
+                if self.config.grad_clip:
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.grad_clip)
                 optimizer.step()
 
                 train_loss += loss.item()
@@ -431,7 +483,9 @@ class GRUPredictor:
             train_loader = DataLoader(train_dataset, batch_size=self.config.batch_size, shuffle=True)
 
             self.model = GRUNetwork(self.config).to(self.device)
-            optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.learning_rate)
+            optimizer = torch.optim.Adam(
+                self.model.parameters(), lr=self.config.learning_rate, weight_decay=self.config.weight_decay
+            )
             criterion = nn.MSELoss()
 
             self.model.train()
@@ -586,6 +640,76 @@ class GRUPredictor:
         }
 
     # ------------------------------------------------------------------
+    # Capacity-relative crossing read-out (t_cross)
+    # ------------------------------------------------------------------
+
+    def predict_crossing(self, recent_values: np.ndarray, capacity: Optional[float] = None) -> Dict:
+        """First-crossing read-out on top of the forecast head.
+
+        For ``target_mode == "t_cross"`` artifacts the head emits per-step
+        crossing logits; sigmoid probabilities are returned directly plus the
+        aggregate P(cross within horizon). For point-forecast artifacts the
+        deterministic first crossing is derived from the point and upper
+        envelopes. The default capacity comes from the central calibration
+        (r_saturation_per_replica x max_k8s_replicas), resolved at call time
+        so CALIBRATION_OVERRIDE is honoured. The point-forecast ``predict``
+        path is untouched.
+        """
+        if capacity is None:
+            from shared.models.calibration import get_calibration
+
+            cal = get_calibration()
+            capacity = float(cal.r_saturation_per_replica) * int(cal.max_k8s_replicas)
+
+        if self.target_mode == "t_cross":
+            if not self.is_trained:
+                raise RuntimeError("Model not trained")
+            values = recent_values[-self.config.sequence_length :]
+            if len(values) < self.config.sequence_length:
+                padding = np.full(self.config.sequence_length - len(values), self.scaler_mean)
+                values = np.concatenate([padding, values])
+            normalized = self._normalize(values.astype(np.float32))
+
+            if TORCH_AVAILABLE and isinstance(self.model, nn.Module):
+                self.model.eval()
+                with torch.no_grad():
+                    X = torch.FloatTensor(normalized).reshape(1, -1, 1).to(self.device)
+                    logits = self.model(X).cpu().numpy()[0]  # (horizon,)
+            else:
+                if self.model is None:
+                    raise RuntimeError("No model loaded for prediction")
+                X = normalized.reshape(1, -1)
+                predict = getattr(self.model, "predict", None)
+                if not callable(predict):
+                    raise RuntimeError(f"{type(self.model).__name__} has no predict method")
+                logits = predict(X)[0]
+
+            probs = _sigmoid(np.asarray(logits, dtype=np.float64))
+            p_win = float(1.0 - np.prod(1.0 - probs))
+            hit = probs >= 0.5
+            t_cross_sec = float((int(np.argmax(hit)) + 1) * self.config.sample_interval_sec) if hit.any() else None
+            return {
+                "mode": "probabilistic",
+                "capacity": float(capacity),
+                "per_step_crossing_prob": [float(p) for p in probs],
+                "p_cross_within_horizon": p_win,
+                "t_cross_sec": t_cross_sec,
+                "horizon": self.config.prediction_horizon,
+                "sample_interval_sec": self.config.sample_interval_sec,
+            }
+
+        base = self.predict(recent_values)
+        return {
+            "mode": "threshold",
+            "capacity": float(capacity),
+            "point": first_crossing(base["point_forecasts"], capacity, self.config.sample_interval_sec),
+            "upper": first_crossing(base["upper_forecasts"], capacity, self.config.sample_interval_sec),
+            "predicted_requests": base["predicted_requests"],
+            "horizon": base["horizon"],
+            "sample_interval_sec": self.config.sample_interval_sec,
+        }
+
+    # ------------------------------------------------------------------
     # Artifact save/load (schema v2)
     # ------------------------------------------------------------------
 
@@ -607,6 +731,7 @@ class GRUPredictor:
             "rmse": self.rmse,
             "mae": self.mae,
             "is_trained": self.is_trained,
+            "target_mode": self.target_mode,
         }
 
         if TORCH_AVAILABLE and isinstance(self.model, nn.Module):
@@ -674,6 +799,7 @@ class GRUPredictor:
             self.scaler_std = metadata["scaler_std"]
             self.rmse = metadata.get("rmse")
             self.mae = metadata.get("mae")
+            self.target_mode = str(metadata.get("target_mode", "point"))
             self.is_trained = True
 
             logger.info(

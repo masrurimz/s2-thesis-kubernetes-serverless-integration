@@ -19,8 +19,8 @@ from __future__ import annotations
 
 import os
 import subprocess
-from dataclasses import dataclass
-from typing import Any
+from dataclasses import dataclass, field
+from typing import Any, Mapping
 
 import structlog
 
@@ -30,6 +30,11 @@ logger = structlog.get_logger(__name__)
 REFUSE_LOAD_RATIO = 1.0
 # Above this the measurement is still taken, with the load recorded as a caveat.
 WARN_LOAD_RATIO = 0.5
+
+# The VM boot delay the autoscaler models; a declared per-pair delay outside
+# this range is a profile claiming a testbed property nobody calibrated.
+PROVISION_DELAY_MIN_SEC = 45
+PROVISION_DELAY_MAX_SEC = 120
 
 
 class ConditionsUnmet(RuntimeError):
@@ -46,6 +51,12 @@ class RunConditions:
     check_host_load: bool = True
     # Report-only mode: inspect the testbed without converging or clearing it.
     converge: bool = True
+    # The simulated VM boot delay this run's pair carries, matched across both
+    # arms of the pair. None keeps the autoscaler's own random range.
+    provision_delay_sec: int | None = None
+    # The declared capacity contract, checked against the live testbed in apply().
+    # Empty means "no contract declared" and must not fail the run.
+    capacity: Mapping[str, float | int | str] = field(default_factory=dict)
 
     @classmethod
     def for_scenarios(
@@ -112,6 +123,104 @@ def _busiest_processes(limit: int = 3) -> list[str]:
     return [line.strip() for line in result.stdout.splitlines()[:limit] if line.strip()]
 
 
+def _workload_manifest(rel_path: str) -> dict:
+    """The first YAML document from an infra workload manifest."""
+    import importlib.resources
+
+    import yaml
+
+    base = importlib.resources.files("infra")
+    return next(iter(yaml.safe_load_all(base.joinpath(*rel_path.split("/")).read_text())), {})
+
+
+def _deployed_pod_cpu_request() -> str:
+    """The CPU request the deployed test-app pods carry, from the applied manifest."""
+    doc = _workload_manifest("workloads/test_app/test-app-warm-deployment.yaml")
+    for container in doc.get("spec", {}).get("template", {}).get("spec", {}).get("containers", []):
+        requested = container.get("resources", {}).get("requests", {}).get("cpu")
+        if requested is not None:
+            return str(requested)
+    return ""
+
+
+def _resolved_max_replicas() -> int:
+    """The replica cap this run will actually apply.
+
+    One number drives both paths: the routing daemon reads it from the active
+    calibration (``to_scaling_config_overrides``), and the S1 HPA is created from
+    ``cal.max_k8s_replicas`` by the reset stage. The committed ``hpa.yaml`` is not
+    the source — nothing applies it — so a contract checked against that file can
+    pass while the system runs something else. That is how the only significant H2
+    batch ran at a cap of 10 while an undeclared profile default puts a run at 6,
+    with nothing in the bundle recording which was in force.
+    """
+    from shared.models.calibration import get_calibration
+
+    return int(get_calibration().max_k8s_replicas)
+
+
+def _agent_node_cpus(cluster: str, static_agents: int) -> float | None:
+    """The CPU limit every static agent container runs under, in cores.
+
+    Docker's NanoCpus is what `docker update --cpus` set, so this is the VM
+    sizing the nodes actually run under — not what the kubelet reports.
+    Returns None when the containers cannot be read or disagree with each other.
+    """
+    values: list[float] = []
+    for index in range(static_agents):
+        result = subprocess.run(
+            ["docker", "inspect", "--format", "{{.HostConfig.NanoCpus}}", f"k3d-{cluster}-agent-{index}"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        if result.returncode != 0:
+            return None
+        values.append(int(result.stdout.strip() or "0") / 1e9)
+    if not values or len(set(values)) != 1:
+        return None
+    return values[0]
+
+
+def _capacity_checks(
+    declared: Mapping[str, float | int | str], cluster: str, static_agents: int
+) -> tuple[dict[str, bool], list[str]]:
+    """Compare the declared capacity contract with the testbed that will run it.
+
+    Only the declared keys are checked: an absent key is an unstated assumption,
+    not a failure, and an empty contract means no contract was declared. Every
+    mismatch lands in the notes with both values, so the refusal names what
+    drifted instead of just that something did.
+    """
+    checks: dict[str, bool] = {}
+    notes: list[str] = []
+
+    def compare(key: str, declared_value: object, observed: object) -> None:
+        ok = declared_value == observed
+        checks[f"capacity_{key}"] = ok
+        if not ok:
+            notes.append(f"capacity {key}: declared {declared_value!r}, observed {observed!r}")
+
+    if "pod_cpu_request" in declared:
+        compare("pod_cpu_request", str(declared["pod_cpu_request"]), _deployed_pod_cpu_request())
+    if "max_k8s_replicas" in declared:
+        compare("max_k8s_replicas", int(declared["max_k8s_replicas"]), _resolved_max_replicas())
+    if "k8s_agents" in declared:
+        compare("k8s_agents", int(declared["k8s_agents"]), static_agents)
+    if "node_cpus" in declared:
+        observed = _agent_node_cpus(cluster, static_agents)
+        if observed is None:
+            checks["capacity_node_cpus"] = False
+            notes.append(
+                f"capacity node_cpus: declared {declared['node_cpus']!r}, "
+                f"observed unknown (agent containers unreadable or inconsistent)"
+            )
+        else:
+            compare("node_cpus", float(declared["node_cpus"]), observed)
+    return checks, notes
+
+
 def apply(conditions: RunConditions, *, scenario: str = "", console: Any = None) -> dict:
     """Converge the testbed, run the sanity checks, and refuse when unmet.
 
@@ -156,6 +265,23 @@ def apply(conditions: RunConditions, *, scenario: str = "", console: Any = None)
         # answers on the port is alive, so an S4 run cannot start against nothing.
         checks["prediction_port"] = is_port_listening(settings.GRU_PORT)
 
+    if conditions.provision_delay_sec is not None:
+        delay = conditions.provision_delay_sec
+        in_range = PROVISION_DELAY_MIN_SEC <= delay <= PROVISION_DELAY_MAX_SEC
+        checks["provision_delay_in_range"] = in_range
+        if not in_range:
+            notes.append(
+                f"provision delay {delay}s is outside the modelled VM boot range "
+                f"{PROVISION_DELAY_MIN_SEC}..{PROVISION_DELAY_MAX_SEC}s"
+            )
+
+    if conditions.capacity:
+        capacity_checks, capacity_notes = _capacity_checks(
+            conditions.capacity, conditions.cluster, int(converged["nodes"]["agents"])
+        )
+        checks.update(capacity_checks)
+        notes.extend(capacity_notes)
+
     if conditions.check_host_load:
         load = _host_load()
         checks["host_load"] = load["ratio"] < REFUSE_LOAD_RATIO
@@ -174,6 +300,8 @@ def apply(conditions: RunConditions, *, scenario: str = "", console: Any = None)
         "load": load,
         "notes": notes,
         "scenario": scenario,
+        "provision_delay_sec": conditions.provision_delay_sec,
+        "capacity": dict(conditions.capacity),
     }
 
     if report["ok"]:

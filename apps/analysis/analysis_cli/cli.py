@@ -907,6 +907,8 @@ _MECHANISM_COLUMNS: dict[str, str] = {
     "delay_s": "provisioning_delay_sec",
     "serverless_pct": "serverless_share_pct",
     "slo": "slo_violations",
+    "ramp_pct": "ramp_serverless_share_pct",
+    "pred_use": "prediction_use_ratio",
 }
 _VARIANCE_COLUMNS: dict[str, str] = {
     "scenario": "scenario",
@@ -1015,17 +1017,93 @@ def mechanism(
     as_json: bool = typer.Option(False, "--json", help="Emit the payload as JSON"),
 ) -> None:
     """When the node tier arrived relative to the load, beside the tail it explains."""
-    from analysis.bundle_evidence import mechanism_rows
+    from analysis.bundle_evidence import as_payload, mechanism_pairs, mechanism_rows
 
     rows = mechanism_rows(bundle)
+    pairs = mechanism_pairs(bundle)
     chosen = _selected(_MECHANISM_COLUMNS, fields)
     if as_json:
-        _emit(_projected(rows, _MECHANISM_COLUMNS, chosen))
+        _emit({"runs": _projected(rows, _MECHANISM_COLUMNS, chosen), "pairs": as_payload(pairs)})
+        return
+    if not rows:
+        typer.echo(f"no runs with a result.json found in {bundle}")
         return
     _table(rows, _MECHANISM_COLUMNS, chosen)
     typer.echo("\nnode at +s is measured from the run's first provisioner event.")
+    if all(row.ramp_serverless_share_pct is None for row in rows):
+        typer.echo("ramp share: not recorded for any run (no daemon weight series, or no k6 artifact to place it).")
+    _pairs_table(pairs)
     if rows:
         print_next([f"thesis analysis variance {bundle}"])
+
+
+def _signed(value: float | None) -> str:
+    return "n/a" if value is None else format(value, "+.1f")
+
+
+def _ratio(value: float | None) -> str:
+    return "n/a" if value is None else format(value, ".3f")
+
+
+def _pairs_table(pairs) -> None:
+    """The per-pair half: the lead, both arms' ramp routing share, engagement."""
+
+    typer.echo("")
+    if not pairs:
+        typer.echo("no pairs to compare: this bundle does not hold two scenarios with shared run ids.")
+        return
+    labels = ["pair", "base at s", "comp at s", "lead s", "base ramp %", "comp ramp %"]
+    cells = [
+        [
+            str(pair.run_id),
+            _cell(pair.baseline_node_at_s),
+            _cell(pair.comparison_node_at_s),
+            _signed(pair.lead_s),
+            _cell(pair.baseline_ramp_share_pct),
+            _cell(pair.comparison_ramp_share_pct),
+        ]
+        for pair in pairs
+    ]
+    widths = [max(len(label), 6) for label in labels]
+    for row_cells in cells:
+        widths = [max(width, len(cell)) for width, cell in zip(widths, row_cells, strict=True)]
+    typer.echo(
+        " ".join(
+            label.rjust(width) if i else label.ljust(width)
+            for i, (label, width) in enumerate(zip(labels, widths, strict=True))
+        )
+    )
+    for row_cells in cells:
+        typer.echo(
+            " ".join(
+                cell.rjust(width) if i else cell.ljust(width)
+                for i, (cell, width) in enumerate(zip(row_cells, widths, strict=True))
+            )
+        )
+    first = pairs[0]
+    typer.echo(
+        f"\nbase = {first.baseline_scenario}, comp = {first.comparison_scenario}; "
+        "lead s = base − comp node arrival, positive means the predictive arm provisioned earlier."
+    )
+    if all(pair.lead_s is None for pair in pairs):
+        typer.echo("node arrival: not recorded (no node_created provisioner event in either arm).")
+    if all(pair.baseline_ramp_share_pct is None and pair.comparison_ramp_share_pct is None for pair in pairs):
+        typer.echo("ramp %: not recorded (no daemon weight series or no k6 artifact to place it).")
+    else:
+        typer.echo(
+            "ramp % = mean serverless weight share (knative / (knative + k3s)) over the trace's "
+            "ramp stages, from prometheus_export.json."
+        )
+    sources = sorted({pair.prediction_use_source for pair in pairs if pair.prediction_use_source})
+    engagement = [
+        f"pair {pair.run_id}: base {_ratio(pair.baseline_prediction_use)}, "
+        f"comp {_ratio(pair.comparison_prediction_use)}"
+        for pair in pairs
+    ]
+    typer.echo(
+        "prediction engagement (proactive actions per eligible cycle, from "
+        f"{'/'.join(sources) if sources else 'no source'}): " + "; ".join(engagement)
+    )
 
 
 @app.command()
@@ -1034,7 +1112,7 @@ def variance(
     fields: str = typer.Option(
         None,
         "--fields",
-        help=f"Comma-separated arm columns; default {' '.join(list(_VARIANCE_COLUMNS)[:DEFAULT_FIELDS])}, or 'all'",
+        help=f"Comma-separated columns; default {' '.join(list(_VARIANCE_COLUMNS)[:DEFAULT_FIELDS])}, or 'all'",
     ),
     as_json: bool = typer.Option(False, "--json", help="Emit the payload as JSON"),
 ) -> None:

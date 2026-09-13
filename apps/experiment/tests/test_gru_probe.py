@@ -89,3 +89,40 @@ def test_ols_arm_sees_only_training_region() -> None:
     fit_region_max = segment_index_matrix(0, SYNTH.val_end, SEQ_LEN, HORIZON).max()
     assert fit_region_max == SYNTH.val_end - 1
     assert fit_region_max < SYNTH.test_start
+
+
+def test_calgary_pretrain_splits_and_isolation() -> None:
+    """Cross-corpus lever: sanctioned Calgary boundaries, post-cut tail never read."""
+
+    from experiment.tuning.calgary_pretrain import build_stage_a_arrays
+    from experiment.tuning.splits import CALGARY_N, calgary_pretrain_split
+
+    spec = calgary_pretrain_split()
+    assert (spec.require_region("train").start, spec.require_region("train").stop) == (0, 1_757_796)
+    assert (spec.require_region("validation").start, spec.require_region("validation").stop) == (1_757_834, 1_769_354)
+    assert spec.require_region("validation").stop < CALGARY_N  # post-cut tail exists and is unused
+
+    rng = np.random.default_rng(21)
+    series = rng.gamma(1.0, 0.05, size=CALGARY_N)
+    fit, val, stats = build_stage_a_arrays(series, spec)
+    assert fit.max_index_consumed == spec.require_region("train").stop - 1
+    assert val.max_index_consumed == spec.require_region("validation").stop - 1
+    assert stats.fit_range.stop == spec.require_region("train").stop  # normalizer fitted on train only
+
+    # Stage-A arrays are bit-identical when the never-read post-cut tail mutates.
+    mutated = series.copy()
+    mutated[spec.require_region("validation").stop :] += 1_000.0
+    fit_m, val_m, _ = build_stage_a_arrays(mutated, spec)
+    np.testing.assert_array_equal(fit.X, fit_m.X)
+    np.testing.assert_array_equal(val.X, val_m.X)
+
+
+def test_fold_internal_carve_honours_embargo() -> None:
+    """Stage-B early-stop carve stays inside the fold's training region."""
+    from experiment.tuning.calgary_pretrain import _internal_carve
+    from experiment.tuning.splits import EMBARGO
+
+    (fit_start, fit_stop), (ival_start, ival_stop) = _internal_carve(22_500)
+    assert fit_start == 0
+    assert ival_start - fit_stop == EMBARGO
+    assert ival_stop == 22_500

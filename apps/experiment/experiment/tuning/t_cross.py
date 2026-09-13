@@ -334,7 +334,12 @@ def label_distribution(fw: FoldWindows, capacity: float) -> dict[str, Any]:
         ("inner_val", fw.y_val, None),
         ("eval", None, fw.y_eval_raw),
     ):
-        z = crossing_labels(raw, capacity) if labels is None else labels
+        if labels is not None:
+            z = labels
+        elif raw is not None:
+            z = crossing_labels(raw, capacity)
+        else:
+            raise ValueError(f"{name}: neither crossing labels nor a raw series was supplied")
         out[name] = {
             "n_windows": int(len(z)),
             "n_crossed": int(z.any(axis=1).sum()),
@@ -374,12 +379,14 @@ def _protocol_header(values: np.ndarray) -> dict[str, Any]:
             "name": deployment.name,
             "role": deployment.role,
             "used_for_selection": deployment.used_for_selection,
-            "test": [deployment.test.start, deployment.test.stop] if deployment.test else None,
+            "test": [deployment.require_region("test").start, deployment.require_region("test").stop]
+            if deployment.test
+            else None,
             "replay_window": list(REPLAY_WINDOW),
             "replay_inside_test": bool(
                 deployment.test
-                and deployment.test.start <= REPLAY_WINDOW[0]
-                and REPLAY_WINDOW[1] < deployment.test.stop
+                and deployment.require_region("test").start <= REPLAY_WINDOW[0]
+                and REPLAY_WINDOW[1] < deployment.require_region("test").stop
             ),
         },
         "plan": plan,
@@ -706,8 +713,8 @@ def run_t_cross(
                     "inner_fit": [0, fw.inner_fit_end],
                     "inner_val": [fw.inner_val_start, fw.inner_val_end],
                     "eval_range": [
-                        fw.spec.region(fw.spec.eval_of_record).start,
-                        fw.spec.region(fw.spec.eval_of_record).stop,
+                        fw.spec.require_region(fw.spec.eval_of_record).start,
+                        fw.spec.require_region(fw.spec.eval_of_record).stop,
                     ],
                     "normalizer": fw.stats_record,
                     "pos_weight": fw.pos_weight,
@@ -763,6 +770,11 @@ def run_t_cross(
         npz_path = probs_dir / f"t_cross_s{seed}.npz"
         np.savez_compressed(
             npz_path,
+            # allow_pickle=False is both the safer default for a data file and
+            # what makes the call type-check: the payload is plain arrays, so
+            # nothing here needs pickle, and a non-array sneaking in now fails
+            # at write time instead of at read time.
+            allow_pickle=False,
             **{f"{fold}__{key}": arr for fold, arrays_d in persisted.items() for key, arr in arrays_d.items()},
         )
         record.setdefault("probs_persisted", []).append(

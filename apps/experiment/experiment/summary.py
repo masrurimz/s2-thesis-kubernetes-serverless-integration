@@ -29,6 +29,7 @@ class Run:
     result: dict
     git_commit: str | None
     model_artifact: str | None
+    ramp_p99_ms: float | None = None
 
     @property
     def valid(self) -> bool:
@@ -151,10 +152,26 @@ def _discover_runs(bundle_dir: Path) -> list[Run]:
                 result=result,
                 git_commit=_git_commit(run_dir),
                 model_artifact=_model_artifact(run_dir, result),
+                ramp_p99_ms=_ramp_p99(run_dir),
             )
         )
-    runs.sort(key=lambda run: (run.scenario, run.run_id))
     return runs
+
+
+def _ramp_p99(run_dir: Path) -> float | None:
+    """The ramp-window p99 the run's k6 summary recorded, when it recorded one.
+
+    Reads the run's newest k6 data artifact; bundles whose script predates
+    per-stage recording have no ramp metric, and that absence is the answer.
+    """
+    from analysis.k6_stages import parse_stage_block
+
+    files = sorted((run_dir / "k6").glob("clarknet_replay_*.json"), key=lambda path: path.stat().st_mtime)
+    if not files:
+        return None
+    block = parse_stage_block(_read_json(files[-1]) or None)
+    ramp = block.get("ramp") if block else None
+    return ramp.get("p99_ms") if isinstance(ramp, dict) else None
 
 
 def _scenario_order(meta: dict, by_scenario: dict[str, list[Run]]) -> list[str]:
@@ -259,18 +276,35 @@ def _headline(scenarios: list[str], by_scenario: dict[str, list[Run]]) -> list[s
         "",
         "Aggregates are means over gate-passing runs.",
         "",
-        "| Scenario | n | p50 (ms) | p95 (ms) | p99 (ms) | error rate | throughput (rps) "
+        "| Scenario | n | p50 (ms) | p95 (ms) | p99 (ms) | ramp p99 (ms) | error rate | throughput (rps) "
         "| SLO violations | replica-seconds | serverless share (%) | valid |",
-        "|---|---|---|---|---|---|---|---|---|---|---|",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for scenario in scenarios:
         runs = by_scenario[scenario]
         valid_runs = [run for run in runs if run.valid]
         cells = [_fmt(_mean_over(valid_runs, field), spec) for field, spec in _HEADLINE_FIELDS]
+        cells.insert(3, _fmt(_mean_attr(valid_runs, "ramp_p99_ms")))
         valid_cell = f"{len(valid_runs)}/{len(runs)}" if runs else NA
         lines.append(f"| {scenario} | {len(runs)} | " + " | ".join(cells) + f" | {valid_cell} |")
     lines.append("")
+    recorded = [run for runs in by_scenario.values() for run in runs if run.ramp_p99_ms is not None]
+    total = sum(len(runs) for runs in by_scenario.values())
+    if recorded:
+        lines.append(
+            f"ramp p99 (co-primary): the trace's ramp stages; mean over the {len(recorded)}/{total} "
+            "run(s) whose k6 summary recorded stages."
+        )
+    else:
+        lines.append("ramp p99 (co-primary): unavailable — this bundle's k6 summaries predate per-stage recording.")
+    lines.append("")
     return lines
+
+
+def _mean_attr(runs: list[Run], attr: str) -> float | None:
+    """Mean of a Run attribute across runs; None when no run recorded one."""
+    values = [value for run in runs if (value := getattr(run, attr)) is not None]
+    return fmean(values) if values else None
 
 
 def _cohens_d_paired(diffs: list[float]) -> float | None:

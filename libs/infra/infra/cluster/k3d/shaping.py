@@ -61,7 +61,12 @@ def remove_node(cluster: str, name: str, *, dry_run: bool = False) -> None:
     """
     if dry_run:
         return
-    run(["k3d", "node", "delete", name, "--cluster", cluster])
+    result = run(["k3d", "node", "delete", name])
+    if result.returncode != 0:
+        # `k3d node delete` takes no --cluster flag; passing one exits non-zero and
+        # a swallowed failure let the convergence report deletions that never
+        # happened, leaving a spare static agent in the cluster.
+        logger.error("k3d_node_delete_failed", node=name, stderr=result.stderr.strip())
     for k8s_name in k8s_node_names(name):
         run(["kubectl", "--context", f"k3d-{cluster}", "delete", "node", k8s_name, "--ignore-not-found"])
 
@@ -134,11 +139,21 @@ def converge_agent_count(cluster: str, target: int, *, dry_run: bool = False) ->
             actions.append(f"create agent {name}")
             current += 1
 
-    logger.info("agent_count_converged", cluster=cluster, before=before, after=current, actions=len(actions))
+    # Report what the cluster actually holds. A delete that failed — a bad flag, a
+    # container already gone — must not be reported as a converged state, because
+    # every downstream check and every run reads this number.
+    after = (
+        current
+        if dry_run
+        else len([n for n in list_nodes(cluster) if n["role"] == "agent" and "dynamic" not in n["name"]])
+    )
+    if not dry_run and actions and after != target:
+        logger.warning("agent_count_not_converged", cluster=cluster, target=target, after=after, actions=actions)
+    logger.info("agent_count_converged", cluster=cluster, before=before, after=after, actions=len(actions))
     return {
         "cluster": cluster,
         "before": before,
-        "after": current,
+        "after": after,
         "actions": actions,
         "dynamic_agents": len(dynamic_agents),
         "dry_run": dry_run,

@@ -29,7 +29,12 @@ from shared.artifacts import (
 )
 from shared.models.experiment import ExperimentConfig, ExperimentResult
 
-from experiment.profiles import get_profile, profile_names
+from experiment.profiles import (
+    ExperimentProfile,
+    check_calibration_agrees_with_capacity,
+    get_profile,
+    profile_names,
+)
 
 if TYPE_CHECKING:
     from rich.console import Console
@@ -79,6 +84,34 @@ def _bundle_dir(
     return str(candidate)
 
 
+def _trace_default_duration(workload: str) -> int:
+    """The duration the workload's own replay artifacts declare.
+
+    The canonical ClarkNet trace runs 1200 s; the old literal 300 under-reported
+    it fourfold. Reads the replay manifest first, then the k6 stages the
+    workload stage replays; 300 remains the fallback when neither exists.
+    """
+    from experiment.stages.workload import default_stages_path
+
+    try:
+        stages_path = default_stages_path(workload)
+    except ValueError:
+        return 300
+    manifest_path = stages_path.parent / f"{workload}_replay_manifest.json"
+    if manifest_path.exists():
+        try:
+            return int(json.loads(manifest_path.read_text())["duration_sec"])
+        except (KeyError, TypeError, ValueError):
+            pass
+    if stages_path.exists():
+        try:
+            stages = json.loads(stages_path.read_text())
+            return int(sum(float(stage["duration"]) for stage in stages))
+        except (KeyError, TypeError, ValueError):
+            pass
+    return 300
+
+
 def _write_bundle_metadata(output_dir: str, scenarios: list[str], runs: int, status: str) -> None:
     """Write bundle meta.yaml + a bundle-level events.jsonl (schema v2)."""
     out = Path(output_dir)
@@ -113,7 +146,9 @@ def _write_bundle_metadata(output_dir: str, scenarios: list[str], runs: int, sta
 def run(
     phase: str = typer.Option("full", help="Phase: preflight, experiments, analysis, or full"),
     runs: int = typer.Option(5, help="Runs per scenario"),
-    duration: int = typer.Option(300, help="Workload duration in seconds"),
+    duration: Optional[int] = typer.Option(
+        None, help="Workload duration in seconds (default: the trace's own duration)"
+    ),
     seed: int = typer.Option(42, help="Random seed for run order"),
     scenarios: Optional[str] = typer.Option(None, help="Comma-separated scenario list (default: all 4)"),
     output: Optional[str] = typer.Option(None, help="Output directory"),
@@ -178,7 +213,7 @@ def run(
     config = ExperimentConfig(
         phase=phase,
         runs=runs,
-        duration_sec=duration,
+        duration_sec=duration if duration is not None else _trace_default_duration(workload),
         seed=seed,
     )
 
@@ -290,10 +325,18 @@ def preflight(
 
     if profile is not None:
         selected = get_profile(profile)
+        if selected.calibration_path:
+            os.environ["CALIBRATION_OVERRIDE"] = selected.calibration_path
+        try:
+            check_calibration_agrees_with_capacity(selected)
+        except ValueError as exc:
+            console.print(f"[red]{exc}[/red]")
+            raise typer.Exit(1) from exc
         conditions = RunConditions(
             agents=selected.k8s_agents,
             needs_prediction_server=selected.prediction_server,
             cluster=os.environ.get("K3D_CLUSTER_NAME", "thesis-hybrid"),
+            capacity=dict(selected.capacity),
         )
     else:
         conditions = RunConditions(agents=agents, cluster=os.environ.get("K3D_CLUSTER_NAME", "thesis-hybrid"))
@@ -659,7 +702,9 @@ def reproduce(
     profile: str = typer.Option(..., "--profile", help=f"Experiment profile: {', '.join(profile_names())}"),
     pairs: Optional[int] = typer.Option(None, help="Override the profile's pair count"),
     runs: Optional[int] = typer.Option(None, help="Override the profile's run count"),
-    duration: int = typer.Option(300, help="Workload duration in seconds per run"),
+    duration: Optional[int] = typer.Option(
+        None, help="Workload duration in seconds per run (default: the trace's own duration)"
+    ),
     seed: int = typer.Option(42, help="Random seed for schedule and ordering"),
     output: Optional[str] = typer.Option(None, help="Bundle directory (default: dated name from the profile)"),
     controller: str = typer.Option("v3", help="Controller version for S3/S4"),
@@ -693,6 +738,17 @@ def reproduce(
     console = Console()
 
     selected = get_profile(profile)
+    if selected.calibration_path:
+        # The existing CALIBRATION_OVERRIDE mechanism: process-level env, so
+        # both arms of every pair and the spawned daemon resolve the same
+        # numbers for the whole bundle.
+        os.environ["CALIBRATION_OVERRIDE"] = selected.calibration_path
+    try:
+        check_calibration_agrees_with_capacity(selected)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
+    run_duration = duration if duration is not None else _trace_default_duration(workload)
     pair_count = pairs if pairs is not None else selected.pairs
     run_count = runs if runs is not None else selected.runs
 
@@ -722,7 +778,6 @@ def reproduce(
 
     existing_pairs = _completed_pairs(bundle_path) if pair_count else {}
     existing_runs: frozenset[tuple[str, int]] = _completed_runs(bundle_path) if not pair_count else frozenset()
-
     if dry_run:
         if pair_count:
             console.print(f"Would run {pair_count - len(existing_pairs)} of {pair_count} pairs into {output_dir}")
@@ -731,6 +786,15 @@ def reproduce(
             console.print(f"Would run {total - len(existing_runs)} of {total} runs into {output_dir}")
         for key, value in selected.routing_env.items():
             console.print(f"  daemon environment: {key}={value}")
+        if selected.provision_delay_seq:
+            console.print(f"  provision delay per pair: {list(selected.provision_delay_seq)}")
+        if selected.calibration_path:
+            console.print(f"  calibration: {selected.calibration_path}")
+        if selected.capacity:
+            console.print(f"  capacity contract: {dict(selected.capacity)}")
+        if selected.endpoints:
+            console.print(f"  endpoints: {dict(selected.endpoints)}")
+        console.print(f"  design: {selected.design}  |  alpha: {selected.alpha}")
         return
 
     from infra.readiness import rebuild_testbed
@@ -743,6 +807,7 @@ def reproduce(
         agents=selected.k8s_agents,
         needs_prediction_server=selected.prediction_server,
         cluster=cluster,
+        capacity=dict(selected.capacity),
     )
     stack_rebuild: dict | None = None
 
@@ -787,7 +852,7 @@ def reproduce(
     os.environ["WORKLOAD"] = workload
     os.environ.update(selected.routing_env)
 
-    config = ExperimentConfig(phase="experiments", runs=run_count or 1, duration_sec=duration, seed=seed)
+    config = ExperimentConfig(phase="experiments", runs=run_count or 1, duration_sec=run_duration, seed=seed)
     from shared.storage.journal import ExperimentJournal
 
     exit_code = 0
@@ -824,6 +889,7 @@ def reproduce(
                 console=console,
                 bundle_journal=bundle_journal,
                 conditions=run_conditions,
+                profile=selected,
             )
 
         s3_results, s4_results, pair_ids = _collect_pairs(bundle_path)
@@ -934,7 +1000,9 @@ def _completed_pairs(bundle_path: Path) -> set[int]:
 @app.command(name="paired-run")
 def paired_run(
     pairs: int = typer.Option(5, help="Number of counterbalanced S3/S4 pairs"),
-    duration: int = typer.Option(300, help="Workload duration in seconds per run"),
+    duration: Optional[int] = typer.Option(
+        None, help="Workload duration in seconds per run (default: the trace's own duration)"
+    ),
     seed: int = typer.Option(42, help="Random seed for pair ordering"),
     workload: str = typer.Option("clarknet", help="Workload trace"),
     controller: str = typer.Option("v3", help="Controller version"),
@@ -998,12 +1066,10 @@ def paired_run(
         console.print(table)
         return
 
-    _write_bundle_metadata(output_dir, ["s3-hybrid-reactive", "s4-hybrid-predictive"], pairs * 2, status="in_progress")
-
     config = ExperimentConfig(
         phase="experiments",
         runs=1,
-        duration_sec=duration,
+        duration_sec=duration if duration is not None else _trace_default_duration(workload),
         seed=seed,
     )
 
@@ -1050,6 +1116,7 @@ def _run_pairs(
     console: "Console",
     bundle_journal,
     conditions: "RunConditions | None" = None,
+    profile: ExperimentProfile | None = None,
 ) -> tuple[list, list, list[str], int]:
     """Run counterbalanced S3/S4 pairs, excluding pairs whose treatment did not deliver.
 
@@ -1069,6 +1136,9 @@ def _run_pairs(
     while len(pair_ids) < pairs and attempt < max_attempts:
         attempt += 1
         pair_id = start_pair_id + len(pair_ids)
+        # The boot delay is indexed by the absolute pair id, so a resumed pair
+        # gets the same delay it would have had in a fresh bundle.
+        pair_delay = profile.provision_delay_for_pair(pair_id - 1) if profile is not None else None
         # Counterbalanced order: alternate which scenario runs first.
         if pair_id % 2 == 1:
             first_scenario, second_scenario = "s3-hybrid-reactive", "s4-hybrid-predictive"
@@ -1077,11 +1147,19 @@ def _run_pairs(
         pid = f"pair_{pair_id:03d}"
         console.print(
             f"\n[bold cyan]Attempt {attempt}/{max_attempts} (valid pairs: {len(pair_ids)}/{pairs})[/bold cyan]"
+            + (f" — provision delay {pair_delay}s" if pair_delay is not None else "")
         )
 
         console.print(f"  [dim]Running {first_scenario}...[/dim]")
         r1 = _run_single(
-            first_scenario, pair_id, (pair_id - 1) * 2, config, output_dir, console=console, conditions=conditions
+            first_scenario,
+            pair_id,
+            (pair_id - 1) * 2,
+            config,
+            output_dir,
+            console=console,
+            conditions=conditions,
+            provision_delay_sec=pair_delay,
         )
         if r1 is None:
             console.print(f"  [red]First scenario {first_scenario} failed[/red]")
@@ -1099,6 +1177,7 @@ def _run_pairs(
             output_dir,
             console=console,
             conditions=conditions,
+            provision_delay_sec=pair_delay,
         )
         if r2 is None:
             console.print(f"  [red]Second scenario {second_scenario} failed[/red]")
@@ -1284,7 +1363,8 @@ def gru_hpo(
 @app.command(name="gru-probe")
 def gru_probe(
     variant: str = typer.Option(
-        "baseline", help="Probe variant: baseline,window120,calendar,revin,log_target,pinball,ensemble"
+        "baseline",
+        help="Probe variant: baseline,window120,calendar,revin,log_target,pinball,ensemble,interval30,interval60,revin_robust,nlinear,diff_target,robust_scale,quantile_norm,nbeats,roll_stats,ewma,diff_input,decomp,calgary_pretrain",
     ),
     seeds: str = typer.Option("42,43,44", help="Comma-separated training seeds"),
     epochs: int = typer.Option(200, help="Training epoch budget per seed"),
@@ -1451,6 +1531,7 @@ def _run_single(
     *,
     console: "Console | None" = None,
     conditions: "RunConditions | None" = None,
+    provision_delay_sec: int | None = None,
 ) -> Optional[ExperimentResult]:
     """Execute a single experiment run with full protocol.
 
@@ -1482,6 +1563,11 @@ def _run_single(
     if conditions is not None:
         from experiment.conditions import ConditionsUnmet
         from experiment.conditions import apply as apply_conditions
+
+        # The pair's boot delay is part of the conditions, so it lands in the
+        # report, the manifest, and the run_conditioned journal event together.
+        if provision_delay_sec is not None:
+            conditions = replace(conditions, provision_delay_sec=provision_delay_sec)
 
         try:
             condition_report = apply_conditions(conditions, scenario=scenario, console=console)
@@ -1521,11 +1607,24 @@ def _run_single(
             payload={"order": run_order_idx, "seed": config.seed},
         )
     )
+    if condition_report:
+        journal.record(
+            journal.new_event(
+                "run_conditioned",
+                scenario=scenario,
+                run_id=run_id,
+                payload={"report": condition_report},
+            )
+        )
     import shutil
 
     _k3d_path = shutil.which("k3d") or os.environ.get("K3D_PATH", "")
     _k3s_image = os.environ.get("K3S_IMAGE", "rancher/k3s:v1.28.5-k3s1")
     _cluster_name = os.environ.get("K3D_CLUSTER_NAME", "thesis-hybrid")
+    # A declared per-pair delay is a testbed property matched across both arms of
+    # the pair; equal min/max makes the autoscaler's draw deterministic, so the
+    # paired difference cannot carry a VM-boot confound. None keeps the legacy
+    # random 45..120 s range.
     provisioner = K3dAutoscalerAdapter(
         cluster_name=_cluster_name,
         k3d_path=_k3d_path,
@@ -1533,10 +1632,18 @@ def _run_single(
         k3s_image=_k3s_image,
         min_nodes=0,
         max_nodes=2,
-        provision_delay_min_sec=45,
-        provision_delay_max_sec=120,
+        provision_delay_min_sec=provision_delay_sec if provision_delay_sec is not None else 45,
+        provision_delay_max_sec=provision_delay_sec if provision_delay_sec is not None else 120,
         node_memory="1g",
     )
+    # The same declared delay sizes the daemon's forecast lead, so the horizon
+    # covers the boot the prediction must bridge instead of adapting to pod
+    # readiness. Both arms of the pair see the identical environment; unset
+    # keeps the legacy EWMA path byte-for-byte.
+    if provision_delay_sec is not None:
+        os.environ["ROUTING_PROVISIONING_DELAY_SEC"] = str(provision_delay_sec)
+    else:
+        os.environ.pop("ROUTING_PROVISIONING_DELAY_SEC", None)
     resetter = ResetStage(provisioner=provisioner)
     daemon_stage = DaemonStage()
     workload_stage = WorkloadStage()

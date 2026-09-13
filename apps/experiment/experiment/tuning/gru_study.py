@@ -228,7 +228,17 @@ def load_synthetic_series(seed: int = 42, duration_hours: int = 72) -> np.ndarra
 
 
 def _torch_device() -> str:
-    """Device the study actually trains on (harness stays device-agnostic)."""
+    """Device the study actually trains on (harness stays device-agnostic).
+
+    ``THESIS_DEVICE=cpu`` forces CPU: the 780M iGPU has wedged mid-training
+    (ROCm "GPU Hang", SIGABRT) more than once under these probe workloads,
+    so unattended runs pin CPU even when CUDA reports available.
+    """
+    import os
+
+    override = os.environ.get("THESIS_DEVICE", "").strip().lower()
+    if override in ("cpu", "cuda"):
+        return override
     try:
         import torch
 
@@ -270,6 +280,9 @@ def _suggest_config(
     dropout = trial.suggest_float("dropout", 0.05, 0.3) if num_layers > 1 else 0.0
     head_dropout = trial.suggest_float("head_dropout", 0.0, 0.3)
     learning_rate = trial.suggest_float("learning_rate", 1e-4, 1e-3, log=True)
+    weight_decay = trial.suggest_float("weight_decay", 1e-6, 1e-2, log=True)
+    grad_clip = trial.suggest_categorical("grad_clip", [0.0, 1.0, 5.0])
+    input_dropout = trial.suggest_float("input_dropout", 0.0, 0.3)
     sequence_length = trial.suggest_categorical("sequence_length", list(sequence_lengths))
     return GRUConfig(
         cell=cell,
@@ -278,6 +291,9 @@ def _suggest_config(
         dropout=dropout,
         head_dropout=head_dropout,
         learning_rate=learning_rate,
+        weight_decay=weight_decay,
+        grad_clip=grad_clip,
+        input_dropout=input_dropout,
         sequence_length=sequence_length,
         prediction_horizon=horizon,
         sample_interval_sec=FIXED_SAMPLE_INTERVAL,

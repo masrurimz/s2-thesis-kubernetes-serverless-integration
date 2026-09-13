@@ -119,6 +119,17 @@ class GRUModelLoader:
         """Recurrent cell of the loaded artifact ("gru" or "lstm")."""
         return self._predictor.config.cell if self.is_loaded else None
 
+    @property
+    def target_mode(self) -> Optional[str]:
+        """Head semantics of the loaded artifact: "point" or "t_cross"."""
+        return getattr(self._predictor, "target_mode", "point") if self.is_loaded else None
+
+    def predict_crossing(self, history: List[float], capacity: Optional[float] = None) -> Dict[str, Any]:
+        """Capacity-relative crossing read-out (GRUPredictor.predict_crossing)."""
+        if not self.is_loaded:
+            raise RuntimeError("Model not loaded")
+        return self._predictor.predict_crossing(np.asarray(history, dtype=np.float32), capacity=capacity)
+
     # ------------------------------------------------------------------
     # Inference
     # ------------------------------------------------------------------

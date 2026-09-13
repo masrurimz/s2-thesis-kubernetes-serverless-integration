@@ -586,6 +586,9 @@ def _params_to_config(params: dict[str, Any]) -> Any:
         dropout=params.get("dropout", 0.0),
         head_dropout=params["head_dropout"],
         learning_rate=params["learning_rate"],
+        weight_decay=params.get("weight_decay", 0.0),
+        grad_clip=params.get("grad_clip", 0.0),
+        input_dropout=params.get("input_dropout", 0.0),
         sequence_length=params["sequence_length"],
         **_FIXED_TRAIN_PARAMS,
     )
@@ -648,6 +651,9 @@ def create_gru_objective(
         dropout = trial.suggest_float("dropout", 0.05, 0.3) if num_layers > 1 else 0.0
         head_dropout = trial.suggest_float("head_dropout", 0.0, 0.3)
         learning_rate = trial.suggest_float("learning_rate", 1e-4, 1e-3, log=True)
+        weight_decay = trial.suggest_float("weight_decay", 1e-6, 1e-2, log=True)
+        grad_clip = trial.suggest_categorical("grad_clip", [0.0, 1.0, 5.0])
+        input_dropout = trial.suggest_float("input_dropout", 0.0, 0.3)
         sequence_length = trial.suggest_categorical("sequence_length", [20, 30, 45])
 
         config = _params_to_config(
@@ -657,6 +663,9 @@ def create_gru_objective(
                 "dropout": dropout,
                 "head_dropout": head_dropout,
                 "learning_rate": learning_rate,
+                "weight_decay": weight_decay,
+                "grad_clip": grad_clip,
+                "input_dropout": input_dropout,
                 "sequence_length": sequence_length,
             }
         )

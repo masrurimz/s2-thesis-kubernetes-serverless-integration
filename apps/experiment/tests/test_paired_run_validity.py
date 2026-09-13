@@ -40,7 +40,9 @@ def _install_fake_run_single(monkeypatch, *, s4_delivered_seq):
     """
     state = {"s4_calls": 0}
 
-    def _fake(scenario, run_id, _order, _config, output_dir, *, console=None, conditions=None):
+    def _fake(
+        scenario, run_id, _order, _config, output_dir, *, console=None, conditions=None, provision_delay_sec=None
+    ):
         run_dir = Path(output_dir) / f"{scenario}_run{run_id}"
         run_dir.mkdir(parents=True, exist_ok=True)
         is_s4 = "s4" in scenario or "predictive" in scenario

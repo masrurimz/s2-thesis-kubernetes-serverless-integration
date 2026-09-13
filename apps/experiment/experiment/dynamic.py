@@ -300,7 +300,8 @@ class DynamicExperimentRunner:
             summary_path = run_results_dir / "k6-summary.json"
             if summary_path.exists():
                 with open(summary_path) as f:
-                    return json.load(f)
+                    summary = json.load(f)
+                return self._with_stage_block(summary, summary_path)
 
             # Fallback: parse stdout JSON (handleSummary writes to stdout)
             try:
@@ -315,6 +316,26 @@ class DynamicExperimentRunner:
         except Exception as e:
             logger.error("k6_error", error=str(e))
             return None
+
+    def _with_stage_block(self, summary: Dict, path: Path) -> Dict:
+        """Attach the per-stage percentiles additively, so they survive the read.
+
+        k6's --summary-export writes the raw end-of-test data object; the stage
+        Trends live under its metrics. Existing keys are untouched — the block
+        is only added when absent, and written back so the artifact carries it.
+        """
+        from analysis.k6_stages import parse_stage_block
+
+        block = parse_stage_block(summary)
+        if not block:
+            return summary
+        added = [key for key in block if key not in summary]
+        for key, value in block.items():
+            summary.setdefault(key, value)
+        if added:
+            path.write_text(json.dumps(summary, indent=2))
+            logger.info("k6_stage_block_attached", keys=added)
+        return summary
 
     # -- Single experiment ------------------------------------------------
 

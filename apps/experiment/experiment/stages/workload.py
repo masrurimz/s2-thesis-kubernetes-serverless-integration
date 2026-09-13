@@ -6,13 +6,14 @@ so a run can be pointed at a different trace or a stub binary without editing th
 module. The parsed summary is a typed model, not a nested dict.
 """
 
+import hashlib
 import json
 import os
 import subprocess
 import threading
 import time
 from pathlib import Path
-from typing import IO, Callable, Optional
+from typing import IO, Any, Callable, Optional
 
 import structlog
 from pydantic import BaseModel, Field
@@ -43,6 +44,9 @@ WORKLOAD_STAGES = {
 }
 
 
+DEFAULT_TRACE_MANIFEST = PROJECT_ROOT / "data" / "trace-replay" / "clarknet_replay_manifest.json"
+
+
 def default_stages_path(workload: str | None = None) -> Path:
     """The stages file for a workload name, rejecting one that does not exist."""
     name = workload or os.environ.get("WORKLOAD", "clarknet")
@@ -52,9 +56,60 @@ def default_stages_path(workload: str | None = None) -> Path:
     return PROJECT_ROOT / "data" / "trace-replay" / WORKLOAD_STAGES[name]
 
 
-class K6RunMetrics(BaseModel):
-    """The metrics one k6 run reported, in the units the analysis uses."""
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
+
+def gather_replay_block(
+    k6_script: Path | str | None = None,
+    k6_stages: Path | str | None = None,
+    trace_manifest: Path | str | None = None,
+) -> dict:
+    """The trace a run replayed and the load generator that replayed it.
+
+    Every piece names the file it came from; a piece whose source is missing
+    records why, so the manifest never carries a silently blank block. The k6
+    script's sha256 is the point: it is the only proof of which load generator
+    actually executed.
+    """
+    script = Path(k6_script) if k6_script is not None else DEFAULT_K6_SCRIPT
+    stages = Path(k6_stages) if k6_stages is not None else default_stages_path()
+    manifest_path = Path(trace_manifest) if trace_manifest is not None else DEFAULT_TRACE_MANIFEST
+
+    def _read(path: Path) -> Any:
+        with open(path) as handle:
+            return json.load(handle)
+
+    if manifest_path.is_file():
+        trace_block: Any = _read(manifest_path)
+    else:
+        trace_block = {"absent_reason": f"trace manifest not found: {manifest_path}"}
+    if stages.is_file():
+        stages_block: Any = _read(stages)
+    else:
+        stages_block = {"absent_reason": f"k6 stages file not found: {stages}"}
+    if script.is_file():
+        script_block: Any = {"path": str(script), "sha256": _sha256(script)}
+    else:
+        script_block = {"absent_reason": f"k6 script not found: {script}"}
+
+    return {
+        "trace_manifest": trace_block,
+        "k6_stages": stages_block,
+        "k6_script": script_block,
+        "sources": {
+            "trace_manifest": str(manifest_path),
+            "k6_stages": str(stages),
+            "k6_script": str(script),
+        },
+    }
+
+
+class K6RunMetrics(BaseModel):
     p50_latency_ms: float = 0.0
     p95_latency_ms: float = 0.0
     p99_latency_ms: float = 0.0
@@ -156,6 +211,10 @@ class WorkloadStage(BaseStage):
         self.k6_script = Path(k6_script or DEFAULT_K6_SCRIPT)
         self.k6_stages = Path(k6_stages) if k6_stages is not None else default_stages_path()
         self.target_url = target_url or f"http://localhost:{settings.HAPROXY_HTTP_PORT}"
+
+    def replay_config_block(self) -> dict:
+        """The replay block for the script and stages this stage will run."""
+        return gather_replay_block(k6_script=self.k6_script, k6_stages=self.k6_stages)
 
     def _run(self, ctx: PipelineContext, on_progress: Callable[[str], None] | None = None) -> None:
         scenario = ctx.scenario
