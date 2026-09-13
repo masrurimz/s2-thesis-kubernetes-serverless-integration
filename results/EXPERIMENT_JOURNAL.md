@@ -8,21 +8,28 @@
 > - **Registry:** `results/evidence/registry.yaml`
 > - **Query cache:** `results/evidence/catalog.duckdb` (rebuilt, not canonical)
 
-**Latest audit:** 2026-09-12T10:05:44.569297+00:00
+**Latest audit:** 2026-09-12T23:34:09.692580+00:00
 
 ## Summary
 
-- **Total bundles:** 153
-- **By role:** diagnostic=98, final=7, intermediate=48
-- **By status:** archived=11, current=79, invalidated=63
+- **Total bundles:** 160
+- **By role:** diagnostic=104, final=7, intermediate=49
+- **By status:** archived=11, current=86, invalidated=63
 
 ## Bundles
 
 | Date | ID | Role | Valid/Total | Treatment | Claims | Path |
 |------|----|------|------------|-----------|--------|------|
+| 2026-09-13 | `experiments.2026-09-13-h2-quiet` | diagnostic | 0/1 | — | — | `experiments/phase-b/2026-09-13_h2-quiet` |
+| 2026-09-13 | `experiments.2026-09-13-baselines-5r` | intermediate | 10/10 | — | — | `experiments/phase-b/2026-09-13_baselines-5r` |
+| 2026-09-12 | `experiments.2026-09-12-smoke-clean` | diagnostic | 2/2 | 57/57 (✓) | — | `experiments/phase-b/2026-09-12_smoke-clean` |
+| 2026-09-12 | `experiments.2026-09-12-smoke-1p` | diagnostic | 2/2 | 57/57 (✓) | — | `experiments/phase-b/2026-09-12_smoke-1p` |
 | 2026-09-12 | `experiments.2026-09-12-s4-point-sizing-shrink-3r` | intermediate | 3/3 | 171/171 (✓) | — | `experiments/phase-b/2026-09-12_s4-point-sizing-shrink-3r` |
 | 2026-09-12 | `experiments.2026-09-12-s4-point-sizing-3r` | intermediate | 3/3 | 170/170 (✓) | — | `experiments/phase-b/2026-09-12_s4-point-sizing-3r` |
+| 2026-09-12 | `experiments.2026-09-12-h2-pair-leakfree` | diagnostic | 4/5 | 114/114 (✓) | — | `experiments/phase-b/2026-09-12_h2-pair-leakfree` |
 | 2026-09-12 | `experiments.2026-09-12-h2-pair` | diagnostic | 10/10 | 280/280 (✓) | — | `experiments/phase-b/2026-09-12_h2-pair` |
+| 2026-09-12 | `experiments.2026-09-12-h2-confirmatory` | diagnostic | 10/10 | 285/285 (✓) | — | `experiments/phase-b/2026-09-12_h2-confirmatory` |
+| 2026-09-12 | `experiments.2026-09-12-declared-smoke` | diagnostic | 2/2 | 57/57 (✓) | — | `experiments/phase-b/2026-09-12_declared-smoke` |
 | 2026-09-11 | `experiments.2026-09-11-conditioned-baselines-n5` | intermediate | 10/10 | — | — | `experiments/phase-b/2026-09-11_conditioned-baselines-n5` |
 | 2026-09-11 | `experiments.2026-09-11-clarknet-replay-165420` | diagnostic | 0/1 | — | — | `experiments/phase-b/2026-09-11_clarknet-replay_165420` |
 | 2026-09-11 | `experiments.2026-09-11-clarknet-leakfree-paired-n5` | diagnostic | 10/11 | 275/275 (✓) | — | `experiments/phase-b/2026-09-11_clarknet-leakfree-paired-n5` |
@@ -178,6 +185,9 @@
 
 | Timestamp | Event | Experiment | Bundle | Run |
 |-----------|-------|------------|--------|-----|
+| 2026-09-12T23:34:09.692580+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |
+| 2026-09-12T23:31:47.925141+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |
+| 2026-09-12T23:22:01.256863+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |
 | 2026-09-12T10:05:44.569297+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |
 | 2026-09-12T09:14:09.982049+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |
 | 2026-08-09T04:12:35.295807+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |

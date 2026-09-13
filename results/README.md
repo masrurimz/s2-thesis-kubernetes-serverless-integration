@@ -15,7 +15,7 @@ Rules:
 | Hypothesis | Mechanism Validated? | Superiority Demonstrated? | Stats Done? | Notes |
 |------------|---------------------|--------------------------|-------------|-------|
 | **H1** (Hybrid > Pure) | ✅ Weight shifting, serverless engagement | ❌ Not supported in valid replicated set (`2026-02-15_clarknet-replay`); rerun-v2 (`n=1`) directional only | ✅ Welch t-test | Hybrid p99 worse than S1 in valid replicated set; no superiority claim |
-| **H2** (Predictive > Reactive) | ✅ PREDICTIVE triggered pre-violation | ✅ Supported (primary p99 p=0.0304, d=−1.26, definitive n=5) | ✅ | Definitive: `2026-07-14_clarknet-tuned-paired-n5`; corrected secondary p=0.1216 not significant |
+| **H2** (Predictive > Reactive) | ✅ PREDICTIVE triggered pre-violation | ✅ Supported (primary p99 p=0.0312, d=−1.26, definitive n=5; 1/32 design floor at n=5) | ✅ | Definitive: `2026-07-14_clarknet-tuned-paired-n5`; corrected secondary p=0.1248 not significant |
 | **H3** (GRU adequate) | ✅ 6.01% RMSE (synthetic), ⚠️ 17.78% RMSE (real ClarkNet) | N/A | ✅ | Synthetic meets targets; real traces do not (<10% RMSE). GRU still outperforms baselines on real data. |
 
 ---

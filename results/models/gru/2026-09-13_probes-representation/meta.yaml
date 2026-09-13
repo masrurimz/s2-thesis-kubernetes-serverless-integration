@@ -1,0 +1,26 @@
+study: representation-search
+created: '2026-09-13'
+protocol: per-fold OLS autoregression gate on selection folds b2/b3/b4 under the leak-free split protocol; served amplitude (RPS)
+gate:
+  selection_fold_ols_served_rps: 36.69
+  selection_fold_ols_counts_per_bucket: 16.677
+levers:
+  complete:
+    - interval30
+    - interval60
+    - revin_robust
+    - nlinear
+    - diff_target
+    - robust_scale
+    - quantile_norm
+    - nbeats
+  queued:
+    - roll_stats
+    - ewma
+    - diff_input
+    - decomp
+splits_module_sha256: 5f937edb361fbcea1a49334d92d768d409eefd1b12c563c5e708b9a1919631e3
+verdict: none of the complete levers beats the linear model on the selection folds; nlinear wins the test region and still fails the gate
+outputs:
+  report.md: full lever records
+  '*.json': per-lever records

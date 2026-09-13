@@ -1,0 +1,1654 @@
+{
+  "variant": "t_cross",
+  "created": "2026-09-13T05:55:28",
+  "headline_finding": {
+    "claim": "On the selection folds the linear arm's crossing recall is 0.8-4.2% against a 22-25% crossing base rate on identical windows: OLS autoregression almost never flags capacity crossings it is about to suffer. A learned crossing head has real headroom here \u2014 the first lever in this round where a model can plausibly clear its gate rather than tie it.",
+    "selection_crossing_base_rate": {
+      "mean": 0.2338343236630549,
+      "std": 0.013634957776853914,
+      "min": 0.22037749038797624,
+      "max": 0.24764068507514855,
+      "n_blocks": 3
+    },
+    "ols_crossing_recall_range": [
+      0.008233532934131737,
+      0.04203013481363997
+    ]
+  },
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "device": "cuda",
+  "epochs_budget": 200,
+  "patience": 25,
+  "loss": "bce_with_logits",
+  "series": {
+    "loader": "splits.load_series(clarknet, unit='rps')",
+    "unit": "RPS (per-bucket mean requests/sec)",
+    "scale_factor": 33.0,
+    "manifest": "data/trace-replay/clarknet_replay_manifest.json",
+    "n": 40315
+  },
+  "metric_units": {
+    "brier": "dimensionless (per-step probability score, lower is better)",
+    "t_cross_mae_steps": "steps of 15 s",
+    "capacity_rps": "served RPS",
+    "persistence_rmse_rps": "RPS at the served amplitude (counts/15 x 33)"
+  },
+  "capacity": {
+    "selection_and_ood": {
+      "r_saturation_per_replica": 33.3,
+      "replicas_at_capacity": 6,
+      "capacity_rps": 199.79999999999998,
+      "source": "shared.models.calibration.get_calibration()"
+    },
+    "deployment": {
+      "r_saturation_per_replica": 33.3,
+      "replicas_at_capacity": 10,
+      "capacity_rps": 333.0,
+      "source": "shared.models.calibration.CalibrationConfig.load(results/calibration/2026-08-06_definitive-repro.json)",
+      "profile": "h2-pair",
+      "calibration_path": "results/calibration/2026-08-06_definitive-repro.json",
+      "declared_capacity_contract": {
+        "pod_cpu_request": "300m",
+        "max_k8s_replicas": 10,
+        "node_cpus": 1.0,
+        "k8s_agents": 1
+      }
+    },
+    "note": "the crossing ceiling is scenario-dependent: selection folds and the b5 OOD report threshold at the code-default calibration, while the deployment arm resolves its ceiling from the calibration its profile actually runs under (the definitive paired H2 configuration overrides max_k8s_replicas to 10)"
+  },
+  "splits_pin": {
+    "sha256": "5f937edb361fbcea1a49334d92d768d409eefd1b12c563c5e708b9a1919631e3",
+    "pin": "5f937edb361fbcea1a49334d92d768d409eefd1b12c563c5e708b9a1919631e3",
+    "matches_pin": true
+  },
+  "splits_module": "experiment.tuning.splits",
+  "fold_plan": {
+    "selection": [
+      "clarknet-bcv-b2",
+      "clarknet-bcv-b3",
+      "clarknet-bcv-b4"
+    ],
+    "ood_report": [
+      "clarknet-bcv-b5"
+    ],
+    "skipped": [
+      {
+        "block": 6,
+        "eval": [
+          34560,
+          40315
+        ],
+        "reason": "train [0, 34522) would contain the replay window (28940, 29020); forbidden by the replay-placement rule"
+      }
+    ]
+  },
+  "deployment": {
+    "name": "clarknet-deployment-frozen",
+    "role": "deployment",
+    "used_for_selection": false,
+    "test": [
+      26243,
+      40315
+    ],
+    "replay_window": [
+      28940,
+      29020
+    ],
+    "replay_inside_test": true
+  },
+  "screen_region": "blocked-CV selection folds b2/b3/b4",
+  "label_definition": {
+    "target": "per-step binary crossing label; first-crossing time derived at scoring",
+    "threshold_rule": "raw served RPS >= capacity_rps (inclusive)",
+    "capacity_rps_by_arm": {
+      "clarknet-bcv-b2": 199.79999999999998,
+      "clarknet-bcv-b3": 199.79999999999998,
+      "clarknet-bcv-b4": 199.79999999999998,
+      "clarknet-bcv-b5": 199.79999999999998,
+      "clarknet-deployment-frozen": 333.0
+    },
+    "step_sec": 15,
+    "horizon_steps": 9
+  },
+  "reference_arms": {
+    "clarknet-bcv-b2": {
+      "capacity_rps": 199.79999999999998,
+      "ols": {
+        "brier_per_step": 0.053574896112470384,
+        "brier_window": 0.24204823488290808,
+        "crossing_accuracy": 0.757951765117092,
+        "crossing_precision": 0.8076923076923077,
+        "crossing_recall": 0.029640084685956247,
+        "crossing_f1": 0.05718175629680055,
+        "confusion": {
+          "tp": 42,
+          "fp": 10,
+          "fn": 1375,
+          "tn": 4295
+        },
+        "t_cross_mae_steps": 9.747353563867325,
+        "t_cross_detection_rate": 0.029640084685956247,
+        "false_alarm_rate": 0.0023228803716608595,
+        "n_windows_crossed": 1417,
+        "n_windows": 5722
+      },
+      "persistence": {
+        "brier_per_step": 0.08641112276204901,
+        "brier_window": 0.22282418734708145,
+        "crossing_accuracy": 0.7771758126529186,
+        "crossing_precision": 0.7335526315789473,
+        "crossing_recall": 0.15737473535638674,
+        "crossing_f1": 0.2591516560139454,
+        "confusion": {
+          "tp": 223,
+          "fp": 81,
+          "fn": 1194,
+          "tn": 4224
+        },
+        "t_cross_mae_steps": 8.75441072688779,
+        "t_cross_detection_rate": 0.15737473535638674,
+        "false_alarm_rate": 0.018815331010452963,
+        "n_windows_crossed": 1417,
+        "n_windows": 5722
+      },
+      "persistence_rmse_rps": 47.228530407270384,
+      "ols_rmse_rps": 36.603895823479164,
+      "day_type_coverage": {
+        "eval_range": [
+          11520,
+          17280
+        ],
+        "weekend_share": 0.0,
+        "day_shares": {
+          "Thu": 0.167,
+          "Wed": 0.833
+        }
+      }
+    },
+    "clarknet-bcv-b3": {
+      "capacity_rps": 199.79999999999998,
+      "ols": {
+        "brier_per_step": 0.04322497961085867,
+        "brier_window": 0.23261097518350227,
+        "crossing_accuracy": 0.7673890248164977,
+        "crossing_precision": 0.6470588235294118,
+        "crossing_recall": 0.008233532934131737,
+        "crossing_f1": 0.016260162601626018,
+        "confusion": {
+          "tp": 11,
+          "fp": 6,
+          "fn": 1325,
+          "tn": 4380
+        },
+        "t_cross_mae_steps": 9.92440119760479,
+        "t_cross_detection_rate": 0.008233532934131737,
+        "false_alarm_rate": 0.0013679890560875513,
+        "n_windows_crossed": 1336,
+        "n_windows": 5722
+      },
+      "persistence": {
+        "brier_per_step": 0.07448832964386966,
+        "brier_window": 0.2210765466620063,
+        "crossing_accuracy": 0.7789234533379937,
+        "crossing_precision": 0.6437246963562753,
+        "crossing_recall": 0.11901197604790419,
+        "crossing_f1": 0.20088439671509792,
+        "confusion": {
+          "tp": 159,
+          "fp": 88,
+          "fn": 1177,
+          "tn": 4298
+        },
+        "t_cross_mae_steps": 9.09805389221557,
+        "t_cross_detection_rate": 0.11901197604790419,
+        "false_alarm_rate": 0.020063839489284085,
+        "n_windows_crossed": 1336,
+        "n_windows": 5722
+      },
+      "persistence_rmse_rps": 47.653966258996746,
+      "ols_rmse_rps": 36.9602907652985,
+      "day_type_coverage": {
+        "eval_range": [
+          17280,
+          23040
+        ],
+        "weekend_share": 0.0,
+        "day_shares": {
+          "Fri": 0.167,
+          "Thu": 0.833
+        }
+      }
+    },
+    "clarknet-bcv-b4": {
+      "capacity_rps": 199.79999999999998,
+      "ols": {
+        "brier_per_step": 0.049691250145636724,
+        "brier_window": 0.21233834323663056,
+        "crossing_accuracy": 0.7876616567633694,
+        "crossing_precision": 0.8833333333333333,
+        "crossing_recall": 0.04203013481363997,
+        "crossing_f1": 0.08024224072672219,
+        "confusion": {
+          "tp": 53,
+          "fp": 7,
+          "fn": 1208,
+          "tn": 4454
+        },
+        "t_cross_mae_steps": 9.62569389373513,
+        "t_cross_detection_rate": 0.04203013481363997,
+        "false_alarm_rate": 0.0015691548980049316,
+        "n_windows_crossed": 1261,
+        "n_windows": 5722
+      },
+      "persistence": {
+        "brier_per_step": 0.07751757349799993,
+        "brier_window": 0.19818245368752185,
+        "crossing_accuracy": 0.8018175463124781,
+        "crossing_precision": 0.7243816254416962,
+        "crossing_recall": 0.1625693893735131,
+        "crossing_f1": 0.26554404145077726,
+        "confusion": {
+          "tp": 205,
+          "fp": 78,
+          "fn": 1056,
+          "tn": 4383
+        },
+        "t_cross_mae_steps": 8.65503568596352,
+        "t_cross_detection_rate": 0.1625693893735131,
+        "false_alarm_rate": 0.017484868863483525,
+        "n_windows_crossed": 1261,
+        "n_windows": 5722
+      },
+      "persistence_rmse_rps": 46.67799622796107,
+      "ols_rmse_rps": 36.50470083170841,
+      "day_type_coverage": {
+        "eval_range": [
+          23040,
+          28800
+        ],
+        "weekend_share": 0.16701388888888888,
+        "day_shares": {
+          "Fri": 0.833,
+          "Sat": 0.167
+        }
+      }
+    },
+    "clarknet-bcv-b5": {
+      "capacity_rps": 199.79999999999998,
+      "ols": {
+        "brier_per_step": 0.001223348479552604,
+        "brier_window": 0.010660608178958406,
+        "crossing_accuracy": 0.9893393918210416,
+        "crossing_precision": 0.0,
+        "crossing_recall": 0.0,
+        "crossing_f1": 0.0,
+        "confusion": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 61,
+          "tn": 5661
+        },
+        "t_cross_mae_steps": 10.0,
+        "t_cross_detection_rate": 0.0,
+        "false_alarm_rate": 0.0,
+        "n_windows_crossed": 61,
+        "n_windows": 5722
+      },
+      "persistence": {
+        "brier_per_step": 0.002407860499436871,
+        "brier_window": 0.011534428521495981,
+        "crossing_accuracy": 0.988465571478504,
+        "crossing_precision": 0.14285714285714285,
+        "crossing_recall": 0.01639344262295082,
+        "crossing_f1": 0.029411764705882356,
+        "confusion": {
+          "tp": 1,
+          "fp": 6,
+          "fn": 60,
+          "tn": 5655
+        },
+        "t_cross_mae_steps": 9.934426229508198,
+        "t_cross_detection_rate": 0.01639344262295082,
+        "false_alarm_rate": 0.0010598834128245894,
+        "n_windows_crossed": 61,
+        "n_windows": 5722
+      },
+      "persistence_rmse_rps": 35.03760807435379,
+      "ols_rmse_rps": 27.3194695392108,
+      "day_type_coverage": {
+        "eval_range": [
+          28800,
+          34560
+        ],
+        "weekend_share": 1.0,
+        "day_shares": {
+          "Sat": 0.833,
+          "Sun": 0.167
+        }
+      }
+    },
+    "clarknet-deployment-frozen": {
+      "capacity_rps": 333.0,
+      "ols": {
+        "brier_per_step": 0.00021376656690893543,
+        "brier_window": 0.001496365968362548,
+        "crossing_accuracy": 0.9985036340316374,
+        "crossing_precision": 0.0,
+        "crossing_recall": 0.0,
+        "crossing_f1": 0.0,
+        "confusion": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 21,
+          "tn": 14013
+        },
+        "t_cross_mae_steps": 10.0,
+        "t_cross_detection_rate": 0.0,
+        "false_alarm_rate": 0.0,
+        "n_windows_crossed": 21,
+        "n_windows": 14034
+      },
+      "persistence": {
+        "brier_per_step": 0.0004116985733060979,
+        "brier_window": 0.0015676214906655266,
+        "crossing_accuracy": 0.9984323785093345,
+        "crossing_precision": 0.3333333333333333,
+        "crossing_recall": 0.047619047619047616,
+        "crossing_f1": 0.08333333333333333,
+        "confusion": {
+          "tp": 1,
+          "fp": 2,
+          "fn": 20,
+          "tn": 14011
+        },
+        "t_cross_mae_steps": 9.619047619047619,
+        "t_cross_detection_rate": 0.047619047619047616,
+        "false_alarm_rate": 0.00014272461285948763,
+        "n_windows_crossed": 21,
+        "n_windows": 14034
+      },
+      "persistence_rmse_rps": 37.81294478623013,
+      "ols_rmse_rps": 29.473719719397653,
+      "day_type_coverage": {
+        "eval_range": [
+          26243,
+          40315
+        ],
+        "weekend_share": 0.8186469584991473,
+        "day_shares": {
+          "Fri": 0.1133,
+          "Mon": 0.068,
+          "Sat": 0.4093,
+          "Sun": 0.4093
+        }
+      }
+    }
+  },
+  "label_distribution": {
+    "clarknet-bcv-b2": {
+      "inner_fit": {
+        "n_windows": 8526,
+        "n_crossed": 1327,
+        "frac_windows_crossed": 0.15564156697161624,
+        "frac_steps_at_or_above_capacity": 0.028266478329896927
+      },
+      "inner_val": {
+        "n_windows": 2842,
+        "n_crossed": 1232,
+        "frac_windows_crossed": 0.43349753694581283,
+        "frac_steps_at_or_above_capacity": 0.09641097486019135
+      },
+      "eval": {
+        "n_windows": 5722,
+        "n_crossed": 1417,
+        "frac_windows_crossed": 0.24764068507514855,
+        "frac_steps_at_or_above_capacity": 0.05312827602028847
+      }
+    },
+    "clarknet-bcv-b3": {
+      "inner_fit": {
+        "n_windows": 14286,
+        "n_crossed": 2694,
+        "frac_windows_crossed": 0.18857622847543049,
+        "frac_steps_at_or_above_capacity": 0.03758924826979637
+      },
+      "inner_val": {
+        "n_windows": 2842,
+        "n_crossed": 1267,
+        "frac_windows_crossed": 0.4458128078817734,
+        "frac_steps_at_or_above_capacity": 0.097662054002285
+      },
+      "eval": {
+        "n_windows": 5722,
+        "n_crossed": 1336,
+        "frac_windows_crossed": 0.23348479552603985,
+        "frac_steps_at_or_above_capacity": 0.04316672310233116
+      }
+    },
+    "clarknet-bcv-b4": {
+      "inner_fit": {
+        "n_windows": 20046,
+        "n_crossed": 4211,
+        "frac_windows_crossed": 0.21006684625361668,
+        "frac_steps_at_or_above_capacity": 0.04254104569554329
+      },
+      "inner_val": {
+        "n_windows": 2842,
+        "n_crossed": 1077,
+        "frac_windows_crossed": 0.37895847994370163,
+        "frac_steps_at_or_above_capacity": 0.0714285746216774
+      },
+      "eval": {
+        "n_windows": 5722,
+        "n_crossed": 1261,
+        "frac_windows_crossed": 0.22037749038797624,
+        "frac_steps_at_or_above_capacity": 0.049458231776952744
+      }
+    },
+    "clarknet-bcv-b5": {
+      "inner_fit": {
+        "n_windows": 25806,
+        "n_crossed": 5540,
+        "frac_windows_crossed": 0.21467875687824536,
+        "frac_steps_at_or_above_capacity": 0.04281949996948242
+      },
+      "inner_val": {
+        "n_windows": 2842,
+        "n_crossed": 1031,
+        "frac_windows_crossed": 0.36277269528501055,
+        "frac_steps_at_or_above_capacity": 0.08597231656312943
+      },
+      "eval": {
+        "n_windows": 5722,
+        "n_crossed": 61,
+        "frac_windows_crossed": 0.010660608178958406,
+        "frac_steps_at_or_above_capacity": 0.0012233484303578734
+      }
+    },
+    "clarknet-deployment-frozen": {
+      "inner_fit": {
+        "n_windows": 19544,
+        "n_crossed": 69,
+        "frac_windows_crossed": 0.003530495292672943,
+        "frac_steps_at_or_above_capacity": 0.0004093327734153718
+      },
+      "inner_val": {
+        "n_windows": 2842,
+        "n_crossed": 0,
+        "frac_windows_crossed": 0.0,
+        "frac_steps_at_or_above_capacity": 0.0
+      },
+      "eval": {
+        "n_windows": 14034,
+        "n_crossed": 21,
+        "frac_windows_crossed": 0.001496365968362548,
+        "frac_steps_at_or_above_capacity": 0.00021376657241489738
+      }
+    }
+  },
+  "label_distribution_by_ceiling": {
+    "selection_folds_at_199.8rps": {
+      "clarknet-bcv-b2": {
+        "inner_fit": {
+          "n_windows": 8526,
+          "n_crossed": 1327,
+          "frac_windows_crossed": 0.15564156697161624,
+          "frac_steps_at_or_above_capacity": 0.028266478329896927
+        },
+        "inner_val": {
+          "n_windows": 2842,
+          "n_crossed": 1232,
+          "frac_windows_crossed": 0.43349753694581283,
+          "frac_steps_at_or_above_capacity": 0.09641097486019135
+        },
+        "eval": {
+          "n_windows": 5722,
+          "n_crossed": 1417,
+          "frac_windows_crossed": 0.24764068507514855,
+          "frac_steps_at_or_above_capacity": 0.05312827602028847
+        }
+      },
+      "clarknet-bcv-b3": {
+        "inner_fit": {
+          "n_windows": 14286,
+          "n_crossed": 2694,
+          "frac_windows_crossed": 0.18857622847543049,
+          "frac_steps_at_or_above_capacity": 0.03758924826979637
+        },
+        "inner_val": {
+          "n_windows": 2842,
+          "n_crossed": 1267,
+          "frac_windows_crossed": 0.4458128078817734,
+          "frac_steps_at_or_above_capacity": 0.097662054002285
+        },
+        "eval": {
+          "n_windows": 5722,
+          "n_crossed": 1336,
+          "frac_windows_crossed": 0.23348479552603985,
+          "frac_steps_at_or_above_capacity": 0.04316672310233116
+        }
+      },
+      "clarknet-bcv-b4": {
+        "inner_fit": {
+          "n_windows": 20046,
+          "n_crossed": 4211,
+          "frac_windows_crossed": 0.21006684625361668,
+          "frac_steps_at_or_above_capacity": 0.04254104569554329
+        },
+        "inner_val": {
+          "n_windows": 2842,
+          "n_crossed": 1077,
+          "frac_windows_crossed": 0.37895847994370163,
+          "frac_steps_at_or_above_capacity": 0.0714285746216774
+        },
+        "eval": {
+          "n_windows": 5722,
+          "n_crossed": 1261,
+          "frac_windows_crossed": 0.22037749038797624,
+          "frac_steps_at_or_above_capacity": 0.049458231776952744
+        }
+      }
+    },
+    "deployment_at_333.0rps": {
+      "inner_fit": {
+        "n_windows": 19544,
+        "n_crossed": 69,
+        "frac_windows_crossed": 0.003530495292672943,
+        "frac_steps_at_or_above_capacity": 0.0004093327734153718
+      },
+      "inner_val": {
+        "n_windows": 2842,
+        "n_crossed": 0,
+        "frac_windows_crossed": 0.0,
+        "frac_steps_at_or_above_capacity": 0.0
+      },
+      "eval": {
+        "n_windows": 14034,
+        "n_crossed": 21,
+        "frac_windows_crossed": 0.001496365968362548,
+        "frac_steps_at_or_above_capacity": 0.00021376657241489738
+      }
+    },
+    "deployment_at_199.8rps_counterfactual": {
+      "inner_fit": {
+        "n_windows": 19544,
+        "n_crossed": 69,
+        "frac_windows_crossed": 0.003530495292672943,
+        "frac_steps_at_or_above_capacity": 0.0004093327734153718
+      },
+      "inner_val": {
+        "n_windows": 2842,
+        "n_crossed": 0,
+        "frac_windows_crossed": 0.0,
+        "frac_steps_at_or_above_capacity": 0.0
+      },
+      "eval": {
+        "n_windows": 14034,
+        "n_crossed": 922,
+        "frac_windows_crossed": 0.06569759156334616,
+        "frac_steps_at_or_above_capacity": 0.015549538657069206
+      }
+    }
+  },
+  "inner_val_span": 2880,
+  "per_seed": {
+    "42": {
+      "clarknet-bcv-b2": {
+        "brier_per_step": 0.28367454301353184,
+        "brier_window": 0.4477437184402754,
+        "crossing_accuracy": 0.5239426773855296,
+        "crossing_precision": 0.3418824098717638,
+        "crossing_recall": 0.9971771347918137,
+        "crossing_f1": 0.5091891891891891,
+        "confusion": {
+          "tp": 1413,
+          "fp": 2720,
+          "fn": 4,
+          "tn": 1585
+        },
+        "t_cross_mae_steps": 3.043754410726888,
+        "t_cross_detection_rate": 0.9795342272406493,
+        "false_alarm_rate": 0.6318234610917538,
+        "n_windows_crossed": 1417,
+        "n_windows": 5722,
+        "skill_vs_ols_brier": -4.294915409971317,
+        "capacity_rps": 199.79999999999998,
+        "role": "selection",
+        "used_for_selection": true,
+        "day_type_coverage": {
+          "eval_range": [
+            11520,
+            17280
+          ],
+          "weekend_share": 0.0,
+          "day_shares": {
+            "Thu": 0.167,
+            "Wed": 0.833
+          }
+        },
+        "windows": {
+          "inner_fit": [
+            0,
+            8564
+          ],
+          "inner_val": [
+            8602,
+            11482
+          ],
+          "eval_range": [
+            11520,
+            17280
+          ],
+          "normalizer": {
+            "method": "log1p-median-iqr",
+            "center": 4.536891345234797,
+            "scale": 0.7893600232809845,
+            "fit_range": [
+              0,
+              11482
+            ],
+            "n_fit": 11482
+          },
+          "pos_weight": 34.37759336099585
+        }
+      },
+      "clarknet-bcv-b3": {
+        "brier_per_step": 0.2092864865662122,
+        "brier_window": 0.37666762046322017,
+        "crossing_accuracy": 0.5830129325410696,
+        "crossing_precision": 0.35655737704918034,
+        "crossing_recall": 0.9767964071856288,
+        "crossing_f1": 0.5224179343474781,
+        "confusion": {
+          "tp": 1305,
+          "fp": 2355,
+          "fn": 31,
+          "tn": 2031
+        },
+        "t_cross_mae_steps": 4.0553892215568865,
+        "t_cross_detection_rate": 0.8480538922155688,
+        "false_alarm_rate": 0.5369357045143639,
+        "n_windows_crossed": 1336,
+        "n_windows": 5722,
+        "skill_vs_ols_brier": -3.841794916975201,
+        "capacity_rps": 199.79999999999998,
+        "role": "selection",
+        "used_for_selection": true,
+        "day_type_coverage": {
+          "eval_range": [
+            17280,
+            23040
+          ],
+          "weekend_share": 0.0,
+          "day_shares": {
+            "Fri": 0.167,
+            "Thu": 0.833
+          }
+        },
+        "windows": {
+          "inner_fit": [
+            0,
+            14324
+          ],
+          "inner_val": [
+            14362,
+            17242
+          ],
+          "eval_range": [
+            17280,
+            23040
+          ],
+          "normalizer": {
+            "method": "log1p-median-iqr",
+            "center": 4.560172820057356,
+            "scale": 0.8057660586680946,
+            "fit_range": [
+              0,
+              17242
+            ],
+            "n_fit": 17242
+          },
+          "pos_weight": 25.60335195530726
+        }
+      },
+      "clarknet-bcv-b4": {
+        "brier_per_step": 0.19311430020515147,
+        "brier_window": 0.42209445164261566,
+        "crossing_accuracy": 0.504718629849703,
+        "crossing_precision": 0.3066142119498402,
+        "crossing_recall": 0.9888977002379065,
+        "crossing_f1": 0.4680930930930931,
+        "confusion": {
+          "tp": 1247,
+          "fp": 2820,
+          "fn": 14,
+          "tn": 1641
+        },
+        "t_cross_mae_steps": 3.485329103885805,
+        "t_cross_detection_rate": 0.8984932593180016,
+        "false_alarm_rate": 0.6321452589105582,
+        "n_windows_crossed": 1261,
+        "n_windows": 5722,
+        "skill_vs_ols_brier": -2.8862837952187927,
+        "capacity_rps": 199.79999999999998,
+        "role": "selection",
+        "used_for_selection": true,
+        "day_type_coverage": {
+          "eval_range": [
+            23040,
+            28800
+          ],
+          "weekend_share": 0.16701388888888888,
+          "day_shares": {
+            "Fri": 0.833,
+            "Sat": 0.167
+          }
+        },
+        "windows": {
+          "inner_fit": [
+            0,
+            20084
+          ],
+          "inner_val": [
+            20122,
+            23002
+          ],
+          "eval_range": [
+            23040,
+            28800
+          ],
+          "normalizer": {
+            "method": "log1p-median-iqr",
+            "center": 4.560172820057356,
+            "scale": 0.8057660586680946,
+            "fit_range": [
+              0,
+              23002
+            ],
+            "n_fit": 23002
+          },
+          "pos_weight": 22.50671009771987
+        }
+      },
+      "clarknet-bcv-b5": {
+        "brier_per_step": 0.0059668794875474655,
+        "brier_window": 0.07704770152926348,
+        "crossing_accuracy": 0.9009087731562391,
+        "crossing_precision": 0.059233449477351915,
+        "crossing_recall": 0.5573770491803278,
+        "crossing_f1": 0.10708661417322836,
+        "confusion": {
+          "tp": 34,
+          "fp": 540,
+          "fn": 27,
+          "tn": 5121
+        },
+        "t_cross_mae_steps": 9.704918032786885,
+        "t_cross_detection_rate": 0.06557377049180328,
+        "false_alarm_rate": 0.09538950715421304,
+        "n_windows_crossed": 61,
+        "n_windows": 5722,
+        "skill_vs_ols_brier": -3.8774977753923707,
+        "capacity_rps": 199.79999999999998,
+        "role": "ood_report",
+        "used_for_selection": false,
+        "day_type_coverage": {
+          "eval_range": [
+            28800,
+            34560
+          ],
+          "weekend_share": 1.0,
+          "day_shares": {
+            "Sat": 0.833,
+            "Sun": 0.167
+          }
+        },
+        "windows": {
+          "inner_fit": [
+            0,
+            25844
+          ],
+          "inner_val": [
+            25882,
+            28762
+          ],
+          "eval_range": [
+            28800,
+            34560
+          ],
+          "normalizer": {
+            "method": "log1p-median-iqr",
+            "center": 4.560172820057356,
+            "scale": 0.8057660586680946,
+            "fit_range": [
+              0,
+              28762
+            ],
+            "n_fit": 28762
+          },
+          "pos_weight": 22.353846153846153
+        }
+      },
+      "clarknet-deployment-frozen": {
+        "brier_per_step": 0.030445755675273863,
+        "brier_window": 0.14294960918068156,
+        "crossing_accuracy": 0.8451617500356278,
+        "crossing_precision": 0.009571558796718322,
+        "crossing_recall": 1.0,
+        "crossing_f1": 0.018961625282167043,
+        "confusion": {
+          "tp": 21,
+          "fp": 2173,
+          "fn": 0,
+          "tn": 11840
+        },
+        "t_cross_mae_steps": 2.857142857142857,
+        "t_cross_detection_rate": 1.0,
+        "false_alarm_rate": 0.1550702918718333,
+        "n_windows_crossed": 21,
+        "n_windows": 14034,
+        "skill_vs_ols_brier": -141.42524504893115,
+        "capacity_rps": 333.0,
+        "role": "deployment",
+        "used_for_selection": false,
+        "day_type_coverage": {
+          "eval_range": [
+            26243,
+            40315
+          ],
+          "weekend_share": 0.8186469584991473,
+          "day_shares": {
+            "Fri": 0.1133,
+            "Mon": 0.068,
+            "Sat": 0.4093,
+            "Sun": 0.4093
+          }
+        },
+        "windows": {
+          "inner_fit": [
+            0,
+            19582
+          ],
+          "inner_val": [
+            19620,
+            22500
+          ],
+          "eval_range": [
+            26243,
+            40315
+          ],
+          "normalizer": {
+            "method": "log1p-median-iqr",
+            "center": 4.560172820057356,
+            "scale": 0.8057660586680946,
+            "fit_range": [
+              0,
+              22500
+            ],
+            "n_fit": 22500
+          },
+          "pos_weight": 2442.0
+        }
+      }
+    },
+    "43": {
+      "clarknet-bcv-b2": {
+        "brier_per_step": 0.2729857080842725,
+        "brier_window": 0.4398403746761397,
+        "crossing_accuracy": 0.5337294652219504,
+        "crossing_precision": 0.3465783664459161,
+        "crossing_recall": 0.9971771347918137,
+        "crossing_f1": 0.5143793228977066,
+        "confusion": {
+          "tp": 1413,
+          "fp": 2664,
+          "fn": 4,
+          "tn": 1641
+        },
+        "t_cross_mae_steps": 3.085391672547636,
+        "t_cross_detection_rate": 0.9745942131263232,
+        "false_alarm_rate": 0.6188153310104529,
+        "n_windows_crossed": 1417,
+        "n_windows": 5722,
+        "skill_vs_ols_brier": -4.095403405191688,
+        "capacity_rps": 199.79999999999998,
+        "role": "selection",
+        "used_for_selection": true,
+        "day_type_coverage": {
+          "eval_range": [
+            11520,
+            17280
+          ],
+          "weekend_share": 0.0,
+          "day_shares": {
+            "Thu": 0.167,
+            "Wed": 0.833
+          }
+        },
+        "windows": {
+          "inner_fit": [
+            0,
+            8564
+          ],
+          "inner_val": [
+            8602,
+            11482
+          ],
+          "eval_range": [
+            11520,
+            17280
+          ],
+          "normalizer": {
+            "method": "log1p-median-iqr",
+            "center": 4.536891345234797,
+            "scale": 0.7893600232809845,
+            "fit_range": [
+              0,
+              11482
+            ],
+            "n_fit": 11482
+          },
+          "pos_weight": 34.37759336099585
+        }
+      },
+      "clarknet-bcv-b3": {
+        "brier_per_step": 0.2142223430971723,
+        "brier_window": 0.3792365739901682,
+        "crossing_accuracy": 0.5819643481300245,
+        "crossing_precision": 0.3563656147986942,
+        "crossing_recall": 0.9805389221556886,
+        "crossing_f1": 0.5227454110135674,
+        "confusion": {
+          "tp": 1310,
+          "fp": 2366,
+          "fn": 26,
+          "tn": 2020
+        },
+        "t_cross_mae_steps": 4.059880239520958,
+        "t_cross_detection_rate": 0.8540419161676647,
+        "false_alarm_rate": 0.5394436844505244,
+        "n_windows_crossed": 1336,
+        "n_windows": 5722,
+        "skill_vs_ols_brier": -3.9559848269623448,
+        "capacity_rps": 199.79999999999998,
+        "role": "selection",
+        "used_for_selection": true,
+        "day_type_coverage": {
+          "eval_range": [
+            17280,
+            23040
+          ],
+          "weekend_share": 0.0,
+          "day_shares": {
+            "Fri": 0.167,
+            "Thu": 0.833
+          }
+        },
+        "windows": {
+          "inner_fit": [
+            0,
+            14324
+          ],
+          "inner_val": [
+            14362,
+            17242
+          ],
+          "eval_range": [
+            17280,
+            23040
+          ],
+          "normalizer": {
+            "method": "log1p-median-iqr",
+            "center": 4.560172820057356,
+            "scale": 0.8057660586680946,
+            "fit_range": [
+              0,
+              17242
+            ],
+            "n_fit": 17242
+          },
+          "pos_weight": 25.60335195530726
+        }
+      },
+      "clarknet-bcv-b4": {
+        "brier_per_step": 0.20523391822549117,
+        "brier_window": 0.4312545312568267,
+        "crossing_accuracy": 0.5164278224397064,
+        "crossing_precision": 0.31099397590361444,
+        "crossing_recall": 0.9825535289452815,
+        "crossing_f1": 0.47244995233555764,
+        "confusion": {
+          "tp": 1239,
+          "fp": 2745,
+          "fn": 22,
+          "tn": 1716
+        },
+        "t_cross_mae_steps": 3.3243457573354482,
+        "t_cross_detection_rate": 0.9270420301348137,
+        "false_alarm_rate": 0.6153328850033625,
+        "n_windows_crossed": 1261,
+        "n_windows": 5722,
+        "skill_vs_ols_brier": -3.130182227735969,
+        "capacity_rps": 199.79999999999998,
+        "role": "selection",
+        "used_for_selection": true,
+        "day_type_coverage": {
+          "eval_range": [
+            23040,
+            28800
+          ],
+          "weekend_share": 0.16701388888888888,
+          "day_shares": {
+            "Fri": 0.833,
+            "Sat": 0.167
+          }
+        },
+        "windows": {
+          "inner_fit": [
+            0,
+            20084
+          ],
+          "inner_val": [
+            20122,
+            23002
+          ],
+          "eval_range": [
+            23040,
+            28800
+          ],
+          "normalizer": {
+            "method": "log1p-median-iqr",
+            "center": 4.560172820057356,
+            "scale": 0.8057660586680946,
+            "fit_range": [
+              0,
+              23002
+            ],
+            "n_fit": 23002
+          },
+          "pos_weight": 22.50671009771987
+        }
+      },
+      "clarknet-bcv-b5": {
+        "brier_per_step": 0.010145125055491734,
+        "brier_window": 0.1589635381771127,
+        "crossing_accuracy": 0.7717581265291856,
+        "crossing_precision": 0.033707865168539325,
+        "crossing_recall": 0.7377049180327869,
+        "crossing_f1": 0.06446991404011461,
+        "confusion": {
+          "tp": 45,
+          "fp": 1290,
+          "fn": 16,
+          "tn": 4371
+        },
+        "t_cross_mae_steps": 9.688524590163935,
+        "t_cross_detection_rate": 0.08196721311475409,
+        "false_alarm_rate": 0.2278749337572867,
+        "n_windows_crossed": 61,
+        "n_windows": 5722,
+        "skill_vs_ols_brier": -7.292915081074815,
+        "capacity_rps": 199.79999999999998,
+        "role": "ood_report",
+        "used_for_selection": false,
+        "day_type_coverage": {
+          "eval_range": [
+            28800,
+            34560
+          ],
+          "weekend_share": 1.0,
+          "day_shares": {
+            "Sat": 0.833,
+            "Sun": 0.167
+          }
+        },
+        "windows": {
+          "inner_fit": [
+            0,
+            25844
+          ],
+          "inner_val": [
+            25882,
+            28762
+          ],
+          "eval_range": [
+            28800,
+            34560
+          ],
+          "normalizer": {
+            "method": "log1p-median-iqr",
+            "center": 4.560172820057356,
+            "scale": 0.8057660586680946,
+            "fit_range": [
+              0,
+              28762
+            ],
+            "n_fit": 28762
+          },
+          "pos_weight": 22.353846153846153
+        }
+      },
+      "clarknet-deployment-frozen": {
+        "brier_per_step": 0.011596406276602692,
+        "brier_window": 0.08759188919716408,
+        "crossing_accuracy": 0.8984608807182557,
+        "crossing_precision": 0.014522821576763486,
+        "crossing_recall": 1.0,
+        "crossing_f1": 0.02862985685071575,
+        "confusion": {
+          "tp": 21,
+          "fp": 1425,
+          "fn": 0,
+          "tn": 12588
+        },
+        "t_cross_mae_steps": 6.0,
+        "t_cross_detection_rate": 0.6666666666666666,
+        "false_alarm_rate": 0.10169128666238493,
+        "n_windows_crossed": 21,
+        "n_windows": 14034,
+        "skill_vs_ols_brier": -53.247988561947395,
+        "capacity_rps": 333.0,
+        "role": "deployment",
+        "used_for_selection": false,
+        "day_type_coverage": {
+          "eval_range": [
+            26243,
+            40315
+          ],
+          "weekend_share": 0.8186469584991473,
+          "day_shares": {
+            "Fri": 0.1133,
+            "Mon": 0.068,
+            "Sat": 0.4093,
+            "Sun": 0.4093
+          }
+        },
+        "windows": {
+          "inner_fit": [
+            0,
+            19582
+          ],
+          "inner_val": [
+            19620,
+            22500
+          ],
+          "eval_range": [
+            26243,
+            40315
+          ],
+          "normalizer": {
+            "method": "log1p-median-iqr",
+            "center": 4.560172820057356,
+            "scale": 0.8057660586680946,
+            "fit_range": [
+              0,
+              22500
+            ],
+            "n_fit": 22500
+          },
+          "pos_weight": 2442.0
+        }
+      }
+    },
+    "44": {
+      "clarknet-bcv-b2": {
+        "brier_per_step": 0.28962186904284326,
+        "brier_window": 0.45161989011720827,
+        "crossing_accuracy": 0.5207969241523943,
+        "crossing_precision": 0.3404767637852155,
+        "crossing_recall": 0.9978828510938603,
+        "crossing_f1": 0.5077199281867145,
+        "confusion": {
+          "tp": 1414,
+          "fp": 2739,
+          "fn": 3,
+          "tn": 1566
+        },
+        "t_cross_mae_steps": 3.0578687367678192,
+        "t_cross_detection_rate": 0.9781227946365562,
+        "false_alarm_rate": 0.6362369337979094,
+        "n_windows_crossed": 1417,
+        "n_windows": 5722,
+        "skill_vs_ols_brier": -4.405924977154165,
+        "capacity_rps": 199.79999999999998,
+        "role": "selection",
+        "used_for_selection": true,
+        "day_type_coverage": {
+          "eval_range": [
+            11520,
+            17280
+          ],
+          "weekend_share": 0.0,
+          "day_shares": {
+            "Thu": 0.167,
+            "Wed": 0.833
+          }
+        },
+        "windows": {
+          "inner_fit": [
+            0,
+            8564
+          ],
+          "inner_val": [
+            8602,
+            11482
+          ],
+          "eval_range": [
+            11520,
+            17280
+          ],
+          "normalizer": {
+            "method": "log1p-median-iqr",
+            "center": 4.536891345234797,
+            "scale": 0.7893600232809845,
+            "fit_range": [
+              0,
+              11482
+            ],
+            "n_fit": 11482
+          },
+          "pos_weight": 34.37759336099585
+        }
+      },
+      "clarknet-bcv-b3": {
+        "brier_per_step": 0.2114061769351852,
+        "brier_window": 0.38561206941229914,
+        "crossing_accuracy": 0.5707794477455436,
+        "crossing_precision": 0.3505869797225187,
+        "crossing_recall": 0.9835329341317365,
+        "crossing_f1": 0.5169158143194335,
+        "confusion": {
+          "tp": 1314,
+          "fp": 2434,
+          "fn": 22,
+          "tn": 1952
+        },
+        "t_cross_mae_steps": 4.059880239520958,
+        "t_cross_detection_rate": 0.8607784431137725,
+        "false_alarm_rate": 0.5549475604195167,
+        "n_windows_crossed": 1336,
+        "n_windows": 5722,
+        "skill_vs_ols_brier": -3.8908334680180454,
+        "capacity_rps": 199.79999999999998,
+        "role": "selection",
+        "used_for_selection": true,
+        "day_type_coverage": {
+          "eval_range": [
+            17280,
+            23040
+          ],
+          "weekend_share": 0.0,
+          "day_shares": {
+            "Fri": 0.167,
+            "Thu": 0.833
+          }
+        },
+        "windows": {
+          "inner_fit": [
+            0,
+            14324
+          ],
+          "inner_val": [
+            14362,
+            17242
+          ],
+          "eval_range": [
+            17280,
+            23040
+          ],
+          "normalizer": {
+            "method": "log1p-median-iqr",
+            "center": 4.560172820057356,
+            "scale": 0.8057660586680946,
+            "fit_range": [
+              0,
+              17242
+            ],
+            "n_fit": 17242
+          },
+          "pos_weight": 25.60335195530726
+        }
+      },
+      "clarknet-bcv-b4": {
+        "brier_per_step": 0.21425973359238915,
+        "brier_window": 0.42635505347055563,
+        "crossing_accuracy": 0.5171268787137364,
+        "crossing_precision": 0.3116850551654965,
+        "crossing_recall": 0.985725614591594,
+        "crossing_f1": 0.4736140217184226,
+        "confusion": {
+          "tp": 1243,
+          "fp": 2745,
+          "fn": 18,
+          "tn": 1716
+        },
+        "t_cross_mae_steps": 3.29817605075337,
+        "t_cross_detection_rate": 0.9310071371927042,
+        "false_alarm_rate": 0.6153328850033625,
+        "n_windows_crossed": 1261,
+        "n_windows": 5722,
+        "skill_vs_ols_brier": -3.31182014870686,
+        "capacity_rps": 199.79999999999998,
+        "role": "selection",
+        "used_for_selection": true,
+        "day_type_coverage": {
+          "eval_range": [
+            23040,
+            28800
+          ],
+          "weekend_share": 0.16701388888888888,
+          "day_shares": {
+            "Fri": 0.833,
+            "Sat": 0.167
+          }
+        },
+        "windows": {
+          "inner_fit": [
+            0,
+            20084
+          ],
+          "inner_val": [
+            20122,
+            23002
+          ],
+          "eval_range": [
+            23040,
+            28800
+          ],
+          "normalizer": {
+            "method": "log1p-median-iqr",
+            "center": 4.560172820057356,
+            "scale": 0.8057660586680946,
+            "fit_range": [
+              0,
+              23002
+            ],
+            "n_fit": 23002
+          },
+          "pos_weight": 22.50671009771987
+        }
+      },
+      "clarknet-bcv-b5": {
+        "brier_per_step": 0.007759435482992643,
+        "brier_window": 0.11190621497156848,
+        "crossing_accuracy": 0.8533729465221951,
+        "crossing_precision": 0.0455607476635514,
+        "crossing_recall": 0.639344262295082,
+        "crossing_f1": 0.08505997818974917,
+        "confusion": {
+          "tp": 39,
+          "fp": 817,
+          "fn": 22,
+          "tn": 4844
+        },
+        "t_cross_mae_steps": 9.114754098360656,
+        "t_cross_detection_rate": 0.14754098360655737,
+        "false_alarm_rate": 0.1443207913796149,
+        "n_windows_crossed": 61,
+        "n_windows": 5722,
+        "skill_vs_ols_brier": -5.342784261954843,
+        "capacity_rps": 199.79999999999998,
+        "role": "ood_report",
+        "used_for_selection": false,
+        "day_type_coverage": {
+          "eval_range": [
+            28800,
+            34560
+          ],
+          "weekend_share": 1.0,
+          "day_shares": {
+            "Sat": 0.833,
+            "Sun": 0.167
+          }
+        },
+        "windows": {
+          "inner_fit": [
+            0,
+            25844
+          ],
+          "inner_val": [
+            25882,
+            28762
+          ],
+          "eval_range": [
+            28800,
+            34560
+          ],
+          "normalizer": {
+            "method": "log1p-median-iqr",
+            "center": 4.560172820057356,
+            "scale": 0.8057660586680946,
+            "fit_range": [
+              0,
+              28762
+            ],
+            "n_fit": 28762
+          },
+          "pos_weight": 22.353846153846153
+        }
+      },
+      "clarknet-deployment-frozen": {
+        "brier_per_step": 0.03609769182301112,
+        "brier_window": 0.12350359115930394,
+        "crossing_accuracy": 0.8708137380647,
+        "crossing_precision": 0.011450381679389313,
+        "crossing_recall": 1.0,
+        "crossing_f1": 0.022641509433962263,
+        "confusion": {
+          "tp": 21,
+          "fp": 1813,
+          "fn": 0,
+          "tn": 12200
+        },
+        "t_cross_mae_steps": 3.761904761904762,
+        "t_cross_detection_rate": 0.9047619047619048,
+        "false_alarm_rate": 0.12937986155712553,
+        "n_windows_crossed": 21,
+        "n_windows": 14034,
+        "skill_vs_ols_brier": -167.86500234804603,
+        "capacity_rps": 333.0,
+        "role": "deployment",
+        "used_for_selection": false,
+        "day_type_coverage": {
+          "eval_range": [
+            26243,
+            40315
+          ],
+          "weekend_share": 0.8186469584991473,
+          "day_shares": {
+            "Fri": 0.1133,
+            "Mon": 0.068,
+            "Sat": 0.4093,
+            "Sun": 0.4093
+          }
+        },
+        "windows": {
+          "inner_fit": [
+            0,
+            19582
+          ],
+          "inner_val": [
+            19620,
+            22500
+          ],
+          "eval_range": [
+            26243,
+            40315
+          ],
+          "normalizer": {
+            "method": "log1p-median-iqr",
+            "center": 4.560172820057356,
+            "scale": 0.8057660586680946,
+            "fit_range": [
+              0,
+              22500
+            ],
+            "n_fit": 22500
+          },
+          "pos_weight": 2442.0
+        }
+      }
+    }
+  },
+  "epochs_trained_per_seed": {
+    "42": 26,
+    "43": 59,
+    "44": 32
+  },
+  "artifacts": [
+    {
+      "path": "/home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/models/gru/2026-09-13_probe-t-cross/artifacts/t_cross_s42.pt",
+      "seed": 42,
+      "trained_on": "deployment train region [0, 22500) at served amplitude",
+      "capacity_rps": 333.0,
+      "capacity_source": "shared.models.calibration.CalibrationConfig.load(results/calibration/2026-08-06_definitive-repro.json)",
+      "sha256": "c8e7c1389b53d47642a852b87188b6d3345b7641e8a4cf022f55713187fc8a72"
+    },
+    {
+      "path": "/home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/models/gru/2026-09-13_probe-t-cross/artifacts/t_cross_s43.pt",
+      "seed": 43,
+      "trained_on": "deployment train region [0, 22500) at served amplitude",
+      "capacity_rps": 333.0,
+      "capacity_source": "shared.models.calibration.CalibrationConfig.load(results/calibration/2026-08-06_definitive-repro.json)",
+      "sha256": "9cb5a910af8871dabc48c42cb4e94c6b1145740aeade3e73eaae090e0d4de51a"
+    },
+    {
+      "path": "/home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/models/gru/2026-09-13_probe-t-cross/artifacts/t_cross_s44.pt",
+      "seed": 44,
+      "trained_on": "deployment train region [0, 22500) at served amplitude",
+      "capacity_rps": 333.0,
+      "capacity_source": "shared.models.calibration.CalibrationConfig.load(results/calibration/2026-08-06_definitive-repro.json)",
+      "sha256": "dd969a426c35f506b76cb1236b0470008c651b0b5eac52bde14be61317269cec"
+    }
+  ],
+  "serving_compatible": true,
+  "serving_note": "t_cross artifacts record target_mode='t_cross'; consumed via GRUPredictor.predict_crossing (probabilistic mode). Point-forecast artifacts and the /predict contract are unchanged.",
+  "selection_aggregate": {
+    "brier_per_step": {
+      "mean": 0.23264500875136104,
+      "std": 0.0429851994804942,
+      "min": 0.20420265067434393,
+      "max": 0.28209404004688254,
+      "n_blocks": 3
+    },
+    "t_cross_mae_steps": {
+      "mean": 3.496668381401752,
+      "std": 0.5100946436156482,
+      "min": 3.062338273347448,
+      "max": 4.0583832335329335,
+      "n_blocks": 3
+    },
+    "crossing_recall": {
+      "mean": 0.9878091364361471,
+      "std": 0.008749552685330068,
+      "min": 0.9802894211576847,
+      "max": 0.9974123735591626,
+      "n_blocks": 3
+    },
+    "crossing_precision": {
+      "mean": 0.33574897274358223,
+      "std": 0.023229279569024982,
+      "min": 0.30976441433965035,
+      "max": 0.3545033238567978,
+      "n_blocks": 3
+    },
+    "false_alarm_rate": {
+      "mean": 0.5978904115779783,
+      "std": 0.04703607085047256,
+      "min": 0.5437756497948016,
+      "max": 0.6289585753000387,
+      "n_blocks": 3
+    }
+  },
+  "ols_selection_brier": {
+    "mean": 0.04883037528965526,
+    "std": 0.005228386178911178,
+    "min": 0.04322497961085867,
+    "max": 0.053574896112470384,
+    "n_blocks": 3
+  },
+  "beats_ols_gate": {
+    "rule": "keep the lever iff mean per-step Brier on selection folds b2/b3/b4 beats OLS+threshold on identical windows",
+    "variant_mean_brier": 0.23264500875136104,
+    "ols_mean_brier": 0.04883037528965526,
+    "note": "the 29.4649 RMSE gate governs point-forecast variants; t_cross is gated on the capacity-relative Brier"
+  },
+  "ood_report_b5": {
+    "clarknet-bcv-b5": {
+      "brier_per_step": 0.0059668794875474655,
+      "brier_window": 0.07704770152926348,
+      "crossing_accuracy": 0.9009087731562391,
+      "crossing_precision": 0.059233449477351915,
+      "crossing_recall": 0.5573770491803278,
+      "crossing_f1": 0.10708661417322836,
+      "confusion": {
+        "tp": 34,
+        "fp": 540,
+        "fn": 27,
+        "tn": 5121
+      },
+      "t_cross_mae_steps": 9.704918032786885,
+      "t_cross_detection_rate": 0.06557377049180328,
+      "false_alarm_rate": 0.09538950715421304,
+      "n_windows_crossed": 61,
+      "n_windows": 5722,
+      "skill_vs_ols_brier": -3.8774977753923707,
+      "capacity_rps": 199.79999999999998,
+      "role": "ood_report",
+      "used_for_selection": false,
+      "day_type_coverage": {
+        "eval_range": [
+          28800,
+          34560
+        ],
+        "weekend_share": 1.0,
+        "day_shares": {
+          "Sat": 0.833,
+          "Sun": 0.167
+        }
+      }
+    }
+  },
+  "deployment_report": {
+    "clarknet-deployment-frozen": {
+      "brier_per_step": 0.030445755675273863,
+      "brier_window": 0.14294960918068156,
+      "crossing_accuracy": 0.8451617500356278,
+      "crossing_precision": 0.009571558796718322,
+      "crossing_recall": 1.0,
+      "crossing_f1": 0.018961625282167043,
+      "confusion": {
+        "tp": 21,
+        "fp": 2173,
+        "fn": 0,
+        "tn": 11840
+      },
+      "t_cross_mae_steps": 2.857142857142857,
+      "t_cross_detection_rate": 1.0,
+      "false_alarm_rate": 0.1550702918718333,
+      "n_windows_crossed": 21,
+      "n_windows": 14034,
+      "skill_vs_ols_brier": -141.42524504893115,
+      "capacity_rps": 333.0,
+      "role": "deployment",
+      "used_for_selection": false,
+      "day_type_coverage": {
+        "eval_range": [
+          26243,
+          40315
+        ],
+        "weekend_share": 0.8186469584991473,
+        "day_shares": {
+          "Fri": 0.1133,
+          "Mon": 0.068,
+          "Sat": 0.4093,
+          "Sun": 0.4093
+        }
+      }
+    }
+  }
+}

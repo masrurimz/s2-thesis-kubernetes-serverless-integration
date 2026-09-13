@@ -36,13 +36,15 @@ This is a work queue — not an interpretation or duplicate experiment report. U
 
   - **Status now:** a genuine 15-second ClarkNet-trained, leak-free artifact exists as of 2026-09-11, `results/models/gru/2026-09-10_clarknet-15s-h9-leakfree` (registry `role: final`, `status: current`, GRU holdout RMSE 29.635 ± 0.016, replay window held out). The remaining work is the paired rerun against that artifact, tracked as EVID-006.
 
-- [ ] EVID-006 — Paired S3/S4 rerun against the leak-free ClarkNet artifact
+- [x] EVID-006 — Paired S3/S4 rerun against the leak-free ClarkNet artifact
   - Priority: high
-  - State: ready, blocked on infrastructure
-  - Scope: `results/experiments/phase-b/<new-date>_clarknet-leakfree-paired-n5/`
-  - Prerequisite: promote `results/models/gru/2026-09-10_clarknet-15s-h9-leakfree/artifacts/clarknet_gru_s44.pt` to `data/models/gru_model.pt`, then bring up the testbed. Both k3d clusters are down as of 2026-09-11 (`thesis-hybrid` 0/1 servers, `thesis-serverless` 0/1 servers, API connection refused) and HAProxy is stopped, so this needs a full `thesis infra setup` plus `thesis infra deploy-app` before the runs.
-  - Done when: five counterbalanced S3/S4 pairs complete with full prediction delivery, `paired_analysis.json` reports the paired statistics, and the result is compared against the 2026-07-14 bundle to show whether the leak-free, ClarkNet-trained model changes the H2 conclusion.
-  - Why it matters: the current H2 result (p = 0.030, d = −1.26, S4 winning all five pairs) rests on a model trained on synthetic data for 18 seconds and never evaluated on the trace it served. The paired rerun is what makes the headline claim rest on an artifact the thesis can defend.
+  - State: complete, 2026-09-13
+  - Scope: `results/experiments/phase-b/2026-09-12_h2-confirmatory/`
+  - Outcome: five valid counterbalanced pairs, all ten runs passed the validity gate, the node tier engaged (two nodes per reactive run, eleven on the predictive arm), provisioning delays were paired arm-to-arm within a fraction of a second, and forecast delivery was 285 of 285. The paired verdict does not support H2 and leans the other way: reactive 342.7 ms against predictive 498.7 ms, difference +156.1 ms, 95 percent CI [-29.5, +416.7], exact permutation p = 0.7812, d = 0.54.
+  - Cause: every actionable forecast cycle converted into a proactive scaleup, but only 3 to 5 of 57 eligible cycles were actionable (0.053 to 0.088), and the node-arrival lead was approximately zero on four of five pairs. The cap is the qualification rule — a point forecast must exceed the capacity threshold inside the lead window — not the controller's willingness to act. Forecasting the crossing directly is the refinement that targets this rate.
+  - Artifact: the predictor was pinned on 2026-09-12 (commit 98e17d1), but the promotion swapped the files — the deployed `data/models/gru_model.pt` is the synthetic-arm leak-free winner (`7f8244bc...3099d`), and the ClarkNet winner (`20623c19...32e5`) was written to `gru_model.pre-leakfree-bak.pt`. Both the confirmatory and quiet batches loaded `7f8244bc...` from their `prediction_preflight` events, so their verdicts describe the synthetic-arm predictor. See EVID-009. The 2026-07-14 manifest carries an empty predictor block, so that batch's weights remain unverifiable.
+  - Variance: the paired standard deviation was 287 ms against 49 ms in the July batch, with per-run p99 from 116 to 1610 ms while probe training ran on the same box. The quiet re-run `results/experiments/phase-b/2026-09-13_h2-quiet/` repeats the profile on an idle machine to separate intrinsic hybrid variance from co-running load.
+  - Why it matters: the answer to this item's question is that the leak-free ClarkNet-trained artifact does not reproduce the July significance. The headline H2 claim now rests on one significant batch under an unpinned artifact plus this fair pre-registered null, and the thesis must say so in those terms.
 
 - [ ] EVID-007 — Symmetric GRU/LSTM study with both cells in one invocation
   - Priority: medium
@@ -52,6 +54,33 @@ This is a work queue — not an interpretation or duplicate experiment report. U
   - Prerequisite: none beyond CPU. Run it on an idle machine.
   - Done when: three seeds per cell complete under the identical refit call, `paired_tests` is non-empty in `metrics.json`, and the asymmetry note in the predictor section of `FINAL_NUMBERS.md` can be deleted.
   - Why it matters: the two published arms were produced by different revisions of the refit call. Both are leak-free and the difference is disclosed, and it works against the GRU claim, but a comparison should not rest on an asymmetry the reader has to reason about. This run removes the caveat and gives the paired test committed provenance inside the bundle rather than only in `scripts/gru_predictor_analysis.py`.
+
+- [ ] EVID-008 — Extend the evidence scanner to the models root
+  - Priority: low
+  - State: ready, deliberately not done during a measurement window
+  - Scope: `apps/experiment/experiment/evidence/registry.py::scan_bundles` plus `_bundle_id`'s `root_name`
+  - Gap: `scan_bundles` walks `results/experiments/` only, so the model bundles under `results/models/gru/` are never reconciled. The four 2026-09-13 bundles (two EDAs, representation search, crossing target) carry `meta.yaml` and `report.md` and still do not appear in `registry.yaml`; the `models.*` entries that do exist were written outside the current CLI.
+  - Done when: `thesis experiment evidence reconcile --apply` creates entries for every `results/models/gru/<date>_*` bundle that has a `meta.yaml`, and the four 2026-09-13 bundles appear with the human-owned role and status set.
+
+- [ ] EVID-009 — Promotion swapped the deployed predictor for the synthetic-arm artifact
+  - Priority: high
+  - State: **swap done 2026-09-13** — `data/models/gru_model.pt` now carries the ClarkNet winner `20623c19c8407b116dcbcffe12a79a58fbedf24c4e731b8659206b5cb77032e5`, sidecar replaced with the champion's (2-layer, scaler 98.41/52.18), predictor restarted and `/predict` verified; the synthetic artifact is backed up as `gru_model.pt.pre-evid009`. Remaining: the pair batch against the correct artifact, and the provenance naming in the write-up.
+  - Evidence: `data/models/gru_model.pt` hashed `7f8244bcc403c59a3e2be5d31b1ee5586f01c0052416c2705c0a325d1cc3099d` (the synthetic-arm artifact, LFS object of `2026-09-11_synthetic-15s-h9-leakfree/artifacts/synthetic_gru_s42.pt`) was served for the confirmatory and quiet batches while the chapter attributed them to the leak-free ClarkNet artifact. Runtime-reported scaler (107.66/23.98), layer count and val coverage matched the synthetic sidecar to the last digit.
+  - Consequence: the confirmatory and quiet pair batches measured the synthetic-arm predictor. The quiet batch was stopped 2026-09-13 (user decision: fix the model first); its S4 half was void either way.
+  - Done when: a pair batch runs against `20623c19c840…` and the predictor provenance in `FINAL_NUMBERS.md`, `CLAIMS_TO_EVIDENCE.md` and the thesis book names the artifact each batch actually loaded.
+
+- [ ] EVID-010 — Spend the remaining predictor-training levers
+  - Priority: high
+  - State: ready, box-bound; every item below is implemented or a small change, none is blocked on design
+  - Context: the split protocol delivered honesty rather than accuracy — it replaced leak-inflated synthetic numbers with the real 29.635 against OLS 29.465 — and the data explains why RMSE cannot move: 30-minute autocorrelation 0.54, so a 135-second horizon is level and slope. **Quantified 2026-09-13** (`2026-09-13_eda-clarknet/eda.json` `forecastability`): permutation entropy at the modeling unit is 0.9876 (m=5; white-noise reference 0.9996), and the residuals of a one-step level+slope fit carry 43.6% of the variance at PE 0.9946 — the linear-unexplained part of ClarkNet is ordinally indistinguishable from noise, so the RMSE ceiling is a measured property of the corpus (Bandt-Pompe; forecastability-measures-2025). Contrast: Calgary reads PE 0.374 with an 86.1% linear-unexplained variance share — sparse/bursty structure linear cannot capture, which is real headroom for a nonlinear model (Kourentzes 2013: the right target there is a demand rate, not the raw level).
+  - Unspent, ranked:
+    1. HPO budget. The deployed winner's study passed `--n-trials 6`; the CLI default is 30 and the space now carries weight decay (1e-6 to 1e-2 log), gradient clipping (0, 1, 5) and input dropout (0 to 0.3) on top of the original six knobs. The calendar variant falling 42% behind persistence (`skill_vs_ols` −0.378, worse than naive) is a training-pathology signature — overfitting or a feature-scaling failure, and it predates the canonical normalisation — so both the regularisation space and the input contract are under-searched. Target 50 or more trials per cell. Driver: `~/.local/state/thesis-run/evid010.sh` block 1.
+    2. More training days. The ClarkNet parquet holds exactly 7 days. Named source now: **NASA-HTTP** (ita.ee.lbl.gov/html/contrib/NASA-HTTP.html) — two months of full HTTP logs from the KSC server in the same format, ~8x the span, enough for the 7-day-block CV ClarkNet cannot support. Acquisition + the existing parquet pipeline; a data job, not a modelling one.
+    3. Calgary pretrain → ClarkNet fine-tune, **retargeted**: pretrain on crossing/rate labels (84.1% of Calgary buckets are zero; point-RPS pretraining would mostly teach "predict zero"), fine-tune on ClarkNet crossing labels. Module exists (`experiment/tuning/calgary_pretrain.py`, uncommitted).
+    4. Multi-scale input. `window120` (2 h look-back) was the least-bad variant at −0.0035 with a derived test start; concatenating short and long windows is untested.
+    5. The four within-day feature variants (queued, wave-2 driver) plus a genuine ensemble — `ensemble.json` in the 2026-09-10 probe set records n/a, so no ensemble was ever measured.
+    6. Wrapper strategies: recursive one-step, per-horizon heads, and seq2seq against the current direct 9-step head.
+    7. Objective: the crossing head already beats the linear arm's 0.8 to 4.2% recall with 0.988. Calibration + validation-only threshold sweep **running 2026-09-13** (`2026-09-13_t-cross-calibration`, record pending); asymmetric loss penalising under-prediction is the untested extension.
 
 
 - [ ] EVID-004 — Apply treatment-fidelity gate to DynamicExperimentRunner (Phase C)

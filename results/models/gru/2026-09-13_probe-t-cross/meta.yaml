@@ -1,0 +1,9 @@
+study: capacity-relative-crossing-target
+created: '2026-09-13'
+protocol: per-fold OLS gate per interval under the leak-free split protocol; 60 s variants gated against their own per-fold OLS (25.1746 served RPS)
+findings:
+  interval: 60 s buckets lower fold error for any model (36.69 to 25.18 served RPS for the autoregression, 36.69 to 25.30 for the network, horizon 135 to 180 s); an interval and horizon change, not a modelling win
+  crossing_target: recall 0.988 +/- 0.009 against 0.008-0.042 for OLS plus threshold and 0.119-0.163 for persistence, at precision 0.336, false-alarm rate 0.598, crossing-time MAE 3.50 steps (about 52 s), Brier 0.233 against 0.049
+verdict: the decision rule is recall at a bounded false-alarm rate; calibration is pending
+outputs:
+  t_cross.json: full records

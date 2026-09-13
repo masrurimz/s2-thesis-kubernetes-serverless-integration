@@ -10,7 +10,7 @@
 | **Diagnostic (n=1)** | `results/experiments/phase-b/2026-07-11_scaling_fix_n1` | Four-scenario (S1–S4) single-run diagnostic | Descriptive only. Directional mechanism evidence. |
 | **Paired H2 (n=5, clean)** | `results/experiments/phase-b/2026-07-12_paired-h2-clean-v2` | Counterbalanced S3/S4 paired comparison, ClarkNet, h=5 model | **⚠️ Superseded — see definitive n=5 below.** |
 | **Dynamic node diagnostic (n=1)** | `results/experiments/phase-b/2026-07-13_clarknet-dynamic-node-n1` | ClarkNet variable load, all tiers exercised, h=9 model | Descriptive. First proactive scaling evidence (predictive_count=4). |
-| **Paired H2 (n=5, tuned, definitive)** | `results/experiments/phase-b/2026-07-14_clarknet-tuned-paired-n5` | Counterbalanced S3/S4, ClarkNet, h=9, consolidation active, tuned S3 | **✅ Definitive.** H2 supported: p=0.030, d=−1.26 (large). |
+| **Paired H2 (n=5, tuned, definitive)** | `results/experiments/phase-b/2026-07-14_clarknet-tuned-paired-n5` | Counterbalanced S3/S4, ClarkNet, h=9, consolidation active, tuned S3 | **✅ Definitive.** H2 supported: p=0.0312 (1/32 design floor at n=5), d=−1.26 (large). |
 
 The earlier `2026-07-11_paired-h2` and `2026-07-12_paired-h2-clean-v2` bundles are retained as historical records. The definitive paired result is `2026-07-14_clarknet-tuned-paired-n5`.
 
@@ -184,14 +184,14 @@ With horizon=9, S4 passed the actuator-fidelity validity gate (`forecast_horizon
 
 **All 5 pairs valid (5/5).** H2 **supported**.
 
-**Statistical correction policy:** Primary p99 p=0.0304 is the pre-specified test (significant at α=0.05). Secondary metrics p95 and SLO have corrected p=0.1216 (not significant after multiplicity correction across 5 metrics). Report secondaries as descriptive only.
+**Statistical correction policy:** Primary p99 p=0.0312 is the pre-specified test (significant at α=0.05). The value is the 1/32 design floor at n = 5: all five pairs fell the same way, so no smaller p is attainable. The stored bundle artifact records 0.0304 from an older analysis routine; the current `thesis experiment analyze` recomputes 1/32; the same exact routine returns 1/32 for both secondaries (p95 and SLO), so their uncorrected p is 0.0312 and the same four-fold correction gives 0.1248, while the stored artifact records 0.0304 and 0.1216. Predictor provenance: `data/models/gru_model.pt` entered version control on 2026-09-12 (commit 98e17d1, LFS oid 7f8244bcc403c59a3e2be5d31b1ee5586f01c0052416c2705c0a325d1cc3099d) as the deployed artifact. The 2026-07-14 manifest records an empty predictor block, so this batch's weights cannot be verified, and later batches do not reproduce its significance. Secondary metrics p95 and SLO have corrected p=0.1248 (the stored artifact records 0.1216) and stay not significant. Report secondaries as descriptive only.
 
 | Metric | S3 (Reactive) | S4 (Predictive) | Difference | Statistic |
 |---|---|---|---|---|
-| Mean p99 | 188.5 ms | 126.0 ms | −62.5 ms (−33.1%) | p=0.030, d=−1.26 |
+| Mean p99 | 188.5 ms | 126.0 ms | −62.5 ms (−33.1%) | p=0.0312, d=−1.26 |
 | 95% CI | — | — | [−100.9, −26.2] | Entirely below zero |
-| Mean SLO violations | 656 | 130 | −526 (−80.2%) | p=0.030, d=−1.35 |
-| Mean p95 | 95.8 ms | 81.9 ms | −13.9 ms (−14.5%) | p=0.030, d=−3.52 (both corrected p=0.122) |
+| Mean SLO violations | 656 | 130 | −526 (−80.2%) | p=0.0312, d=−1.35 |
+| Mean p95 | 95.8 ms | 81.9 ms | −13.9 ms (−14.5%) | p=0.0312, d=−3.52 (both corrected p=0.125) |
 | Monthly cost | USD 163 | USD 163 | identical | — |
 
 Per-pair p99 values:
@@ -261,7 +261,7 @@ The 2026-09-10 GRU bundle's artifacts also stored an error metric equal to their
 | Skill against persistence | 0.219 |
 | Baselines on identical windows | persistence 7.768, linear trend 12.152, seasonal naive 11.297 |
 
-**Verdict on H3:** the pre-registered target, RMSE under 10% of the mean and MAE under 5%, **is met on synthetic data** under the leak-free protocol at horizon 9, with 5.2% and 4.1% respectively. It is **not met on the real deployment trace**, where RMSE is 39.6% of the mean. These two numbers are the honest pair to report: 5.2% on synthetic, 39.6% on amplified ClarkNet. The superseded figures of 4.75% and 6.01% should not be quoted; 5.2% replaces them, and the gap between synthetic and real is now measured under one protocol rather than across two.
+**Verdict on H3:** the pre-registered target, RMSE under 10% of the mean and MAE under 5%, **is met on synthetic data** under the leak-free protocol at horizon 9, with 5.2% and 4.1% respectively. It is **not met on the held-out region of the real deployment trace**, where RMSE is 39.6% of the mean. These two numbers are the honest pair to report: 5.2% on synthetic, 39.6% on amplified ClarkNet. The superseded figures of 4.75% and 6.01% should not be quoted; 5.2% replaces them, and the gap between synthetic and real is now measured under one protocol rather than across two.
 
 ### Modern lever screening (2026-09-11), single seed, one lever at a time
 
@@ -276,5 +276,27 @@ The 2026-09-10 GRU bundle's artifacts also stored an error metric equal to their
 | pinball loss at q=0.9 | 50.4815 | 29.4649 | −0.3350 | mis-specified for a point head, 70% worse |
 
 **Not one variant beats the linear autoregression on the same windows.** The 120-window is the only lever that lowers absolute error, and it lowers the linear arm by the same amount, so model parity is structural rather than a tuning artefact. It was not adopted into the registered bundle because the study-protocol run costs six to twelve hours at this window; the probe evidence is recorded here and the adoption is future work.
+
+### Representation lever study, leak-free fold protocol (2026-09-13)
+
+**Source:** `results/models/gru/2026-09-13_probes-representation/`. Twelve representation levers were specified against the per-fold OLS autoregression on selection folds b2/b3/b4. Eight are complete (interval30, interval60, revin_robust, nlinear, diff_target, robust_scale, quantile_norm, nbeats) and four are queued (roll_stats, ewma, diff_input, decomp). Every record pins `splits_module.sha256` = 5f937edb361fbcea1a49334d92d768d409eefd1b12c563c5e708b9a1919631e3.
+
+Units: all RMSE values below are at the served amplitude (counts per 15 s bucket / 15 × 33.0). The 15 s selection-fold gate is 36.69 served RPS (= 16.677 counts per bucket); the measured fold OLS mean across the completed 15 s variants is 36.6896 ± 0.2396.
+
+- None of the eight beats the linear model (`beats_ols_on_selection_folds = false` in every record).
+- Selection-fold skill vs OLS ranges from −0.01% (`robust_scale`, −9.1e-05, parity to the fourth decimal) to −3.68% (`nbeats`).
+- Closest: `nlinear` at −0.30%, Diebold-Mariano p 0.29. `nlinear` beats OLS on the test region (+0.05% skill) and still fails the selection gate; the selection folds decide.
+- Per-day-type parity for `nlinear` vs OLS (served RPS): Friday evening 46.0 vs 45.6, Saturday 27.8 vs 27.9, Sunday 25.2 vs 25.3, Monday 27.8 vs 27.7.
+
+Disclosed conclusion: the deployed point predictor should be the linear autoregression. The network's parity is a limitation of the thesis, not a hidden fact.
+
+### Interval change and capacity-relative crossing target (2026-09-13)
+
+**Source:** `results/models/gru/2026-09-13_probe-t-cross/`.
+
+- 60-second buckets lower absolute error for any model: the fold error falls from 36.69 to 25.18 served RPS for the autoregression and from 36.69 to 25.30 for the network, because the target becomes coarser and the wall-clock horizon grows from 135 to 180 seconds. This is an interval and horizon change, not a modelling win. Each resampled variant is gated against its own per-fold OLS (25.1746 at 60 s), because cross-interval RMSE is not comparable.
+- Capacity-relative crossing target: recall 0.988 ± 0.009, against 0.008 to 0.042 for OLS plus threshold and 0.119 to 0.163 for persistence. Precision 0.336, false-alarm rate 0.598, predicted crossing-time MAE 3.50 steps (about 52 s).
+- The target fails the per-step Brier rule, 0.233 against 0.049, because it is overconfident. The decision rule for this target is recall at a bounded false-alarm rate, and calibration work is pending.
+- Labels exist only where the capacity ceiling is approached: the selection folds and the OOD report use the code default of 6 replicas (199.8 served RPS); the deployment arm's paired configuration uses 10 (333.0 served RPS).
 
 
