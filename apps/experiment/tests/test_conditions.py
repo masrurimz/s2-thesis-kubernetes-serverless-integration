@@ -117,3 +117,78 @@ def test_serverless_only_runs_do_not_require_the_k8s_endpoint(monkeypatch):
 
     assert report["ok"] is True
     assert "k8s_endpoint_serving" not in report["checks"]
+
+
+def test_refuses_a_ceiling_the_replayed_load_already_saturates(monkeypatch):
+    """A saturation-pinned ceiling leaves the forecast nothing to exceed.
+
+    The cap-6 tight profile is the measured case: 11 of 40 ClarkNet stages saturate
+    that ceiling and the predictive arm produced 0 actionable cycles in 57 eligible
+    ones, so the design would compare a reactive arm against itself.
+    """
+    _patch(monkeypatch)
+    # The testbed genuinely at cap 6, so this isolates the headroom rule from the
+    # capacity-contract check that compares the declaration against the live cluster.
+    monkeypatch.setattr(conditions_module, "_resolved_max_replicas", lambda: 6)
+
+    with pytest.raises(ConditionsUnmet) as excinfo:
+        apply(
+            RunConditions(
+                agents=1,
+                needs_prediction_server=True,
+                capacity={"max_k8s_replicas": 6},
+            ),
+            scenario="s4-hybrid-predictive",
+        )
+
+    message = str(excinfo.value)
+    assert "capacity_headroom" in message
+    # The refusal carries the arithmetic, so the ceiling to move to is unambiguous.
+    assert "of 40" in message
+
+
+def test_passes_a_ceiling_the_replayed_load_sits_under(monkeypatch):
+    """The cap-10 confirmatory ceiling is what the paired design needs."""
+    _patch(monkeypatch)
+    monkeypatch.setattr(conditions_module, "_resolved_max_replicas", lambda: 10)
+
+    report = apply(
+        RunConditions(agents=1, needs_prediction_server=True, capacity={"max_k8s_replicas": 10}),
+        scenario="s4-hybrid-predictive",
+    )
+
+    assert report["checks"]["capacity_headroom"] is True
+    assert report["ok"] is True
+
+
+def test_a_reactive_run_is_not_held_to_the_headroom_rule(monkeypatch):
+    """Without a predictor there is no proactive path for a tight ceiling to starve."""
+    _patch(monkeypatch)
+    monkeypatch.setattr(conditions_module, "_resolved_max_replicas", lambda: 6)
+
+    report = apply(
+        RunConditions(agents=1, capacity={"max_k8s_replicas": 6}),
+        scenario="s3-hybrid-reactive",
+    )
+
+    assert "capacity_headroom" not in report["checks"]
+    assert report["ok"] is True
+
+
+def test_an_unknown_workload_is_an_unstated_assumption(monkeypatch):
+    """No stages file means no measurement, which is not a failure."""
+    _patch(monkeypatch)
+    monkeypatch.setattr(conditions_module, "_resolved_max_replicas", lambda: 6)
+
+    report = apply(
+        RunConditions(
+            agents=1,
+            needs_prediction_server=True,
+            capacity={"max_k8s_replicas": 6},
+            workload="no-such-workload",
+        ),
+        scenario="s4-hybrid-predictive",
+    )
+
+    assert "capacity_headroom" not in report["checks"]
+    assert report["ok"] is True

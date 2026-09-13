@@ -111,6 +111,38 @@ class TestS4PartialDelivery:
         assert out.run_validity_passed is False
 
 
+class TestS4TreatmentApplied:
+    """Complete delivery that never acted is not treatment."""
+
+    def test_zero_actionable_cycles_fails(self):
+        """Delivery is not treatment: every forecast arrived and none changed a decision.
+
+        The cap-6 tight runs delivered 57 of 57 eligible forecasts and issued no
+        proactive scale-up, because no forecast could exceed a ceiling the load already
+        saturated. Size-wise that is the reactive arm's own target, so the run measures
+        the reactive arm under a predictive label.
+        """
+        out = evaluate_run_validity(
+            _make_result(),
+            scenario="s4-hybrid-predictive",
+            preflight_passed=True,
+            daemon_status={
+                "prediction_eligible_cycles": 57,
+                "prediction_delivery_failures": 0,
+                "model_history_ready": True,
+                "forecast_horizon_sufficient": True,
+                "forecast_actionable_cycles": 0,
+                "proactive_scaleups": 0,
+            },
+        )
+        tf = out.treatment_fidelity
+        assert tf is not None
+        assert tf.delivery_rate == 1.0
+        assert tf.delivered is False
+        assert any("actionable" in r for r in tf.reasons)
+        assert out.run_validity_passed is False
+
+
 class TestS3Unaffected:
     """S3 (reactive) has no prediction requirement and is left untouched."""
 

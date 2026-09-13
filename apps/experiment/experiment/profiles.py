@@ -119,15 +119,19 @@ PROFILES: dict[str, ExperimentProfile] = {
     "h2-pair-tight": ExperimentProfile(
         name="h2-pair-tight",
         description=(
-            "Counterbalanced S3/S4 pairs under a capacity ceiling the replayed load "
-            "actually reaches. Six replicas at 33.3 RPS each is 199.8 RPS against a "
-            "replay peak of 164, a 1.22x margin, where h2-pair's ten-replica ceiling "
-            "of 333.0 RPS is a 2.0x margin the replay never approaches: the crossing "
-            "label is 0.35 percent of fitting windows there and only 3 to 5 of 57 "
-            "eligible forecast cycles were actionable. This ceiling is also the one "
-            "the t_cross crossing target was trained and judged at, so the "
-            "predictive arm's qualification rule, a forecast above capacity inside "
-            "the lead window, can fire."
+            "A six-replica ceiling, declared to make the forecast exceed capacity more "
+            "often than the ten-replica paired design does. Measured on 2026-09-13 "
+            "(2026-09-13_h2-pair-tight-5p), the premise was inverted: six replicas at "
+            "33.3 RPS each is 199.8 RPS and the replayed ClarkNet trace peaks at 164, so "
+            "no stage saturates the ceiling, no forecast can exceed it, and the "
+            "predictive arm produced 0 actionable cycles in 57 eligible ones against 3 "
+            "to 5 at the ten-replica ceiling. S4's p99 came out 1885 to 4694 ms against "
+            "1151 to 1573 for S3, 4x the cap-10 runs. The sizing law is why: the "
+            "threshold for a proactive scale-up is the reactively-required target, which "
+            "with alpha 0.0601 is about 16.65 RPS per replica, so a tighter ceiling "
+            "lowers that threshold and can only reduce the forecast's headroom. Kept as "
+            "the regression case the capacity-headroom refusal in experiment.conditions "
+            "is written against; it cannot run, and that is the point. Use h2-pair."
         ),
         scenarios=(_S3, _S4),
         pairs=5,

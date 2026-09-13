@@ -9,6 +9,9 @@ job, because the failure is silent in both directions:
   measures its own pod tier.
 * Run while the host is oversubscribed and the work that is not the experiment
   lands in the tail latency, which then reads as the arm's behaviour.
+* Declare a replica ceiling the replayed load already saturates, and the
+  predictive arm has nothing to pre-empt: no forecast can exceed a ceiling the
+  load pins, so the run measures a reactive arm under a predictive label.
 
 Every entry point that executes a run goes through ``apply`` here, so no path can
 skip the conditioning, and the report it returns is written into the run's journal
@@ -17,6 +20,8 @@ and manifest.
 
 from __future__ import annotations
 
+import json
+import math
 import os
 import subprocess
 from dataclasses import dataclass, field
@@ -30,6 +35,16 @@ logger = structlog.get_logger(__name__)
 REFUSE_LOAD_RATIO = 1.0
 # Above this the measurement is still taken, with the load recorded as a caveat.
 WARN_LOAD_RATIO = 0.5
+
+# The share of replay stages that may saturate a declared replica ceiling before
+# the predictive design stops being one. The arm acts only when its forecast
+# exceeds the capacity the load already requires, and a saturation-pinned ceiling
+# leaves that difference identically zero. Measured at the cap-6 tight ceiling
+# (2026-09-13_h2-pair-tight-5p): 11 of 40 stages saturate, 0 of 57 eligible cycles
+# were actionable, and S4's p99 came out 4x the cap-10 runs', which carried 3 to 5
+# actionable cycles. So a design that tests the predictive arm needs a ceiling
+# most of the replayed load sits under.
+MIN_HEADROOM_STAGE_SHARE = 0.05
 
 # The VM boot delay the autoscaler models; a declared per-pair delay outside
 # this range is a profile claiming a testbed property nobody calibrated.
@@ -57,6 +72,10 @@ class RunConditions:
     # The declared capacity contract, checked against the live testbed in apply().
     # Empty means "no contract declared" and must not fail the run.
     capacity: Mapping[str, float | int | str] = field(default_factory=dict)
+    # The workload whose replay stages the capacity-headroom check reads. Named
+    # rather than assumed so a spike or ramp profile is checked against its own
+    # trace. Empty resolves the same default the runner itself uses.
+    workload: str = ""
 
     @classmethod
     def for_scenarios(
@@ -221,6 +240,64 @@ def _capacity_checks(
     return checks, notes
 
 
+def _saturated_stage_share(workload: str, max_replicas: int) -> tuple[str, float, int, int] | None:
+    """Share of replay stages whose load saturates a declared replica ceiling.
+
+    Saturation asks the daemon's own question: would Algorithm 2's sizing law,
+    ``ceil(alpha * buffer * load)``, already return the ceiling for this stage?
+    The alpha and buffer come from the active calibration, so this tracks the
+    sizing model instead of restating it, and the ceiling from the declared
+    contract, which ``_capacity_checks`` has already matched to the live testbed.
+
+    Returns the resolved workload label with the numbers, so a refusal names the
+    trace it measured rather than the empty string a caller may have left.
+    None when the stages file is unreadable or empty, which is an unstated
+    assumption rather than a failure — the same reading ``_capacity_checks`` gives
+    an absent key.
+    """
+    from experiment.stages.workload import WORKLOAD_STAGES, default_stages_path
+    from shared.models.calibration import get_calibration
+
+    try:
+        path = default_stages_path(workload or None)
+        stages = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return None
+    targets = [float(stage["target"]) for stage in stages if "target" in stage]
+    if not targets:
+        return None
+
+    label = next((name for name, filename in WORKLOAD_STAGES.items() if path.name == filename), path.name)
+    calibration = get_calibration()
+    alpha, buffer = calibration.alpha, calibration.buffer
+    saturated = sum(1 for load in targets if min(max_replicas, math.ceil(alpha * buffer * load)) >= max_replicas)
+    return label, saturated / len(targets), saturated, len(targets)
+
+
+def _headroom_check(conditions: RunConditions) -> tuple[bool, str] | None:
+    """Refuse a predictive design whose declared ceiling leaves the load no headroom.
+
+    Only a run that needs the predictor and declares a ceiling can fail: without a
+    predictor there is no proactive path to starve, and without a declared ceiling
+    there is no contract to hold the design to.
+    """
+    if not conditions.needs_prediction_server or "max_k8s_replicas" not in conditions.capacity:
+        return None
+    ceiling = int(conditions.capacity["max_k8s_replicas"])
+    measured = _saturated_stage_share(conditions.workload, ceiling)
+    if measured is None:
+        return None
+    label, share, saturated, total = measured
+    if share < MIN_HEADROOM_STAGE_SHARE:
+        return True, ""
+    return False, (
+        f"capacity headroom: {saturated} of {total} {label} replay stages "
+        f"({share:.0%}) already saturate the declared {ceiling}-replica ceiling, so a forecast "
+        f"cannot exceed it and the predictive arm can issue no proactive scale-up; declare a "
+        f"ceiling most of the replay sits under"
+    )
+
+
 def apply(conditions: RunConditions, *, scenario: str = "", console: Any = None) -> dict:
     """Converge the testbed, run the sanity checks, and refuse when unmet.
 
@@ -282,6 +359,12 @@ def apply(conditions: RunConditions, *, scenario: str = "", console: Any = None)
         checks.update(capacity_checks)
         notes.extend(capacity_notes)
 
+    headroom = _headroom_check(conditions)
+    if headroom is not None:
+        checks["capacity_headroom"], headroom_note = headroom
+        if headroom_note:
+            notes.append(headroom_note)
+
     if conditions.check_host_load:
         load = _host_load()
         checks["host_load"] = load["ratio"] < REFUSE_LOAD_RATIO
@@ -302,6 +385,7 @@ def apply(conditions: RunConditions, *, scenario: str = "", console: Any = None)
         "scenario": scenario,
         "provision_delay_sec": conditions.provision_delay_sec,
         "capacity": dict(conditions.capacity),
+        "workload": conditions.workload,
     }
 
     if report["ok"]:

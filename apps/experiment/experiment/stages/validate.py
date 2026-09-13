@@ -111,6 +111,7 @@ def evaluate_run_validity(
         and delivery_rate >= 1.0
         and model_history_ready
         and forecast_horizon_sufficient
+        and forecast_actionable > 0
     )
 
     reasons: list[str] = []
@@ -126,6 +127,14 @@ def evaluate_run_validity(
         reasons.append("model history never reached true input window (mean-value padding excluded)")
     if not forecast_horizon_sufficient:
         reasons.append("forecast horizon shorter than measured provisioning delay")
+    if forecast_actionable == 0:
+        # Delivery is not treatment. A forecast that never exceeds the observed
+        # requirement sizes the same target the reactive arm already reached, so no
+        # proactive scale-up is issued and the arm under test is the reactive one.
+        reasons.append(
+            "forecast was never actionable: no cycle's predicted requirement exceeded the observed "
+            "target, so the predictive arm issued no proactive scale-up and the treatment went unapplied"
+        )
 
     result.treatment_fidelity = TreatmentFidelity(
         required=True,
