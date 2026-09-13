@@ -6,9 +6,9 @@ This section synthesizes the final evidence across the diagnostic and definitive
 
 The n=1 four-scenario diagnostic (`2026-07-11_scaling_fix_n1`) establishes directional mechanism evidence. S4 p99 was 118.2 ms versus 2,421.3 ms for S1 (−95.1%), while S3 was 98.8 ms. These values should not be treated as inferential H1 evidence because the diagnostic has one run per scenario.
 
-The definitive ClarkNet paired bundle (`2026-07-14_clarknet-tuned-paired-n5`) establishes H2 for its pre-specified primary p99 metric. Across five counterbalanced pairs, S3 mean p99 was 188.5 ms and S4 mean p99 was 126.0 ms (difference −62.5 ms; 95% CI [−100.9, −26.2]; p=0.030; paired d=−1.26). S4 won all five pairs. Thus the earlier statement that statistical superiority could not be established is superseded: **H2 is established for the primary p99 comparison**.
+The definitive ClarkNet paired bundle (`2026-07-14_clarknet-tuned-paired-n5`) establishes H2 for its pre-specified primary p99 metric. Across five counterbalanced pairs, S3 mean p99 was 188.5 ms and S4 mean p99 was 126.0 ms (difference −62.5 ms; 95% CI [−100.9, −26.2]; p=0.0312, the 1/32 design floor at n = 5; paired d=−1.26). S4 won all five pairs. Thus the earlier statement that statistical superiority could not be established is superseded: **H2 is established for the primary p99 comparison**.
 
-Mean SLO violations also favored S4 (656 versus 130, −80.2%), but p95 and SLO are secondary metrics. Their multiplicity-corrected p-value is 0.1216, so these effects are reported descriptively rather than as additional confirmatory claims. S3 and S4 have identical projected monthly cost, USD 163.
+Mean SLO violations also favored S4 (656 versus 130, −80.2%), but p95 and SLO are secondary metrics. Their multiplicity-corrected p-value is 0.1248, so these effects are reported descriptively rather than as additional confirmatory claims. S3 and S4 have identical projected monthly cost, USD 163.
 
 The GRU result remains mixed by data source: synthetic RMSE is 4.75% after HPO (6.01% pre-HPO), whereas ClarkNet RMSE is 17.78%. The mechanism is usable under confidence gating, but real-trace accuracy does not meet the original threshold.
 
@@ -29,7 +29,7 @@ The paired H2 result is valid for the specified ClarkNet replay, h=9 model, cons
 1. A GRU-based workload predictor whose synthetic accuracy meets the target and whose real-trace limitation is disclosed.
 2. A V3 capacity-driven routing controller with the priority order **SCALE_OUT > PREDICTIVE > OPTIMIZE_COST > MAINTAIN**, with no separate SCALE_IN action.
 3. An implemented Algorithm 2 that uses $R=\alpha x+\beta$ and assigns prediction to proactive Kubernetes scaling rather than routing weights.
-4. A counterbalanced paired evaluation showing H2 primary p99 superiority (p=0.030, d=−1.26) at identical projected S3/S4 cost, while reporting corrected secondary metrics descriptively.
+4. A counterbalanced paired evaluation showing H2 primary p99 superiority (p=0.0312, d=−1.26) at identical projected S3/S4 cost, while reporting corrected secondary metrics descriptively.
 
 ### 4.6.5 Comparison with the ElaX Framework
 
@@ -37,7 +37,7 @@ ElaX's two-layer structure is retained: Algorithm 1 governs routing and Algorith
 
 ### 4.6.6 Defensible Position
 
-The final evidence supports the following framing: the hybrid system mechanisms are implemented and validated; H1 is directional at n=1; and H2 is supported for the pre-specified primary p99 metric in the definitive paired n=5 experiment. Secondary p95 and SLO effects are favorable but not statistically significant after correction (p=0.1216). The result is strong mechanism and primary-performance evidence under a controlled multi-node stress harness, not a claim of universal cloud performance or billed-cost savings.
+The final evidence supports the following framing: the hybrid system mechanisms are implemented and validated; H1 is directional at n=1; and H2 is supported for the pre-specified primary p99 metric in the definitive paired n=5 experiment. Secondary p95 and SLO effects are favorable but not statistically significant after correction (p=0.1248). The result is strong mechanism and primary-performance evidence under a controlled multi-node stress harness, not a claim of universal cloud performance or billed-cost savings.
 
 ---
 

@@ -293,6 +293,14 @@ Categories: contribution | drift | method | data/model | results/statistics | va
 - The replay-window exposure is closed rather than disclosed. In the new study the splits are train 0 to 22500, validation 22539 to 26205, test 26243 to 40315, and the replay window at 15-second samples 28940 to 29020 falls inside the test portion, which is never trained on. The old risk, where the window at 71.8 percent of the series sat inside the development region, no longer exists.
 - What remains true for the examiner: the predictor is refit per deployment trace by design, as ElaX and Mondal also do, and only S4 consumes a forecast, so any trace-aware tuning can only inflate the arm the thesis claims wins.
 
+### Correction 2026-09-13 — the deployed artifact is ClarkNet-trained, and the replayed window is held out
+- The deployed artifact changed. `data/models/gru_model.pt` entered version control on 2026-09-12 (commit `98e17d1`, LFS oid `7f8244bcc403c59a3e2be5d31b1ee5586f01c0052416c2705c0a325d1cc3099d`) as the promoted winner of the leak-free ClarkNet study. The July statement that the weights are synthetic-trained no longer describes the artifact the testbed serves.
+- The study trains on the ClarkNet 15 s series with chronological splits and an embargo: train [0, 22500), validation [22539, 26205), test [26243, 40315), and the scaler is fitted on the amplified training portion only.
+- The replayed window is held out. The 15 s series runs from 1995-08-28 04:00:30 to 1995-09-04 03:59:00. Index 22500 maps to 1995-09-01 01:45:30, index 26205 to 1995-09-01 17:11:45, and index 26243 to 1995-09-01 17:21:15. The replayed window is 1995-09-02 04:35:30 to 04:55:00, so it lies in the test region, about 11 hours after the fitting region ends. The manifest's `window_start_idx` of 14470 is a 30 s bucket index of the trace series and maps to exactly that timestamp, so it is not comparable with the 15 s training indices.
+- What remains true from QA-016: hyperparameter selection ran on a region that contains the replayed window (1995-08-28 to 09-03), and only S4 consumes a forecast, so trace-aware tuning can only inflate the arm the thesis claims wins.
+- Evidence: `data/models/gru_model.json` (scaler_mean 107.66, horizon 9, sequence 30); `results/models/gru/2026-09-10_clarknet-15s-h9-leakfree/report.md` (test RMSE 29.635, nRMSE 0.3961, skill 0.216); `results/models/gru/2026-09-10_clarknet-15s-h9-leakfree/artifacts/clarknet_gru_s42.json`; `data/trace-replay/clarknet_replay_manifest.json`; `apps/experiment/experiment/tuning/gru_study.py` lines 1-13.
+- Corrected forbidden overclaim: never say the weights never saw ClarkNet. Say that the weights train on ClarkNet under chronological splits with the replayed window held out, that hyperparameters were selected on a region that contains that window, and that S3 consumes no forecast.
+
 ## QA-017 — Why GRU and not LSTM (the architecture swap from ElaX)
 - Date added: 2026-09-10
 - Status: actioned

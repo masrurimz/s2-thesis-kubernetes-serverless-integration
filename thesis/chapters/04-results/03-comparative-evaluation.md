@@ -23,13 +23,13 @@ The definitive bundle uses five counterbalanced S3/S4 pairs under the ClarkNet v
 
 | Metric | S3 (Reactive) | S4 (Predictive) | Difference / statistic |
 |---|---:|---:|---|
-| Mean p99 | 188.5 ms | 126.0 ms | −62.5 ms (−33.1%); p=0.030, d=−1.26 |
+| Mean p99 | 188.5 ms | 126.0 ms | −62.5 ms (−33.1%); p=0.0312, d=−1.26 |
 | 95% paired CI | — | — | [−100.9, −26.2] ms |
 | Mean SLO violations | 656 | 130 | −526 (−80.2%); descriptive secondary |
-| Mean p95 | 95.8 ms | 81.9 ms | −13.9 ms (−14.5%); corrected p=0.1216 |
+| Mean p95 | 95.8 ms | 81.9 ms | −13.9 ms (−14.5%); corrected p=0.1248 |
 | Projected monthly cost | USD 163 | USD 163 | Identical; projected, not billed |
 
-The pre-specified primary p99 permutation test is significant at p=0.030 (the unrounded value is 0.0304), with a large paired effect (d=−1.26) and a confidence interval entirely below zero. S4 won all five paired p99 comparisons. SLO and p95 differences are reported descriptively because their multiplicity-corrected p-value is 0.1216; they are not separate confirmatory claims.
+The pre-specified primary p99 permutation test is significant at p=0.0312, with a large paired effect (d=−1.26) and a confidence interval entirely below zero. The value is the design floor: 1/32 is the smallest p attainable with five pairs, because all five pairs fell the same way. The stored bundle artifact records 0.0304 from an older analysis routine; the current `thesis experiment analyze` recomputes 1/32. The deployed predictor `data/models/gru_model.pt` entered version control on 2026-09-12 (commit 98e17d1, LFS oid 7f8244bcc403c59a3e2be5d31b1ee5586f01c0052416c2705c0a325d1cc3099d) as the deployed artifact. The 2026-07-14 manifest records an empty predictor block, so this batch's weights cannot be verified, and later batches do not reproduce its significance. S4 won all five paired p99 comparisons. SLO and p95 differences are reported descriptively because their multiplicity-corrected p-value is 0.1248; they are not separate confirmatory claims.
 
 All five S4 runs passed validity gates, delivered complete forecasts (280/280 predictions), and recorded predictive activity. The h=9 horizon covers the measured provisioning-delay regime, while the ClarkNet ramps and surges provide conditions in which proactive scaling can act.
 
@@ -45,6 +45,6 @@ The diagnostic establishes the corrected testbed's directional H1 contrast and t
 
 ### 4.3.5 Independent Replication (2026-08-07)
 
-Two independent, configuration-matched re-runs (`2026-08-07_paired-h2_060200` and `2026-08-07_paired-h2_104918`, same ClarkNet trace, seed 42, `max_k8s_replicas=10` override, h=9) confirmed H2. Batch 1: S4 won 4 of 5 pairs (S3 131.7 ms vs S4 109.9 ms, Δ −21.8 ms; SLO 172 vs 101, −41%), d=−0.71, p=0.0958 — directional, not significant (its reactive baseline ran faster). Batch 2: S4 won **all 5 pairs** (S3 175.3 ms vs S4 94.6 ms, Δ −80.8 ms, CI [−152.0, −33.0], **p=0.0304** — identical to July — d=−1.00; SLO 626 vs 8). Pooled August n=10 (S4 wins 9/10): Δ −51.3 ms, CI [−94.4, −19.7], p=0.0030, d=−0.78. The replication is thus independently significant (batch 2) and highly significant pooled, while batch 1 documents realistic between-batch variance. A default-configuration re-run (cap 6) produced a qualitatively different comparison and is documented as a config-drift diagnostic in `thesis/DRIFT_ANALYSIS.md` §6b.
+Two independent, configuration-matched re-runs (`2026-08-07_paired-h2_060200` and `2026-08-07_paired-h2_104918`, same ClarkNet trace, seed 42, `max_k8s_replicas=10` override, h=9) confirmed H2. Batch 1: S4 won 4 of 5 pairs (S3 131.7 ms vs S4 109.9 ms, Δ −21.8 ms; SLO 172 vs 101, −41%), d=−0.71, p=0.0958 — directional, not significant (its reactive baseline ran faster). Batch 2: S4 won **all 5 pairs** (S3 175.3 ms vs S4 94.6 ms, Δ −80.8 ms, CI [−152.0, −33.0], **p=0.0304**, the same value the July artifact stored, d=−1.00; SLO 626 vs 8). Pooled August n=10 (S4 wins 9/10): Δ −51.3 ms, CI [−94.4, −19.7], p=0.0030, d=−0.78. The replication is thus independently significant (batch 2) and highly significant pooled, while batch 1 documents realistic between-batch variance. A default-configuration re-run (cap 6) produced a qualitatively different comparison and is documented as a config-drift diagnostic in `thesis/DRIFT_ANALYSIS.md` §6b.
 
 *Evidence: `results/claims/FINAL_NUMBERS.md`; `results/claims/CLAIMS_TO_EVIDENCE.md`; bundles `2026-07-11_scaling_fix_n1`, `2026-07-14_clarknet-tuned-paired-n5`, `2026-08-07_paired-h2_060200`, `2026-08-07_paired-h2_104918` (plus `2026-08-06_paired-h2_034648` n=3 and `2026-08-06_paired-h2_234256` config diagnostic).*

@@ -31,7 +31,7 @@ To facilitate comparison across different traffic scales, percentage-normalized 
 | MAE% | < 5% of average traffic | Low average error for stable predictions |
 | Inference latency | < 50ms | Real-time constraint for 15-second decision cycle |
 
-The model is evaluated on both synthetic test data (primary accuracy assessment) and real HTTP trace data from ClarkNet and Calgary (generalization assessment). Performance on real traces is reported separately with the expectation that accuracy may be lower due to non-stationarity and irregular patterns absent in synthetic training data.
+The deployed artifact is trained on the ClarkNet 15-second series under chronological splits with an embargo, and the replayed window (1995-09-02 04:35:30 to 04:55:00 UTC) lies in the held-out test region, so the deployment arm serves out-of-sample load. A synthetic arm is evaluated as a separate studied arm (primary accuracy assessment against the pre-registered target). Performance on the real trace is reported separately with the expectation that accuracy may be lower due to non-stationarity and irregular patterns. The training and validation regions contain no weekend buckets while the test region is 81.9% weekend, so performance is reported per day type. Across the split the level falls from 45.70 to 34.08 counts per 15 s bucket, which is 3.05 to 2.27 RPS.
 
 ### 3.5.2 System Evaluation: Scenarios and Phases
 
@@ -103,10 +103,10 @@ The primary comparative evaluation with statistical rigor, using realistic time-
 
 | Test | Purpose | Interpretation |
 |------|---------|----------------|
-| Paired permutation test | Pre-specified primary p99 comparison for S3/S4 | p=0.0304, significant at α=0.05 |
+| Paired permutation test | Pre-specified primary p99 comparison for S3/S4 | p=0.0312, significant at α=0.05; the 1/32 design floor at n=5 (the stored artifact's 0.0304 came from an older routine) |
 | Paired 95% CI | Uncertainty for S4−S3 p99 difference | [−100.9, −26.2] ms |
 | Paired Cohen's d | Effect size | d=−1.26 (large) |
-| Corrected secondary p-values | p95 and SLO after multiplicity correction | p=0.1216; descriptive only |
+| Corrected secondary p-values | p95 and SLO after multiplicity correction | p=0.1248; descriptive only |
 
 The n=1 S1–S4 diagnostic is descriptive. The paired n=5 H2 result uses the pre-specified primary p99 test; secondary p95 and SLO results are reported with the correction caveat.
 

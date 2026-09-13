@@ -37,16 +37,16 @@ The research questions are operationalized as three testable hypotheses:
 
   - #strong[H1 (hybrid vs pure)]: A hybrid Kubernetes-serverless architecture with dynamic traffic routing outperforms a pure Kubernetes baseline (HPA) in tail latency and SLO compliance at comparable cost. Tested as S4 vs S1; the result is directional at n = 1.
 
-  - #strong[H2 (predictive vs reactive)]: Adding GRU-based workload prediction to the hybrid controller (predictive scaling) outperforms the same controller driven by observed load only (reactive scaling) on tail latency and SLO compliance at equal cost. Tested as S4 vs S3; the primary p99 comparison supports H2 (p = 0.0304, d = -1.26).
+  - #strong[H2 (predictive vs reactive)]: Adding GRU-based workload prediction to the hybrid controller (predictive scaling) outperforms the same controller driven by observed load only (reactive scaling) on tail latency and SLO compliance at equal cost. Tested as S4 vs S3. The direction is consistent across every retained batch, and one batch is significant (p = 0.0312, d = -1.26, at the 1/32 design floor for five pairs) while later replications are null or marginal; the replication record in Chapter 4 bounds the claim.
 
-  - #strong[H3 (predictor adequacy)]: A GRU workload predictor achieves the pre-registered accuracy target (RMSE < 10% of normalized range, MAE < 5%, inference < 50 ms) on synthetic test data. The target is met on synthetic data under the leak-free protocol (RMSE 5.2% of the mean, MAE 4.1%) and is not met on the real deployment trace (RMSE 39.6% of the mean), where the network matches a linear autoregression on the same input window.
+  - #strong[H3 (predictor adequacy)]: A GRU workload predictor achieves the pre-registered accuracy target (RMSE < 10% of normalized range, MAE < 5%, inference < 50 ms) on synthetic test data. The target is met on synthetic data under the leak-free protocol (RMSE 5.2% of the mean, MAE 4.1%) and is not met on the held-out region of the real deployment trace (RMSE 39.6% of the mean), where the network matches a linear autoregression on the same input window. A twelve-lever representation search under the leak-free fold protocol found no variant that beats the linear model, so the disclosed conclusion is that the deployed point predictor should be the linear autoregression.
 
 
 == #H("ch1-objectives")
 
 The objectives of this research are:
 
-1. *Design and implement a GRU-based workload prediction model* capable of forecasting HTTP traffic patterns for real-time control decisions. The model trains on synthetic workload patterns that represent common traffic shapes (diurnal, bursty, ramp). It is validated against real HTTP trace datasets (ClarkNet and Calgary). The target accuracy is an RMSE under 10% of the normalized traffic range on synthetic test data, with inference latency under 50 ms.
+1. *Design and implement a GRU-based workload prediction model* capable of forecasting HTTP traffic patterns for real-time control decisions. The deployed model trains on the ClarkNet 15-second series under chronological splits with an embargo, and a synthetic arm that represents common traffic shapes (diurnal, bursty, ramp) is studied separately. Validation uses real HTTP trace datasets (ClarkNet and Calgary). The target accuracy is an RMSE under 10% of the normalized traffic range on synthetic test data, with inference latency under 50 ms.
 
 2. *Develop a modified ElaX algorithm* that integrates workload prediction with SLO-aware hybrid control. Specifically: Algorithm 2 (Cluster Controller) uses the GRU confidence-gated upper forecast for Kubernetes replica scaling in predictive mode, while Algorithm 1 (Routing Controller) uses observed load and ready-replica capacity for traffic routing; its priority framework is SCALE_OUT > PREDICTIVE > OPTIMIZE_COST > MAINTAIN. Algorithm 2 uses R = α·x + β.
 
@@ -60,7 +60,7 @@ The objectives of this research are:
 
 == #H("ch1-contribution")
 
-1. GRU-Based Workload Predictor for HTTP Traffic (30-sample input window at 15 s, 9-step / 135 s horizon). Under the leak-free protocol it reaches 5.2% RMSE on the synthetic arm and 39.6% on the real deployment trace, at about 40 ms inference.
+1. GRU-Based Workload Predictor for HTTP Traffic (30-sample input window at 15 s, 9-step / 135 s horizon). Under the leak-free protocol it reaches 5.2% RMSE on the synthetic arm and 39.6% on the held-out region of the real deployment trace, at about 40 ms inference. A twelve-lever representation search under the leak-free fold protocol found no variant that beats the linear autoregression on the selection folds.
 
 2. Extended ElaX hybrid controller: prediction drives Kubernetes replica scaling (Algorithm 2). Algorithm 1 does SLO-aware routing using observed load and capacity. It uses graduated weight shifts and a priority hierarchy.
 
@@ -72,7 +72,7 @@ The objectives of this research are:
 
 - *Prediction:* GRU only; prediction drives Algorithm 2 replica scaling, while Algorithm 1 routing uses observed load and capacity.
 
-- *Training:* synthetic + validation on ClarkNet/Calgary.
+- *Training:* the deployed artifact trains on the ClarkNet 15-second series with chronological splits and an embargo; the synthetic arm is studied separately; validation on ClarkNet/Calgary.
 
 - *Metrics:* p99, throughput, error; cost proxy.
 

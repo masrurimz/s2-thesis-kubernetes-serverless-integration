@@ -102,7 +102,7 @@ Tabel berikut menyajikan nilai p99 per pasangan dari bundle definitif `2026-07-1
     [Rata-rata p99 S4 (ms)], [126.0],
     [Selisih rata-rata (ms)], [-62.5 (-33.1%)],
     [95% CI berpasangan (ms)], [-100.9 hingga -26.2],
-    [Uji permutasi satu sisi], [p = 0.0304],
+    [Uji permutasi satu sisi], [p = 0.0312],
     [Cohen's d berpasangan], [-1.26 (besar)],
     [Kemenangan pasangan S4], [5/5],
     [Pelanggaran SLO rata-rata], [S3 656; S4 130],
@@ -111,7 +111,7 @@ Tabel berikut menyajikan nilai p99 per pasangan dari bundle definitif `2026-07-1
   caption: cap([Statistical results of the definitive bundle], [Hasil statistik bundle definitif]),
 )
 
-Bundle ini adalah perbandingan definitif counterbalanced untuk H2. Seluruh 5 pasangan valid, seluruh 280 prediksi GRU terkirim, dan `predictive_count` berada pada 4--5 per run S4. Metrik sekunder dilaporkan deskriptif setelah koreksi Bonferroni (p terkoreksi = 0.1216).
+Bundle ini adalah perbandingan definitif counterbalanced untuk H2. Seluruh 5 pasangan valid, seluruh 280 prediksi GRU terkirim, dan `predictive_count` berada pada 4--5 per run S4. Metrik sekunder dilaporkan deskriptif setelah koreksi Bonferroni (p terkoreksi = 0.1248). Nilai p = 0.0312 adalah lantai desain 1/32 pada n = 5, karena kelima pasangan jatuh searah. Nilai ini adalah hasil hitung ulang rutin `thesis experiment analyze` saat ini. Artefak bundel tersimpan menyimpan 0.0304 dari rutin analisis lama. Prediktor yang dideploy `data/models/gru_model.pt` baru masuk kontrol versi pada 2026-09-12 (commit 98e17d1, LFS oid 7f8244bcc403c59a3e2be5d31b1ee5586f01c0052416c2705c0a325d1cc3099d) sebagai artefak yang dideploy. Manifest bundle 2026-07-14 mencatat blok prediktor kosong, sehingga bobot model pada batch ini tidak dapat diverifikasi, dan batch selanjutnya tidak mereproduksi signifikansinya.
 
 #pagebreak()
 
