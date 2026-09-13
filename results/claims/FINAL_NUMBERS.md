@@ -208,6 +208,8 @@ S4 won all 5 pairs. predictive_count=4-5 in every S4 run (GRU forecast consisten
 
 **Why this is the definitive result:** Unlike the earlier n=5 (2026-07-12_paired-h2-clean-v2) which used h=5 model, no consolidation, and untuned S3 (scale_down_cooldown=300s dead zone), this experiment uses: (1) h=9 model covering provisioning delays, (2) utilization-based node consolidation matching K8s CA semantics, (3) tuned S3 reactive controller (120s cooldown, 0.75 threshold), (4) ClarkNet variable load allowing proactive scaling. The result reverses the earlier non-significant finding: S4 is now 33.1% better on p99 (was 5.9% better, p=0.38 nonsig).
 
+**Provenance caveat (2026-09-13).** Every paired S3/S4 run to date used a synthetic-trained predictor, not the ClarkNet winner. This batch's manifests predate the `predictor` block (empty), and the two September confirmatory bundles (`2026-09-12_h2-confirmatory`, `2026-09-13_h2-quiet`) record `artifact_sha256` 7f8244bc — the synthetic winner deployed by the 98e17d1 swap. The first paired run whose manifests record the ClarkNet winner (`20623c19`) is `results/experiments/phase-b/2026-09-13_h2-pair-5p`; its paired verdict supersedes this section's H2 number once it lands.
+
 ## Predictor model — leak-free ClarkNet study (2026-09-10)
 
 **Source:** `results/models/gru/2026-09-10_clarknet-15s-h9-leakfree` (registry `role: final`, `status: current`, notes carry the same numbers).
@@ -279,13 +281,13 @@ The 2026-09-10 GRU bundle's artifacts also stored an error metric equal to their
 
 ### Representation lever study, leak-free fold protocol (2026-09-13)
 
-**Source:** `results/models/gru/2026-09-13_probes-representation/`. Twelve representation levers were specified against the per-fold OLS autoregression on selection folds b2/b3/b4. Eight are complete (interval30, interval60, revin_robust, nlinear, diff_target, robust_scale, quantile_norm, nbeats) and four are queued (roll_stats, ewma, diff_input, decomp). Every record pins `splits_module.sha256` = 5f937edb361fbcea1a49334d92d768d409eefd1b12c563c5e708b9a1919631e3.
+**Source:** `results/models/gru/2026-09-13_probes-representation/`. Twelve representation levers were specified against the per-fold OLS autoregression on selection folds b2/b3/b4, and all twelve have records (interval30, interval60, revin_robust, nlinear, diff_target, robust_scale, quantile_norm, nbeats, roll_stats, ewma, diff_input, decomp). The first batch of eight pins `splits_module.sha256` = 5f937edb361fbcea1a49334d92d768d409eefd1b12c563c5e708b9a1919631e3; the second batch of four plus the calendar re-run pin cd7b5266635275f1eb2f1176da30f3e93c90f6c3e1524f0c6c22e7e9e400e25a (the regime-gap-note revision — split boundaries and geometry unchanged).
 
 Units: all RMSE values below are at the served amplitude (counts per 15 s bucket / 15 × 33.0). The 15 s selection-fold gate is 36.69 served RPS (= 16.677 counts per bucket); the measured fold OLS mean across the completed 15 s variants is 36.6896 ± 0.2396.
 
-- None of the eight beats the linear model (`beats_ols_on_selection_folds = false` in every record).
-- Selection-fold skill vs OLS ranges from −0.01% (`robust_scale`, −9.1e-05, parity to the fourth decimal) to −3.68% (`nbeats`).
-- Closest: `nlinear` at −0.30%, Diebold-Mariano p 0.29. `nlinear` beats OLS on the test region (+0.05% skill) and still fails the selection gate; the selection folds decide.
+- None of the twelve beats the linear model on the selection folds (`beats_ols_on_selection_folds = false` in every record).
+- Selection-fold RMSE vs OLS 36.69 served RPS for the second batch: decomp 37.41, ewma 37.51, roll_stats 37.61, diff_input 37.70, calendar 38.55. Calendar covariates (the extended seven-channel set) remain harmful even on the corrected day-type-matched folds.
+- Closest on the test region: `ewma` (+0.53% skill vs OLS) and `decomp` (+0.06%) beat OLS there and still fail the selection gate — the selection folds decide, not the test region. `nlinear` is the same pattern (−0.30% on selection folds, +0.05% on test, Diebold-Mariano p 0.29).
 - Per-day-type parity for `nlinear` vs OLS (served RPS): Friday evening 46.0 vs 45.6, Saturday 27.8 vs 27.9, Sunday 25.2 vs 25.3, Monday 27.8 vs 27.7.
 
 Disclosed conclusion: the deployed point predictor should be the linear autoregression. The network's parity is a limitation of the thesis, not a hidden fact.

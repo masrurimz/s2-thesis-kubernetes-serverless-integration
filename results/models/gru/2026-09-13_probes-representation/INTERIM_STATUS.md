@@ -1,25 +1,29 @@
-# Interim status — 2026-09-13_probes-representation (partial round)
+# Status — 2026-09-13_probes-representation (complete)
 
-**Status as of 2026-09-13 ~01:5x UTC: 8 of 12 variants complete; 4 queued, not run.**
-This is a partial round, not the whole one. The H1 baseline measurement window
-opened on this box mid-batch; per the coordinator's instruction the batch was
-stopped cleanly (driver cancelled, zero training processes verified) so the
-latency measurements are not degraded. The four queued variants run only after
-an explicit go.
+**Status as of 2026-09-13 ~16:30 UTC: all 12 specified variants have records.**
+The round is complete. The batch was paused mid-day for the H1 baseline
+measurement window, then resumed; the four queued variants and the calendar
+re-run finished after the gate.
 
-Completed (record + probes.md row present):
+Completed (record + report.md row present):
 
 - interval30, interval60, revin_robust, nlinear, diff_target, robust_scale,
-  quantile_norm, nbeats
+  quantile_norm, nbeats  (first batch, splits pin 5f937edb)
+- roll_stats, ewma, diff_input, decomp, calendar  (second batch, splits pin
+  cd7b5266 — the regime-gap-note revision; geometry identical)
 
-Queued (implementation complete and smoke-verified; no record yet):
-
-- roll_stats, ewma, diff_input, decomp
+**Gate verdict: none of the twelve beats the per-fold OLS autoregression on the
+selection folds** (`beats_ols_on_selection_folds = false` in every record).
+Selection-fold RMSE vs OLS 36.69 served RPS: decomp 37.41, ewma 37.51,
+roll_stats 37.61, diff_input 37.70, calendar 38.55. `ewma` (+0.53%) and `decomp`
+(+0.06%) beat OLS on the *test* region and still fail the selection gate — the
+selection folds decide, not the test region.
 
 Protocol pin carried by every record (`splits_module.sha256` in each JSON):
 
-- 5f937edb361fbcea1a49334d92d768d409eefd1b12c563c5e708b9a1919631e3 (matches the
-  coordinator's pinned revision; `matches_pin: true` in each record).
+- 5f937edb361fbcea1a49334d92d768d409eefd1b12c563c5e708b9a1919631e3 — first batch
+- cd7b5266635275f1eb2f1176da30f3e93c90f6c3e1524f0c6c22e7e9e400e25a — second batch
+  (adds the computed regime-gap note; split boundaries and geometry unchanged)
 
 Unit chain, stated once for the whole bundle: protocol references are counts
 per 15 s bucket on the raw trace; divide by 15 for raw RPS; multiply by 33.0
