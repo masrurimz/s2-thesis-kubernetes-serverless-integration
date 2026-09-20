@@ -196,16 +196,16 @@ The cost proxy is a model, not a billing observation. Break-even analyses distin
   kind: table,
   table(
     columns: (auto, auto, auto, auto, auto),
-    [Scenario], [Total/mo], [USD/1M SLO-OK], [Serverless Reqs], [EC2 Nodes],
-    [S1 (K8s-only)], [USD 132], [USD 0.79], [0], [2],
-    [S2 (Serverless)], [USD 394], [USD 2.19], [87,840], [0],
-    [S3 (Hybrid-reactive)], [USD 147], [USD 0.81], [5,354], [2],
-    [S4 (Hybrid-predictive)], [USD 142], [USD 0.79], [2,666], [2],
+    [Scenario], [Nodes base→peak (dyn-hrs)], [Serverless reqs (PC)], [Total/mo = EKS+EC2+Lambda], [USD/1M SLO-OK],
+    [S1 (K8s-only)], [2→2 (0)], [0 (0)], [USD 132 = 72+60+0], [USD 0.79],
+    [S2 (Serverless)], [0→0], [87,840 (8)], [USD 395 = 0+0+395], [USD 2.19],
+    [S3 (Hybrid-reactive)], [2→2 (0)], [5,354 (1)], [USD 147 = 72+60+15], [USD 0.81],
+    [S4 (Hybrid-predictive)], [2→2 (0)], [2,666 (1)], [USD 143 = 72+60+11], [USD 0.79],
   ),
   caption: cap([AWS monthly cost projection (n = 1 diagnostic)], [Proyeksi biaya bulanan AWS (n = 1 diagnostik)]),
 ) <tab:cost-analysis>
 
-S1 is the cheapest scenario (USD 132/mo) but fails the SLO catastrophically (p99 = 2,421 ms, 7.66% violation rate). Its low cost reflects poor service rather than efficiency. S2 (serverless-only) is the most expensive (USD 394/mo) but achieves the best raw latency (77.7 ms). These n = 1 cost projections are *directional diagnostic estimates only*. They must not be used to rank S3 and S4 or to claim monthly savings. The USD/1M SLO-OK column normalizes the total monthly cost by the count of SLO-satisfying requests.
+S1 is the cheapest scenario (USD 132/mo) but fails the SLO catastrophically (p99 = 2,421 ms, 7.66% violation rate). Its low cost reflects poor service rather than efficiency. S2 (serverless-only) is the most expensive (USD 395/mo) but achieves the best raw latency (77.7 ms). In the table, Nodes is base→peak with dynamic node-hours in parentheses; Total/mo decomposes into EKS+EC2+Lambda. These n = 1 cost projections are *directional diagnostic estimates only*. They must not be used to rank S3 and S4 or to claim monthly savings. The USD/1M SLO-OK column normalizes the total monthly cost by the count of SLO-satisfying requests.
 
 #figure(
   fig-cost-comparison(),
