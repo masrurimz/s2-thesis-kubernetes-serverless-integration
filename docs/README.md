@@ -56,7 +56,7 @@ Every entry names its mode, so you know what you are opening: a **tutorial** tea
 | [`thesis-typst/`](../thesis-typst/) | Explanation | The canonical thesis book |
 | [`thesis/chapters/`](../thesis/chapters/) | Explanation | The markdown draft |
 | [References](references/REFERENCES.md) | Reference | Archived cited papers; the PDFs are Git LFS objects |
-| [Plans](plans/) | Explanation | Dated implementation plans, including the [2026-09-10 GRU leak-free retrain](plans/2026-09-10-gru-leakfree-retrain.md) |
+| [Plans](plans/) | Explanation | Dated implementation plans, including the [2026-09-10 GRU leak-free retrain](plans/2026-09-10-gru-leakfree-retrain.md) and the [2026-09-18 publication venues](plans/2026-09-18-publication-venues.md) |
 
 ## Decisions and known debt
 
