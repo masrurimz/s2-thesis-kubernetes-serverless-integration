@@ -116,12 +116,14 @@
   = System Design
   #figure(
     image(figdir + "fig01-control-loop.svg", width: 100%),
+    placement: auto,
+    scope: "parent",
     caption: [Control loop. HAProxy splits traffic between the K3s and Knative
       backends; the routing daemon adjusts weights every 15 s and the GRU
       server supplies a confidence-gated forecast to the scaling path.],
   ) <fig:arch>
 
-  Fig. @fig:arch shows the architecture. Clients generate load; HAProxy
+  @fig:arch shows the architecture. Clients generate load; HAProxy
   ingress splits it between an always-warm K3s backend and a scale-to-zero
   Knative backend by a runtime-adjustable weight. A routing daemon runs a
   15 s control loop over two algorithms. *Algorithm 1 (routing)* sets the
@@ -235,7 +237,7 @@
     caption: [Per-scenario p99 latency over the n = 5 four-scenario
       replication. With ten-replica headroom the pure-Kubernetes baseline no
       longer saturates, so the hybrid advantage narrows; the bounded case in
-      Table @tab:scenarios is where routing earns its keep.],
+      Table I is where routing earns its keep.],
   ) <fig:boxplot>
 
   == Predictive versus reactive (H2)
@@ -269,7 +271,7 @@
   == Node provisioning and consolidation
   The third tier decides when prediction pays. The node autoscaler
   provisions a workload node when pods pend and consolidates it when
-  utilization falls below 50%. Fig. @fig:nodeprov shows the provisioning
+  utilization falls below 50%. @fig:nodeprov shows the provisioning
   timeline: nodes arrive 51--70 s after the load that triggered them, a delay
   the serverless backend absorbs in the hybrid scenarios but that pure
   Kubernetes cannot.
@@ -296,16 +298,14 @@
 
   #figure(
     table(
-      columns: (auto, auto, auto, auto),
-      [Scenario], [USD/mo], [USD/1M SLO-OK], [EC2 nodes],
-      [S1 K8s-only], [132], [0.79], [2],
-      [S2 Serverless], [394], [2.19], [0],
-      [S3 Reactive], [147], [0.81], [2],
-      [S4 Predictive], [142], [0.79], [2],
+      columns: (auto, auto, auto, auto, auto),
+      [Scenario], [Nodes base→peak (dyn-hrs)], [Serverless reqs (PC)], [Total/mo = EKS+EC2+Lambda], [USD/1M SLO-OK],
+      [S1 K8s-only], [2→2 (0)], [0 (0)], [USD 132 = 72+60+0], [0.79],
+      [S2 Serverless], [0→0], [87,840 (8)], [USD 395 = 0+0+395], [2.19],
+      [S3 Reactive], [2→2 (0)], [5,354 (1)], [USD 147 = 72+60+15], [0.81],
+      [S4 Predictive], [2→2 (0)], [2,666 (1)], [USD 143 = 72+60+11], [0.79],
     ),
-    caption: [AWS monthly cost projection (diagnostic). S1 is cheapest but
-      fails the SLO; S2 is fastest but most expensive; the hybrid scenarios
-      sit between on both axes.],
+    caption: [AWS monthly cost projection (diagnostic). Nodes is base→peak with dynamic node-hours in parentheses; Total/mo decomposes into EKS+EC2+Lambda.],
   ) <tab:cost>
 ]
 
