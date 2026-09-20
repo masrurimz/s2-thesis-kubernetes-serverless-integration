@@ -40,6 +40,9 @@ import numpy as np
 DEFINITIVE_PAIRED = "2026-07-14_clarknet-tuned-paired-n5"
 PAIRED_RUN1 = "2026-08-08_paired-h2_195150"
 PAIRED_RUN2 = "2026-08-08_paired-h2_233726"
+PAIRED_SEP13_PAIR = "2026-09-13_h2-pair-5p"
+PAIRED_SEP13_CONF = "2026-09-13_h2-confirmatory-10p"
+PAIRED_SEP20_QUIET = "2026-09-20_h2-confirmatory-10p"
 
 plt.rcParams.update(
     {
@@ -85,6 +88,9 @@ def _fig_replication_batches(repo_root: Path, out_dir: Path) -> Path:
     st_def = _paired_stats(repo_root, DEFINITIVE_PAIRED)
     st_run1 = _paired_stats(repo_root, PAIRED_RUN1)
     st_run2 = _paired_stats(repo_root, PAIRED_RUN2)
+    st_sep13_pair = _paired_stats(repo_root, PAIRED_SEP13_PAIR)
+    st_sep13_conf = _paired_stats(repo_root, PAIRED_SEP13_CONF)
+    st_sep20_quiet = _paired_stats(repo_root, PAIRED_SEP20_QUIET)
 
     # RUN3 (n=5 replay) S4-vs-S3 from report.md: Welch mean diff −52.50 ms,
     # 95% CI [−102.60, −11.81], Cohen's d −1.300, Mann-Whitney p 0.0317.
@@ -97,14 +103,25 @@ def _fig_replication_batches(repo_root: Path, out_dir: Path) -> Path:
     }
 
     labels = [
-        "Definitive\n(07-14, n=5)",
+        "Definitive\n(07-14 synthetic pred., n=5)",
         "RUN1\n(08-08 19:51, n=5)",
         "RUN2\n(08-08 23:37, n=5)",
         "RUN3\n(08-09 replay, n=5)",
+        "RUN4\n(09-13 pair, ClarkNet, n=5)",
+        "RUN5\n(09-13 confirmatory, ClarkNet, n=10)",
+        "RUN6\n(09-20 quiet-host, ClarkNet, n=10)",
     ]
-    stats = [st_def, st_run1, st_run2, st_run3]
+    stats = [
+        st_def,
+        st_run1,
+        st_run2,
+        st_run3,
+        st_sep13_pair,
+        st_sep13_conf,
+        st_sep20_quiet,
+    ]
 
-    fig, ax = plt.subplots(figsize=(8, 4.5))
+    fig, ax = plt.subplots(figsize=(8, 6.2))
     ypos = np.arange(len(labels))[::-1]
 
     ax.axvline(0, color="#999999", linewidth=1.0, zorder=1)
@@ -129,9 +146,9 @@ def _fig_replication_batches(repo_root: Path, out_dir: Path) -> Path:
             zorder=3,
         )
         ax.text(
-            s["mean_diff"] + 4,
-            y,
-            f"d = {s['d']:.2f}\np = {s['p']:.3f}",
+            s["mean_diff"] + 12,
+            y + 0.18,
+            f"d = {s['d']:.2f}   p = {s['p']:.3f}",
             va="center",
             ha="left",
             fontsize=9,
@@ -141,10 +158,10 @@ def _fig_replication_batches(repo_root: Path, out_dir: Path) -> Path:
     ax.set_yticks(ypos)
     ax.set_yticklabels(labels)
     ax.set_xlabel("S4 − S3 mean p99 difference (ms) — negative favours S4")
-    ax.set_title("H2 across replication batches (point = mean diff, whiskers = 95% CI)")
-    ax.set_xlim(-190, 95)
+    ax.set_title("H2 across replication batches (mean diff, 95% CI)")
+    ax.set_xlim(-650, 1150)
     ax.grid(axis="x", linestyle=":", alpha=0.5)
-    ax.axvspan(-190, 0, color="#2ca02c", alpha=0.05, zorder=0)
+    ax.axvspan(-650, 0, color="#2ca02c", alpha=0.05, zorder=0)
     fig.tight_layout()
 
     out = out_dir / "fig04_6_replication_batches.png"

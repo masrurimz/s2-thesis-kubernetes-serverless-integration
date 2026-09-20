@@ -15,9 +15,9 @@ This diagnostic exercised S1 (K8s+HPA), S2 (Knative-only), S3 (hybrid-reactive),
 
 For H1, S4 is 95.1% lower in p99 than S1 (118.2 versus 2,421.3 ms), and has 98.5% fewer SLO violations. Because this is n=1, the result is reported as directional mechanism evidence rather than statistical superiority.
 
-### 4.3.2 Definitive Paired H2 Comparison (n=5)
+### 4.3.2 Paired H2 Comparison (July Batch, n=5)
 
-The definitive bundle uses five counterbalanced S3/S4 pairs under the ClarkNet variable-load replay. Both scenarios use the same multi-node testbed, utilization-based node consolidation, and workload configuration. S4 uses the final GRU horizon of 9 control steps (9 × 15 seconds = 135 seconds); its forecasts are used for proactive scaling, while routing remains capacity- and observed-load-driven.
+The July bundle uses five counterbalanced S3/S4 pairs under the ClarkNet variable-load replay. Both scenarios use the same multi-node testbed, utilization-based node consolidation, and workload configuration. S4 uses the final GRU horizon of 9 control steps (9 × 15 seconds = 135 seconds); its forecasts are used for proactive scaling, while routing remains capacity- and observed-load-driven.
 
 **Table 4.8: Definitive paired results**
 
@@ -29,7 +29,7 @@ The definitive bundle uses five counterbalanced S3/S4 pairs under the ClarkNet v
 | Mean p95 | 95.8 ms | 81.9 ms | −13.9 ms (−14.5%); corrected p=0.1248 |
 | Projected monthly cost | USD 163 | USD 163 | Identical; projected, not billed |
 
-The pre-specified primary p99 permutation test is significant at p=0.0312, with a large paired effect (d=−1.26) and a confidence interval entirely below zero. The value is the design floor: 1/32 is the smallest p attainable with five pairs, because all five pairs fell the same way. The stored bundle artifact records 0.0304 from an older analysis routine; the current `thesis experiment analyze` recomputes 1/32. The deployed predictor `data/models/gru_model.pt` entered version control on 2026-09-12 (commit 98e17d1, LFS oid 7f8244bcc403c59a3e2be5d31b1ee5586f01c0052416c2705c0a325d1cc3099d) as the deployed artifact. The 2026-07-14 manifest records an empty predictor block, so this batch's weights cannot be verified, and later batches do not reproduce its significance. S4 won all five paired p99 comparisons. SLO and p95 differences are reported descriptively because their multiplicity-corrected p-value is 0.1248; they are not separate confirmatory claims.
+The pre-specified primary p99 permutation test in this batch is significant at p=0.0312, with a large paired effect (d=−1.26) and a confidence interval entirely below zero. The value is the design floor: 1/32 is the smallest p attainable with five pairs, because all five pairs fell the same way. The stored bundle artifact records 0.0304 from an older analysis routine; the current `thesis experiment analyze` recomputes 1/32. The verdict, however, changed after a provenance audit. The 2026-07-14 manifest records an empty predictor block, so this batch's weights cannot be verified, and the artifact deployed on 2026-09-12 (commit 98e17d1, LFS oid 7f8244bcc403c59a3e2be5d31b1ee5586f01c0052416c2705c0a325d1cc3099d) was later shown to be the synthetic-trained winner rather than the ClarkNet winner. The batch is therefore reported as historical: its significance is real within the batch, but its result is not attributable to the ClarkNet-trained predictor the thesis deploys. S4 won all five paired p99 comparisons in this batch. SLO and p95 differences are reported descriptively because their multiplicity-corrected p-value is 0.1248; they are not separate confirmatory claims.
 
 All five S4 runs passed validity gates, delivered complete forecasts (280/280 predictions), and recorded predictive activity. The h=9 horizon covers the measured provisioning-delay regime, while the ClarkNet ramps and surges provide conditions in which proactive scaling can act.
 
@@ -41,10 +41,17 @@ The earlier July paired bundle `2026-07-12_paired-h2-clean-v2` is also supersede
 
 ### 4.3.4 Interpretation
 
-The diagnostic establishes the corrected testbed's directional H1 contrast and the paired study establishes H2 for the pre-specified primary p99 metric. Together they show that prediction is useful when assigned to the scaling actuator: S4 improves tail latency over S3 without a projected cost difference. The results do not claim that every secondary metric is statistically significant or that proxy costs are billed cloud expenditure.
+The diagnostic establishes the corrected testbed's directional H1 contrast. The paired studies establish that the predictive advantage is not statistically detectable: the only significant batch (July) used an unverifiable predictor later shown to be synthetic-trained, and every ClarkNet-attributable batch is null on the pre-specified test. The results do not claim that every secondary metric is statistically significant or that proxy costs are billed cloud expenditure.
 
-### 4.3.5 Independent Replication (2026-08-07)
+### 4.3.5 Replication History and the Quiet-Host Verdict
 
-Two independent, configuration-matched re-runs (`2026-08-07_paired-h2_060200` and `2026-08-07_paired-h2_104918`, same ClarkNet trace, seed 42, `max_k8s_replicas=10` override, h=9) confirmed H2. Batch 1: S4 won 4 of 5 pairs (S3 131.7 ms vs S4 109.9 ms, Δ −21.8 ms; SLO 172 vs 101, −41%), d=−0.71, p=0.0958 — directional, not significant (its reactive baseline ran faster). Batch 2: S4 won **all 5 pairs** (S3 175.3 ms vs S4 94.6 ms, Δ −80.8 ms, CI [−152.0, −33.0], **p=0.0304**, the same value the July artifact stored, d=−1.00; SLO 626 vs 8). Pooled August n=10 (S4 wins 9/10): Δ −51.3 ms, CI [−94.4, −19.7], p=0.0030, d=−0.78. The replication is thus independently significant (batch 2) and highly significant pooled, while batch 1 documents realistic between-batch variance. A default-configuration re-run (cap 6) produced a qualitatively different comparison and is documented as a config-drift diagnostic in `thesis/DRIFT_ANALYSIS.md` §6b.
+Two initial replication batches from 2026-08-07 were deleted from the working tree before commit and are excluded from the evidence record; their numbers survive only as superseded prose. The retained replication record comprises the August batches (RUN1 p=0.436 null, RUN2 p=0.062 marginal) and the September ClarkNet-attributable batches, followed by a pre-registered quiet-host replication:
 
-*Evidence: `results/claims/FINAL_NUMBERS.md`; `results/claims/CLAIMS_TO_EVIDENCE.md`; bundles `2026-07-11_scaling_fix_n1`, `2026-07-14_clarknet-tuned-paired-n5`, `2026-08-07_paired-h2_060200`, `2026-08-07_paired-h2_104918` (plus `2026-08-06_paired-h2_034648` n=3 and `2026-08-06_paired-h2_234256` config diagnostic).*
+- `2026-09-13_h2-pair-5p` (ClarkNet winner 20623c19, n=5): +153.3 ms, p=0.656.
+- `2026-09-13_h2-confirmatory-10p` (ClarkNet winner, n=10): −104.2 ms, p=0.168; three slow runs coincided with a settling host (peak 66–100% CPU busy), and the host-load series added in this batch shows peak host CPU-busy correlating with p99 at r=0.69.
+- `2026-09-20_h2-confirmatory-10p` (pre-registered quiet-host replication, n=10, host load gated under 0.1 of capacity, 20/20 runs valid): S4 146.8 ms versus S3 160.4 ms, −13.6 ms (95% CI [−63.5, +35.6], p=0.307, d=−0.16), S4 winning 5 of 10 pairs.
+- Pooled over the 25 ClarkNet-attributable pairs: −16.5 ms (95% CI [−194.0, +182.5], p=0.50, d=−0.03).
+
+An interim quiet-host subset estimate drawn from the September batch (−101.3 ms, p=0.039, the eight pairs under 40% host busy) does not survive the dedicated replication; it was an artifact of subset selection. The final H2 verdict is therefore: **not supported on the pre-specified primary p99 test**, with the hybrid-versus-saturated-Kubernetes result (H1) unaffected.
+
+*Evidence: `results/claims/FINAL_NUMBERS.md`; `results/claims/CLAIMS_TO_EVIDENCE.md`; bundles `2026-07-11_scaling_fix_n1`, `2026-07-14_clarknet-tuned-paired-n5` (historical), `2026-09-13_h2-pair-5p`, `2026-09-13_h2-confirmatory-10p`, `2026-09-20_h2-confirmatory-10p`.*

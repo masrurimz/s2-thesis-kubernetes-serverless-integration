@@ -8,19 +8,23 @@
 > - **Registry:** `results/evidence/registry.yaml`
 > - **Query cache:** `results/evidence/catalog.duckdb` (rebuilt, not canonical)
 
-**Latest audit:** 2026-09-12T23:34:09.692580+00:00
+**Latest audit:** 2026-09-20T21:31:26.844298+00:00
 
 ## Summary
 
-- **Total bundles:** 160
-- **By role:** diagnostic=104, final=7, intermediate=49
-- **By status:** archived=11, current=86, invalidated=63
+- **Total bundles:** 164
+- **By role:** diagnostic=107, final=7, intermediate=50
+- **By status:** archived=11, current=90, invalidated=63
 
 ## Bundles
 
 | Date | ID | Role | Valid/Total | Treatment | Claims | Path |
 |------|----|------|------------|-----------|--------|------|
-| 2026-09-13 | `experiments.2026-09-13-h2-quiet` | diagnostic | 0/1 | — | — | `experiments/phase-b/2026-09-13_h2-quiet` |
+| 2026-09-20 | `experiments.2026-09-20-h2-confirmatory-10p` | diagnostic | 20/20 | 570/570 (✓) | — | `experiments/phase-b/2026-09-20_h2-confirmatory-10p` |
+| 2026-09-13 | `experiments.2026-09-13-h2-quiet` | diagnostic | 4/5 | 114/114 (✓) | — | `experiments/phase-b/2026-09-13_h2-quiet` |
+| 2026-09-13 | `experiments.2026-09-13-h2-pair-tight-5p` | intermediate | 6/7 | 171/171 (✓) | — | `experiments/phase-b/2026-09-13_h2-pair-tight-5p` |
+| 2026-09-13 | `experiments.2026-09-13-h2-pair-5p` | diagnostic | 10/10 | 285/285 (✓) | — | `experiments/phase-b/2026-09-13_h2-pair-5p` |
+| 2026-09-13 | `experiments.2026-09-13-h2-confirmatory-10p` | diagnostic | 20/20 | 570/570 (✓) | — | `experiments/phase-b/2026-09-13_h2-confirmatory-10p` |
 | 2026-09-13 | `experiments.2026-09-13-baselines-5r` | intermediate | 10/10 | — | — | `experiments/phase-b/2026-09-13_baselines-5r` |
 | 2026-09-12 | `experiments.2026-09-12-smoke-clean` | diagnostic | 2/2 | 57/57 (✓) | — | `experiments/phase-b/2026-09-12_smoke-clean` |
 | 2026-09-12 | `experiments.2026-09-12-smoke-1p` | diagnostic | 2/2 | 57/57 (✓) | — | `experiments/phase-b/2026-09-12_smoke-1p` |
@@ -185,6 +189,7 @@
 
 | Timestamp | Event | Experiment | Bundle | Run |
 |-----------|-------|------------|--------|-----|
+| 2026-09-20T21:31:26.844298+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |
 | 2026-09-12T23:34:09.692580+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |
 | 2026-09-12T23:31:47.925141+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |
 | 2026-09-12T23:22:01.256863+00:00 | registry_audited | registry | /home/zahid/work/master-s2-study/thesis-kubernetes-serverless-integration/results/evidence | — |

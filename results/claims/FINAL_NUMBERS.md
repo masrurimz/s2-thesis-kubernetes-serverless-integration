@@ -301,4 +301,22 @@ Disclosed conclusion: the deployed point predictor should be the linear autoregr
 - The target fails the per-step Brier rule, 0.233 against 0.049, because it is overconfident. The decision rule for this target is recall at a bounded false-alarm rate, and calibration work is pending.
 - Labels exist only where the capacity ceiling is approached: the selection folds and the OOD report use the code default of 6 replicas (199.8 served RPS); the deployment arm's paired configuration uses 10 (333.0 served RPS).
 
+## Quiet-host confirmatory replication — H2 null verdict (2026-09-20)
+
+**Source:** `results/experiments/phase-b/2026-09-20_h2-confirmatory-10p` (commit 837e8a8).
+**Design:** pre-registered `h2-confirmatory` profile, 10 counterbalanced S3/S4 pairs, one static agent, ClarkNet winner artifact 20623c19 in every manifest, host-load gate holding the machine under 0.1 of capacity throughout, graphify-watcher stopped. This batch directly tests the September quiet-host subset estimate.
+
+| Metric | S3 (Reactive) | S4 (Predictive) | Difference / statistic |
+|---|---:|---:|---|
+| Mean p99 | 160.4 ms | 146.8 ms | −13.6 ms; 95% CI [−63.5, +35.6]; p=0.307; d=−0.16 (negligible) |
+| Pair wins | 5/10 | 5/10 | Coin flip |
+| Validity | 20/20 runs gate-passing | | 100% forecast delivery |
+
+- All 20 runs passed the validity gates; all eligible GRU predictions were delivered.
+- **H2 is not supported.** The interim quiet-host subset estimate from the September batch (−101.3 ms, p=0.039, eight of its ten pairs under 40% host busy) does not survive the dedicated replication; it was an artifact of subset selection.
+- Pooled over the 25 ClarkNet-attributable pairs of the three batches (`2026-09-13_h2-pair-5p`, `2026-09-13_h2-confirmatory-10p`, `2026-09-20_h2-confirmatory-10p`): mean −16.5 ms, one-sided permutation p ≈ 0.50, d = −0.03, bootstrap 95% CI [−194.0, +182.5].
+- Provenance note standing: the July significant batch (`2026-07-14_clarknet-tuned-paired-n5`, p=0.0312) remains non-ClarkNet-attributable (empty manifest predictor block; deployed artifact of that period was the synthetic winner).
+- Testbed repairs enabling this run are recorded in the bundle: hybrid serverlb network reattachment, stale node-object cleanup, node resolv.conf refresh, and Knative control-plane pull recovery (autoscaler, controller, activator).
+
+
 
