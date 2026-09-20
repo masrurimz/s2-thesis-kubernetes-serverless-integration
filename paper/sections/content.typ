@@ -18,14 +18,15 @@
   scenarios under a counterbalanced paired design with treatment-fidelity
   gates. Hybrid routing cuts p99 latency by up to 95% relative to a saturated
   pure-Kubernetes baseline. The benefit of prediction over a reactive
-  controller is conditional: across ten ClarkNet-attributable pairs the
-  predictive controller lowers mean p99 by 104 ms but does not reach
-  significance on the pre-specified test ($p = 0.168$). A per-run host-load
-  series we add shows that host CPU contention correlates with p99 at
-  $r = 0.69$; restricting to the eight pairs measured on a quiet host yields a
-  significant $-101$ ms advantage ($p = 0.039$, $d = -0.74$). Predictive
-  autoscaling is therefore a measurement-hygiene problem as much as a
-  modelling one.
+  controller does not clear the pre-specified test in any
+  ClarkNet-attributable batch, and a pre-registered replication on a host
+  whose load a gate kept quiet (ten further pairs, all 20 runs valid) finds a
+  $-13.6$ ms difference ($p = 0.307$, $d = -0.16$). Pooled over 25 pairs, the
+  difference is $-16.5$ ms (95% CI $[-194.0, +182.5]$). At this workload and
+  resolution, a confidence-gated GRU forecast does not separate from
+  well-tuned reactive control; the measurable win is hybrid routing itself.
+  A per-run host-load series still earns its place: it exposed a
+  host-contaminated batch that otherwise read as a near-significant effect.
 ]
 
 #let index-terms() = (
@@ -76,10 +77,11 @@
     controller and a confidence-gated GRU forecaster driving replica scaling;
   + a paired, validity-gated evaluation showing hybrid routing cuts p99 by up
     to 95% over a saturated Kubernetes baseline, while the predictive
-    advantage over reactive control is conditional on host contention;
+    advantage over reactive control does not clear the pre-specified test in
+    any batch, including a gate-verified quiet-host replication;
   + evidence that per-run host-load instrumentation is needed to attribute
-    tail-latency effects on a shared testbed, turning a non-significant
-    headline into a significant clean-host result.
+    tail-latency effects on a shared testbed: it exposed a contaminated
+    batch, and the confirmatory replication it motivated returned a null;
 ]
 
 // ---------------------------------------------------------------------------
@@ -248,25 +250,31 @@
 
   #figure(
     image(figdir + "fig02-paired-p99.svg", width: 100%),
-    caption: [Per-pair p99 for the reactive and predictive controllers. The
-      predictive arm wins most pairs, but the spread across pairs is what
-      keeps the pre-specified test from significance.],
+    caption: [Per-pair p99 for the reactive and predictive controllers. S4
+      wins 5 of 10 pairs and the spread across pairs is what keeps the
+      pre-specified test from significance.],
   ) <fig:paired>
   #figure(
     image(figdir + "fig07-replication-forest.svg", width: 100%),
     caption: [Paired S4$-$S3 p99 difference across batches; negative favours
-      the predictive controller. The effect direction is consistent but the
-      pre-specified test is significant only on quiet-host subsets.],
+      the predictive controller. No batch clears the pre-specified test, and
+      the batch-to-batch spread is larger than any single batch's effect.],
   ) <fig:forest>
 
-  *Host-contention sensitivity.* The per-run host-load series explains the
-  variance. Peak host CPU-busy correlates with p99 at $r = 0.69$, and the
-  three slowest runs all coincided with a settling host (peak 66--100% busy).
-  Restricting to the eight pairs where both arms stayed under 40% host busy
-  yields a significant $-101.3$ ms advantage ($p = 0.039$, $d = -0.74$, S4
-  wins 6 of 8). This is a post-hoc sensitivity analysis, not the
-  pre-specified test; it shows the effect the contention was masking and
-  argues for a quiet-host design rather than overclaiming.
+  *Confirmatory quiet-host replication.* A pre-registered replication ran
+  the same ten-pair design on a host whose load a gate kept under 0.1 of
+  capacity throughout; all 20 runs passed the validity gates and every
+  forecast was delivered. The mean difference is $-13.6$ ms (95% CI
+  $[-63.5, +35.6]$, $p = 0.307$, $d = -0.16$), with S4 winning 5 of 10
+  pairs. Pooled over the 25 ClarkNet-attributable pairs of the three
+  batches, the difference is $-16.5$ ms (95% CI $[-194.0, +182.5]$,
+  $p = 0.50$). The quiet-host subset reported after the September batch
+  ($-101.3$ ms, $p = 0.039$, $d = -0.74$, eight of its ten pairs) does not
+  survive the replication; that result was an artifact of subset selection.
+  Host load
+  still correlates with p99 ($r = 0.69$ in the September batch, with the
+  three slowest runs on a settling host at 66--100% busy), so the series
+  stays in the harness as a misattribution control.
 
   == Node provisioning and consolidation
   The third tier decides when prediction pays. The node autoscaler
@@ -314,26 +322,31 @@
   = Discussion
   The evaluation supports three claims. First, hybrid routing is the
   load-bearing win: when Kubernetes saturates, offloading to serverless
-  removes nearly all tail-latency violations. Second, the marginal value of
-  prediction over a well-tuned reactive controller is real but conditional:
-  it appears on a quiet host and under a consolidation regime, and it is
-  masked by host contention on a shared testbed. Third, the instrument that
-  surfaced this is the per-run host-load series; without it the same data
-  reads as a flat null.
+  removes nearly all tail-latency violations. Second, prediction over a
+  well-tuned reactive controller shows no detectable benefit on the
+  pre-specified test in any ClarkNet-attributable batch, including a
+  replication on a gate-verified quiet host; only a single-pair
+  consolidation diagnostic favours the forecast. Third, the per-run
+  host-load series is what keeps the record honest: it exposed a
+  contaminated batch that would otherwise have read as a near-significant
+  effect.
 
   *Threats to validity.* The testbed is a single multi-node cluster, not a
-  public cloud; the cost model is a proxy, not a bill; and the clean-host
-  result is a sensitivity analysis on a subset, so it carries a selection
-  caveat. The GRU's parity with a linear model means the prediction benefit
-  is attributable to the forecast's lead time, not to any deep-learning
-  advantage at this resolution.
+  public cloud; the cost model is a proxy, not a bill; and batch-to-batch
+  spread (paired sd 49 ms in July, 102 ms in September) limits power for
+  effects under about 100 ms even at ten pairs. The GRU's parity with a
+  linear model means the prediction benefit is attributable to the
+  forecast's lead time, not to any deep-learning advantage at this
+  resolution.
 
   #if extended [
-    *Generalization.* The conditional-prediction finding fits the broader
-    autoscaling literature: proactive control pays when the forecast lead
-    time exceeds the provisioning delay and when the environment is quiet
-    enough for the signal to survive measurement noise. Where either
-    condition fails, a well-tuned reactive controller is competitive and
+    *Generalization.* The null-prediction finding fits the broader
+    autoscaling literature: benchmarks repeatedly show well-calibrated
+    reactive baselines matching learned policies. The consolidation
+    diagnostic suggests where a forecast can pay, when returning load would
+    otherwise trigger destructive consolidation, but one pair cannot carry
+    that claim. Where the forecast lead time fails to exceed the
+    provisioning delay, a well-tuned reactive controller is competitive and
     simpler to operate.
   ]
 ]
@@ -345,10 +358,14 @@
   couples SLO-aware routing with a confidence-gated GRU forecaster. Hybrid
   routing removes up to 95% of tail-latency violations relative to a
   saturated Kubernetes baseline. The incremental benefit of prediction over
-  reactive control is conditional: it is significant on a quiet host and
-  under node consolidation, and it is masked by host contention on a shared
-  testbed. The broader lesson is methodological: per-run host-load
-  instrumentation turns an ambiguous null into an attributable result. Future
-  work is a quiet-host paired replication and a forecast horizon that adapts
-  to the measured provisioning delay.
+  reactive control is not statistically detectable: no ClarkNet-attributable
+  batch clears the pre-specified test, a gate-verified quiet-host
+  replication (ten pairs) finds a negligible difference ($-13.6$ ms,
+  $p = 0.307$), and pooling 25 pairs gives $-16.5$ ms with a confidence
+  interval spanning zero. The broader lesson is methodological: per-run
+  host-load instrumentation keeps effects attributable, and it was that
+  instrumentation which exposed a contaminated batch as the mirage it was.
+  Future work is a forecast horizon that adapts to the measured
+  provisioning delay, and controller regimes where a forecast has a lead
+  time to spend, such as consolidation-prone load.
 ]
