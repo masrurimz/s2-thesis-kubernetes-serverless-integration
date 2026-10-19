@@ -62,7 +62,7 @@ No circular dependencies. `libs/` never imports from `apps/`.
 
 | Scenario | Pod Autoscaler | Node Autoscaler | Traffic Routing | HPA |
 |----------|---------------|-----------------|-----------------|-----|
-| S1 (K8s-only) | HPA (CPU 50%, 1-10) | K3dAutoscaler (min=0, max=2) | 100% K8s | Enabled |
+| S1 (K8s-only) | HPA (CPU 70%, 1-10) | K3dAutoscaler (min=0, max=2) | 100% K8s | Enabled |
 | S2 (Serverless) | KPA (Knative) | N/A | 100% Serverless | Disabled |
 | S3 (Hybrid-reactive) | Algorithm 2 (observed-only) | K3dAutoscaler | V3 capacity-driven | Disabled |
 | S4 (Hybrid-predictive) | Algorithm 2 (GRU) | K3dAutoscaler | V3 capacity-driven | Disabled |
