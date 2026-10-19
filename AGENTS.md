@@ -149,12 +149,7 @@ uv run thesis experiment reproduce --profile h2-pair --fresh-stack
 
 **When an experiment changes, its conditions change with it.** A new profile or scenario set must declare what it needs — static agents, the prediction server, controller environment — and `apps/experiment/tests/test_profiles.py` fails when a hybrid profile leaves no capacity to bind or a predictive one serves no predictor. A new check belongs in `conditions.apply`, next to the others, so both `preflight` and the runner get it.
 
-**Host hygiene is part of the measurement.** The gate reports CPU busy from `/proc/stat` and refuses above full occupancy, naming the processes responsible. Indexers count: `graphify-watcher.service` holds most of a core while it watches the work tree, and any experiment run on the same machine waits for it.
-
-```bash
-systemctl --user stop graphify-watcher.service    # before a measurement window
-systemctl --user start graphify-watcher.service   # after
-```
+**Host hygiene is part of the measurement.** The gate reports CPU busy from `/proc/stat` and refuses above full occupancy, naming the processes responsible. Stop any file watcher or indexer on this machine before a measurement window.
 
 ### Reading a finished bundle
 
@@ -183,8 +178,7 @@ uv run thesis experiment series \
   --json
 ```
 
-It retries a failed stage once, stops the chain when a stage fails every attempt, and
-pauses the work-tree indexer for the whole window, restoring it even if a stage dies.
+It retries a failed stage once and stops the chain when a stage fails every attempt.
 
 Older invocations remain available for ad-hoc work:
 

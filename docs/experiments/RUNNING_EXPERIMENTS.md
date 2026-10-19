@@ -94,7 +94,7 @@ uv run thesis-experiment reproduce --profile smoke --dry-run
 
 ## Series
 
-`series` chains profiles as stages in one invocation. A failing stage is retried up to `--max-attempts` (default 2); a stage that fails every attempt stops the chain, because the next stage assumes the stack the last one left. The work-tree indexer is paused for the window and restored afterwards.
+`series` chains profiles as stages in one invocation. A failing stage is retried up to `--max-attempts` (default 2); a stage that fails every attempt stops the chain, because the next stage assumes the stack the last one left.
 
 ```bash
 uv run thesis-experiment series --stage smoke --stage h2-pair

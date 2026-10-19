@@ -1,7 +1,7 @@
 """The series rules: parse a stage, retry a failure, stop the chain when it repeats.
 
-The chain used to be a shell script, so its rules — retry once, stop rather than run
-later stages against a broken stack, keep the indexer out of the measurement window —
+The chain used to be a shell script, so its rules (retry once, stop rather than run
+later stages against a broken stack)
 were untested and lived in one operator's head. They are tested here with a fake
 runner, which is also why the runner is a parameter.
 """
@@ -25,15 +25,6 @@ class FakeRunner:
         scripted = self.results.get(profile, [0])
         same_profile = [c for c in self.calls if c[c.index("--profile") + 1] == profile]
         return scripted[min(len(same_profile) - 1, len(scripted) - 1)]
-
-
-class FakeIndexer:
-    def __init__(self):
-        self.actions: list[str] = []
-
-    def __call__(self, action: str) -> bool:
-        self.actions.append(action)
-        return True
 
 
 class TestParsing:
@@ -61,13 +52,11 @@ class TestParsing:
 class TestRunSeries:
     def test_stages_run_in_order(self, tmp_path):
         runner = FakeRunner()
-        indexer = FakeIndexer()
 
         outcomes = run_series(
             [parse_stage("a"), parse_stage("b")],
             log_path=tmp_path / "s.log",
             runner=runner,
-            indexer=indexer,
             sleep=lambda _: None,
         )
 
@@ -78,9 +67,7 @@ class TestRunSeries:
     def test_a_failure_is_retried_once(self, tmp_path):
         runner = FakeRunner({"a": [1, 0]})
 
-        outcomes = run_series(
-            [parse_stage("a")], log_path=tmp_path / "s.log", runner=runner, indexer=FakeIndexer(), sleep=lambda _: None
-        )
+        outcomes = run_series([parse_stage("a")], log_path=tmp_path / "s.log", runner=runner, sleep=lambda _: None)
 
         assert len(runner.calls) == 2
         assert outcomes[0].ok is True
@@ -93,7 +80,6 @@ class TestRunSeries:
             [parse_stage("a"), parse_stage("b")],
             log_path=tmp_path / "s.log",
             runner=runner,
-            indexer=FakeIndexer(),
             sleep=lambda _: None,
         )
 
@@ -101,47 +87,21 @@ class TestRunSeries:
         assert outcomes[0].ok is False
         assert "b" not in " ".join(" ".join(call) for call in runner.calls)
 
-    def test_the_indexer_is_paused_for_the_window_and_restored(self, tmp_path):
-        indexer = FakeIndexer()
-
-        run_series(
-            [parse_stage("a")], log_path=tmp_path / "s.log", runner=FakeRunner(), indexer=indexer, sleep=lambda _: None
-        )
-
-        assert indexer.actions == ["stop", "start"]
-
-    def test_the_indexer_is_restored_even_when_a_stage_fails(self, tmp_path):
-        indexer = FakeIndexer()
-
-        run_series(
-            [parse_stage("a")],
-            log_path=tmp_path / "s.log",
-            runner=FakeRunner({"a": [1, 1]}),
-            indexer=indexer,
-            sleep=lambda _: None,
-        )
-
-        assert indexer.actions == ["stop", "start"]
-
     def test_the_log_records_each_stage_and_its_outcome(self, tmp_path):
         log_path = tmp_path / "s.log"
 
-        run_series(
-            [parse_stage("a")], log_path=log_path, runner=FakeRunner(), indexer=FakeIndexer(), sleep=lambda _: None
-        )
+        run_series([parse_stage("a")], log_path=log_path, runner=FakeRunner(), sleep=lambda _: None)
 
         text = log_path.read_text()
         assert "series start" in text
         assert "stage a: attempt 1" in text
         assert "stage a: ok" in text
-        assert "indexer restored" in text
 
     def test_summary_is_readable_and_payload_is_json(self, tmp_path):
         outcomes = run_series(
             [parse_stage("a")],
             log_path=tmp_path / "s.log",
             runner=FakeRunner(),
-            indexer=FakeIndexer(),
             sleep=lambda _: None,
         )
 

@@ -568,17 +568,13 @@ def series(
     log: Optional[str] = typer.Option(
         None, help="Log file (default: ~/.local/state/thesis-run/series-<timestamp>.log)"
     ),
-    pause_indexer: bool = typer.Option(
-        True, "--pause-indexer/--no-pause-indexer", help="Stop the work-tree indexer for the window"
-    ),
     as_json: bool = typer.Option(False, "--json", help="Emit the stage outcomes as JSON"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Print the commands and run nothing"),
 ) -> None:
     """Run a chain of profiles as one series.
 
     A stage that fails is retried; one that fails every attempt stops the chain, since
-    the next stage assumes the stack the last one left. The indexer that watches this
-    work tree is paused for the whole window and restored afterwards.
+    the next stage assumes the stack the last one left.
     """
     from experiment.series import json_payload, parse_stage, run_series, summarise
     from rich.console import Console
@@ -595,18 +591,10 @@ def series(
             console.print("  " + " ".join(spec.command()))
         return
 
-    def indexer(action: str) -> bool:
-        if not pause_indexer:
-            return False
-        from experiment.series import _default_indexer
-
-        return _default_indexer(action)
-
     outcomes = run_series(
         specs,
         max_attempts=max_attempts,
         log_path=Path(log) if log else None,
-        indexer=indexer,
     )
     if as_json:
         typer.echo(json_payload(outcomes))

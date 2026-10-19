@@ -1,9 +1,8 @@
 """Run a chain of profiles as one supervised series.
 
 A series is not a shell loop: each stage changes the testbed, so a stage that fails has
-to be retried on its own terms, the chain has to stop rather than run later stages
-against a broken stack, and the indexer that watches this work tree has to be out of
-the way for the whole measurement window. Those rules belong in the tool that runs the
+to be retried on its own terms, and the chain has to stop rather than run later stages
+against a broken stack. Those rules belong in the tool that runs the
 experiments, not in a script beside it — the script could not be reused for a longer
 night, could not be tested, and left the rules in one operator's head.
 
@@ -13,7 +12,6 @@ The runner is injectable so the rules are tested without launching anything.
 from __future__ import annotations
 
 from shared.output import json_line
-import shutil
 import subprocess
 import time
 from collections.abc import Callable, Sequence
@@ -21,7 +19,6 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-INDEXER_UNIT = "graphify-watcher.service"
 STAGE_KEYS = ("pairs", "runs", "output", "duration", "controller", "workload", "seed")
 
 
@@ -93,20 +90,12 @@ def _default_runner(command: Sequence[str], log_path: Path) -> int:
     return completed.returncode
 
 
-def _default_indexer(action: str) -> bool:
-    """Pause or restore the work-tree indexer; best effort, never fatal."""
-    if shutil.which("systemctl") is None:
-        return False
-    return subprocess.run(["systemctl", "--user", action, INDEXER_UNIT], check=False).returncode == 0
-
-
 def run_series(
     stages: Sequence[StageSpec],
     *,
     max_attempts: int = 2,
     log_path: Path | None = None,
     runner: Callable[[Sequence[str], Path], int] = _default_runner,
-    indexer: Callable[[str], bool] = _default_indexer,
     sleep: Callable[[float], None] = time.sleep,
     now: Callable[[], datetime] = datetime.now,
 ) -> list[StageOutcome]:
@@ -124,39 +113,32 @@ def run_series(
             log.write(f"{now():%Y-%m-%d %H:%M:%S} {message}\n")
 
     note(f"series start: {len(stages)} stage(s), log {log_path}")
-    indexer_paused = indexer("stop")
-    note(f"indexer {'paused' if indexer_paused else 'not paused'} for the series")
 
-    try:
-        for stage in stages:
-            started = time.monotonic()
-            returncode = 0
-            for attempt in range(1, max_attempts + 1):
-                note(f"stage {stage.describe()}: attempt {attempt}")
-                returncode = runner(stage.command(), log_path)
-                if returncode == 0:
-                    break
-                note(f"stage {stage.describe()}: attempt {attempt} failed with {returncode}")
-                if attempt < max_attempts:
-                    sleep(60)
-            ok = returncode == 0
-            outcomes.append(
-                StageOutcome(
-                    stage=stage.profile,
-                    attempts=attempt,
-                    ok=ok,
-                    seconds=time.monotonic() - started,
-                    returncode=returncode,
-                )
-            )
-            note(f"stage {stage.describe()}: {'ok' if ok else 'FAILED'}")
-            if not ok:
-                note("series stopping: a stage failed every attempt")
+    for stage in stages:
+        started = time.monotonic()
+        returncode = 0
+        for attempt in range(1, max_attempts + 1):
+            note(f"stage {stage.describe()}: attempt {attempt}")
+            returncode = runner(stage.command(), log_path)
+            if returncode == 0:
                 break
-    finally:
-        if indexer_paused:
-            indexer("start")
-            note("indexer restored")
+            note(f"stage {stage.describe()}: attempt {attempt} failed with {returncode}")
+            if attempt < max_attempts:
+                sleep(60)
+        ok = returncode == 0
+        outcomes.append(
+            StageOutcome(
+                stage=stage.profile,
+                attempts=attempt,
+                ok=ok,
+                seconds=time.monotonic() - started,
+                returncode=returncode,
+            )
+        )
+        note(f"stage {stage.describe()}: {'ok' if ok else 'FAILED'}")
+        if not ok:
+            note("series stopping: a stage failed every attempt")
+            break
 
     return outcomes
 
