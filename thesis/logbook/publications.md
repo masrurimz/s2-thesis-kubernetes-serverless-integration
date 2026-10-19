@@ -79,6 +79,13 @@
 - Open: an S1/S2/S3/S4 rerun with the leak-free GRU would let the four-scenario table measure the described system; not run.
 - Evidence: `thesis/logbook/decisions-2026-10-19-paper-rewrite.tsv`; `paper/numbers.json`; `results/claims/FINAL_NUMBERS.md` (Replication 2026-08-09, S4 predictor).
 
+### 2026-10-20 — title changed
+- Status: pending
+- What changed: the title is now "Scaling Kubernetes Replicas with GRU Forecasts and Routing Overflow to Serverless" (conference), with the subtitle "Architecture and Paired Evaluation" in the journal. It replaces "Forecast-Driven Replica Scaling in a Hybrid Kubernetes–Knative Deployment: Architecture and Paired Evaluation" from the 2026-10-19 event above. Reasons: the old title led with the forecast, which gave no measurable gain; it said "Knative" where readers search "serverless"; and its wording did not show that only scaling uses the forecast. The new order ties "with GRU Forecasts" to scaling alone, which matches the code, and "Routing Overflow" names what Algorithm 1 does (only the load above ready-pod capacity goes to serverless).
+- Build: conference 6 pages, anonymous; journal 7 pages.
+- Next action: adviser confirms the title with the draft `WA-2026-10-19-01` — owner: user — `pending`.
+- Evidence: `paper/conference.typ`; `paper/journal.typ`; `thesis/logbook/decisions-2026-10-19-paper-rewrite.tsv`.
+
 ### PAPER-001 outline (6–7 pages, IEEE two-column)
 - Title and abstract: proposed title "GRU-Based Predictive Autoscaling for Hybrid Kubernetes and Serverless Clusters". Keywords: Kubernetes, serverless, autoscaling, workload prediction, GRU. Abstract of 120–150 words, no citations.
 - Framing note: serverless carries the paper's emphasis, because the study compares a Kubernetes backend against a serverless backend and then the two hybrid modes. State one caveat in the first paragraph of Section III, or a reviewer will read the platform claim as false: both backends run on a single k3d testbed, simulating a two-platform deployment, with separate namespaces, separate ingress paths, and separate workload instances (`ch03-method`, `ch03-infra`).

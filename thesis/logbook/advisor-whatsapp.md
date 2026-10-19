@@ -206,6 +206,8 @@ Exchange (verbatim, 13/10/26):
 Draft (Indonesian, for the user to send):
 > Selamat siang Pak Roy, izin update progres.
 >
+> Judul paper yang saya usulkan: "Scaling Kubernetes Replicas with GRU Forecasts and Routing Overflow to Serverless". Versi jurnal menambah subjudul "Architecture and Paired Evaluation".
+>
 > 1. Paper conference dan jurnal sudah saya tulis ulang berdasarkan tiga kontribusi yang kita sepakati tanggal 13 kemarin. Kontribusinya sekarang eksplisit: (a) arsitektur kontrol terintegrasi, yaitu Algoritma 2 untuk scaling replika Kubernetes dan Algoritma 1 untuk distribusi trafik berbasis kapasitas ke Knative; (b) modifikasi decision factor ElaX: LSTM per jam diganti GRU 9 langkah × 15 detik, nilai yang dipakai adalah upper envelope terbesar dalam 135 detik, dan hanya dipakai kalau meminta replika lebih banyak daripada beban teramati. Bobot routing tidak bergantung pada forecast; (c) evaluasi dua bagian: hybrid terhadap Kubernetes-only (S1) dan serverless-only (S2), lalu perbandingan berpasangan S4 terhadap S3 dengan GRU final. Saya juga menambahkan tabel perbandingan langsung dengan ElaX.
 > 2. Bagian GRU sudah saya detailkan di sisi training dan evaluasi: split kronologis dengan embargo, seleksi hyperparameter hanya di data validasi, dan window replay ada di data test. GRU mengurangi error persistence sekitar 22% dan sedikit lebih baik dari LSTM, tetapi tidak lebih baik dari autoregresi linear.
 > 3. Hasil empat skenario: kedua hybrid biayanya sama dengan Kubernetes + HPA (sekitar USD 170 per bulan) dan memakai 30–36% lebih sedikit pod-seconds, sedangkan serverless-only lebih dari dua kali lipat (USD 391). Catatan jujur: batch empat skenario itu dijalankan Agustus, sebelum GRU final (leak-free) dilatih, jadi S4 di batch itu masih memakai GRU versi lama. Perbandingan dengan S1 dan S2 saya klaim untuk arsitekturnya, bukan untuk GRU final.
@@ -215,7 +217,7 @@ Draft (Indonesian, for the user to send):
 >
 > Mohon arahan Bapak: conference mana yang dipilih, jurnal mana yang dituju, apakah Bapak berkenan dicantumkan sebagai co-author di versi jurnal, dan apakah perlu saya jalankan ulang keempat skenario dengan GRU final supaya tabel empat skenario konsisten (sekitar satu hari eksperimen). Terima kasih Pak.
 
-- English note: the draft reports three things the adviser asked for (explicit contributions against ElaX and the GRU, GRU training and evaluation detail, a Scopus conference) and asks four decisions: conference, journal, co-authorship, and whether to rerun the four scenarios with the leak-free GRU. Point 3 was corrected the same day after the review found that the August four-scenario batch ran S4 with an earlier GRU.
+- English note: the draft reports three things the adviser asked for (explicit contributions against ElaX and the GRU, GRU training and evaluation detail, a Scopus conference), proposes the paper title, and asks four decisions: conference, journal, co-authorship, and whether to rerun the four scenarios with the leak-free GRU. Point 3 was corrected the same day after the review found that the August four-scenario batch ran S4 with an earlier GRU. The title line was added on 2026-10-20.
 - Evidence: numbers from `paper/numbers.json` (four-scenario cost and pod-seconds from `2026-08-09_clarknet-replay_032257`; batch C from `2026-09-20_h2-confirmatory-10p`; GRU skill 0.216). Predictor provenance in `results/claims/FINAL_NUMBERS.md` (Replication 2026-08-09, S4 predictor). Venue facts from `VEN-2026-10-19-01`.
 - Action items:
   - Send the draft — owner: user — `pending`.

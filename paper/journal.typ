@@ -5,7 +5,7 @@
 #import "sections/body.typ": abstract, body, keywords
 
 #show: ieee.with(
-  title: [Forecast-Driven Replica Scaling in a Hybrid Kubernetes--Knative Deployment: \
+  title: [Scaling Kubernetes Replicas with GRU Forecasts and Routing Overflow to Serverless: \
     Architecture and Paired Evaluation],
   authors: (
     (
