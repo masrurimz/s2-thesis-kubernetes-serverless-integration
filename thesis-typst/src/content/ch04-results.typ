@@ -22,7 +22,7 @@ The paired S3/S4 comparison (H2) rests on three ClarkNet-attributable batches (2
 The July paired batch (`2026-07-14_clarknet-tuned-paired-n5`, Appendix B) reached p = 0.0312 but is not ClarkNet-attributable and is reported as history.
 The predictor evidence additionally carries the 2026-09-13 representation and crossing-target probes (`results/models/gru/2026-09-13_probes-representation/`, `results/models/gru/2026-09-13_probe-t-cross/`), reported with the GRU results in this chapter.
 
-== #H("ch4-gru")
+== #H("ch4-gru") <sec:gru-model>
 
 The prediction model is trained and evaluated under a leak-free chronological protocol.
 ClarkNet is resampled to 15 seconds and scaled by the same factor the replay applies, so the model trains at the amplitude it later serves.
@@ -199,6 +199,8 @@ Most cycles were within ready capacity (MAINTAIN or RECOVERY).
 The four-scenario replication ran on 2026-08-08 and 2026-08-09 (`2026-08-09_clarknet-replay_032257`, Appendix D). Its `meta.yaml` records status `in_progress`, and no analysis artifact exists in the bundle, so every statistic here was recomputed from the 20 run results.
 It ran 4 scenarios, 5 runs each (20 clean runs).
 All validity gates passed (5/5 per scenario), and treatment fidelity was delivered in every S4 run.
+The S4 arm ran before the leak-free GRU of @sec:gru-model was trained on 2026-09-10, so it measures an earlier predictor.
+Its logged upper envelope lies about 10 RPS above the point forecast (`s4-hybrid-predictive_run1/daemon.log`, 76.2 and 85.9 RPS), against 55 to 60 RPS for the leak-free model, so the S1 and S2 comparisons in this batch hold for the architecture, not for the forecaster of @sec:gru-model.
 Per-scenario mean p99 was S1 110.3 ms, S2 79.7 ms, S3 151.6 ms, and S4 99.1 ms.
 SLO violations summed over the five runs were S1 253, S2 2, S3 1,998, and S4 92 (per-run means 50.6, 0.4, 399.6, and 18.4).
 The replication did not reproduce the n = 1 diagnostic's S1 saturation.
