@@ -11,8 +11,8 @@
 
 ## Thread status
 
-- **Current state:** replied. The adviser approved the FRS on 2026-09-10 and issued two directives: an Indonesian summary in a fixed order, and a 6–7 page conference paper from existing results with submission before January.
-- **Next action:** send `ringkasan-penelitian.md` for review, confirm the venue (CCGrid 2027 proposed), then draft the paper. Bimbingan slot still open: the adviser has not fixed a day yet.
+- **Current state:** draft reply ready (2026-10-19), not sent. It reports the rewritten conference and journal papers, the result, and the venue shortlist, and asks the adviser to choose a conference and a journal.
+- **Next action:** user sends `WA-2026-10-19-01`. Then: submit to the chosen conference before its deadline (ICAIIC 2027: 2026-11-15), and port the journal version to the chosen journal's template. The Bimbingan slot is still not fixed.
 - **Fallback:** if the slot stays unset after the summary is read, propose Monday or Tuesday again in the same thread.
 
 ## Timeline
@@ -22,6 +22,8 @@
 | 2026-08-07 | Initial outreach drafted (evidence-tiered) | superseded |
 | 2026-09-10 | FRS + bimbingan outreach sent | sent |
 | 2026-09-10 | Adviser replied: FRS approved; Indonesian summary and conference paper directed | replied |
+| 2026-10-13 | Adviser asked for progress; summary link sent; three contribution bullets agreed; adviser asked for a Scopus conference | replied |
+| 2026-10-19 | Draft reply: papers rewritten, result, venue shortlist, three decisions asked | pending |
 
 ---
 
@@ -147,6 +149,77 @@ Sent (verbatim, user's side, 10/09/26):
   - `PUB-001` redirected to a conference paper of 6–7 pages with submission before January 2027 — owner: user and adviser, due: venue chosen this week.
   - FRS: approved 2026-09-10 (user report) — `actioned`.
 - Evidence: summary numbers come from [../../results/claims/FINAL_NUMBERS.md](../../results/claims/FINAL_NUMBERS.md). The FRS approval is user-reported and `unverified` in the repo.
+
+## WA-2026-10-13-01 — Progress check, contributions against ElaX and GRU, venue status
+
+### 2026-10-13 09:31–10:08 — received and sent
+- Direction: in and out
+- Status: replied (actioned for the manuscript wording; venue items pending)
+- Outcome: the adviser asked for the contributions to be defined explicitly and tied to ElaX and the GRU. He proposed three bullets. The user answered with a more exact version. The adviser also asked for a Scopus conference.
+
+Exchange (verbatim, 13/10/26):
+> [09.31.59] Pak Royyana Muslim Ijtihadie, S.Kom.,M.Kom.,Ph.D.: maaf baru respon, kelupaan ketumpukan chat lain
+> [09.32.30] Pak Royyana Muslim Ijtihadie, S.Kom.,M.Kom.,Ph.D.: bagaimana progresnya
+> [09.33.38] Muhammad Zahid Masruri: Untuk summary nya ada di link ini pak.
+> [09.34.33] Muhammad Zahid Masruri: Lalu untuk conference akhirnya kemaren saya belum mendaftar juga.
+> Jadi tinggal tersisa jurnal
+> [09.37.13] Pak Royyana Muslim Ijtihadie, S.Kom.,M.Kom.,Ph.D.: apa sudah ada kandidatnya ?
+> [09.46.11] Pak Royyana Muslim Ijtihadie, S.Kom.,M.Kom.,Ph.D.: jangan lupa kontribusi perlu di definisikan, terkait dengan elax dan GRU
+> [09.46.45] Muhammad Zahid Masruri: untuk kandidat nya yang paling mungkin https://kinetik.umm.ac.id  pak
+> [09.48.34] Muhammad Zahid Masruri: untuk elax disini ada modifikasi dan aplikasi nya ke routing 2 sistem berbeda dibanding yg asli hanya 1 sistem
+> untuk GRU akan saya coba detailkan, di GRU nya saya tidak terlalu banyak explore di modelnya, lebih di sisi training dan eval nya
+> [09.49.14] Pak Royyana Muslim Ijtihadie, S.Kom.,M.Kom.,Ph.D.: berarti decision making factornya dimodifikasi ?
+> [09.49.23] Pak Royyana Muslim Ijtihadie, S.Kom.,M.Kom.,Ph.D.: ini nanti yang perlu dieksplisitkan
+> [09.50.16] Muhammad Zahid Masruri: betul pak
+> [09.54.55] Pak Royyana Muslim Ijtihadie, S.Kom.,M.Kom.,Ph.D.: nah itu yang perlu explisit, apakah seperti ini kira kira ?
+> • integrated control architecture that coordinates Kubernetes replica scaling and capacity-aware traffic distribution to Knative serverless services
+> • extend the scaling decision logic by incorporating  multi-step GRU forecasts
+> • evaluate the proposed mechanism against Kubernetes-only, serverless-only, and reactive hybrid
+> [09.57.53] Pak Royyana Muslim Ijtihadie, S.Kom.,M.Kom.,Ph.D.: coba tetap cari conference scopus aja
+> [10.04.52] Muhammad Zahid Masruri: Betul pak, detail nya seperti ini
+>
+> • Integrated control architecture that coordinates Kubernetes replica scaling (Algorithm 2) and capacity-aware, SLO-driven traffic distribution (Algorithm 1) between Kubernetes and Knative serverless services.
+> • Extension of ElaX's scaling decision with multi-step GRU forecasts. Routing does not use the forecast. The GRU is trained and evaluated under a leak-free chronological protocol.
+> • Evaluation of the proposed hybrid-predictive mechanism (S4) against Kubernetes-only (HPA, S1), serverless-only (Knative KPA, S2), and hybrid-reactive (S3)
+> [10.05.09] Muhammad Zahid Masruri: akan saya coba cari kembali pak roy, tapi untuk yg jurnal apakh tetep dicoba juga ?
+> [10.06.16] Pak Royyana Muslim Ijtihadie, S.Kom.,M.Kom.,Ph.D.: saya masih menanyakan jurnal yang seperti apa yang bisa untuk publikasi
+> [10.08.33] Muhammad Zahid Masruri: baik pak roy terimakaish banyak
+
+- English note: three points. (1) The adviser wants the contribution stated against ElaX and the GRU, and he wants the modified decision-making factor explicit. The user confirmed it was modified ("betul"). (2) The adviser's three bullets and the user's refinement are the agreed contribution wording. They were applied on 2026-10-13 to `paper/sections/content.typ`, thesis ch01, ch02 and ch03, and `ringkasan-penelitian.md`. Open: the ch03 Algorithm 1 pseudocode still lets the forecast change routing weights, which contradicts the agreed "routing does not use the forecast" wording. See PUB-001, 2026-10-13. (3) Venue: the conference is not registered, so only the journal path is open from the user's side. The adviser asked the user to keep searching for a Scopus conference. He is still asking which journal can take the paper, so no journal is confirmed. Kinetik is the user's candidate only.
+- Interpretation: "conference akhirnya kemaren saya belum mendaftar" is read as "the conference I had in mind, TIME-E 2026 (deadline 2026-09-20), was never registered". The message does not name the conference. `unverified`.
+- The summary link in 09.33.38 is not in the export. `unverified`.
+- Action items:
+  - Contribution wording applied to papers, thesis and summary, 2026-10-13 — owner: user — `actioned`.
+  - Find a Scopus-indexed conference with a deadline before January 2027 — owner: user — due: before the CCGrid 2027 abstract date 2026-11-24 if CCGrid is chosen — `pending`.
+  - Agree a journal with the adviser. He is asking around — owner: adviser — `pending`.
+  - Detail the GRU training and evaluation section in the paper and thesis. The user said the work is on training and evaluation, not on model architecture — owner: user — `pending`.
+- Evidence: venue status in [publications.md](publications.md) PUB-001 and PUB-002 and [venue-communications.md](venue-communications.md) VEN-2026-10-13-01. Contribution claims checked against `apps/routing/routing/daemon/service.py` and `apps/prediction/prediction/gru_predictor.py`; see the 2026-10-13 event in `publications.md`.
+- Follow-up 2026-10-13 (later): the Algorithm 1 contradiction is fixed. ch03 now describes the capacity-driven V3 controller that the manifests record for S3 and S4. The ElaX comparison is stated against ElaX section III. See PUB-001, "2026-10-13 (later)".
+
+## WA-2026-10-19-01 — Papers rewritten; venue shortlist; three decisions asked
+
+### 2026-10-19 — draft, not sent
+- Direction: out
+- Status: pending
+- Outcome: none yet.
+
+Draft (Indonesian, for the user to send):
+> Selamat siang Pak Roy, izin update progres.
+>
+> 1. Paper conference dan jurnal sudah saya tulis ulang berdasarkan tiga kontribusi yang kita sepakati tanggal 13 kemarin. Kontribusinya sekarang eksplisit: (a) arsitektur kontrol terintegrasi, yaitu Algoritma 2 untuk scaling replika Kubernetes dan Algoritma 1 untuk distribusi trafik berbasis kapasitas ke Knative; (b) modifikasi decision factor ElaX: LSTM per jam diganti GRU 9 langkah × 15 detik, nilai yang dipakai adalah upper envelope terbesar dalam 135 detik, dan hanya dipakai kalau meminta replika lebih banyak daripada beban teramati. Bobot routing tidak bergantung pada forecast; (c) evaluasi dua bagian: hybrid terhadap Kubernetes-only (S1) dan serverless-only (S2), lalu perbandingan berpasangan S4 terhadap S3 dengan GRU final. Saya juga menambahkan tabel perbandingan langsung dengan ElaX.
+> 2. Bagian GRU sudah saya detailkan di sisi training dan evaluasi: split kronologis dengan embargo, seleksi hyperparameter hanya di data validasi, dan window replay ada di data test. GRU mengurangi error persistence sekitar 22% dan sedikit lebih baik dari LSTM, tetapi tidak lebih baik dari autoregresi linear.
+> 3. Hasil empat skenario: kedua hybrid biayanya sama dengan Kubernetes + HPA (sekitar USD 170 per bulan) dan memakai 30–36% lebih sedikit pod-seconds, sedangkan serverless-only lebih dari dua kali lipat (USD 391). Catatan jujur: batch empat skenario itu dijalankan Agustus, sebelum GRU final (leak-free) dilatih, jadi S4 di batch itu masih memakai GRU versi lama. Perbandingan dengan S1 dan S2 saya klaim untuk arsitekturnya, bukan untuk GRU final.
+> 4. Untuk GRU final, pada batch berpasangan yang tesnya ditetapkan di awal (10 pasang), selisih p99 S4 terhadap S3 adalah −13,6 ms (CI 95% −63,5 sampai +35,6; p = 0,31), jadi tidak signifikan, dan S4 memakai 45% lebih banyak pod-seconds. Ini saya tulis apa adanya beserta analisis penyebabnya.
+> 5. Kandidat conference Scopus yang masih buka: ICAIIC 2027 (IEEE co-sponsored, deadline 15 November, 6 halaman, bisa virtual USD 550) dan IEEE CCGrid 2027 (deadline 1 Desember, 10 halaman, sepertinya harus hadir di Dallas). Status Scopus ICAIIC masih saya cek.
+> 6. Untuk jurnal, ternyata Kinetik hanya SINTA 2, belum Scopus. Alternatif yang Scopus: Journal of Cloud Computing (Springer) atau Jurnal RESTI (SINTA 2 + Scopus, APC Rp8,5 juta).
+>
+> Mohon arahan Bapak: conference mana yang dipilih, jurnal mana yang dituju, apakah Bapak berkenan dicantumkan sebagai co-author di versi jurnal, dan apakah perlu saya jalankan ulang keempat skenario dengan GRU final supaya tabel empat skenario konsisten (sekitar satu hari eksperimen). Terima kasih Pak.
+
+- English note: the draft reports three things the adviser asked for (explicit contributions against ElaX and the GRU, GRU training and evaluation detail, a Scopus conference) and asks four decisions: conference, journal, co-authorship, and whether to rerun the four scenarios with the leak-free GRU. Point 3 was corrected the same day after the review found that the August four-scenario batch ran S4 with an earlier GRU.
+- Evidence: numbers from `paper/numbers.json` (four-scenario cost and pod-seconds from `2026-08-09_clarknet-replay_032257`; batch C from `2026-09-20_h2-confirmatory-10p`; GRU skill 0.216). Predictor provenance in `results/claims/FINAL_NUMBERS.md` (Replication 2026-08-09, S4 predictor). Venue facts from `VEN-2026-10-19-01`.
+- Action items:
+  - Send the draft — owner: user — `pending`.
+  - Confirm ICAIIC 2027 Scopus status before submitting — owner: user — due 2026-11-15 — `pending`.
 
 ---
 

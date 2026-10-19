@@ -9,6 +9,12 @@
 
 **Rumusan masalah.** (1) Bagaimana merancang prediksi beban kerja trafik aplikasi web memakai GRU? (2) Bagaimana memodifikasi algoritma ElaX untuk scaling klaster dan distribusi trafik ke tipe klaster berbeda? (3) Bagaimana mengevaluasi mekanisme tersebut pada lingkungan terintegrasi Kubernetes dan serverless?
 
+**Kontribusi.**
+
+- (1) Arsitektur kontrol terpadu yang mengoordinasikan scaling replika Kubernetes (Algoritma 2) dan distribusi trafik yang sadar kapasitas (Algoritma 1) antara Kubernetes dan layanan serverless Knative, di bawah SLO p99 200 ms.
+- (2) Perluasan keputusan scaling ElaX dengan prediksi GRU multi-langkah. ElaX memprediksi 60 titik per menit sekali tiap jam dengan LSTM dan mereservasi sumber daya sesuai nilai prediksi terbesar. Di sini LSTM diganti GRU yang memprediksi 9 langkah (135 detik) dan diperbarui tiap siklus 15 detik. Algoritma 2 mempertahankan aturan nilai terbesar ElaX pada batas atas GRU, membandingkannya dengan target dari beban teramati, dan menahan target yang naik selama 90 detik. Bobot routing hanya bergantung pada beban teramati dan pod yang ready, tidak pada prediksi. Pengendali umpan balik berbasis slack milik ElaX tidak diimplementasikan ulang. GRU dilatih dan dievaluasi dengan protokol kronologis tanpa kebocoran data.
+- (3) Evaluasi mekanisme hibrida prediktif (S4) terhadap Kubernetes saja (HPA, S1), serverless saja (Knative KPA, S2), dan hibrida reaktif (S3).
+
 **Metodologi.** Model GRU:
 
 - Input: 30 sampel trafik terakhir, interval sampling 15 detik
@@ -18,7 +24,7 @@
 
 ElaX dimodifikasi jadi dua algoritma:
 
-- **Algoritma 1 (routing, hanya dari beban aktual).** Tiap 15 detik hitung kapasitas efektif K8s dari replika yang ready (R_efektif 16,65 RPS/replika), lalu alihkan lonjakan di atas kapasitas ke serverless. Prediksi GRU tidak dipakai untuk routing, hanya untuk memberi label PREDICTIVE. Prioritas: SCALE_OUT $>$ PREDICTIVE $>$ OPTIMIZE_COST $>$ MAINTAIN. Setiap langkah menggeser split sepuluh poin persen.
+- **Algoritma 1 (routing, hanya dari beban aktual).** Tiap 15 detik hitung kapasitas efektif K8s dari replika yang ready (R_efektif 16,65 RPS/replika). K8s membawa beban sampai kapasitas itu, dan serverless membawa lonjakan di atasnya (maksimum 50% trafik). Bobot pindah langsung ke target dalam satu siklus, tanpa langkah tetap. Suku pacing belum pernah menambah bobot pada run yang dilaporkan: pelanggaran dihitung paling banyak satu per siklus 15 detik, sehingga laju pembakaran tidak pernah mencapai batas anggaran. Prediksi GRU tidak dipakai untuk routing. Label PREDICTIVE diberikan saat predicted_upper melebihi beban teramati; predicted_upper berasal dari batas atas GRU atau, bila tren beban naik, dari ekstrapolasi beban teramati. Label lain: REACTIVE, RECOVERY, MAINTAIN.
 - **Algoritma 2 (scaling, satu-satunya jalur prediksi).** Jumlah pod dihitung dengan rumus R = alfa dikali x ditambah beta. Mode reaktif memakai beban aktual; mode prediktif memakai batas atas prediksi GRU (upper envelope, dikalikan ROUTING_PREDICTIVE_SHRINK), dan hanya diterapkan apabila target prediktif melebihi target aktual, dengan hold 90 detik. Ini satu-satunya tempat prediksi mengubah perilaku: scale-up dan scale-down replika K8s.
 - **Konsolidasi node.** Seperti Cluster Autoscaler: bila utilisasi di bawah 50% dan pod-nya bisa dipindah, node dihapus.
 
@@ -33,7 +39,7 @@ Empat skenario dibandingkan, memakai beban dari trace ClarkNet 30–164 RPS (rat
 | S3 hibrida reaktif | Algoritma 1 + 2, beban aktual | dinamis: Kubernetes + serverless |
 | S4 hibrida prediktif | Algoritma 1 + 2, prediksi GRU | dinamis: Kubernetes + serverless |
 
-**Hasil evaluasi.** Eksperimen terakhir memakai model ClarkNet (artefak 20623c19, 13 September 2026): perbandingan berpasangan n=10 (`2026-09-13_h2-confirmatory-10p`) dan n=5 (`2026-09-13_h2-pair-5p`). Semua run lolos uji validitas dan 100% prediksi terkirim.
+**Hasil evaluasi.** Batch terbaru memakai model ClarkNet (artefak 20623c19): replikasi konfirmatori 20 September 2026 (n=10, `2026-09-20_h2-confirmatory-10p`) dan dua batch 13 September (n=10 dan n=5). Semua run lolos uji validitas dan 100% prediksi terkirim. Tabel berikut memuat batch 13 September n=10.
 
 Perbandingan berpasangan n=10 (model ClarkNet):
 
@@ -42,7 +48,7 @@ Perbandingan berpasangan n=10 (model ClarkNet):
 | p99 rata-rata (ms) | 420,2 | 316,0, selisih -104,2 (p = 0,168 satu arah; d = -0,33 kecil; CI 95% [-293,9; +79,5] mencakup nol) |
 | p95 rata-rata (ms) | 129,5 | 118,1, selisih -11,4 (p = 0,333; d = -0,15) |
 | Pelanggaran SLO | 1.874 | 1.425, selisih -448,5 (p = 0,288; d = -0,18) |
-| Porsi serverless | 21,4% | 12,9% (S4 menahan kapasitas K8s lebih awal sehingga ketergantungan pada serverless turun) |
+| Porsi waktu serverless | 21,4% | 12,9% |
 | Replica-seconds | 6.851 | 10.002 (S4 menahan lebih banyak replika warm) |
 
 Kesimpulan jujur dari uji utama: **H2 tidak didukung** (p = 0,168 tidak melewati 0,05). Hasil n=5 bulan Juli (188,5 vs 126,0 ms, p = 0,0312) memakai model yang dilatih dengan data sintetis, bukan model terbaik ClarkNet, sehingga tidak lagi dipakai sebagai hasil utama, melainkan dicatat sebagai hasil historis.
@@ -65,7 +71,7 @@ Kesimpulan jujur dari uji utama: **H2 tidak didukung** (p = 0,168 tidak melewati
 
 **Kesimpulan.**
 
-- (1) GRU memenuhi target akurasi pada data sintetis (RMSE 5,2%, MAE 4,1%) dan cukup cepat untuk keputusan real-time (inferensi ~40 ms), tetapi pada trace asli ia setara dengan model linear (bukan keunggulan akurasi), sehingga dipakai sebagai sinyal batas atas dengan gerbang confidence.
+- (1) GRU memenuhi target akurasi pada data sintetis (RMSE 5,2%, MAE 4,1%) dan cukup cepat untuk keputusan real-time (inferensi median 4,0 ms pada bundel 20 September), tetapi pada trace asli ia setara dengan model linear (bukan keunggulan akurasi), sehingga dipakai sebagai sinyal batas atas (upper envelope) untuk scaling replika.
 - (2) ElaX menjadi 2 algoritma: Algoritma 1 untuk routing memakai beban aktual dan kapasitas replika yang ready; Algoritma 2 untuk scaling adalah satu-satunya jalur prediksi (target prediktif hanya dipakai bila melebihi target aktual). PREDICTIVE adalah label aksi routing saat predicted_upper melebihi beban aktual, bukan jalur split tersendiri.
-- (3) Pada eksperimen terakhir dengan model ClarkNet (n=10, artefak 20623c19): S4 lebih cepat 104,2 ms tetapi tidak signifikan (p = 0,168), pelanggaran SLO turun 448,5 dengan biaya yang sama. H2 tidak didukung pada uji utama. Replikasi pra-registrasi pada host sepi dengan gerbang beban (10 pasangan, 20 run valid) memberi selisih −13,6 ms (p = 0,307, d = −0,16), dan pooled 25 pasangan memberi −16,5 ms (95% CI [−194,0, +182,5], p = 0,50). Estimasi subset host idle yang lama (p = 0,039) tidak bertahan terhadap replikasi; itu artefak pemilihan subset. Efek signifikan hanya muncul pada uji konsolidasi (n=1).
-- Berlaku dengan 3 syarat: horizon prediksi menutupi jeda provisioning node, konsolidasi node mengikuti Cluster Autoscaler, baseline reaktif disetel secara wajar — ditambah syarat keempat dari eksperimen terakhir: pengukuran dilakukan pada host yang idle (data beban host tercatat per run).
+- (3) Pada batch 13 September dengan model ClarkNet (n=10, artefak 20623c19): S4 lebih cepat 104,2 ms tetapi tidak signifikan (p = 0,168), pelanggaran SLO turun 448,5 dengan biaya yang sama. H2 tidak didukung pada uji utama. Replikasi konfirmatori 20 September (10 pasangan, 20 run valid) memberi selisih −13,6 ms (p = 0,307, d = −0,16). Pooled 25 pasangan memberi −16,5 ms (95% CI [−188,6; +184,5] ms, p satu sisi = 0,448, d = −0,03; `paper/derive_numbers.py`). Subset 8 pasangan dengan puncak beban host di bawah 40% memberi −101,3 ms (p = 0,039), tetapi itu hasil pemilihan subset dan tidak bertahan terhadap replikasi. Efek signifikan hanya muncul pada uji konsolidasi (n=1).
+- Berlaku dengan 3 syarat: horizon prediksi menutupi jeda provisioning node, konsolidasi node mengikuti Cluster Autoscaler, baseline reaktif disetel secara wajar. Syarat keempat: beban host dicatat per run. Pada batch 20 September kesibukan host rata-rata 0,14–0,27 per run dan puncak di atas 0,5 pada 7 dari 20 run. Gerbang beban sebelum run hanya memeriksa satu sampel (REFUSE 1,0, WARN 0,5), sehingga tidak menjamin host tenang selama run.

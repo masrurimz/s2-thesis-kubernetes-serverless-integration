@@ -3,6 +3,12 @@
 **Date:** 2026-09-18
 **Mode:** Explanation — why TIME-E 2026 is the venue, and what is built.
 
+> **Status 2026-10-19:** superseded on venue choice. TIME-E 2026 was not submitted and is closed. The
+> current shortlist (ICAIIC 2027, IEEE CCGrid 2027, TECHNOVA-GRACE 2027) and the finding that Kinetik is
+> SINTA 2 but not Scopus-indexed are in `thesis/logbook/venue-communications.md` (VEN-2026-10-19-01) and
+> `thesis/logbook/publications.md` (PUB-001, PUB-002). The paper is rebuilt from `paper/sections/body.typ`;
+> `paper/sections/content.typ`, named below, no longer exists.
+
 ## Advisor comms (WhatsApp, 2026-09-10)
 
 Pak Royyana Muslim Ijtihadie asked for:

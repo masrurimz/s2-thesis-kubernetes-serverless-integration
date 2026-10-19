@@ -46,6 +46,39 @@
 - Evidence: adviser message [advisor-whatsapp.md](advisor-whatsapp.md) WA-2026-09-10-01; numbers from [../../results/claims/FINAL_NUMBERS.md](../../results/claims/FINAL_NUMBERS.md)
 - Next action: confirm the venue with the adviser, then draft the paper from the outline below
 
+### 2026-10-13 — TIME-E 2026 not registered; Scopus conference search reopened
+- Status: pending
+- What changed: the conference was never registered. TIME-E 2026 (paper deadline 2026-09-20) has passed, so it cannot take this paper. The adviser asked for a Scopus-indexed conference. CCGrid 2027 is the candidate already in this log (paper deadline 2026-12-01, abstract 2026-11-24, per wikicfp). Its Scopus indexing is `[INFERENCE]`; the CCGrid site was not checked in this session.
+- Title mismatch: three titles exist. `paper/conference.typ` says "Hybrid Kubernetes-Serverless Routing: A Test of Guessing Against Reacting". `paper/journal.typ` says "Hybrid Kubernetes-Serverless Routing: Design, Paired Evaluation, and Host-Load Instrumentation". The outline above proposes "GRU-Based Predictive Autoscaling for Hybrid Kubernetes and Serverless Clusters". Pick one before submission.
+- Contribution wording applied 2026-10-13 to `paper/sections/content.typ` (abstract, introduction, contribution list), thesis ch01, ch02 and ch03, and `ringkasan-penelitian.md`. The "confidence-gated" wording is removed. The scaling path has no confidence check: `apps/routing/routing/daemon/service.py` lines 607–662 use the forecast without one, and `apps/prediction/prediction/gru_predictor.py` lines 628–636 give confidence 0.8 or 0.6 against a 0.5 threshold, so no gate would ever close.
+- Open, not changed in this event: `thesis-typst/src/content/ch03-methodology.typ` Algorithm 1 pseudocode (PREDICTIVE branch, lines 125–129) and the PREDICTIVE bullet (line 103) still say the forecast can move routing weights. The v3 routing code, which the daemon imports, does not do that. `ch02-literature.typ` line 90 (PulseNet row) still names "confidence-gated prediction".
+- Next action: user finds a Scopus-indexed conference and confirms CCGrid or an alternative before 2026-11-24 — owner: user — `pending`.
+- Evidence: `results/claims/FINAL_NUMBERS.md`; code references above; `WA-2026-10-13-01`; `VEN-2026-10-13-01`.
+
+### 2026-10-13 (later) — follow-up: Algorithm 1 and ElaX wording corrected
+- Status: pending
+- What changed: the "Open" items in the event above are closed. The thesis Algorithm 1 table and the PREDICTIVE bullet in ch03 described the earlier priority-ladder controller (SCALE_OUT, OPTIMIZE_COST, ten-point steps). Every S3 and S4 run in `results/experiments/phase-b/2026-09-20_h2-confirmatory-10p/` records `controller_version` v3 in its manifest, and its `daemon.log` shows `controller_decision_v3` with direct capacity splits (for example 100/0 to 70/30 in one cycle). Ch03 now describes V3: capacity split, 50% cap, pacing term, labels. The same fix reached ch01, ch02, ch04 (Phase A1 labelled as the earlier controller), ch05, the paper design section and `ringkasan-penelitian.md`. The ch02 PulseNet row no longer says "no confidence-gated prediction".
+- ElaX wording, checked against `docs/references/elax-elastic-provisioning-containerized-2019.pdf` section III: ElaX predicts 60 per-minute points once an hour with an LSTM and reserves for the largest predicted value. So multi-step forecasting is inherited, not new. The thesis now states what changed: GRU, 135 s horizon refreshed every 15 s, the larger of the observed and forecast replica targets with a 90 s hold, and routing between two backends. It states that ElaX's slack-based feedback controller and vertical scale-up are not reimplemented.
+- Still open, not changed: (a) the pacing term looks unable to fire at a 15 s cadence. Allowed burn is 1000/1200 = 0.83 cycles per second and the largest possible burn is one violating cycle per 15 s = 0.067. This arithmetic is `[INFERENCE]`. In the one run inspected (S4 run 10 of the bundle above) `burn_adjustment` stayed 0 and `budget_remaining` stayed 1000. (b) The Knative pre-warm request returned HTTP 404 in that run's log, so the claim that pre-warming reduces cold-start latency is unverified. (c) ch04 lines about the n = 1 ClarkNet diagnostic still mention OPTIMIZE_COST and "the confidence gate". The controller version of those older diagnostics is unverified. (d) The V3 module docstring still says S3 uses V1 and that total load is max(observed, predicted). The code does neither.
+- Evidence: `apps/routing/routing/algorithm/algorithm1_v3.py` lines 217–294; `apps/routing/routing/algorithm/registry.py` lines 83–94; run manifests and `daemon.log` named above.
+
+### 2026-10-19 — conference paper rewritten from the evidence; venue shortlist renewed
+- Status: pending
+- What changed: the paper was rewritten from scratch around the three contributions agreed on 2026-10-13. One title replaces the three in the event of 2026-10-13: "Forecast-Driven Replica Scaling in a Hybrid Kubernetes–Knative Deployment: Architecture and Paired Evaluation". Structure: Introduction (ElaX gap, three contributions), Related work (with a table of what Algorithm 2 keeps from ElaX and what it changes), Control architecture (Algorithm 1 and Algorithm 2 as pseudocode, node tier), GRU forecaster (leak-free protocol, accuracy against persistence, LSTM and linear autoregression), Experimental setup, Results (four scenarios; three paired batches and the pooled 25 pairs; why the forecast did not help), Discussion, Conclusion. The conference build is 5 A4 pages, anonymous.
+- Evidence pipeline: `paper/derive_numbers.py` derives every measured value from the bundles into `paper/numbers.json`; the prose interpolates it. `make check` in `paper/` fails when the JSON is stale or when the prose types a number that is not a listed configuration constant.
+- Corrections against the old paper: Algorithm 1 no longer reads the forecast; the S3/S4 "serverless share" is the weight-time share, not a request share; the 102 ms paired sd is replaced by the measured sd per batch (84 ms in batch C); the July batch is described as unattributable history, not evidence.
+- Venue: TIME-E 2026 is closed. Ranked shortlist (VEN-2026-10-19-01): ICAIIC 2027 (deadline 2026-11-15, 6 pages, virtual author fee USD 550, IEEE technical co-sponsorship; Scopus unverified), IEEE CCGrid 2027 (abstract 2026-11-24, paper 2026-12-01, 10 pages, double-blind, no online option found), TECHNOVA-GRACE 2027 (online, deadline window from 2026-12-15; indexing unproven).
+- Next action: adviser picks the conference; submit `paper/conference.pdf` before its deadline — owner: user — `pending`.
+- Evidence: `paper/numbers.json`; bundles named in `paper/derive_numbers.py`; `thesis/logbook/decisions-2026-10-19-paper-rewrite.tsv`.
+
+### 2026-10-19 (later) — adversarial review applied to both papers
+- Status: pending
+- What changed: a hostile review (6 must-fix, 16 should-fix, 14 nits) was applied. The largest fix: the four-scenario batch (2026-08-09) ran S4 with an earlier GRU (envelope about 10 RPS above the point forecast, against 55–60 RPS for the leak-free model), so the paper now claims the S1/S2 comparison for the architecture only. The headline is the pre-specified batch C (−13.6 ms, 95% CI [−63.5, +35.6], p = 0.307). The two hybrids used 30% (S4) and 36% (S3) fewer pod-seconds than HPA at the same projected cost. Other fixes: the router wording (the routing weight does not depend on the forecast), the testbed facts (Knative has one three-CPU worker and three to ten warm pods; each request computes fib(33) and then waits 50 ms), the gates, the delay design, the bibliography metadata, MArk and Spock added as the closest prior work, the post-hoc quiet-host subset labelled as such, and the margin-only ablation stated as untested. The n = 1 diagnostic with the non-scaling S1 arm was removed.
+- Stats fix found on the way: `paired_permutation_p_from_diffs` dropped the observed arrangement through float rounding (9/256 instead of 10/256 for the quiet subset). Fixed in commit `44ef4db` with a regression test; the four stored H2 verdicts are unchanged.
+- Build: `paper/conference.pdf` 6 pages A4, anonymous (no author strings), 29 references.
+- Open: an S1/S2/S3/S4 rerun with the leak-free GRU would let the four-scenario table measure the described system; not run.
+- Evidence: `thesis/logbook/decisions-2026-10-19-paper-rewrite.tsv`; `paper/numbers.json`; `results/claims/FINAL_NUMBERS.md` (Replication 2026-08-09, S4 predictor).
+
 ### PAPER-001 outline (6–7 pages, IEEE two-column)
 - Title and abstract: proposed title "GRU-Based Predictive Autoscaling for Hybrid Kubernetes and Serverless Clusters". Keywords: Kubernetes, serverless, autoscaling, workload prediction, GRU. Abstract of 120–150 words, no citations.
 - Framing note: serverless carries the paper's emphasis, because the study compares a Kubernetes backend against a serverless backend and then the two hybrid modes. State one caveat in the first paragraph of Section III, or a reviewer will read the platform claim as false: both backends run on a single k3d testbed, simulating a two-platform deployment, with separate namespaces, separate ingress paths, and separate workload instances (`ch03-method`, `ch03-infra`).
@@ -103,6 +136,32 @@
 **Reality check:** no acceptance guaranteed; ranks/APCs need edition verification before submission. The research route needs an accepted Q3+/WoS journal OR published SINTA 1-4, plus the seminar requirement — plan for both a journal AND an oral presentation.
 
 ---
+
+## PUB-002 — Hybrid Kubernetes-Serverless Routing (journal track)
+
+- First logged: 2026-10-13
+- Status: pending
+- Stage: draft. `paper/journal.typ` builds at 5 pages from the same content source as the conference version.
+- Target venue: Kinetik (Universitas Muhammadiyah Malang), the user's candidate. The adviser is still asking which journal fits. Not confirmed.
+- Indexing check (2026-10-13): Kinetik's indexing page lists SINTA S2, BASE, ROAD, Google Scholar, Garuda, Dimensions, Ingenta Connect and EBSCOHost. It does not list Scopus. The adviser asked for a Scopus venue. The "SINTA 2 + Scopus" note in `docs/plans/2026-09-18-publication-venues.md` is `unverified`.
+- Authors: `paper/journal.typ` lists Royyana Muslim Ijtihadie as co-author. The chat does not record the adviser agreeing to this. `unverified`.
+- Next action: confirm the journal with the adviser, and check Kinetik's Scopus status before submitting — owner: user — `pending`.
+- Evidence: `results/claims/FINAL_NUMBERS.md`; `WA-2026-10-13-01`; `VEN-2026-10-13-01`.
+
+### 2026-10-19 — journal version rewritten; Kinetik is not Scopus-indexed
+- Status: pending
+- Stage: draft. `paper/journal.pdf` builds at 6 pages from the same body as the conference version, with journal-only blocks: a cold-start and scaling-control paragraph in related work, the design reasoning behind the decision factor, the GRU search result, envelope coverage and probe variants, run conditioning, the cost model, the per-run boxplot, the node-tier timing, and a data-availability statement.
+- Indexing: Kinetik's About page lists "SINTA 2, Scholar Metrics, Google Scholar" (checked 2026-10-19). Kinetik meets a SINTA requirement, not a Scopus one. Scopus-indexed alternatives: Journal of Cloud Computing (Springer, Scopus and SCIE; collections close 2026-12-31) and Jurnal RESTI (self-reported Scopus source 21101288925; APC IDR 8,500,000). Neither was confirmed on scopus.com itself in this session.
+- Format gap: Kinetik asks for 6–10 pages in its Word template with sections Introduction, Research Method, Results and Discussion, Conclusion, and at least 25 references, 20 of them journal papers. The journal build is in the IEEE layout and cites 31 works, many of them conference papers or preprints. Port to the chosen journal's template once the adviser decides.
+- Next action: adviser chooses the journal; then port `paper/journal.pdf` to its template — owner: user — `pending`.
+- Evidence: `VEN-2026-10-19-01`; `paper/journal.pdf`.
+
+### 2026-10-19 (later) — journal version after the review
+- Status: pending
+- Stage: draft. `paper/journal.pdf` builds at 7 pages with 34 references, which replaces the 6 pages and 31 works stated above. New journal-only material: the search budget (6 trials per input length, input lengths 20 and 30), per-step error against the linear model, the warm-up request note, the delay sequence, the cost-model formula, and the S2 capacity asymmetry.
+- Gap: a Scopus journal usually expects a longer manuscript (often 10 or more pages, and about 30% new material over a conference version). The extensions that would close it are the four-scenario rerun with the leak-free GRU, a constant-margin ablation, and a per-backend tail decomposition.
+- Next action: adviser chooses the journal — owner: user — `pending`.
+- Evidence: `paper/journal.pdf`; `thesis/logbook/decisions-2026-10-19-paper-rewrite.tsv`.
 
 *Conventions: append events per PUB ID; statuses per README.md.*
 ---
