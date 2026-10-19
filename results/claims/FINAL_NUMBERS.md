@@ -1,6 +1,6 @@
 # Final Experiment Numbers
 
-**Date:** 2026-07-14
+**Date:** 2026-07-14 (corrected 2026-10-19; see the dated note at the end)
 **Rule:** Thesis Ch4/Ch5/abstracts must use ONLY numbers from this file.
 
 ---
@@ -8,17 +8,17 @@
 ## Two evidence tiers (read this first)
 
 | **Diagnostic (n=1)** | `results/experiments/phase-b/2026-07-11_scaling_fix_n1` | Four-scenario (S1–S4) single-run diagnostic | Descriptive only. Directional mechanism evidence. |
-| **Paired H2 (n=5, clean)** | `results/experiments/phase-b/2026-07-12_paired-h2-clean-v2` | Counterbalanced S3/S4 paired comparison, ClarkNet, h=5 model | **⚠️ Superseded — see definitive n=5 below.** |
+| **Paired H2 (n=5, clean)** | `results/experiments/phase-b/2026-07-12_paired-h2-clean-v2` | Counterbalanced S3/S4 paired comparison, ClarkNet, h=5 model | **⚠️ Superseded — see the July n=5 batch below.** |
 | **Dynamic node diagnostic (n=1)** | `results/experiments/phase-b/2026-07-13_clarknet-dynamic-node-n1` | ClarkNet variable load, all tiers exercised, h=9 model | Descriptive. First proactive scaling evidence (predictive_count=4). |
-| **Paired H2 (n=5, tuned, definitive)** | `results/experiments/phase-b/2026-07-14_clarknet-tuned-paired-n5` | Counterbalanced S3/S4, ClarkNet, h=9, consolidation active, tuned S3 | **✅ Definitive.** H2 supported: p=0.0312 (1/32 design floor at n=5), d=−1.26 (large). |
+| **Paired H2 (n=5, tuned, July batch)** | `results/experiments/phase-b/2026-07-14_clarknet-tuned-paired-n5` | Counterbalanced S3/S4, ClarkNet, h=9, consolidation active, tuned S3 | **History (not ClarkNet-attributable).** Within-batch p=0.0312 (1/32 design floor at n=5), d=−1.26 (large). Superseded by the 25-pair ClarkNet record. |
 
-The earlier `2026-07-11_paired-h2` and `2026-07-12_paired-h2-clean-v2` bundles are retained as historical records. The definitive paired result is `2026-07-14_clarknet-tuned-paired-n5`.
+The earlier `2026-07-11_paired-h2` and `2026-07-12_paired-h2-clean-v2` bundles are retained as historical records. The July paired batch `2026-07-14_clarknet-tuned-paired-n5` is kept as history. The ClarkNet-attributable record is in the September section.
 
 ---
 
 ## Tier 1 — Diagnostic four-scenario summary (n=1)
 
-| Scenario | p99 (ms) | SLO Violations | SLO Rate | Serverless % |
+| Scenario | p99 (ms) | SLO Violations | SLO Rate | Time in serverless % |
 |---|---|---|---|---|
 | S1 (K8s+HPA) | 2,421.3 | 6,717 | 7.66% | 0.0% |
 | S2 (Serverless) | 77.7 | 19 | 0.02% | 100.0% |
@@ -31,7 +31,7 @@ The earlier `2026-07-11_paired-h2` and `2026-07-12_paired-h2-clean-v2` bundles a
 
 ## Tier 2 — Clean paired H2 result (n=5, full treatment delivery)
 
-**⚠️ SUPERSEDED: This section documents the pre-tuning n=5 result. The definitive result is in the section below.**
+**⚠️ SUPERSEDED: This section documents the pre-tuning n=5 result. The July batch is in the section below (history).**
 
 **Source:** `results/experiments/phase-b/2026-07-12_paired-h2-clean-v2/paired_analysis.json`
 
@@ -87,7 +87,7 @@ The mechanism repair (alpha=1/r_effective, buffer=1.0) reversed the effect direc
 
 ## Diagnostic cost model (n=1, directional only)
 
-The n=1 AWS monthly projection (S1=USD 132, S2=USD 394, S3=USD 147, S4=USD 142/mo) is a directional diagnostic cost model only. It must not be used to rank S3 and S4 or claim monthly savings.
+The n=1 AWS monthly projection (S1=USD 132, S2=USD 395, S3=USD 147, S4=USD 143/mo) is a directional diagnostic cost model only. It must not be used to rank S3 and S4 or claim monthly savings. Provenance: `results/cost_analysis/cost_analysis_20260711_112337.json`, where monthly = aws_cost.total × 2,592,000 s ÷ duration. The unrounded values are 131.9, 394.9, 147.2 and 142.8.
 
 ## Dynamic node + serverless offload diagnostic (n=1, 2026-07-13)
 
@@ -97,7 +97,7 @@ The n=1 AWS monthly projection (S1=USD 132, S2=USD 394, S3=USD 147, S4=USD 142/m
 
 **Workload:** `archetype_high_load_k6_stages.json` — 200 RPS constant for 1,200 seconds (40 stages × 30s). At r_effective=16.65, 200 RPS requests 10 replicas, exceeding the 6-pod static envelope and leaving K8s effective capacity (166.5 RPS) below offered load.
 
-| Scenario | p99 (ms) | SLO Violations | Success Rate | RPS | Nodes Provisioned | First Delay (s) | Serverless % | Knative Active (s) | Monthly USD | Dynamic Node USD |
+| Scenario | p99 (ms) | SLO Violations | Success Rate | RPS | Nodes Provisioned | First Delay (s) | Time in serverless % | Knative Active (s) | Monthly USD | Dynamic Node USD |
 |---|---|---|---|---|---|---|---|---|---|---|
 | S1 (K8s+HPA) | 6,665.1 | 78,257 | 65.6% | 189.6 | 2 | 54.8 | 0.0% | 0 | 219 | 0.0279 |
 | S2 (Serverless) | 1,401.9 | 12,859 | 94.6% | 199.9 | 0 | 0.0 | 100.0% | 1,260 | 1,110 | 0.0000 |
@@ -109,7 +109,7 @@ The n=1 AWS monthly projection (S1=USD 132, S2=USD 394, S3=USD 147, S4=USD 142/m
 - Tier 2 (pod scaling): Algorithm 2 / HPA scales replicas from 3 to 10 (the override cap) in S1, S3, and S4.
 - Tier 3 (node autoscaling): K3dAutoscaler provisions 2 dynamic workload nodes in S1, S3, and S4 after Pending pods are detected. Each `provision_events.json` records `pending_detected → provision_delay_started → node_created → node_resource_applied` for both nodes.
 
-**Trade-off finding:** Dynamic nodes alone are not sufficient. S1 (K8s-only with 2 dynamic nodes but no serverless offload) has the worst p99 (6,665 ms) and success rate (65.6%). S3 (hybrid-reactive with 2 dynamic nodes + serverless offload) achieves the best p99 (874 ms). The 51–70-second provisioning delay was absorbed by Knative offload in S3/S4 but caused severe latency degradation in S1, where no serverless fallback existed. S3 and S4 have identical monthly cost (USD 387/mo) despite different p99, confirming that the cost difference between reactive and predictive modes is negligible at this load; the latency difference is a controller-effectiveness question, not a cost trade-off.
+**Trade-off finding:** Dynamic nodes alone are not sufficient. S1 (K8s-only with 2 dynamic nodes but no serverless offload) has the worst p99 (6,665 ms) and success rate (65.6%). S3 (hybrid-reactive with 2 dynamic nodes + serverless offload) achieves the best p99 (874 ms). The 51–70-second provisioning delay of this July diagnostic was absorbed by Knative offload in S3/S4 but caused severe latency degradation in S1, where no serverless fallback existed. Later batches measured delays of 50–125 s. S3 and S4 have identical monthly cost (USD 387/mo) despite different p99, confirming that the cost difference between reactive and predictive modes is negligible at this load; the latency difference is a controller-effectiveness question, not a cost trade-off.
 
 **S4 validity failure — forecast horizon insufficient:** S4 failed the actuator-fidelity validity gate (`run_validity_passed=False`). The measured provisioning delay was 70.5s; with the 15s safety margin, the required forecast horizon is `ceil((70.5 + 15) / 15) = 6` steps. The deployed GRU model outputs only 5 steps (75s forecast window), so `forecast_horizon_sufficient=False`. S4 delivered 55 GRU predictions (100% delivery rate, 56 eligible cycles) but `predictive_count=0` and `proactive_scaleups=0` — none of the forecasts produced a proactive scale-up action. S4's p99 (1,393 ms) was 59% worse than S3's (874 ms) and its SLO violations (46,245) were 93% higher. The longer provisioning delay (70.5s vs S3's 51.8s) suggests the predictive decision path added latency before triggering the scale command.
 
@@ -133,15 +133,15 @@ With horizon=9, S4 passed the actuator-fidelity validity gate (`forecast_horizon
 
 **Topology:** 2 static workload agents (6-pod capacity), `max_k8s_replicas=10`, `prediction_horizon=9` (135s window), ClarkNet trace (variable 30–164 RPS, mean ~73 RPS, 1,200 seconds).
 
-| Scenario | p50 (ms) | p95 (ms) | p99 (ms) | SLO Violations | RPS | Nodes | Delay (s) | Serverless % | Monthly USD | Valid |
+| Scenario | p50 (ms) | p95 (ms) | p99 (ms) | SLO Violations | RPS | Nodes | Delay (s) | Time in serverless % | Monthly USD | Valid |
 |---|---|---|---|---|---|---|---|---|---|---|
 | S1 (K8s+HPA) | 64.5 | 77.9 | 118.4 | 129 | 73.2 | 2 | 91.8 | 0.0% | 187 | ✅ |
 | S2 (Serverless) | 66.0 | 76.6 | 79.0 | 15 | 73.2 | 0 | 0.0 | 100.0% | 403 | ✅ |
 | S3 (Reactive) | 64.7 | 79.3 | 103.9 | 14 | 73.2 | 2 | 120.7 | 21.2% | 196 | ✅ |
 | S4 (Predictive) | 64.7 | 81.1 | 108.3 | 44 | 73.2 | 2 | 108.9 | 17.6% | 196 | ✅ |
 
-**This is the definitive mechanism experiment.** Unlike the constant 200 RPS diagnostic, ClarkNet's variable load (ramps and surges) allows the GRU forecast to predict traffic increases before they occur. For the first time in the project:
-- `predictive_count = 4` — the GRU forecast triggered 4 predictive routing decisions
+**This is the mechanism diagnostic for variable load.** Unlike the constant 200 RPS diagnostic, ClarkNet's variable load (ramps and surges) allows the GRU forecast to predict traffic increases before they occur. For the first time in the project:
+- `predictive_count = 4` — 4 PREDICTIVE labels (weight increases made while predicted_upper exceeded the observed load; the label does not change the split)
 - `proactive_scaleups = 1` — 1 proactive scale-up was issued based on a forecast
 - `forecast_actionable_cycles = 1` — 1 cycle where the forecast capacity signal exceeded the observed
 - All validity gates passed: `forecast_horizon_sufficient=True`, `run_validity_passed=True`, `delivered=True`, 55/55 predictions delivered
@@ -161,7 +161,7 @@ With horizon=9, S4 passed the actuator-fidelity validity gate (`forecast_horizon
 
 **Topology:** Same ClarkNet trace (30-164 RPS, mean 73), max_k8s_replicas=10, prediction_horizon=9.
 
-| Scenario | p99 (ms) | SLO | Nodes Provisioned | Scale-Downs | Serverless % | Monthly USD | Dynamic Node USD |
+| Scenario | p99 (ms) | SLO | Nodes Provisioned | Scale-Downs | Time in serverless % | Monthly USD | Dynamic Node USD |
 |---|---|---|---|---|---|---|---|
 | S3 (Reactive) | 228.4 | 1,085 | 3 | 3 | 12.4% | 162 | 0.040 |
 | S4 (Predictive) | 113.0 | 40 | 5 | 3 | 9.5% | 170 | 0.068 |
@@ -177,14 +177,14 @@ With horizon=9, S4 passed the actuator-fidelity validity gate (`forecast_horizon
 
 **Cost model improvement:** Dynamic-node EC2 cost is now computed from actual `node_created → node_deleted` timestamps in provision_events, not the flat `nodes_provisioned × (duration - delay)` formula. This correctly reflects shorter node lifetimes from consolidation.
 
-## Definitive paired H2 result — n=5, tuned, ClarkNet variable load (2026-07-14)
+## July paired H2 batch (history) — n=5, tuned, ClarkNet variable load (2026-07-14)
 
 **Source:** `results/experiments/phase-b/2026-07-14_clarknet-tuned-paired-n5`
 **Design:** 5 counterbalanced S3/S4 pairs, ClarkNet trace (30-164 RPS), max_k8s_replicas=10, prediction_horizon=9, utilization-based node consolidation (node utilization threshold=0.5, node idle=90s, node cooldown=120s), tuned S3 (pod scale_down_cooldown=120s, pod scale_down_threshold=0.75).
 
-**All 5 pairs valid (5/5).** H2 **supported**.
+**All 5 pairs valid (5/5).** Within the batch S4 won all 5 pairs. The batch is history and not ClarkNet-attributable, so H2 is not supported on the ClarkNet-attributable record.
 
-**Statistical correction policy:** Primary p99 p=0.0312 is the pre-specified test (significant at α=0.05). The value is the 1/32 design floor at n = 5: all five pairs fell the same way, so no smaller p is attainable. The stored bundle artifact records 0.0304 from an older analysis routine; the current `thesis experiment analyze` recomputes 1/32; the same exact routine returns 1/32 for both secondaries (p95 and SLO), so their uncorrected p is 0.0312 and the same four-fold correction gives 0.1248, while the stored artifact records 0.0304 and 0.1216. Predictor provenance: `data/models/gru_model.pt` entered version control on 2026-09-12 (commit 98e17d1, LFS oid 7f8244bcc403c59a3e2be5d31b1ee5586f01c0052416c2705c0a325d1cc3099d) as the deployed artifact. The 2026-07-14 manifest records an empty predictor block, so this batch's weights cannot be verified, and later batches do not reproduce its significance. Secondary metrics p95 and SLO have corrected p=0.1248 (the stored artifact records 0.1216) and stay not significant. Report secondaries as descriptive only.
+**Statistical correction policy:** Primary p99 p=0.0312 is the pre-specified test (significant at α=0.05). The value is the 1/32 design floor at n = 5: all five pairs fell the same way, so no smaller p is attainable. The stored bundle artifact records 0.0304 from an older analysis routine; the current `thesis experiment analyze` recomputes 1/32; the same exact routine returns 1/32 for both secondaries (p95 and SLO), so their uncorrected p is 0.0312 and the same four-fold correction gives 0.1248, while the stored artifact records 0.0304 and 0.1216. Predictor provenance: `data/models/gru_model.pt` entered version control on 2026-09-12 (commit 98e17d1, LFS oid 7f8244bcc403c59a3e2be5d31b1ee5586f01c0052416c2705c0a325d1cc3099d) as the deployed artifact. The 2026-07-14 manifest has no predictor key, so this batch's weights cannot be verified, and later batches do not reproduce its significance. Secondary metrics p95 and SLO have corrected p=0.1248 (the stored artifact records 0.1216) and stay not significant. Report secondaries as descriptive only.
 
 | Metric | S3 (Reactive) | S4 (Predictive) | Difference | Statistic |
 |---|---|---|---|---|
@@ -206,7 +206,7 @@ Per-pair p99 values:
 
 S4 won all 5 pairs. predictive_count=4-5 in every S4 run (GRU forecast consistently triggered proactive routing decisions). forecast_horizon_sufficient=True in all 5 S4 runs.
 
-**Why this is the definitive result:** Unlike the earlier n=5 (2026-07-12_paired-h2-clean-v2) which used h=5 model, no consolidation, and untuned S3 (scale_down_cooldown=300s dead zone), this experiment uses: (1) h=9 model covering provisioning delays, (2) utilization-based node consolidation matching K8s CA semantics, (3) tuned S3 reactive controller (120s cooldown, 0.75 threshold), (4) ClarkNet variable load allowing proactive scaling. The result reverses the earlier non-significant finding: S4 is now 33.1% better on p99 (was 5.9% better, p=0.38 nonsig).
+**Why this batch used the tuned design:** Unlike the earlier n=5 (2026-07-12_paired-h2-clean-v2) which used h=5 model, no consolidation, and untuned S3 (scale_down_cooldown=300s dead zone), this experiment uses: (1) h=9 model covering provisioning delays, (2) utilization-based node consolidation matching K8s CA semantics, (3) tuned S3 reactive controller (120s cooldown, 0.75 threshold), (4) ClarkNet variable load allowing proactive scaling. Within the batch the result reverses the earlier non-significant finding: S4 is 33.1% better on p99 (was 5.9% better, p=0.38 nonsig). The batch is not ClarkNet-attributable (see the provenance caveat).
 
 **Provenance caveat (2026-09-13).** Every paired S3/S4 run before this date used a synthetic-trained predictor, not the ClarkNet winner. This batch's manifests predate the `predictor` block (empty), and the two September confirmatory bundles (`2026-09-12_h2-confirmatory`, `2026-09-13_h2-quiet`) record `artifact_sha256` 7f8244bc — the synthetic winner deployed by the 98e17d1 swap. Two bundles now record the ClarkNet winner (`20623c19`): `2026-09-13_h2-pair-5p` (n=5, Δp99 +153.3 ms, p=0.656) and `2026-09-13_h2-confirmatory-10p` (n=10, Δp99 −104.2 ms, p=0.168). Neither clears 0.05 on the pre-specified test, so the ClarkNet-attributable headline is that H2 is not supported. The 10-pair bundle is the first to record per-run host CPU-busy (`host_load.parquet`); restricting to the 8 pairs where both arms peaked under 40% busy gives Δp99 −101.3 ms, p=0.039, d=−0.74 — a post-hoc sensitivity result showing the effect host contention was masking, and grounds for a quiet-host re-run.
 
@@ -304,7 +304,7 @@ Disclosed conclusion: the deployed point predictor should be the linear autoregr
 ## Quiet-host confirmatory replication — H2 null verdict (2026-09-20)
 
 **Source:** `results/experiments/phase-b/2026-09-20_h2-confirmatory-10p` (commit 837e8a8).
-**Design:** pre-registered `h2-confirmatory` profile, 10 counterbalanced S3/S4 pairs, one static agent, ClarkNet winner artifact 20623c19 in every manifest, host-load gate holding the machine under 0.1 of capacity throughout, graphify-watcher stopped. This batch directly tests the September quiet-host subset estimate.
+**Design:** pre-registered `h2-confirmatory` profile, 10 counterbalanced S3/S4 pairs, one static agent, ClarkNet winner artifact 20623c19 in every manifest. A pre-run host-load gate sampled a load ratio of 0.07 (manifest `conditions.load`). The gate thresholds are REFUSE 1.0 and WARN 0.5. The gate is not a held condition: during the runs, mean host CPU-busy was 0.14–0.27 per run, and the peak exceeded 0.5 in 7 of 20 runs (max 1.00). Graphify-watcher stopped. This batch directly tests the September quiet-host subset estimate.
 
 | Metric | S3 (Reactive) | S4 (Predictive) | Difference / statistic |
 |---|---:|---:|---|
@@ -314,7 +314,22 @@ Disclosed conclusion: the deployed point predictor should be the linear autoregr
 
 - All 20 runs passed the validity gates; all eligible GRU predictions were delivered.
 - **H2 is not supported.** The interim quiet-host subset estimate from the September batch (−101.3 ms, p=0.039, eight of its ten pairs under 40% host busy) does not survive the dedicated replication; it was an artifact of subset selection.
-- Pooled over the 25 ClarkNet-attributable pairs of the three batches (`2026-09-13_h2-pair-5p`, `2026-09-13_h2-confirmatory-10p`, `2026-09-20_h2-confirmatory-10p`): mean −16.5 ms, one-sided permutation p ≈ 0.50, d = −0.03, bootstrap 95% CI [−194.0, +182.5].
+- Pooled over the 25 ClarkNet-attributable pairs of the three batches (`2026-09-13_h2-pair-5p`, `2026-09-13_h2-confirmatory-10p`, `2026-09-20_h2-confirmatory-10p`): mean −16.5 ms, one-sided permutation p = 0.448, d = −0.03, bootstrap 95% CI [−188.6, +184.5] (S4 wins 15 of 25). Computed by `paper/derive_numbers.py` with `shared.stats` (`paired_bootstrap_ci`, `paired_permutation_p_from_diffs`), seed 42.
+
+## 2026-10-19 corrections
+
+- **Tiers and history.** The July paired batch is history. Its p=0.0312 is within-batch and not ClarkNet-attributable. Headers now say so, and the 25-pair pool is the ClarkNet-attributable record.
+- **Quiet host.** The 09-20 gate was a single pre-run sample (load ratio 0.0726). It was not a condition held during the runs. Recorded host CPU-busy during the 09-20 runs: mean 0.14–0.27 per run, peak above 0.5 in 7 of 20 runs (max 1.00). The earlier phrase "under 0.1 throughout" is withdrawn.
+- **Pooled 25 pairs.** Replaces [−194.0, +182.5], p 0.50 with mean −16.5 ms, bootstrap 95% CI [−188.6, +184.5], one-sided permutation p 0.448, d −0.03 (`paper/derive_numbers.py`, seed 42).
+- **Inference latency.** Median GRU response 4.0 ms (p95 5.1 ms, n = 560, first call per run excluded) in the 09-20 bundle. The "~40 ms" figure is a February 2026 observation and is not used.
+- **Serverless share.** "Serverless %" in the tables is `time_in_serverless_pct`, the share of time with Knative weight above zero. Traffic share by HAProxy weight-time product is in `paper/numbers.json`: diagnostic S3 6.1%, S4 3.0%.
+- **Cost 395 / 143 (S2 / S4, n=1).** Provenance is `results/cost_analysis/cost_analysis_20260711_112337.json`. The 2026-08-09 replication has no cost artifact, so no cost is quoted for it.
+- **PREDICTIVE labels.** "Forecast-driven decisions" counts PREDICTIVE labels. In the 07-14 S4 runs 21 of 21 labels had a GRU forecast at or below the observed load, so the labels come from the observed-load trend. The GRU forecast reaches routing only through replica counts.
+- **Pacing.** `burn_adjustment` was never positive in any bundle. The n=1 diagnostic logged −5 and −7.
+- **Replication 2026-08-09.** Its `meta.yaml` says status `in_progress`. Mann-Whitney p 0.0317 and Welch p 0.0970 are from `2026-08-09_clarknet-replay_032257/report.md`. Its SLO column is the five-run total; per-run means are 50.6, 0.4, 399.6, and 18.4.
+- **Checkpoint.** `data/models/gru_model.pt` (sha256 20623c19…) is hidden 256, 2 layers, dropout 0.103, head 256→128→9, lr 1.53e-4, batch 32, 23 epochs, seq 30, horizon 9, upper offsets 55–60 RPS.
+- **Artifact metadata.** The 09-20 manifests record `rmse` 29.621, which equals the seed-44 test RMSE in `metrics.json`. The statement that artifacts carry the validation RMSE is not confirmed by these manifests.
+- **Knative pre-warm.** Every 09-20 S3 and S4 run logged HTTP 404 on the pre-warm probe. The July runs logged OK.
 - Provenance note standing: the July significant batch (`2026-07-14_clarknet-tuned-paired-n5`, p=0.0312) remains non-ClarkNet-attributable (empty manifest predictor block; deployed artifact of that period was the synthetic winner).
 - Testbed repairs enabling this run are recorded in the bundle: hybrid serverlb network reattachment, stale node-object cleanup, node resolv.conf refresh, and Knative control-plane pull recovery (autoscaler, controller, activator).
 

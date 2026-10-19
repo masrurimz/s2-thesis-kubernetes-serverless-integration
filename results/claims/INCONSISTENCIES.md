@@ -215,12 +215,12 @@ All previous July experiment bundles (`2026-07-08-fib33-n5`, `2026-07-08-fib33-p
 | Scenario | p99 (ms) | SLO | Serverless % | Monthly Cost |
 |---|---|---|---|---|
 | S1 (K8s-only) | 2,421 | 6,717 (7.7%) | 0% | $132 |
-| S2 (Serverless) | 78 | 19 (0.02%) | 100% | $394 |
+| S2 (Serverless) | 78 | 19 (0.02%) | 100% | $395 |
 | S3 (Hybrid-reactive) | 99 | 3 (0.00%) | 31.8% | $147 |
-| S4 (Hybrid-predictive) | 118 | 104 (0.12%) | 24.7% | $142 |
+| S4 (Hybrid-predictive) | 118 | 104 (0.12%) | 24.7% | $143 |
 
 H1 (hybrid > K8s): ✅ S4 beats S1 by 95.1% on p99.
-H2 (predictive > reactive): ⚠️ S4 cheaper ($142 vs $147, -50% serverless reqs) but p99 19% higher. n=5 needed.
+H2 (predictive > reactive): ⚠️ S4 cheaper ($143 vs $147, -50% serverless reqs) but p99 19% higher. n=5 needed.
 
 ## Treatment Fidelity
 
