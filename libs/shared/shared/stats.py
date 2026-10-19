@@ -173,20 +173,24 @@ def paired_permutation_p_from_diffs(
     n = len(values)
     if n == 0:
         return 1.0
-    observed = float(np.mean(values))
+    # Compare sums, not means, and allow rounding: an arrangement is summed in a
+    # different order than the observed total, so one equal to it (the observed
+    # arrangement itself included) can land a few ulps above and drop out of the count.
+    observed = float(np.sum(values))
+    tolerance = 1e-9 * max(1.0, float(np.abs(values).sum()))
 
     if n <= _EXACT_PERMUTATION_MAX_PAIRS:
         totals = np.zeros(1, dtype=float)
         for value in values:
             totals = np.concatenate([totals + value, totals - value])
-        count = int(np.count_nonzero(totals / n <= observed))
+        count = int(np.count_nonzero(totals <= observed + tolerance))
         return count / len(totals)
 
     rng = np.random.default_rng(seed=seed)
     count = 0
     for _ in range(n_permutations):
         signs = rng.choice([-1, 1], size=n)
-        if np.mean(values * signs) <= observed:
+        if np.sum(values * signs) <= observed + tolerance:
             count += 1
     # The observed arrangement is always one of the possibilities, so it counts:
     # without it a maximal effect would be reported as p = 0, which no permutation

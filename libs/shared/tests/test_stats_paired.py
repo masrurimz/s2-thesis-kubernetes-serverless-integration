@@ -49,6 +49,24 @@ class TestExactDirection:
             paired_permutation_p_from_diffs([-10.0, -10.0, -15.0])
         )
 
+    def test_the_observed_arrangement_counts_despite_rounding(self):
+        # Batch B's eight low-contention pairs (2026-09-13_h2-confirmatory-10p). The
+        # all-plus arrangement sums these in a different order than np.mean does and
+        # lands 3e-14 above the observed mean; it must still count. Ten of the 256
+        # arrangements are at least as favourable, the observed one included.
+        diffs = [
+            -156.95344868000006,
+            -120.30973235000005,
+            -347.28155108,
+            -187.41768611000003,
+            -92.28668168000007,
+            25.14089935000004,
+            93.78006418000001,
+            -25.114992659999956,
+        ]
+
+        assert paired_permutation_p_from_diffs(diffs) == pytest.approx(10 / 256)
+
 
 class TestSampledPath:
     def test_a_large_sample_is_sampled_and_seeded(self):
