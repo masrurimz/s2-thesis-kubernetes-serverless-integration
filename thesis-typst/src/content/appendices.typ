@@ -32,7 +32,7 @@ Tabel berikut menyajikan parameter kalibrasi yang digunakan dalam eksperimen.
   caption: cap([Calibration parameters (default)], [Parameter kalibrasi (default)]),
 )
 
-*Catatan (override definitif):* Bundle berpasangan definitif H2 menggunakan override khusus eksperimen `max_k8s_replicas = 10, prediction_horizon = 9`, bukan nilai default pada tabel di atas. Override ini penting karena menjelaskan mengapa S1 tidak jenuh pada replikasi n=5.
+*Catatan (override kalibrasi):* Bundle berpasangan H2 menggunakan override khusus eksperimen `max_k8s_replicas = 10, prediction_horizon = 9`, bukan nilai default pada tabel di atas. Override ini penting karena menjelaskan mengapa S1 tidak jenuh pada replikasi n=5.
 
 == #H("app-a-alloc")
 
@@ -75,7 +75,7 @@ Tabel berikut menyajikan parameter kalibrasi yang digunakan dalam eksperimen.
 
 == #H("app-b-pairs")
 
-Tabel berikut menyajikan nilai p99 per pasangan dari bundle definitif `2026-07-14_clarknet-tuned-paired-n5`. Desainnya counterbalanced: lima pasangan (10 run) mengalternasikan urutan S3 dan S4 pada beban trace ClarkNet.
+Tabel berikut menyajikan nilai p99 per pasangan dari bundle Juli `2026-07-14_clarknet-tuned-paired-n5` (sejarah). Desainnya counterbalanced: lima pasangan (10 run) mengalternasikan urutan S3 dan S4 pada beban trace ClarkNet.
 
 #figure(
   kind: table,
@@ -88,7 +88,7 @@ Tabel berikut menyajikan nilai p99 per pasangan dari bundle definitif `2026-07-1
     [4], [164.0], [155.7], [-8.3], [Ya],
     [5], [199.2], [167.4], [-31.8], [Ya],
   ),
-  caption: cap([Per-pair p99 latency (definitive ClarkNet bundle)], [Per-pair p99 latency (bundle definitif ClarkNet)]),
+  caption: cap([Per-pair p99 latency (July paired bundle, history)], [Latensi p99 per-pasangan (bundel berpasangan Juli, sejarah)]),
 )
 
 == #H("app-b-stats")
@@ -108,10 +108,10 @@ Tabel berikut menyajikan nilai p99 per pasangan dari bundle definitif `2026-07-1
     [Pelanggaran SLO rata-rata], [S3 656; S4 130],
     [Biaya bulanan], [USD 163 vs USD 163],
   ),
-  caption: cap([Statistical results of the definitive bundle], [Hasil statistik bundle definitif]),
+  caption: cap([Statistical results of the July paired bundle (history)], [Hasil statistik bundel berpasangan Juli (sejarah)]),
 )
 
-Bundle ini adalah perbandingan paired batch Juli untuk H2 dan kini dilaporkan sebagai sejarah. Seluruh 5 pasangan valid, seluruh 280 prediksi GRU terkirim, dan `predictive_count` berada pada 4--5 per run S4. Metrik sekunder dilaporkan deskriptif setelah koreksi Bonferroni (p terkoreksi = 0.1248). Nilai p = 0.0312 adalah lantai desain 1/32 pada n = 5, karena kelima pasangan jatuh searah. Nilai ini adalah hasil hitung ulang rutin `thesis experiment analyze` saat ini. Artefak bundel tersimpan menyimpan 0.0304 dari rutin analisis lama. Prediktor yang dideploy `data/models/gru_model.pt` baru masuk kontrol versi pada 2026-09-12 (commit 98e17d1, LFS oid 7f8244bcc403c59a3e2be5d31b1ee5586f01c0052416c2705c0a325d1cc3099d) sebagai artefak yang dideploy. Manifest bundle 2026-07-14 mencatat blok prediktor kosong, dan artefak periode itu kemudian terbukti merupakan pemenang terlatih-sintetis, sehingga batch ini tidak teratribusikan ke ClarkNet. Verdict final H2 (Bab 4, bagian replikasi): tidak didukung — tiga batch teratribusikan ClarkNet (p = 0.656, 0.168, 0.307) semuanya null, dan pooled 25 pasangan memberi −16.5 ms (95% CI [−194.0, +182.5], p = 0.50).
+Bundle ini adalah perbandingan paired batch Juli untuk H2 dan kini dilaporkan sebagai sejarah. Seluruh 5 pasangan valid, seluruh 280 prediksi GRU terkirim, dan `predictive_count` berada pada 4--5 per run S4. Metrik sekunder dilaporkan deskriptif setelah koreksi Bonferroni (p terkoreksi = 0.1248). Nilai p = 0.0312 adalah lantai desain 1/32 pada n = 5, karena kelima pasangan jatuh searah. Nilai ini adalah hasil hitung ulang rutin `thesis experiment analyze` saat ini. Artefak bundel tersimpan menyimpan 0.0304 dari rutin analisis lama. Prediktor yang dideploy `data/models/gru_model.pt` baru masuk kontrol versi pada 2026-09-12 (commit 98e17d1, LFS oid 7f8244bcc403c59a3e2be5d31b1ee5586f01c0052416c2705c0a325d1cc3099d) sebagai artefak yang dideploy. Manifest bundle 2026-07-14 tidak mencatat prediktor, dan artefak periode itu kemudian terbukti merupakan pemenang terlatih-sintetis, sehingga batch ini tidak teratribusikan ke ClarkNet. Verdict final H2 (Bab 4, bagian replikasi): tidak didukung — tiga batch teratribusikan ClarkNet (p = 0.656, 0.168, 0.307) semuanya null, dan pooled 25 pasangan memberi −16.5 ms (95% CI [−188.6, +184.5], p satu sisi = 0.448; `paper/derive_numbers.py`).
 
 #pagebreak()
 
@@ -236,7 +236,7 @@ Tabel berikut menyajikan hasil per-run replikasi empat skenario `2026-08-09_clar
     [Perbandingan], [Hasil], [Kesimpulan],
     [S2 vs S1], [Welch p = 0.0004; Cohen's d = -5.58], [Signifikan],
     [S4 vs S3], [Welch p = 0.097; Mann-Whitney p = 0.0317; Cohen's d = -1.30], [Signifikan (Mann-Whitney)],
-    [S4 vs S1], [p = 0.24], [Tidak signifikan],
+    [S4 vs S1], [p = 0.151], [Tidak signifikan],
     [S3 vs S1], [+37.4%; p = 0.165], [Tidak signifikan],
     [S4 vs S3 (SLO)], [-95.4%; Mann-Whitney p = 0.0345], [Signifikan],
   ),
