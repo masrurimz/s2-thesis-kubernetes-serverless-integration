@@ -1,34 +1,32 @@
-// Extended journal version — same content, extended sections, named authors.
-// Build: typst compile --root .. paper/journal.typ paper/journal.pdf
+// Journal version: same body with the extended sections, named authors.
+// Build: cd paper && make journal
+// The IEEE layout is a neutral manuscript format; apply the chosen journal's template on submission.
 #import "ieee.typ": ieee
-#import "sections/content.typ": *
+#import "sections/body.typ": abstract, body, keywords
 
 #show: ieee.with(
-  title: [Prediction-Gated Hybrid Routing Between Kubernetes and Serverless
-    Backends: Design, Paired Evaluation, and the Role of Host-Load
-    Instrumentation],
+  title: [Forecast-Driven Replica Scaling in a Hybrid Kubernetes--Knative Deployment: \
+    Architecture and Paired Evaluation],
   authors: (
-    (name: "Muhammad Zahid Masruri",
-     department: [Department of Informatics],
-     organization: [Institut Teknologi Sepuluh Nopember],
-     location: [Surabaya, Indonesia],
-     email: [masruri03\@gmail.com]),
-    (name: "Royyana Muslim Ijtihadie",
-     department: [Department of Informatics],
-     organization: [Institut Teknologi Sepuluh Nopember],
-     location: [Surabaya, Indonesia],
-     email: [roy\@if.its.ac.id]),
+    (
+      name: "Muhammad Zahid Masruri",
+      department: [Department of Informatics],
+      organization: [Institut Teknologi Sepuluh Nopember],
+      location: [Surabaya, Indonesia],
+      email: "masruri03@gmail.com",
+    ),
+    (
+      name: "Royyana Muslim Ijtihadie",
+      department: [Department of Informatics],
+      organization: [Institut Teknologi Sepuluh Nopember],
+      location: [Surabaya, Indonesia],
+      email: "roy@if.its.ac.id",
+    ),
   ),
-  abstract: abstract(extended: true),
-  index-terms: index-terms(),
+  abstract: abstract,
+  index-terms: keywords,
   paper-size: "a4",
   bibliography: bibliography("../thesis-typst/src/bibliography.bib"),
 )
 
-#introduction(extended: true)
-#related(extended: true)
-#design(extended: true)
-#methodology(extended: true)
-#results(extended: true)
-#discussion(extended: true)
-#conclusion(extended: true)
+#body(extended: true)
