@@ -34,11 +34,12 @@ Open venue facts:
 
 | File | Use | Verified 2026-11-12 |
 |---|---|---|
-| `paper/conference-named.pdf` | upload when EDAS does not ask for an anonymous manuscript; also the base for the camera-ready | 6 pages, A4, 10 pt body, 6 fonts all embedded, author block present |
-| `paper/conference.pdf` | upload when EDAS says the review is double-blind | 6 pages, A4, 10 pt body, 6 fonts all embedded, 0 lines matching author or institution strings |
+| `paper/conference-named.pdf` | upload when EDAS does not ask for an anonymous manuscript; also the base for the camera-ready | 6 pages, A4, 10 pt body, 7 fonts all embedded, author block present (rewritten 2026-11-12) |
+| `paper/conference.pdf` | upload when EDAS says the review is double-blind | 6 pages, A4, 10 pt body, 7 fonts all embedded, 0 lines matching author or institution strings (rewritten 2026-11-12) |
 
 Both come from the same body. `make check` in `paper/` passed: `numbers.json` matches the bundles and the prose
-types no measured number. Rebuild with `cd paper && make`.
+types no measured number. Rebuild with `cd paper && make`. The sixth page is full: the last reference ends two lines
+above the bottom, so recheck the page count after any edit to the text or to `thesis-typst/src/bibliography.bib`.
 
 ## 3. EDAS steps
 
@@ -78,11 +79,11 @@ a co-author. Ask Pak Roy (draft `WA-2026-11-12-01`). Adding an author is one ent
 
 Kubernetes, serverless computing, autoscaling, workload prediction, gated recurrent unit, traffic routing
 
-**Abstract** (208 words, plain text)
+**Abstract** (227 words, plain text, same as the PDF)
 
-Kubernetes adds pods only after load has risen, and a serverless platform absorbs bursts at a higher cost per request. We present a control architecture for a hybrid of the two. Every 15 s, a capacity-aware router sends to Knative only the load that the ready Kubernetes pods cannot serve, and a replica scaler derived from ElaX sizes the Kubernetes deployment. We extend ElaX's scaling decision with multi-step forecasts from a gated recurrent unit (GRU). The scaler takes the largest upper-envelope value over the next 135 s and uses it only when it asks for more replicas than the observed load does. The routing weight depends only on observed load and ready pods. Under a leak-free chronological protocol, the GRU beats persistence (skill 0.216) but not a linear autoregression. On a CPU-bounded testbed that replays the ClarkNet trace, the two hybrids used 30% to 36% fewer pod-seconds than Kubernetes with HPA at the same projected cost, and serverless alone cost more than twice as much. In a pre-specified batch of ten counterbalanced pairs with the leak-free GRU, the forecast changed p99 by -13.6 ms (95% CI [-63.5, +35.6], p = 0.307) and added 45% more pod-seconds.
+A hybrid of Kubernetes and a serverless platform serves the base load on Kubernetes pods and sends the overflow to the serverless backend. We ask whether a load forecast still helps the Kubernetes replica scaler in such a hybrid, where the serverless backend already takes load while new pods and nodes start. Every 15 s, a router sends to Knative the load above the capacity of the ready Kubernetes pods, and a replica scaler derived from ElaX sizes the Kubernetes deployment. We extend the decision factor of the scaler with forecasts from a gated recurrent unit (GRU): the largest forecast value over the next 135 s plus a safety margin. Under a protocol that keeps test data out of training and tuning, the GRU reduces the error of a persistence forecast by 22% but does not beat a linear autoregression. On a CPU-bounded testbed that replays the ClarkNet trace, both hybrids matched the projected cost of Kubernetes with the Horizontal Pod Autoscaler (HPA). The reactive hybrid had a higher 99th-percentile latency (p99) than the HPA, and Knative alone was the fastest at more than twice the cost. In ten pre-specified pairs of runs, adding the forecast to the reactive hybrid changed p99 by -13.6 ms (95% CI [-63.5, +35.6], p = 0.307) and used 45% more pod-seconds, in a design that detects differences above about 72 ms.
 
-If EDAS caps the abstract below 208 words, drop the sentence that starts "The routing weight depends".
+If EDAS caps the abstract at 200 words, drop the sentence that starts "The reactive hybrid had a higher". The abstract in the PDF may stay longer than the EDAS field; IEEE allows up to 250 words.
 
 ## 5. After acceptance (2026-12-15 onward)
 
