@@ -28,6 +28,7 @@
 //   - p99 boxplot:      2026-08-09_clarknet-replay_032257/*/result.json (n=5)
 // ============================================================================
 #import "@preview/primaviz:0.9.1": *
+#import "headings.typ": cap
 
 // Scenario palette (matches shared.scenarios SCENARIO_COLORS).
 #let s1 = rgb("#4C72B0")
@@ -42,16 +43,16 @@
 // Bars S1/S2/S3/S4; dashed h-line at the July paired batch cost (S3=S4=163).
 // ---------------------------------------------------------------------------
 #let fig-cost-comparison() = bar-chart(
-  (("S1: K8s Only", 132), ("S2: Serverless Only", 395), ("S3: Hybrid Reactive", 147), ("S4: Hybrid Predictive", 143)),
+  ((cap("S1: K8s Only", "S1: hanya K8s"), 132), (cap("S2: Serverless Only", "S2: hanya serverless"), 395), (cap("S3: Hybrid Reactive", "S3: hybrid reaktif"), 147), (cap("S4: Hybrid Predictive", "S4: hybrid prediktif"), 143)),
   width: 420pt,
   height: 260pt,
   bar-width: 0.62,
-  title: [Monthly cost by scenario],
-  subtitle: [Directional diagnostic estimate (n=1)],
-  x-label: [Scenario],
+  title: cap([Monthly cost by scenario], [Biaya bulanan per skenario]),
+  subtitle: cap([Directional diagnostic estimate (n=1)], [Perkiraan diagnostik arah (n=1)]),
+  x-label: cap([Scenario], [Skenario]),
   theme: (palette: (s1, s2, s3, s4)),
   annotations: (
-    (type: "h-line", value: 163, dash: "dashed", color: slo, label: [July paired batch, history (S3 = S4 = 163)]),
+    (type: "h-line", value: 163, dash: "dashed", color: slo, label: cap([July paired batch, history (S3 = S4 = 163)], [Batch berpasangan Juli, sejarah (S3 = S4 = 163)])),
   ),
 )
 
@@ -63,14 +64,14 @@
   (
     labels: ("P1", "P2", "P3", "P4", "P5"),
     series: (
-      (name: "S3 Reactive", values: (235.6, 192.2, 151.4, 164.0, 199.2)),
-      (name: "S4 Predictive", values: (101.4, 104.9, 100.5, 155.7, 167.4)),
+      (name: cap("S3 Reactive", "S3 Reaktif"), values: (235.6, 192.2, 151.4, 164.0, 199.2)),
+      (name: cap("S4 Predictive", "S4 Prediktif"), values: (101.4, 104.9, 100.5, 155.7, 167.4)),
     ),
   ),
   width: 440pt,
   height: 280pt,
-  x-label: [Pair],
-  y-label: [p99 latency (ms)],
+  x-label: cap([Pair], [Pasangan]),
+  y-label: cap([p99 latency (ms)], [Latensi p99 (ms)]),
   theme: (palette: (s3, s4)),
   annotations: (
     (type: "h-line", value: 200, dash: "dashed", color: slo, label: [SLO 200 ms]),
@@ -83,16 +84,16 @@
 // ---------------------------------------------------------------------------
 #let fig-slo-violations() = grouped-bar-chart(
   (
-    labels: ("July batch (07-14, history)", "Replication (08-09)"),
+    labels: (cap("July batch (07-14, history)", "Batch Juli (07-14, sejarah)"), cap("Replication (08-09)", "Replikasi (08-09)")),
     series: (
-      (name: "S3 Reactive", values: (656, 399.6)),
-      (name: "S4 Predictive", values: (130, 18.4)),
+      (name: cap("S3 Reactive", "S3 Reaktif"), values: (656, 399.6)),
+      (name: cap("S4 Predictive", "S4 Prediktif"), values: (130, 18.4)),
     ),
   ),
   width: 420pt,
   height: 280pt,
-  x-label: [Evidence tier],
-  y-label: [SLO violations (count)],
+  x-label: cap([Evidence tier], [Tingkat bukti]),
+  y-label: cap([SLO violations (count)], [Pelanggaran SLO (jumlah)]),
   theme: (palette: (s3, s4)),
 )
 
@@ -110,8 +111,8 @@
   height: 280pt,
   show-points: true,
   show-values: false,
-  x-label: [Time (s)],
-  y-label: [Total node CPU (%)],
+  x-label: cap([Time (s)], [Waktu (s)]),
+  y-label: cap([Total node CPU (%)], [Total CPU node (%)]),
   theme: (palette: (s3,)),
   annotations: (
     // Cycle 1: pending -> delay -> node_created (t = ts - t_start, t_start = 1783967907.923196)
@@ -136,7 +137,7 @@
 // ---------------------------------------------------------------------------
 #let fig-p99-boxplot() = box-plot(
   (
-    labels: ("S1: K8s Only", "S2: Serverless Only", "S3: Hybrid Reactive", "S4: Hybrid Predictive"),
+    labels: (cap("S1: K8s Only", "S1: hanya K8s"), cap("S2: Serverless Only", "S2: hanya serverless"), cap("S3: Hybrid Reactive", "S3: hybrid reaktif"), cap("S4: Hybrid Predictive", "S4: hybrid prediktif")),
     boxes: (
       (min: 98.76, q1: 107.47, median: 112.69, q3: 115.18, max: 117.47),
       (min: 77.98, q1: 78.75, median: 79.02, q3: 79.41, max: 79.41, outliers: (83.42,)),
@@ -146,8 +147,8 @@
   ),
   width: 460pt,
   height: 300pt,
-  x-label: [Scenario],
-  y-label: [p99 latency (ms)],
+  x-label: cap([Scenario], [Skenario]),
+  y-label: cap([p99 latency (ms)], [Latensi p99 (ms)]),
   box-width: 0.5,
   theme: (palette: (s1, s2, s3, s4)),
   annotations: (

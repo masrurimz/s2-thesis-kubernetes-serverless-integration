@@ -12,6 +12,7 @@
 // <fig:...> label stay in ch02-literature.typ at the call site).
 // ============================================================================
 #import "@preview/cetz:0.4.0"
+#import "headings.typ": cap
 
 // ---- palette ---------------------------------------------------------------
 #let c-cp = rgb("#dbeafe")          // control plane light blue
@@ -154,7 +155,7 @@
   darrow((cp-cx + 2.3, 6.9), (node-cx - 2.15, 8.7 - 1.05), label: none)
   darrow((cp-cx + 2.3, 6.9), (node-cx - 2.15, 4.35 - 1.05), label: none)
   cetz.draw.content(
-    (6.95, 5.4), text(size: 6.5pt, fill: c-note, [kubelet watches apiserver]),
+    (6.95, 5.4), text(size: 6.5pt, fill: c-note, cap([kubelet watches apiserver], [kubelet memantau\ apiserver])),
     anchor: "center",
   )
 })
@@ -168,37 +169,37 @@
   cetz.draw.rect(
     (0.15, 3.15), (3.05, 5.85), fill: c-box, stroke: c-box-edge, radius: 0.12,
   )
-  cetz.draw.content((1.6, 5.4), text(size: 8.5pt, weight: "bold", [Event Trigger]), anchor: "center")
+  cetz.draw.content((1.6, 5.4), text(size: 8.5pt, weight: "bold", cap([Event Trigger], [Pemicu Peristiwa])), anchor: "center")
   cetz.draw.content(
-    (1.6, 4.65), text(size: 6.5pt, fill: c-note, [HTTP request\ message queue\ file upload\ cron schedule]), anchor: "north",
+    (1.6, 4.65), text(size: 6.5pt, fill: c-note, cap([HTTP request\ message queue\ file upload\ cron schedule], [_request_ HTTP\ antrean pesan\ unggah berkas\ jadwal cron])), anchor: "north",
   )
 
   // 2 — Function Invocation
-  dbox((4.45, 4.5), 2.3, 1.4, c-box, c-box-edge, [Function\ Invocation], size: 8pt)
+  dbox((4.45, 4.5), 2.3, 1.4, c-box, c-box-edge, cap([Function\ Invocation], [Pemanggilan\ Fungsi]), size: 8pt)
 
   // 3 — Container Provisioning (warm / cold inside)
   cetz.draw.rect(
     (5.85, 3.0), (9.35, 6.05), fill: c-box, stroke: c-box-edge, radius: 0.12,
   )
-  cetz.draw.content((7.6, 5.95), text(size: 8pt, weight: "bold", [Container\ Provisioning]), anchor: "north")
+  cetz.draw.content((7.6, 5.95), text(size: 8pt, weight: "bold", cap([Container\ Provisioning], [Penyediaan\ Kontainer])), anchor: "north")
   cetz.draw.rect(
     (6.05, 4.5), (9.15, 5.15), fill: c-dp, stroke: c-dp-edge, radius: 0.08,
   )
   cetz.draw.content(
-    (7.6, 4.825), text(size: 6.5pt, fill: c-dp-edge, [warm instance (reuse)]), anchor: "center",
+    (7.6, 4.825), text(size: 6.5pt, fill: c-dp-edge, cap([warm instance (reuse)], [instans hangat (dipakai ulang)])), anchor: "center",
   )
   cetz.draw.rect(
     (6.05, 3.2), (9.15, 4.35), fill: c-orange, stroke: c-orange-edge, radius: 0.08,
   )
   cetz.draw.content(
-    (7.6, 3.775), text(size: 6.5pt, fill: c-orange-edge, [cold start (provision + init)]), anchor: "center",
+    (7.6, 3.775), text(size: 6.5pt, fill: c-orange-edge, cap([cold start (provision + init)], [_cold start_\ (penyediaan + inisialisasi)])), anchor: "center",
   )
 
   // 4 — Function Execution
-  dbox((10.55, 4.5), 1.9, 1.4, c-box, c-box-edge, [Function\ Execution], size: 8pt)
+  dbox((10.55, 4.5), 1.9, 1.4, c-box, c-box-edge, cap([Function\ Execution], [Eksekusi\ Fungsi]), size: 8pt)
 
   // 5 — Response
-  dbox((12.6, 4.5), 1.7, 1.4, c-box, c-box-edge, [Response], size: 8pt)
+  dbox((12.6, 4.5), 1.7, 1.4, c-box, c-box-edge, cap([Response], [Respons]), size: 8pt)
 
   // flow arrows
   darrow((3.05, 4.5), (3.3, 4.5), label: none)
@@ -213,7 +214,7 @@
   )
   cetz.draw.content(
     (7.6, 1.1),
-    text(size: 7pt, fill: c-note, [scale to zero when idle (no instances, no cost)]),
+    text(size: 7pt, fill: c-note, cap([scale to zero when idle (no instances, no cost)], [skala ke nol saat menganggur\ (tanpa instans, tanpa biaya)])),
     anchor: "center",
   )
 })
@@ -256,47 +257,47 @@
 
   // ---- header row -----------------------------------------------------------
   cetz.draw.line((mx, hdr_bot), (x4, hdr_bot), stroke: c-gray-edge)
-  cetz.draw.content(((x0 + x1) / 2, hdr_mid), text(size: 7.5pt, weight: "bold", [Service Models]), anchor: "center")
-  cetz.draw.content(((x1 + x2) / 2, hdr_mid), text(size: 7.5pt, weight: "bold", [Cloud Stack]), anchor: "center")
-  cetz.draw.content(((x2 + x3) / 2, hdr_mid), text(size: 7.5pt, weight: "bold", [Stack Components]), anchor: "center")
-  cetz.draw.content(((x3 + x4) / 2, hdr_mid), text(size: 7.5pt, weight: "bold", [Who Is Responsible]), anchor: "center")
+  cetz.draw.content(((x0 + x1) / 2, hdr_mid), text(size: 7.5pt, weight: "bold", cap([Service Models], [Model Layanan])), anchor: "center")
+  cetz.draw.content(((x1 + x2) / 2, hdr_mid), text(size: 7.5pt, weight: "bold", cap([Cloud Stack], [Tumpukan _Cloud_])), anchor: "center")
+  cetz.draw.content(((x2 + x3) / 2, hdr_mid), text(size: 7.5pt, weight: "bold", cap([Stack Components], [Komponen Tumpukan])), anchor: "center")
+  cetz.draw.content(((x3 + x4) / 2, hdr_mid), text(size: 7.5pt, weight: "bold", cap([Who Is Responsible], [Penanggung Jawab])), anchor: "center")
 
   // ---- column 2: Cloud Stack (4 tall cells, one layer name each) -----------
-  cell(x1, x2, y_ua, ytop, [User], size: 8pt, bold: true)
-  cell(x1, x2, y_as, y_ua, [Application], size: 8pt, bold: true)
-  cell(x1, x2, y_si, y_as, [Application\ Stack], size: 7.5pt, bold: true)
-  cell(x1, x2, ybot, y_si, [Infrastructure], size: 7.5pt, bold: true)
+  cell(x1, x2, y_ua, ytop, cap([User], [Pengguna]), size: 8pt, bold: true)
+  cell(x1, x2, y_as, y_ua, cap([Application], [Aplikasi]), size: 8pt, bold: true)
+  cell(x1, x2, y_si, y_as, cap([Application\ Stack], [Tumpukan\ Aplikasi]), size: 7.5pt, bold: true)
+  cell(x1, x2, ybot, y_si, cap([Infrastructure], [Infrastruktur]), size: 7.5pt, bold: true)
 
   // ---- column 3: Stack Components grid --------------------------------------
   // User layer: 3 stacked rows
   let u_row = (ytop - y_ua) / 3
-  cell(x2, x3, ytop - u_row, ytop, [Login])
-  cell(x2, x3, ytop - 2 * u_row, ytop - u_row, [Registration])
-  cell(x2, x3, ytop - 3 * u_row, ytop - 2 * u_row, [Administration])
+  cell(x2, x3, ytop - u_row, ytop, cap([Login], [Masuk]))
+  cell(x2, x3, ytop - 2 * u_row, ytop - u_row, cap([Registration], [Pendaftaran]))
+  cell(x2, x3, ytop - 3 * u_row, ytop - 2 * u_row, cap([Administration], [Administrasi]))
 
   // Application layer: 2 cols x 3 rows
   let hw = (x3 - x2) / 2
   let ar = (y_ua - y_as) / 3
-  cell(x2, x2 + hw, y_ua - ar, y_ua, [Authentication])
-  cell(x2 + hw, x3, y_ua - ar, y_ua, [Authorization])
-  cell(x2, x2 + hw, y_ua - 2 * ar, y_ua - ar, [User Interface])
-  cell(x2 + hw, x3, y_ua - 2 * ar, y_ua - ar, [Transactions])
-  cell(x2, x2 + hw, y_ua - 3 * ar, y_ua - 2 * ar, [Reports])
-  cell(x2 + hw, x3, y_ua - 3 * ar, y_ua - 2 * ar, [Dashboard])
+  cell(x2, x2 + hw, y_ua - ar, y_ua, cap([Authentication], [Autentikasi]))
+  cell(x2 + hw, x3, y_ua - ar, y_ua, cap([Authorization], [Otorisasi]))
+  cell(x2, x2 + hw, y_ua - 2 * ar, y_ua - ar, cap([User Interface], [Antarmuka Pengguna]))
+  cell(x2 + hw, x3, y_ua - 2 * ar, y_ua - ar, cap([Transactions], [Transaksi]))
+  cell(x2, x2 + hw, y_ua - 3 * ar, y_ua - 2 * ar, cap([Reports], [Laporan]))
+  cell(x2 + hw, x3, y_ua - 3 * ar, y_ua - 2 * ar, cap([Dashboard], [Dasbor]))
 
   // Application Stack layer: 2 cols x 3 rows
   let sr = (y_as - y_si) / 3
   cell(x2, x2 + hw, y_as - sr, y_as, [OS])
-  cell(x2 + hw, x3, y_as - sr, y_as, [Programming Language])
-  cell(x2, x2 + hw, y_as - 2 * sr, y_as - sr, [App Svr])
+  cell(x2 + hw, x3, y_as - sr, y_as, cap([Programming Language], [Bahasa Pemrograman]))
+  cell(x2, x2 + hw, y_as - 2 * sr, y_as - sr, cap([App Svr], [Server Aplikasi]))
   cell(x2 + hw, x3, y_as - 2 * sr, y_as - sr, [Middleware])
-  cell(x2, x2 + hw, y_as - 3 * sr, y_as - 2 * sr, [Database])
-  cell(x2 + hw, x3, y_as - 3 * sr, y_as - 2 * sr, [Monitoring])
+  cell(x2, x2 + hw, y_as - 3 * sr, y_as - 2 * sr, cap([Database], [Basis Data]))
+  cell(x2 + hw, x3, y_as - 3 * sr, y_as - 2 * sr, cap([Monitoring], [Pemantauan]))
 
   // Infrastructure layer: dark block
   cetz.draw.rect((x2, ybot), (x3, y_si), fill: c-dark, stroke: c-dark, radius: 0.03)
   cetz.draw.content(((x2 + x3) / 2, 2.45), text(size: 9pt, weight: "bold", fill: white, [IaaS]), anchor: "center")
-  cetz.draw.content(((x2 + x3) / 2, 1.95), text(size: 6pt, fill: white, [Vendor Supplies – Infrastructure Security]), anchor: "center")
+  cetz.draw.content(((x2 + x3) / 2, 1.95), text(size: 6pt, fill: white, cap([Vendor Supplies – Infrastructure Security], [Vendor Menyediakan: Keamanan Infrastruktur])), anchor: "center")
 
   // ---- column 1: Service Models (3 vertical bars, SaaS tallest) ------------
   let bw = 0.55
@@ -323,26 +324,26 @@
   // IaaS: Customer = User+Application+AppStack, Vendor = Infrastructure
   cetz.draw.rect((iaas_x0, y_si), (iaas_x1, ytop), fill: c-customer, stroke: c-cp-edge, radius: 0.03)
   cetz.draw.rect((iaas_x0, ybot), (iaas_x1, y_si), fill: c-vendor, stroke: c-gray-edge, radius: 0.03)
-  cetz.draw.content(((iaas_x0 + iaas_x1) / 2, (ytop + y_si) / 2), rotate(-90deg, text(size: 7pt, weight: "bold", fill: c-cp-edge, [Customer])), anchor: "center")
+  cetz.draw.content(((iaas_x0 + iaas_x1) / 2, (ytop + y_si) / 2), rotate(-90deg, text(size: cap(7pt, 6pt), weight: "bold", fill: c-cp-edge, cap([Customer], [Pelanggan]))), anchor: "center")
   cetz.draw.content(((iaas_x0 + iaas_x1) / 2, (y_si + ybot) / 2), rotate(-90deg, text(size: 7pt, weight: "bold", fill: c-gray-edge, [Vendor])), anchor: "center")
 
   // PaaS: Customer = User+Application, Vendor = AppStack+Infrastructure
   cetz.draw.rect((paas_x0, y_as), (paas_x1, ytop), fill: c-customer, stroke: c-cp-edge, radius: 0.03)
   cetz.draw.rect((paas_x0, ybot), (paas_x1, y_as), fill: c-vendor, stroke: c-gray-edge, radius: 0.03)
-  cetz.draw.content(((paas_x0 + paas_x1) / 2, (ytop + y_as) / 2), rotate(-90deg, text(size: 7pt, weight: "bold", fill: c-cp-edge, [Customer])), anchor: "center")
+  cetz.draw.content(((paas_x0 + paas_x1) / 2, (ytop + y_as) / 2), rotate(-90deg, text(size: cap(7pt, 6pt), weight: "bold", fill: c-cp-edge, cap([Customer], [Pelanggan]))), anchor: "center")
   cetz.draw.content(((paas_x0 + paas_x1) / 2, (y_as + ybot) / 2), rotate(-90deg, text(size: 7pt, weight: "bold", fill: c-gray-edge, [Vendor])), anchor: "center")
 
   // SaaS: Customer = User, Vendor = Application+AppStack+Infrastructure
   cetz.draw.rect((saas_x0, y_ua), (saas_x1, ytop), fill: c-customer, stroke: c-cp-edge, radius: 0.03)
   cetz.draw.rect((saas_x0, ybot), (saas_x1, y_ua), fill: c-vendor, stroke: c-gray-edge, radius: 0.03)
-  cetz.draw.content(((saas_x0 + saas_x1) / 2, (ytop + y_ua) / 2), rotate(-90deg, text(size: 7pt, weight: "bold", fill: c-cp-edge, [Customer])), anchor: "center")
+  cetz.draw.content(((saas_x0 + saas_x1) / 2, (ytop + y_ua) / 2), rotate(-90deg, text(size: cap(7pt, 5.5pt), weight: "bold", fill: c-cp-edge, cap([Customer], [Pelanggan]))), anchor: "center")
   cetz.draw.content(((saas_x0 + saas_x1) / 2, (y_ua + ybot) / 2), rotate(-90deg, text(size: 7pt, weight: "bold", fill: c-gray-edge, [Vendor])), anchor: "center")
 
   // ---- legend ---------------------------------------------------------------
   cetz.draw.rect((x0, 0.5), (x0 + 0.9, 0.85), fill: c-customer, stroke: c-cp-edge, radius: 0.04)
-  cetz.draw.content((x0 + 1.15, 0.675), text(size: 6.5pt, fill: c-note, [Customer managed]), anchor: "west")
+  cetz.draw.content((x0 + 1.15, 0.675), text(size: 6.5pt, fill: c-note, cap([Customer managed], [Dikelola pelanggan])), anchor: "west")
   cetz.draw.rect((x0 + 3.4, 0.5), (x0 + 4.3, 0.85), fill: c-vendor, stroke: c-gray-edge, radius: 0.04)
-  cetz.draw.content((x0 + 4.55, 0.675), text(size: 6.5pt, fill: c-note, [Vendor managed]), anchor: "west")
+  cetz.draw.content((x0 + 4.55, 0.675), text(size: 6.5pt, fill: c-note, cap([Vendor managed], [Dikelola vendor])), anchor: "west")
 })
 
 // ============================================================================
@@ -351,22 +352,22 @@
 // ============================================================================
 #let fig-elax-architecture() = cetz.canvas({
   // phase titles
-  cetz.draw.content((2.45, 9.35), text(size: 8pt, weight: "bold", [1. Workload Prediction]), anchor: "center")
-  cetz.draw.content((6.65, 9.35), text(size: 8pt, weight: "bold", [2. Resource Reservation]), anchor: "center")
-  cetz.draw.content((10.9, 9.35), text(size: 8pt, weight: "bold", [3. Online Controller]), anchor: "center")
+  cetz.draw.content((2.45, 9.35), text(size: 8pt, weight: "bold", cap([1. Workload Prediction], [1. Prediksi Beban Kerja])), anchor: "center")
+  cetz.draw.content((6.65, 9.35), text(size: 8pt, weight: "bold", cap([2. Resource Reservation], [2. Reservasi Sumber Daya])), anchor: "center")
+  cetz.draw.content((10.9, 9.35), text(size: 8pt, weight: "bold", cap([3. Online Controller], [3. Pengendali _Online_])), anchor: "center")
 
   // ---- Phase 1: Workload Prediction ----------------------------------------
-  dbox((2.45, 8.2), 3.4, 0.9, c-box, c-box-edge, [Request History], size: 8pt)
-  dbox((2.45, 6.55), 3.8, 1.0, c-box, c-box-edge, [Singular Spectrum\ Analysis], size: 7.5pt)
-  cetz.draw.content((2.45, 5.95), text(size: 6pt, fill: c-note, [trace data denoising]), anchor: "center")
-  dbox((2.45, 4.65), 3.4, 0.9, c-box, c-box-edge, [LSTM Training], size: 8pt)
+  dbox((2.45, 8.2), 3.4, 0.9, c-box, c-box-edge, cap([Request History], [Riwayat _Request_]), size: 8pt)
+  dbox((2.45, 6.55), 3.8, 1.0, c-box, c-box-edge, cap([Singular Spectrum\ Analysis], [Analisis Spektrum\ Singular]), size: 7.5pt)
+  cetz.draw.content((2.45, 5.95), text(size: 6pt, fill: c-note, cap([trace data denoising], [pembersihan derau _trace_])), anchor: "center")
+  dbox((2.45, 4.65), 3.4, 0.9, c-box, c-box-edge, cap([LSTM Training], [Pelatihan LSTM]), size: 8pt)
 
   // decision making (with three sub-items)
   cetz.draw.rect((0.55, 1.0), (4.35, 3.8), fill: c-cp, stroke: c-cp-edge, radius: 0.14)
-  cetz.draw.content((2.45, 3.5), text(size: 7.5pt, weight: "bold", fill: c-cp-edge, [Decision Making]), anchor: "center")
-  dbox((2.45, 2.8), 3.4, 0.55, c-box, c-box-edge, [heterogeneous capacity], size: 6.5pt)
-  dbox((2.45, 2.15), 3.4, 0.55, c-box, c-box-edge, [performance bottleneck], size: 6.5pt)
-  dbox((2.45, 1.5), 3.4, 0.55, c-box, c-box-edge, [burst peak workload], size: 6.5pt)
+  cetz.draw.content((2.45, 3.5), text(size: 7.5pt, weight: "bold", fill: c-cp-edge, cap([Decision Making], [Pengambilan Keputusan])), anchor: "center")
+  dbox((2.45, 2.8), 3.4, 0.55, c-box, c-box-edge, cap([heterogeneous capacity], [kapasitas heterogen]), size: 6.5pt)
+  dbox((2.45, 2.15), 3.4, 0.55, c-box, c-box-edge, cap([performance bottleneck], [hambatan kinerja]), size: 6.5pt)
+  dbox((2.45, 1.5), 3.4, 0.55, c-box, c-box-edge, cap([burst peak workload], [beban kerja puncak _burst_]), size: 6.5pt)
 
   // phase 1 vertical arrows
   darrow((2.45, 7.75), (2.45, 7.05), label: none)
@@ -378,8 +379,8 @@
   dbox((6.65, 5.5), 2.4, 1.0, c-box, c-box-edge, [Scale-up], size: 8pt)
 
   // ---- Phase 3: Online Controller ------------------------------------------
-  dbox((10.9, 8.2), 4.0, 0.9, c-box, c-box-edge, [SLO slack feedback], size: 7.5pt)
-  dbox((10.9, 6.55), 4.0, 0.9, c-box, c-box-edge, [Elasticity Provisioning], size: 7.5pt)
+  dbox((10.9, 8.2), 4.0, 0.9, c-box, c-box-edge, cap([SLO slack feedback], [Umpan balik _slack_ SLO]), size: 7.5pt)
+  dbox((10.9, 6.55), 4.0, 0.9, c-box, c-box-edge, cap([Elasticity Provisioning], [Penyediaan Elastisitas]), size: 7.5pt)
 
   // servers group (dashed container)
   cetz.draw.rect(
@@ -393,9 +394,9 @@
   dbox((12.9, 4.75), 1.4, 0.8, c-box, c-box-edge, [Server 3], size: 6.5pt)
 
   // resource + platform stack
-  dbox((10.9, 3.15), 4.0, 0.7, c-orange, c-orange-edge, [CPU / RAM / Disk / Network], size: 7pt)
+  dbox((10.9, 3.15), 4.0, 0.7, c-orange, c-orange-edge, cap([CPU / RAM / Disk / Network], [CPU / RAM / Disk / Jaringan]), size: 7pt)
   dbox((10.9, 2.2), 4.0, 0.7, c-dp, c-dp-edge, [Docker Engine], size: 7pt)
-  dbox((10.9, 1.25), 4.0, 0.7, c-gray, c-gray-edge, [Operating System], size: 7pt)
+  dbox((10.9, 1.25), 4.0, 0.7, c-gray, c-gray-edge, cap([Operating System], [Sistem Operasi]), size: 7pt)
 
   // phase 3 vertical arrows
   darrow((10.9, 7.75), (10.9, 7.0), label: none)
@@ -421,6 +422,6 @@
     (0.6, 8.95), (12.6, 8.95),
     stroke: (paint: c-note, thickness: 0.7pt, dash: "dashed"),
   )
-  cetz.draw.content((6.6, 9.15), text(size: 6.5pt, fill: c-note, [Request History Data]), anchor: "center")
+  cetz.draw.content((6.6, 9.15), text(size: 6.5pt, fill: c-note, cap([Request History Data], [Data Riwayat _Request_])), anchor: "center")
   darrow((3.0, 8.95), (2.7, 8.65), edge: c-note)
 })
