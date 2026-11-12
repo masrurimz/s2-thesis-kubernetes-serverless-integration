@@ -1,21 +1,26 @@
 # Build both paper versions from paper/.
-#   make            -> conference.pdf + journal.pdf
+#   make            -> conference.pdf + conference-named.pdf + journal.pdf
 #   make conference -> six-page anonymous conference version
+#   make conference-named -> the same six pages with the author block
 #   make journal    -> extended named-author version
 #   make numbers    -> rederive numbers.json from the result bundles
 #   make check      -> fail if numbers.json no longer matches the bundles
 TYPST = typst compile --root ..
 SOURCES = sections/body.typ sections/common.typ numbers.json ieee.typ ../thesis-typst/src/bibliography.bib
 
-all: conference journal
+all: conference conference-named journal
 
 conference: conference.pdf
+conference-named: conference-named.pdf
 journal: journal.pdf
 
 conference.pdf: conference.typ $(SOURCES)
 	$(TYPST) conference.typ conference.pdf
 
-journal.pdf: journal.typ $(SOURCES)
+conference-named.pdf: conference-named.typ authors.typ $(SOURCES)
+	$(TYPST) conference-named.typ conference-named.pdf
+
+journal.pdf: journal.typ authors.typ $(SOURCES)
 	$(TYPST) journal.typ journal.pdf
 
 numbers numbers.json: derive_numbers.py
@@ -28,6 +33,6 @@ watch:
 	typst watch --root .. conference.typ conference.pdf
 
 clean:
-	rm -f conference.pdf journal.pdf
+	rm -f conference.pdf conference-named.pdf journal.pdf
 
-.PHONY: all conference journal numbers check watch clean
+.PHONY: all conference conference-named journal numbers check watch clean

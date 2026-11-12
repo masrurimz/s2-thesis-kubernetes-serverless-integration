@@ -2,27 +2,13 @@
 // Build: cd paper && make journal
 // The IEEE layout is a neutral manuscript format; apply the chosen journal's template on submission.
 #import "ieee.typ": ieee
+#import "authors.typ": authors
 #import "sections/body.typ": abstract, body, keywords
 
 #show: ieee.with(
   title: [Scaling Kubernetes Replicas with GRU Forecasts and Routing Overflow to Serverless: \
     Architecture and Paired Evaluation],
-  authors: (
-    (
-      name: "Muhammad Zahid Masruri",
-      department: [Department of Informatics],
-      organization: [Institut Teknologi Sepuluh Nopember],
-      location: [Surabaya, Indonesia],
-      email: "masruri03@gmail.com",
-    ),
-    (
-      name: "Royyana Muslim Ijtihadie",
-      department: [Department of Informatics],
-      organization: [Institut Teknologi Sepuluh Nopember],
-      location: [Surabaya, Indonesia],
-      email: "roy@if.its.ac.id",
-    ),
-  ),
+  authors: authors,
   abstract: abstract,
   index-terms: keywords,
   paper-size: "a4",
