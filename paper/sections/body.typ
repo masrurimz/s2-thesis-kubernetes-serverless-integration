@@ -21,9 +21,9 @@
   p99 at more than twice the cost. In ten pairs of runs planned
   in advance, the forecast changed p99 by #H.b10b.diff ms (95% CI \[#H.b10b.ci_lo, #H.b10b.ci_hi\],
   $p = #H.b10b.p$) and used #H.b10b.replica_pct% more pod-seconds. This design detects differences
-  above about #H.b10b.mde ms. The GRU was also no more accurate than a linear autoregression. One
-  explanation that fits these results is that Knative already serves the load during the start-up
-  delay that the forecast was meant to cover.
+  above about #H.b10b.mde ms, and the GRU forecast was no more accurate than a linear autoregression.
+  These results suggest that in a hybrid, the serverless backend already serves the load while new pods
+  start, so a forecast has little delay left to cover.
 ]
 
 #let keywords = ([Kubernetes], [serverless computing], [autoscaling], [workload prediction],
