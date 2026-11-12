@@ -7,7 +7,7 @@ Bab ini meninjau landasan teori dan penelitian terdahulu yang mendukung peneliti
 
 == #H("ch2-cloud")
 
-Komputasi awan adalah model akses jaringan yang ada di mana-mana, nyaman, dan sesuai permintaan ke sekumpulan sumber daya komputasi yang dapat dikonfigurasi dan dipakai bersama @mell2011nist. Sumber daya itu berupa jaringan, server, penyimpanan, aplikasi, dan layanan. Penyedia dapat menyediakan dan melepasnya dengan cepat, dengan upaya pengelolaan atau interaksi dengan penyedia yang minimal. Model ini kini menjadi cara utama untuk menjalankan sistem perangkat lunak berskala besar. Pada 2023, 87% perusahaan telah menerapkan strategi _multi-cloud_.
+Komputasi awan adalah model akses jaringan yang ada di mana-mana, nyaman, dan sesuai permintaan ke sekumpulan sumber daya komputasi yang dapat dikonfigurasi dan dipakai bersama @mell2011nist. Sumber daya itu berupa jaringan, server, penyimpanan, aplikasi, dan layanan. Penyedia dapat menyediakan dan melepasnya dengan cepat, dengan upaya pengelolaan atau interaksi dengan penyedia yang minimal. Model ini kini menjadi cara utama untuk menjalankan sistem perangkat lunak berskala besar. Dalam survei industri pada 2023, 87% responden melaporkan pemakaian _multi-cloud_ @flexera2023.
 
 Layanan komputasi awan terbagi menjadi empat model. Setiap model menetapkan batas tanggung jawab yang berbeda antara penyedia dan pengguna:
 

@@ -7,7 +7,7 @@ This chapter reviews the theoretical foundations and prior work that support thi
 
 == #H("ch2-cloud")
 
-Cloud computing is a model for ubiquitous, convenient, on-demand network access to a shared pool of configurable computing resources @mell2011nist. These resources are networks, servers, storage, applications, and services. A provider can provision and release them rapidly with minimal management effort or service provider interaction. The model is now the dominant way to deploy and operate software systems at scale. By 2023, 87% of enterprises had adopted multi-cloud strategies.
+Cloud computing is a model for ubiquitous, convenient, on-demand network access to a shared pool of configurable computing resources @mell2011nist. These resources are networks, servers, storage, applications, and services. A provider can provision and release them rapidly with minimal management effort or service provider interaction. The model is now the dominant way to deploy and operate software systems at scale. In a 2023 industry survey, 87% of respondents reported multi-cloud use @flexera2023.
 
 Cloud computing services fall into four models. Each model defines a different boundary of responsibility between the provider and the consumer:
 
