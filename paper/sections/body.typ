@@ -98,11 +98,12 @@ sets its planning horizon from it @adapt2026. Each of these systems scales one p
 benchmark finds that a calibrated rule-based autoscaler beats six deep reinforcement learning
 algorithms on cost @rayscale2026.
 
-*Serverless cost and cold starts.* A survey of serverless resource management names the start-up delay
-of new function instances as a challenge for autoscaling @mampage2022holistic. Benchmarks measure
-cold-start latency @yu2020characterizing @sebs2020, and SeBS shows that billing rounds up time and
-memory, so users pay for resources that they do not use @sebs2020. Billing practices @demystifying2025
-and the CPU and memory overhead of keeping instances warm @highcost2025 raise the cost further.
+*Serverless cost and cold starts.* Serverless has its own start-up delay. A survey of serverless
+resource management names the start-up delay of new function instances as a challenge for autoscaling
+@mampage2022holistic, and benchmarks measure cold-start latency @yu2020characterizing @sebs2020. Cost
+is the other problem. SeBS shows that billing rounds up time and memory, so users pay for resources
+that they do not use @sebs2020. Billing practices @demystifying2025 and the CPU and memory overhead of
+keeping instances warm @highcost2025 add to that bill.
 
 #if extended [
   *Scheduling and scaling control.* A survey of Kubernetes scheduling includes a category of
@@ -170,11 +171,11 @@ one hour. Algorithm 2 applies the forecast target when it exceeds $R(x_"obs")$ a
 
 #alg-scaling <alg:scaling>
 
-Three choices separate this decision factor from a plain forecast. It uses the upper envelope and not
-the point forecast, because a pod that arrives late costs SLO violations and a pod that arrives early
-costs idle time. The forecast can raise the target but cannot lower it, so a forecast error cannot
-remove pods that the observed load needs. The 90 s hold keeps a raised target through short dips, so
-the scaler does not remove pods that the next forecast asks for again.
+The scaler does not use the forecast as it comes. It takes the upper envelope and not the point
+forecast, because a pod that arrives late costs SLO violations and a pod that arrives early costs idle
+time. The forecast can raise the target but never lower it, so a bad forecast cannot remove pods that
+the observed load needs. And the 90 s hold keeps a raised target through short dips, so the scaler does
+not remove pods that the next forecast asks for again.
 
 == Node tier
 Pods that cannot be scheduled trigger a node autoscaler. A timer stands in for the start of a virtual
@@ -370,14 +371,14 @@ batch ran S4 with an earlier GRU, so its comparisons with S1 and S2 hold for the
 for the forecaster of @sec:gru.
 
 = Conclusion
-A capacity-aware router and an ElaX-derived replica scaler ran in one 15 s loop over Kubernetes and
+We ran a capacity-aware router and an ElaX-derived replica scaler in one 15 s loop over Kubernetes and
 Knative, and the scaler read the upper envelope of a 135 s GRU forecast. Both hybrids matched the
 projected cost of Kubernetes with the HPA, and the reactive hybrid had a higher p99. In ten
 pre-specified pairs, the forecast added pods and gave no measurable latency gain over reactive control,
-in a design that detects differences above about #H.b10b.mde ms.
-Future work will compare the GRU with a constant-margin baseline, set the margin from the measured
-provisioning delay, and test the scaler without a serverless backend, where a forecast has a delay to
-cover.
+in a design that detects differences above about #H.b10b.mde ms. The next experiment is a
+constant-margin baseline: if it matches S4, the GRU adds nothing beyond its margin. We also plan to set
+the margin from the measured provisioning delay and to test the scaler without a serverless backend,
+where a forecast has a delay to cover.
 
 #if extended [
   = Data availability

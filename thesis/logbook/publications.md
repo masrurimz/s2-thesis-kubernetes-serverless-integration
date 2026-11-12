@@ -139,6 +139,12 @@
 - Round 2 (fresh judges, new order): plant machine 3 of 3. The rewritten introduction paragraph and the Testbed paragraph drew no machine flag in 6 judgments (4 human, 2 uncertain).
 - Build: both conference PDFs 6 pages; `make check` passed.
 
+### 2026-11-12 (night, whole paper) — blind-judge check on every paragraph
+- Status: pending
+- What ran: the abstract and all 31 body paragraphs went to 12 independent judges (three per group of eight), with an obvious AI plant, a subtle AI plant and a human control in every set. Both plants were flagged 24 of 24; the control 0 of 12.
+- Result: 29 of 32 paragraphs drew no machine verdict. Three drew one machine verdict each at 0.6 (serverless cost, the decision-factor reasoning, the conclusion). Those three were reworded with the same claims and citations; on retest the first and the last read human 3 of 3, and the decision-factor paragraph stayed split (one machine at 0.6).
+- Evidence: [icaiic-2027-review/ai-perception/RESULTS.md](icaiic-2027-review/ai-perception/RESULTS.md).
+
 ### PAPER-001 outline (6–7 pages, IEEE two-column)
 - Title and abstract: proposed title "GRU-Based Predictive Autoscaling for Hybrid Kubernetes and Serverless Clusters". Keywords: Kubernetes, serverless, autoscaling, workload prediction, GRU. Abstract of 120–150 words, no citations.
 - Framing note: serverless carries the paper's emphasis, because the study compares a Kubernetes backend against a serverless backend and then the two hybrid modes. State one caveat in the first paragraph of Section III, or a reviewer will read the platform claim as false: both backends run on a single k3d testbed, simulating a two-platform deployment, with separate namespaces, separate ingress paths, and separate workload instances (`ch03-method`, `ch03-infra`).
