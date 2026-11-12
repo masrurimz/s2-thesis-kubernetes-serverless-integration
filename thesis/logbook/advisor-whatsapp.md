@@ -337,6 +337,24 @@ Draft (Indonesian, with `paper/conference-named.pdf` attached):
 >
 > Saya berencana submit pada 14 November 2026. Terima kasih, Pak.
 
+### 2026-11-12 13:31 — sent and reply received; Prof. Tohari to be listed
+- Direction: out and in
+- Status: replied (author list: actioned; venue approval and paper feedback: pending)
+- Outcome: the user sent the message before 13:31 WIB. Pak Roy answered that Prof. Tohari must be listed because he is also a supervisor, and that he will read the paper first. He did not answer the venue question or say anything about author order. The draft "author list set" above was written after this exchange and is not needed; do not send it.
+- Delivered text: unverified. The user did not paste the sent text. The reply answers the question "Apakah Prof. Tohari juga perlu saya cantumkan?", so it was one of the drafts that asks it, most likely the plain-language version.
+
+Exchange (verbatim, 12/11/26):
+> [12/11/26, 13.31.06] Pak Royyana Muslim Ijtihadie, S.Kom.,M.Kom.,Ph.D.: prof tohari perlu dicantumkan karena pembimbing juga
+> [12/11/26, 13.31.33] Pak Royyana Muslim Ijtihadie, S.Kom.,M.Kom.,Ph.D.: nanti saya baca dulu
+> [12/11/26, 13.32.43] Muhammad Zahid Masruri: baik pak roy
+> [12/11/26, 13.32.47] Muhammad Zahid Masruri: terimakasih banyak pak
+
+- English note: "Prof. Tohari must be included because he is also a supervisor." "I will read it first." Done the same evening: Prof. Tohari Ahmad is second author in `paper/authors.typ` (commit `2544f53`), and the Drive link Pak Roy will open already shows the three-author PDF.
+- Action items:
+  - Pak Roy reads the paper and sends feedback — owner: adviser — before 2026-11-14 — `pending`.
+  - Apply his revisions and rebuild — owner: agent — on receipt — `pending`.
+  - Submit on EDAS — owner: user — 2026-11-14 WIB — `pending`.
+
 ---
 
 *Conventions: append events, never rewrite. Statuses: pending → sent → replied → actioned. See [README.md](README.md).*

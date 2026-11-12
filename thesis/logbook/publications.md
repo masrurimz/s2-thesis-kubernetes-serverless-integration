@@ -150,6 +150,11 @@
 - What changed: at the user's request the author list is now Masruri, Tohari Ahmad, Royyana Muslim Ijtihadie (thesis supervisor order). Email tohari@if.its.ac.id from his ITS profile. Both conference builds are still 6 pages; the anonymous build has 0 author lines. The adviser draft now states the order and asks Pak Roy to approve it (`WA-2026-11-12-01`, "author list set").
 - Evidence: `paper/authors.typ`; [icaiic-2027-submission.md](icaiic-2027-submission.md) section 4.
 
+### 2026-11-12 13:31 - adviser: Prof. Tohari must be listed; paper under his reading
+- Status: pending
+- What changed: Pak Roy replied that Prof. Tohari must be included as a co-author because he is also a supervisor, and that he will read the paper first (`WA-2026-11-12-01`, 13:31 event). This confirms the three-author list already in the PDF. The "author list set" draft is not needed. Still open: his feedback, and an explicit answer on the venue.
+- Evidence: [advisor-whatsapp.md](advisor-whatsapp.md) `WA-2026-11-12-01`; `paper/authors.typ`.
+
 ### PAPER-001 outline (6–7 pages, IEEE two-column)
 - Title and abstract: proposed title "GRU-Based Predictive Autoscaling for Hybrid Kubernetes and Serverless Clusters". Keywords: Kubernetes, serverless, autoscaling, workload prediction, GRU. Abstract of 120–150 words, no citations.
 - Framing note: serverless carries the paper's emphasis, because the study compares a Kubernetes backend against a serverless backend and then the two hybrid modes. State one caveat in the first paragraph of Section III, or a reviewer will read the platform claim as false: both backends run on a single k3d testbed, simulating a two-platform deployment, with separate namespaces, separate ingress paths, and separate workload instances (`ch03-method`, `ch03-infra`).
