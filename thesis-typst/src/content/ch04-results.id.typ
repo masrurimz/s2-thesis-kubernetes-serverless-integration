@@ -6,6 +6,7 @@
 #import "figures.typ": *
 #import "headings.typ": H, cap
 
+
 = #H("ch4")
 
 Bab ini menyajikan hasil eksperimen untuk arsitektur _hybrid_ Kubernetes-_serverless_ dengan prediksi beban kerja berbasis GRU.
@@ -42,7 +43,7 @@ Ini setara dengan 3,05 sampai 2,27 RPS.
 
 Pencarian Tree-structured Parzen Estimator @optuna2019 memilih jaringan dua lapis dengan 256 unit tersembunyi dan jendela masukan 30 sampel.
 Pencarian itu juga memilih _dropout_ pada _head_ sebesar 0,055 dan laju pembelajaran $#"1,53" times 10^(-4)$ pada anggaran tetap 23 _epoch_.
-Tabel @tab:gru-performance melaporkan akurasi pada bagian uji yang ditahan, dari tiga _seed_.
+@tab:gru-performance melaporkan akurasi pada bagian uji yang ditahan, dari tiga _seed_.
 Semua _baseline_ dinilai pada jendela yang sama.
 
 #figure(
@@ -50,12 +51,12 @@ Semua _baseline_ dinilai pada jendela yang sama.
   table(
     columns: (auto, auto),
     [Metrik], [Nilai],
-    [RMSE _holdout_], [29,635 $\pm$ 0,016],
-    [MAE _holdout_], [22,486 $\pm$ 0,079],
+    [RMSE _holdout_], [29,635 $plus.minus$ 0,016],
+    [MAE _holdout_], [22,486 $plus.minus$ 0,079],
     [RMSE sebagai persentase beban rata-rata], [39,6%],
     [_Skill_ terhadap _persistence_], [0,216],
     [Cakupan _upper envelope_ pada target yang menanjak], [0,921],
-    [RMSE _rolling-origin_ pada bagian uji], [29,039 $\pm$ 6,893],
+    [RMSE _rolling-origin_ pada bagian uji], [29,039 $plus.minus$ 6,893],
     [RMSE _baseline_ _persistence_], [37,813],
     [RMSE _baseline_ tren linear], [46,534],
     [RMSE _baseline_ _seasonal naive_], [53,688],
@@ -235,7 +236,10 @@ Keunggulan _hybrid_ atas Kubernetes murni muncul ketika _baseline_ dibatasi kapa
 ) <fig:p99-box-n5>
 
 #figure(
-  fig-slo-violations(),
+  {
+    show regex("\d+\.\d+"): it => it.text.replace(".", ",")
+    fig-slo-violations()
+  },
   caption: [Rata-rata pelanggaran SLO per _run_ pada replikasi empat skenario (5 _run_ per skenario)],
 ) <fig:slo-violations-n5>
 
@@ -275,7 +279,7 @@ Karena itu, H2 tidak didukung pada uji p99 utama yang ditetapkan sebelumnya.
 Dua estimasi menempatkan hasil ini dalam konteks.
 Pertama, penggabungan seluruh 25 pasangan yang memakai prediktor hasil latihan ClarkNet (_batch_ ini dan dua _batch_ tanggal 13 September 2026) menghasilkan -16,5 ms (rentang kepercayaan 95% [-188,6; +184,5], p satu sisi = 0,448, d = -0,03).
 Kedua, _batch_ ini didaftarkan sebelumnya karena sebuah estimasi sementara tampak menjanjikan.
-Estimasi itu memakai delapan pasangan dari _batch_ konfirmatori 13 September 2026 dengan puncak beban _host_ di bawah 40% (-101,3 ms, p = 0,039).
+Estimasi itu memakai delapan pasangan dari _batch_ konfirmatori 13 September 2026 dengan puncak beban _host_ di bawah 40% (−101,3 ms, p = 0,039).
 Estimasi itu tidak bertahan pada _batch_ yang didaftarkan sebelumnya, yang menunjukkan bahwa hasilnya muncul dari pemilihan subset setelah data terlihat.
 
 === #H("ch4-h2-history") <sec:h2-history>
@@ -285,7 +289,6 @@ Delapan _batch_ membandingkan S3 dan S4 sebelum _batch_ pra-registrasi.
 Dua _batch_ lain dari 7 Agustus 2026 tidak dimasukkan, karena berkas hasilnya terhapus sebelum di-_commit_.
 
 #[
-#set par(justify: false)
 #figure(
   kind: table,
   table(
@@ -314,7 +317,7 @@ Dua _batch_ sebelumnya mencapai p < 0,05: _batch_ Juli dan uji Mann-Whitney pada
 Keduanya tidak memakai prediktor hasil latihan ClarkNet, dan tiga _batch_ yang memakainya tidak menemukan perbedaan yang signifikan.
 Peralihan dari _batch_ awal ke _batch_ Juli juga mengubah tiga hal sekaligus.
 Horizon prakiraan bertambah dari 75 s menjadi 135 s, konsolidasi _node_ ditambahkan, dan _baseline_ reaktif disetel.
-Seandainya keuntungan pada _batch_ Juli nyata, keuntungan itu tidak dapat dikreditkan pada salah satunya.
+Seandainya keuntungan pada _batch_ Juli nyata, keuntungan itu tidak dapat dikaitkan dengan salah satu dari ketiga perubahan tersebut.
 
 === #H("ch4-s4vs1")
 
@@ -326,8 +329,8 @@ Skenario _hybrid_ prediktif memberikan perbaikan besar (@tab:s4-vs-s1).
   table(
     columns: (auto, auto, auto, auto),
     [Metrik], [S1 (K8s+HPA)], [S4 (Prediktif)], [Perbaikan],
-    [Latensi p99 (ms)], [2.421,3], [118,2], [-2.303,1 (-95,1%)],
-    [Pelanggaran SLO], [6.717], [104], [-6.613 (-98,5%)],
+    [Latensi p99 (ms)], [2.421,3], [118,2], [−2.303,1 (−95,1%)],
+    [Pelanggaran SLO], [6.717], [104], [−6.613 (−98,5%)],
     [Tingkat pelanggaran SLO], [7,66%], [0,12%], [-7,54 pp],
   ),
   caption: [_Hybrid_ prediktif (S4) lawan Kubernetes murni (S1)],
@@ -354,17 +357,18 @@ Analisis ini kemudian memproyeksikan biaya bulanan terpadu dari konsumsi sumber 
 Proyeksi di bawah berasal dari _baseline_ diagnostik n = 1 dan merupakan estimasi diagnostik satu _run_.
 
 Proksi biaya adalah model, bukan pengamatan tagihan.
-Analisis titik impas membedakan tingkat beban kerja pada saat keunggulan relatif _serverless_ dan kapasitas berbasis VM berubah @skyrise2025.
+Analisis titik impas menunjukkan pada tingkat beban kerja berapa keunggulan relatif _serverless_ dan kapasitas berbasis VM saling berganti @skyrise2025.
 Granularitas penagihan dan penjadwalan dapat membuat biaya sumber daya _serverless_ terukur melebihi konsumsi mentah @demystifying2025.
-Menjaga instans _serverless_ tetap hangat menambah _overhead_ CPU dan memori @highcost2025, dan perbandingan biaya _hybrid_ perlu memperhitungkannya.
-Acuan ini mendukung pelaporan proksi hanya pada arahnya.
-Acuan ini mendukung dipertahankannya hasil biaya sama pada eksperimen berpasangan, bukan klaim penghematan universal.
+Menjaga instans _serverless_ tetap hangat menambah _overhead_ CPU dan memori @highcost2025.
+Perbandingan biaya _hybrid_ harus memperhitungkannya.
+Acuan ini mendukung pelaporan proksi hanya sebagai arah.
+Acuan ini juga mendukung hasil biaya setara pada eksperimen berpasangan, tanpa klaim penghematan universal.
 
 #figure(
   kind: table,
   table(
     columns: (auto, auto, auto, auto, auto),
-    [Skenario], [_Node_ awal→puncak (jam dinamis)], [Permintaan _serverless_ (PC)], [Total/bln = EKS+EC2+Lambda], [USD/1 juta SLO-OK],
+    [Skenario], [_Node_ awal→puncak (jam dinamis)], [Permintaan _serverless_ (PC)], [Total/bln = EKS + EC2 + Lambda], [USD/1 juta SLO-OK],
     [S1 (hanya K8s)], [2→2 (0)], [0 (0)], [USD 132 = 72+60+0], [USD 0,79],
     [S2 (_Serverless_)], [0→0], [87.840 (8)], [USD 395 = 0+0+395], [USD 2,19],
     [S3 (_Hybrid_ reaktif)], [2→2 (0)], [5.354 (1)], [USD 147 = 72+60+15], [USD 0,81],
@@ -403,7 +407,7 @@ Beban itu sengaja melampaui batas statis enam _pod_ agar memicu _pod_ Pending, p
     [S3 (Reaktif)], [874,4], [2], [51,8], [96,5%], [387], [23.913],
     [S4 (Prediktif)], [1.393,3], [2], [70,5], [96,5%], [387], [46.245],
   ),
-  caption: [Diagnostik arsitektur tiga _tier_ (n = 1)],
+  caption: [Diagnostik arsitektur tiga tingkat (n = 1)],
 ) <tab:dynamic-node-offload>
 
 Diagnostik ini menguji ketiga tingkat.
@@ -522,7 +526,7 @@ Hasil ini berasal dari diagnostik konsolidasi _node_.
 
 == #H("ch4-hpo")
 
-Studi optimasi hiperparameter yang terpisah menjelajahi empat parameter pengendali lewat penyaringan Optuna TPE: `target_cpu_util`, `kp_burn`, `proactive_trend_threshold`, dan `proactive_approach_ratio`.
+Studi optimasi hiperparameter (HPO) yang terpisah menjelajahi empat parameter pengendali lewat penyaringan Optuna TPE: `target_cpu_util`, `kp_burn`, `proactive_trend_threshold`, dan `proactive_approach_ratio`.
 Studi itu berjalan pada infrastruktur sebelum perbaikan, yang mendahului _baseline_ diagnostik n = 1.
 Temuan metodologisnya dilaporkan di sini untuk kelengkapan.
 Hasil kuantitatif spesifiknya hanya menunjukkan arah dan digantikan oleh Bug 8 sampai 13.
@@ -559,8 +563,8 @@ _Run_ diagnostik S4 membawa 9 label PREDICTIVE.
 Label itu tidak menentukan pembagian, dan prakiraan mencapai pembagian hanya lewat jumlah replika.
 
 Untuk perbandingan _hybrid_ lawan Kubernetes murni (H1), hasilnya positif pada arahnya di n = 1.
-S4 menurunkan latensi p99 sebesar 95,1% (2.421,3 ms -> 118,2 ms).
-Skenario itu menurunkan pelanggaran SLO sebesar 98,5% (6.717 -> 104) dibandingkan S1.
+S4 menurunkan latensi p99 sebesar 95,1% (dari 2.421,3 ms menjadi 118,2 ms).
+Skenario itu menurunkan pelanggaran SLO sebesar 98,5% (dari 6.717 menjadi 104) dibandingkan S1.
 Temuan negatif sebelumnya adalah artefak infrastruktur (batas CPU yang tidak ditegakkan dan penyediaan _node_ dinamis berlebih pada S1).
 Temuan itu bukan sifat mekanisme _hybrid_.
 Hasil n = 1 tidak menetapkan signifikansi inferensial.
@@ -577,14 +581,14 @@ Penggabungan seluruh 25 pasangan yang memakai prediktor hasil latihan ClarkNet m
 _Batch_ Juli sebelumnya mendapati -62,5 ms (p = 0,0312), tetapi prediktornya tidak dapat diverifikasi, sehingga @sec:h2-history melaporkannya sebagai sejarah.
 
 Dua catatan membatasi kesimpulan ini.
-Pertama, diagnostik empat skenario n = 1 memberi bukti mekanisme yang menunjukkan arah, tetapi tidak ada statistik inferensial untuk H1.
+Pertama, diagnostik empat skenario n = 1 memberi bukti mekanisme yang menunjukkan arah, tetapi tidak ada statistik inferensial untuk H1, dan replikasi lima _run_ dengan S1 yang tidak jenuh tidak mereproduksinya.
 Kedua, daya uji terbatas pada skala efek ini.
 Simpangan baku berpasangan adalah 484,5 ms pada 25 pasangan, dan nilai per _batch_ berkisar dari 83,6 ms sampai 1.057,3 ms (dihitung ulang dari _bundle_).
 _Batch_ pra-registrasi menjalankan sepuluh pasangan karena alasan ini, dan tetap menemukan selisih yang dapat diabaikan.
 Uji p99 utamanya telah ditetapkan sebelumnya.
 Metrik sekundernya (p95, pelanggaran SLO) tidak signifikan setelah koreksi multiplisitas (p terkoreksi = 1,0) dan dilaporkan sebagai deskriptif.
 
-Secara keseluruhan, hasil mendukung H1 pada arahnya (arsitektur _hybrid_ mengungguli _baseline_ Kubernetes murni yang jenuh pada n = 1).
+Secara keseluruhan, hasil mendukung H1 hanya pada arahnya: arsitektur _hybrid_ mengungguli _baseline_ Kubernetes murni yang jenuh dalam satu _run_ n = 1, dan replikasi dengan ruang replika yang lega tidak mereproduksinya.
 H2 tidak didukung.
 _Batch_ pra-registrasi menemukan selisih yang dapat diabaikan, dan estimasi gabungan 25 pasangan sebesar -16,5 ms memiliki rentang kepercayaan yang mencakup nol.
 Sebuah _batch_ dapat menguji H2 hanya bila sisi prediktif bertindak berdasarkan prakiraannya.

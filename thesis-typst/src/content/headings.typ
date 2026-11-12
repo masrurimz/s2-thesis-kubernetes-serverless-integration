@@ -164,9 +164,9 @@
     "ch4-gru": "Kinerja Model Prediksi GRU",
     "ch4-phasea1": "Validasi Mekanisme Sistem (Fase A1)",
     "ch4-comparative": "Evaluasi Perbandingan",
-    "ch4-h2": "Penskalaan Prediktif versus Reaktif (H2)",
+    "ch4-h2": "Penskalaan Prediktif lawan Reaktif (H2)",
     "ch4-h2-history": "_Batch_ Berpasangan Sebelumnya",
-    "ch4-s4vs1": "_Hybrid_ versus Kubernetes Murni (S4 vs S1)",
+    "ch4-s4vs1": "_Hybrid_ lawan Kubernetes Murni (S4 lawan S1)",
     "ch4-cost": "Analisis Biaya",
     "ch4-node": "Penyediaan _Node_ Dinamis dan Pengalihan Beban ke _Serverless_",
     "ch4-varload": "Validasi Beban Variabel (ClarkNet, Semua Tingkat Diuji)",
@@ -187,7 +187,7 @@
     "app-a-trace": "Parameter _Trace_ ClarkNet",
     "app-b": "LAMPIRAN B: Hasil Eksperimen Mentah",
     "app-b-primary": "Hasil per Pasangan _Batch_ Pra-Registrasi (n=10)",
-    "app-b-pairs": "Hasil Per Pasangan _Batch_ Juli Berpasangan (n=5, Sejarah)",
+    "app-b-pairs": "Hasil per Pasangan _Batch_ Juli Berpasangan (n=5, Sejarah)",
     "app-b-stats": "Ringkasan Uji Statistik _Batch_ Juli Berpasangan (Sejarah)",
     "app-c": "LAMPIRAN C: Daftar Kode",
     "app-c-signal": "Sinyal Kapasitas dari Prakiraan (Pengendali V3)",
@@ -218,3 +218,4 @@
 // Bilingual caption / label text. Picks the active edition's variant.
 // Usage (code position, e.g. figure named args): caption: cap([English caption], [Takarir Indonesia])
 #let cap(en, id) = if _en { en } else { id }
+

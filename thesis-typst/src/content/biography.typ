@@ -4,7 +4,7 @@
 
 = #H("biography")
 
-Penulis bernama Muhammad Zahid Masruri, NRP 6025221041. Ia adalah mahasiswa Magister Komputer (M.Kom) Program Studi Teknik Informatika, Departemen Teknik Informatika, Fakultas Teknologi Elektro dan Informatika Cerdas, Institut Teknologi Sepuluh Nopember (ITS), Surabaya. Penulis menempuh pendidikan magister sejak tahun 2022 dengan bidang minat Komputasi Awan, Kubernetes, dan Komputasi _Serverless_. Tesisnya berjudul "Pengambilan Keputusan dan Pengaturan Skalabilitas Elastis pada Lingkungan Cloud yang Heterogen dengan Berbasiskan pada Prediksi Workload" dan disusun untuk memenuhi syarat memperoleh gelar Magister Komputer (M.Kom).
+Penulis bernama Muhammad Zahid Masruri, NRP 6025221041. Ia adalah mahasiswa Magister Komputer (M.Kom.) Program Studi Teknik Informatika, Departemen Teknik Informatika, Fakultas Teknologi Elektro dan Informatika Cerdas, Institut Teknologi Sepuluh Nopember (ITS), Surabaya. Penulis menempuh pendidikan magister sejak tahun 2022 dengan bidang minat Komputasi Awan, Kubernetes, dan Komputasi _Serverless_. Tesisnya berjudul "Pengambilan Keputusan dan Pengaturan Skalabilitas Elastis pada Lingkungan Cloud yang Heterogen dengan Berbasiskan pada Prediksi Workload" dan disusun untuk memenuhi syarat memperoleh gelar Magister Komputer (M.Kom.).
 
 Sebelum menempuh pendidikan magister, penulis lulus Sarjana Terapan Teknik (S.Tr.T) dari Politeknik Elektronika Negeri Surabaya (PENS) pada tahun 2021. Tugas akhirnya berjudul "Hand Gesture Detection Using Surface Electromyograph (SEMG) for Human Machine Interface" dan berada di bidang _machine learning_ dan _human-computer interaction_.
 

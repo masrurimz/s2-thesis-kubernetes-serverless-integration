@@ -173,7 +173,7 @@
 
 #v(1.5em)
 
-Puji syukur penulis panjatkan ke hadirat Allah SWT atas rahmat dan kemudahan yang diberikan, sehingga penulis dapat menyelesaikan penelitian tesis berjudul "Pengambilan Keputusan dan Pengaturan Skalabilitas Elastis pada Lingkungan Cloud yang Heterogen dengan Berbasiskan pada Prediksi Workload".
+Puji syukur penulis panjatkan ke hadirat Allah SWT atas rahmat dan kemudahan yang diberikan, sehingga penulis dapat menyelesaikan penelitian tesis berjudul "#title.id".
 
 Penulis menyadari bahwa tesis ini tidak akan selesai tanpa bantuan banyak pihak. Oleh karena itu, penulis mengucapkan terima kasih kepada:
 
@@ -221,7 +221,7 @@ Penulis menyadari bahwa laporan tesis ini masih memiliki banyak kekurangan, sehi
 #v(1em)
 Sistem _cloud_ modern harus menjaga _tail latency_ tetap rendah dengan biaya terkendali. Kubernetes memberi kontrol yang stabil, tetapi lambat merespons lonjakan lalu lintas. Komputasi _serverless_ menskalakan dengan cepat, tetapi biayanya lebih mahal per _request_. Tesis ini membangun dan mengevaluasi arsitektur _hybrid_ dari keduanya. Dalam arsitektur itu, prakiraan GRU (_gated recurrent unit_) menjadi masukan bagi penskalaan replika Kubernetes.
 
-Sistem mengalihkan lalu lintas dari Kubernetes ke _serverless_ ketika beban teramati melebihi kapasitas replika Kubernetes yang siap. Prakiraan GRU merencanakan replika Kubernetes dalam Algoritma 2. Algoritma 1 merutekan lalu lintas berdasarkan beban saat ini dan kapasitas replika yang siap, tanpa membaca prakiraan. Pengujian utama adalah satu _batch_ pra-registrasi berisi 10 pasang kontrol reaktif dan prediktif pada lalu lintas ClarkNet, dengan prediktor yang dilatih dengan ClarkNet. _Batch_ sebelumnya dilaporkan sebagai sejarah. Pengujian juga mencakup perbandingan empat skenario dengan satu _run_ per skenario dan pemeriksaan mekanisme bertahap. Beban _replay_ terdiri dari 40 tahap × 30 detik = 20 menit, dengan RPS (_requests per second_) 22 sampai 164.
+Sistem mengalihkan lalu lintas dari Kubernetes ke _serverless_ ketika beban teramati melebihi kapasitas replika Kubernetes yang siap. Prakiraan GRU merencanakan replika Kubernetes dalam Algoritma 2. Algoritma 1 merutekan lalu lintas berdasarkan beban saat ini dan kapasitas replika yang siap, tanpa membaca prakiraan. Pengujian utama adalah satu _batch_ pra-registrasi berisi 10 pasangan kontrol reaktif dan prediktif dengan urutan diseimbangkan pada lalu lintas ClarkNet. Prediktornya dilatih dengan ClarkNet. _Batch_ sebelumnya dilaporkan sebagai sejarah. Pengujian juga mencakup perbandingan empat skenario dengan satu _run_ per skenario dan pemeriksaan mekanisme bertahap. Beban _replay_ terdiri dari 40 tahap × 30 detik = 20 menit, dengan RPS (_requests per second_) 22 sampai 164.
 
 Pada beban ClarkNet, prediksi tidak memberi keuntungan yang jelas. Pada _batch_ pra-registrasi, S4 mencapai rata-rata p99 (persentil ke-99) 146,8 ms, sedangkan S3 mencapai 160,4 ms (selisih rata-rata -13,6 ms, rentang kepercayaan 95% [-63,5; +35,6] ms, p = 0,307, Cohen's d = -0,16). S4 menang pada 5 dari 10 pasangan. Latensi p95 dan pelanggaran SLO (_service level objective_) juga tidak berbeda. Pada seluruh 25 pasangan yang memakai prediktor ClarkNet, S4 rata-rata 16,5 ms lebih cepat. Rentang kepercayaan 95%-nya berkisar dari 188,6 ms lebih cepat sampai 184,5 ms lebih lambat (p satu sisi = 0,448). _Batch_ Juli sebelumnya mencapai p = 0,0312, tetapi manifesnya tidak mencatat prediktor, sehingga tesis ini memperlakukannya sebagai hasil awal yang belum terverifikasi. Model GRU mencapai RMSE 5,2% pada data sintetis. Pada _trace_ ClarkNet, akurasinya di bawah target karena beban tidak stasioner.
 
@@ -315,6 +315,11 @@ On ClarkNet load, prediction gave no clear gain. In the pre-registered batch, S4
 #set heading(numbering: none)
 
 = #H("bib")
+// Typst's APA style prints "(2014,)" for entries that have a year but no month.
+#show bibliography: it => {
+  show regex("\(\d{4}[a-z]?,\)"): m => m.text.replace(",)", ")")
+  it
+}
 #bibliography(
   "bibliography.bib",
   title: none,

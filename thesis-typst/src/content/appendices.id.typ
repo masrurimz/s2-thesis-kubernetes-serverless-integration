@@ -5,7 +5,9 @@
 // Appendix E — Experiment Index
 // Ported from archived/thesis-latex/src/chapters/104-106-appendix-*.tex
 
+
 #import "headings.typ": H, cap
+#show raw.where(block: true): set text(size: 8pt)
 
 = #H("app-a")
 
@@ -125,20 +127,20 @@ Tabel berikut menyajikan latensi p99 per pasangan pada _batch_ Juli (E3 di Lampi
     [Statistik], [Nilai],
     [Rata-rata p99 S3 (ms)], [188,5],
     [Rata-rata p99 S4 (ms)], [126,0],
-    [Selisih rata-rata (ms)], [-62,5 (-33,1%)],
+    [Selisih rata-rata (ms)], [−62,5 (−33,1%)],
     [Rentang kepercayaan 95% berpasangan (ms)], [-100,9 sampai -26,2],
     [Uji permutasi satu sisi], [p = 0,0312],
     [Cohen's d berpasangan], [-1,26 (besar)],
     [Pasangan yang dimenangi S4], [5/5],
     [Pelanggaran SLO rata-rata], [S3 656; S4 130],
-    [Biaya bulanan], [USD 163 vs USD 163],
+    [Biaya bulanan], [USD 163 lawan USD 163],
   ),
   caption: [Hasil statistik _bundle_ berpasangan Juli (sejarah)],
 )
 
 Seluruh 5 pasangan pada _batch_ Juli valid, seluruh 280 prediksi GRU terkirim, dan setiap _run_ S4 membawa 4 sampai 5 label PREDICTIVE. Metrik sekunder bersifat deskriptif setelah koreksi Bonferroni (p terkoreksi = 0,1248). Nilai p = 0,0312 adalah batas bawah desain, yaitu 1/32 pada n = 5, yang tercapai karena kelima pasangan jatuh searah. Nilai ini adalah hasil hitung ulang dengan `thesis experiment analyze` yang berlaku sekarang. Berkas analisis yang tersimpan berisi 0,0304 dari rutin yang lebih lama.
 
-_Batch_ ini tidak dapat dikreditkan kepada prediktor yang dilatih pada ClarkNet. Manifesnya tidak mencatat prediktor. Model terpasang `data/models/gru_model.pt` baru masuk kontrol versi pada 2026-09-12 (_commit_ 98e17d1, LFS oid 7f8244bcc403c59a3e2be5d31b1ee5586f01c0052416c2705c0a325d1cc3099d). Model yang terpasang pada bulan Juli kemudian diketahui sebagai model yang dilatih pada data sintetis. @sec:h2 melaporkan putusan H2.
+_Batch_ ini tidak dapat dikaitkan dengan prediktor yang dilatih pada ClarkNet. Manifesnya tidak mencatat prediktor. Model terpasang `data/models/gru_model.pt` baru masuk kontrol versi pada 2026-09-12 (_commit_ 98e17d1, LFS oid 7f8244bcc403c59a3e2be5d31b1ee5586f01c0052416c2705c0a325d1cc3099d). Model yang terpasang pada bulan Juli kemudian diketahui sebagai model yang dilatih pada data sintetis. @sec:h2 melaporkan putusan H2.
 
 #pagebreak()
 
@@ -261,11 +263,11 @@ Tabel berikut menyajikan hasil per _run_ dari replikasi empat skenario (E7 di La
   table(
     columns: (auto, auto, auto),
     [Perbandingan], [Hasil], [Kesimpulan],
-    [S2 vs S1], [Welch p = 0,0004; Cohen's d = -5,58], [Signifikan],
-    [S4 vs S3], [Welch p = 0,097; Mann-Whitney p = 0,0317; Cohen's d = -1,30], [Signifikan (Mann-Whitney)],
-    [S4 vs S1], [p = 0,151], [Tidak signifikan],
-    [S3 vs S1], [+37,4%; p = 0,165], [Tidak signifikan],
-    [S4 vs S3 (pelanggaran SLO)], [-95,4%; Mann-Whitney p = 0,0345], [Signifikan],
+    [S2 lawan S1], [Welch p = 0,0004; Cohen's d = -5,58], [Signifikan],
+    [S4 lawan S3], [Welch p = 0,097; Mann-Whitney p = 0,0317; Cohen's d = -1,30], [Signifikan (Mann-Whitney)],
+    [S4 lawan S1], [p = 0,151], [Tidak signifikan],
+    [S3 lawan S1], [+37,4%; p = 0,165], [Tidak signifikan],
+    [S4 lawan S3 (pelanggaran SLO)], [-95,4%; Mann-Whitney p = 0,0345], [Signifikan],
   ),
   caption: [Uji statistik replikasi empat skenario],
 )
@@ -309,7 +311,7 @@ Studi prediktor dan model biaya di balik Bab 4 disimpan di luar _bundle_ eksperi
 #figure(
   kind: table,
   table(
-    columns: (auto, auto, auto),
+    columns: (1fr, auto, 2fr),
     align: left,
     [Studi], [Dipakai untuk], [Lokasi],
     [Pencarian representasi dengan dua belas variasi], [Bab 4, kinerja GRU], [`results/models/gru/2026-09-13_probes-representation/`],
