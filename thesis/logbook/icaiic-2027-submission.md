@@ -24,11 +24,18 @@ Open venue facts:
 
 - Scopus. The CFP promises submission to Scopus. A web search on 2026-11-12 returned a SCImago source page titled
   "International Conference on Artificial Intelligence in Information and Communication, ICAIIC" (source id
-  21101299653), and SCImago lists Scopus sources only. The page itself refused a scripted read (HTTP 403), so open
+  21101299653), and SCImago lists Scopus sources only. The page itself refused a scripted read (HTTP 403), and so did
+  scopus.com (timeout) and IEEE Xplore (HTTP 418), so open
   https://www.scimagojr.com/journalsearch.php?q=21101299653&tip=sid&clean=0 or https://www.scopus.com/sources once.
+- IEEE Xplore, confirmed. Crossref lists IEEE DOIs for the last three proceedings, for example
+  10.1109/icaiic60209.2024.10463503 (2024), 10.1109/icaiic64266.2025.10920804 (2025) and
+  10.1109/icaiic68212.2026.11454364 (2026, Xplore conference 11454127), publisher IEEE (api.crossref.org, 2026-11-12).
 - ITS grade. ICAIIC is not in CORE (portal search 2026-10-20, [publication-targets.md](publication-targets.md)), so
   the seminar row grades it B. CCGrid 2027 is CORE B and grades A, but needs a 10-page paper and travel to Dallas.
-- ITS also asks for more than 5 countries. Not checked for ICAIIC 2027; the 2026 program book would show it.
+- ITS also asks for more than 5 countries. The ICAIIC 2026 final program (52 pages, NICT copy
+  https://www.nict.go.jp/en/asean_ivo/gden8c00000004pn-att/mpfh36000000040v.pdf, read 2026-11-12) lists paper authors
+  from Korea, Japan, Thailand, the Philippines, Canada, Taiwan, Indonesia, Portugal and others, so the 2026 edition met
+  it. The 2027 count is known only after the program is out.
 
 ## 2. Files to upload
 
