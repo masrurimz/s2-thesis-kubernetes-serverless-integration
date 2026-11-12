@@ -49,3 +49,8 @@ Validity: obvious plant 12/12 machine, subtle plant 12/12 machine, control 0/12 
 ## Retest after rewording P08, P13 and P31
 Files `retest-j*.md`. Plants 6/6 machine, control 0/3.
 P08 (serverless cost) HHH, P31 (conclusion) HHH, P13 (decision-factor reasoning) HM? with the machine verdict at 0.6, the same split as before the edit.
+
+## Second retest after rewording P13 again
+Files `retest2-j*.md`, five judges. Plants 10/10 machine, control 0/5.
+P13 (decision-factor reasoning, now opening "We size for the upper envelope") HHHHH. P08 HHHH?, P31 HHHHH, P18 HHHH?.
+No paper paragraph draws a machine verdict.

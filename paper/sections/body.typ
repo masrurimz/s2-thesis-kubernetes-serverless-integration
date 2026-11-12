@@ -171,11 +171,11 @@ one hour. Algorithm 2 applies the forecast target when it exceeds $R(x_"obs")$ a
 
 #alg-scaling <alg:scaling>
 
-The scaler does not use the forecast as it comes. It takes the upper envelope and not the point
-forecast, because a pod that arrives late costs SLO violations and a pod that arrives early costs idle
-time. The forecast can raise the target but never lower it, so a bad forecast cannot remove pods that
-the observed load needs. And the 90 s hold keeps a raised target through short dips, so the scaler does
-not remove pods that the next forecast asks for again.
+We size for the upper envelope rather than the point forecast because the two errors cost different
+things. A pod that arrives late costs SLO violations. A pod that arrives early costs idle time. The
+forecast can only raise the target: if the GRU under-predicts, the observed load still sets the
+replica count. A raised target is then held for 90 s. Without the hold, a short dip in the load would
+remove pods that the next forecast asks for again one 15 s cycle later.
 
 == Node tier
 Pods that cannot be scheduled trigger a node autoscaler. A timer stands in for the start of a virtual
