@@ -121,6 +121,14 @@
 - Build: both conference PDFs 6 pages A4, all fonts embedded, anonymous build 0 author lines; `make check` passed. The shorter captions freed space: page 6 now has about six reference lines spare, after the scenario-batch caveat went back under threats to validity and the detectable difference back into the conclusion.
 - Evidence: `paper/sections/common.typ` (`tnote`), `paper/sections/body.typ`.
 
+### 2026-11-12 (night, later) — abstract rewritten
+- Status: pending
+- Why: the user found the abstract hard to read. It packed the method, the forecaster protocol and every result into long sentences and used terms that the paper defines only later (decision factor, persistence forecast, CPU-bounded testbed).
+- What changed: the abstract now runs problem, question, method, results, explanation. It opens with the delay that Kubernetes pays and the price that serverless pays, states the question in one sentence, and closes with the explanation from Section VII, worded as an explanation that fits the results and not as a finding. It is 233 words.
+- Left out on purpose: the 22% skill against a persistence forecast and the comparison with Knative alone at twice the cost. Both stay in the body. No number in the abstract changed.
+- Build: both conference PDFs 6 pages; `make check` passed. The paste-ready abstract in [icaiic-2027-submission.md](icaiic-2027-submission.md) matches the PDF.
+- Evidence: `paper/sections/body.typ` lines 10 to 26.
+
 ### PAPER-001 outline (6–7 pages, IEEE two-column)
 - Title and abstract: proposed title "GRU-Based Predictive Autoscaling for Hybrid Kubernetes and Serverless Clusters". Keywords: Kubernetes, serverless, autoscaling, workload prediction, GRU. Abstract of 120–150 words, no citations.
 - Framing note: serverless carries the paper's emphasis, because the study compares a Kubernetes backend against a serverless backend and then the two hybrid modes. State one caveat in the first paragraph of Section III, or a reviewer will read the platform claim as false: both backends run on a single k3d testbed, simulating a two-platform deployment, with separate namespaces, separate ingress paths, and separate workload instances (`ch03-method`, `ch03-infra`).
