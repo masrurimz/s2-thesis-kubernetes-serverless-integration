@@ -1,6 +1,6 @@
 // Facts shared by the conference and journal papers: numbers, tables, figures,
-// algorithms. Prose lives in conference-body.typ and journal-body.typ. Every
-// number comes from numbers.json, which derive_numbers.py builds from the bundles.
+// algorithms. Prose lives in body.typ. Every number comes from numbers.json,
+// which derive_numbers.py builds from the bundles.
 #import "@preview/cetz:0.4.0"
 #import "@preview/lovelace:0.3.0": pseudocode-list
 
@@ -8,7 +8,6 @@
 #let F = N.four
 #let H = N.h2
 #let G = N.gru
-#let figdir = "../../thesis-typst/src/figures/paper/"
 
 #let rule = table.hline(stroke: 0.5pt)
 #let toprule = table.hline(stroke: 0.8pt)
@@ -29,27 +28,28 @@
         content(pos, text(size: 6.5pt, style: "italic", label), anchor: anchor, padding: 2pt)
       }
     }
+    let weight(sub) = text(size: 8.5pt, style: "normal", $w_sub$)
 
     node((0, 2), (2.4, 3.2), "load", [*Load generator* \ k6, ClarkNet replay])
     node((3.4, 2), (5.8, 3.2), "lb", [*HAProxy* \ weighted ingress], fill: luma(240))
     node((3.4, 4.4), (5.8, 5.6), "prom", [*Prometheus* \ load $x$, p99])
-    node((7, 3.4), (10, 4.6), "k8s", [*Kubernetes backend* \ always-warm pods])
-    node((7, 0.6), (10, 1.8), "kn", [*Knative backend* \ KPA, 3–10 warm pods])
-    node((7, 5.4), (10, 6.4), "nodes", [*Node autoscaler* \ pending pod $->$ node, 45–120 s])
+    node((7, 3.4), (10, 4.6), "k8s", [*Kubernetes backend* \ 3–10 pods])
+    node((7, 0.6), (10, 1.8), "kn", [*Knative backend* \ 3–10 warm pods])
+    node((6.6, 5.4), (10.4, 6.4), "nodes", [*Node autoscaler* \ new node after 45–120 s])
     node((13, 5.5), (17.4, 6.5), "gru", [*GRU forecaster* \ 9 steps $times$ 15 s], fill: luma(240))
 
     rect((11.4, 0.2), (17.4, 4.9), name: "daemon", stroke: (dash: "dashed"), radius: 2pt)
-    content((11.55, 4.75), text(size: 6.5pt, [routing daemon, every 15 s]), anchor: "north-west")
-    node((11.7, 2.7), (17.1, 4.2), "alg2", [*Algorithm 2: replica scaling* \ $R(v) = ceil(alpha v + beta)$; S4 raises \ the target to $R(max_k hat(u)_(t+k))$])
-    node((11.7, 0.5), (17.1, 2.0), "alg1", [*Algorithm 1: capacity-aware routing* \ serverless share from $x$ and ready pods $n$])
+    content((11.55, 4.75), text(size: 6.5pt, [control daemon, every 15 s]), anchor: "north-west")
+    node((11.7, 2.7), (17.1, 4.2), "alg2", [*Algorithm 2: replica scaler* \ replica count $R(v)$ from observed load. \ S4 raises it to $R(max_k hat(u)_(t+k))$])
+    node((11.7, 0.5), (17.1, 2.0), "alg1", [*Algorithm 1: capacity-aware router* \ serverless weight from $x$ and ready pods $n$])
 
     arrow("load.east", "lb.west", label: [HTTP], pos: (2.9, 2.6))
-    arrow((5.8, 2.9), (7, 4.0), label: [$w_"k8s"$], pos: (6.3, 3.55), anchor: "south-east")
-    arrow((5.8, 2.3), (7, 1.2), label: [$w_"sls"$], pos: (6.3, 1.65), anchor: "north-east")
+    arrow((5.8, 2.9), (7, 4.0), label: weight("k8s"), pos: (6.3, 3.55), anchor: "south-east")
+    arrow((5.8, 2.3), (7, 1.2), label: weight("sls"), pos: (6.3, 1.65), anchor: "north-east")
     arrow("lb.north", "prom.south", label: [metrics], pos: (4.6, 3.8), anchor: "west")
     arrow("prom.north", (4.6, 7.1), (12.2, 7.1), (12.2, 4.9), label: [load $x$, p99], pos: (8.4, 7.1))
     arrow("gru.south", (15.2, 4.2), label: [upper envelope $hat(u)$ (S4 only)], pos: (15.05, 5.2), anchor: "east")
-    arrow("alg2.west", "k8s.east", label: [replicas], pos: (10.65, 3.6), anchor: "north")
+    arrow("alg2.west", "k8s.east", label: [replica count], pos: (10.65, 3.6), anchor: "north")
     arrow((9.8, 3.4), (9.8, 2.4), (11.0, 2.4), (11.0, 1.25), "alg1.west", label: [ready pods $n$], pos: (10.9, 2.3), anchor: "north-east")
     arrow("alg1.south", (14.4, -0.5), (4.6, -0.5), "lb.south", label: [weights $w_"k8s", w_"sls"$], pos: (9.5, -0.5))
     arrow("nodes.south", "k8s.north")
@@ -57,9 +57,9 @@
   placement: auto,
   scope: "parent",
   caption: [Control architecture. HAProxy splits requests between the Kubernetes and Knative backends.
-    Every 15 s the routing daemon runs Algorithm 1, which sets the split from observed load and ready
-    pods, and Algorithm 2, which sets the replica count. Only Algorithm 2 uses the GRU forecast, and only
-    in the hybrid-predictive scenario (S4).],
+    Every 15 s the control daemon runs Algorithm 1, which sets the split from the observed load and the
+    ready pods, and Algorithm 2, which sets the replica count. Algorithm 2 alone reads the GRU forecast,
+    and it does so in the predictive hybrid (S4) but not in the reactive hybrid (S3).],
 ) 
 
 // ---------------------------------------------------------------------------
@@ -67,13 +67,12 @@
 #let alg-routing = figure(
   kind: "algorithm",
   supplement: [Algorithm],
-  caption: [Capacity-aware traffic distribution, every 15 s],
+  caption: [Capacity-aware router, every 15 s],
   align(start, text(size: 8pt, pseudocode-list(booktabs: true, numbered-title: none)[
-    + *input:* observed load $x$ (RPS), ready replicas $n$, current serverless weight $w$
+    + *input:* load $x$ (RPS), ready pods $n$, current serverless weight $w$
     + $C <- n dot r_"eff"$ #h(1fr) ▷ capacity of ready pods
     + *if* $x <= C$ *then* $w' <- 0$
-    + *else* $w' <- min(50, ceil(100 (x - C) \/ x))$ #h(1fr) ▷ burst share, capped
-    + $w' <- "clamp"(w' + p_"burn", 0, 50)$ #h(1fr) ▷ SLO pacing term
+    + *else* $w' <- min(50, ceil(100 (x - C) \/ x))$ #h(1fr) ▷ excess share, capped
     + *if* $w' != w$ *then* set HAProxy weights $(w_"k8s", w_"sls") <- (100 - w', w')$
   ])),
 )
@@ -81,18 +80,17 @@
 #let alg-scaling = figure(
   kind: "algorithm",
   supplement: [Algorithm],
-  caption: [ElaX-derived replica scaling with the forecast decision factor, every 15 s],
+  caption: [ElaX-derived replica scaler with the forecast decision factor, every 15 s],
   align(start, text(size: 8pt, pseudocode-list(booktabs: true, numbered-title: none)[
-    + *input:* load samples, upper envelope $hat(u)_(t+1..t+9)$ (S4), desired replicas $r$, p99
+    + *input:* load samples, upper envelope $hat(u)_(t+1..t+9)$ (S4), current replica count $r$, p99
     + $R(v) := "clamp"(ceil(alpha v + beta), R_min, R_max)$
-    + $x_"obs" <-$ mean observed load over the last 30 s; $T <- R(x_"obs")$
+    + $x_"obs" <-$ mean load over the last 30 s; $T <- R(x_"obs")$ #h(1fr) ▷ observed-load target
     + *if* scenario is S4 *then*
-      + $T_p <- R(max_k hat(u)_(t+k))$ #h(1fr) ▷ decision factor
+      + $T_p <- R(max_k hat(u)_(t+k))$ #h(1fr) ▷ forecast target
       + *if* $T_p > T$ *then* $T <- T_p$; hold $(T_p, t + 90 "s")$
       + *else if* a hold is active *and* its target $> T$ *then* $T <-$ held target
     + *if* $T > r$ *and* 15 s since last scale-up *then* scale to $T$
-    + *else if* $T < 0.75 r$ *and* 120 s since last scale-down *and* p99 $< 140$ ms *then*
-      + scale to $max(T, R_min)$
+    + *else if* $T < 0.75 r$ *and* 120 s since last scale-down *and* p99 $< 140$ ms *then* scale to $T$
   ])),
 )
 
@@ -107,16 +105,19 @@
     toprule,
     [], [*ElaX* @yang2019elax], [*This work (Algorithm 2)*],
     rule,
-    [Predictor], [LSTM on a denoised series], [GRU, direct 9-output head],
+    [Predictor], [LSTM on a denoised series], [GRU with one 9-step output head],
     [Horizon], [60 one-minute points], [9 steps of 15 s (135 s)],
-    [Refresh], [forecast and reservation hourly; model daily], [every 15 s control cycle],
-    [Decision factor $v$], [largest point forecast in the next hour], [largest *upper-envelope* value in the next 135 s, used only if its target exceeds $R(x_"obs")$; raised target held 90 s],
-    [Feedback], [slack-based online controller, every 2 s], [not reimplemented; cooldowns and a p99 guard on scale-down],
-    [Dimension], [horizontal and vertical], [horizontal pods; node tier separate],
+    [Refresh], [forecast and reservation every hour, model retrained every day], [every 15 s control cycle],
+    [Decision factor $v$#super[a]], [largest point forecast of the next hour], [largest upper-envelope value of the next 135 s, used when it needs more pods than the observed load],
+    [Resource model], [$R = sigma y + beta$, fitted by profiling], [$R = ceil(alpha v + beta)$ with $alpha = 1 \/ r_"eff"$, $beta = 0$],
+    [Feedback], [slack-based online controller, every 2 s], [cooldowns and a p99 guard on scale-down],
+    [Scaling], [horizontal and vertical], [horizontal, with a separate node tier],
     [Scope], [one container cluster], [Kubernetes and Knative behind one router (Algorithm 1)],
     toprule,
   ),
-  caption: [What Algorithm 2 keeps from ElaX and what it changes],
+  placement: auto,
+  caption: [What Algorithm 2 keeps from ElaX and what it changes. #super[a]The term decision factor is
+    ours: the load value from which the scaler computes the replica count.],
 ) 
 
 #let tab-scenarios = figure(
@@ -126,15 +127,15 @@
     stroke: none,
     inset: (x: 3pt, y: 2.2pt),
     toprule,
-    [], [*Pod scaling*], [*Traffic*], [*Forecast*],
+    [], [*Pod scaling*], [*Traffic*], [*GRU forecast*],
     rule,
     [S1], [HPA (50% CPU), 1–10 pods], [100% Kubernetes], [no],
-    [S2], [Knative KPA, 3–10 pods], [100% Knative], [no],
+    [S2], [Knative autoscaler, 3–10 pods], [100% Knative], [no],
     [S3], [Algorithm 2, observed load], [Algorithm 1], [no],
-    [S4], [Algorithm 2, observed + forecast], [Algorithm 1], [yes],
+    [S4], [Algorithm 2, observed load and forecast], [Algorithm 1], [yes],
     toprule,
   ),
-  caption: [Deployment scenarios],
+  caption: [Deployment scenarios. S3 is the reactive hybrid and S4 the predictive hybrid.],
 )
 
 #let tab-predictor = figure(
@@ -147,15 +148,15 @@
     [*Model (same 30-sample windows)*], [*RMSE*], [*MAE*], [*Skill*],
     rule,
     [GRU, 2 × #G.hidden (3 seeds)], [#G.gru.rmse ± #G.gru.rmse_sd], [#G.gru.mae], [#G.gru.skill],
-    [LSTM, same protocol (3 seeds)], [#G.lstm.rmse ± #G.lstm.rmse_sd], [#G.lstm.mae], [#G.lstm.skill],
-    [Linear autoregression], [#G.ols_rmse], [#G.ols_mae], [–],
+    [LSTM (3 seeds)], [#G.lstm.rmse ± #G.lstm.rmse_sd], [#G.lstm.mae], [#G.lstm.skill],
+    [Linear autoregression], [#G.ols_rmse], [#G.ols_mae], [#G.ols_skill],
     [Persistence], [#G.persistence], [–], [0],
-    [Linear trend], [#G.trend], [–], [–],
-    [Seasonal naive (one day)], [#G.seasonal], [–], [–],
+    [Linear trend], [#G.trend], [–], [#G.trend_skill],
+    [Seasonal naive (one day)], [#G.seasonal], [–], [#G.seasonal_skill],
     toprule,
   ),
-  caption: [Forecast error on the held-out ClarkNet test region, 9-step horizon, in RPS of the replayed
-    (×33) series. Skill is $1 - "RMSE" \/ "RMSE"_"persistence"$.],
+  caption: [Forecast error on the held-out ClarkNet test portion, 9-step horizon, in RPS of the replayed
+    (×33) series. ± is the standard deviation over seeds. Skill is $1 - "RMSE" \/ "RMSE"_"persistence"$.],
 )
 
 #let tab-four = figure(
@@ -165,7 +166,7 @@
     stroke: none,
     inset: (x: 3pt, y: 2.2pt),
     toprule,
-    [], [*p99 (ms)*], [*SLO viol.*], [*Serverless*], [*Pod-s*], [*USD/mo*],
+    [], [*p99 (ms)*], [*SLO viol.*], [*Serverless*], [*K8s pod-s*], [*USD/mo*],
     rule,
     [S1], [#F.s1.p99 ± #F.s1.p99_sd], [#F.s1.slo], [#F.s1.share%], [#F.s1.replica_s], [#F.s1.cost],
     [S2], [#F.s2.p99 ± #F.s2.p99_sd], [#F.s2.slo], [#F.s2.share%], [#F.s2.replica_s], [#F.s2.cost],
@@ -173,41 +174,76 @@
     [S4#super[a]], [#F.s4.p99 ± #F.s4.p99_sd], [#F.s4.slo], [#F.s4.share%], [#F.s4.replica_s], [#F.s4.cost],
     toprule,
   ),
-  caption: [Four scenarios, five runs each (mean ± sd), batch of August 2026. SLO violations are requests
-    over 200 ms per run. Serverless is the share of the HAProxy weight-time product. Pod-s is Kubernetes
-    replica-seconds per run. #super[a]S4 ran an earlier GRU with an envelope offset near 10 RPS, not the
-    model of @sec:gru.],
+  caption: [Scenario batch of August 2026, five runs each (mean ± sd). SLO viol. is the number of
+    requests slower than 200 ms in a run of about #F.requests requests. Serverless is the time average
+    of the serverless weight. K8s pod-s is Kubernetes pod-seconds per run and excludes Knative pods.
+    #super[a]S4 ran an earlier GRU, not the model of @sec:gru.],
 )
 
 #let h2row(label, b) = (
-  label, [#b.n], [#b.s3], [#b.s4], [#b.diff \[#b.ci_lo, #b.ci_hi\]], [#b.p], [#b.d], [#b.wins/#b.n],
+  label, [#b.s3], [#b.s4], [#b.diff \[#b.ci_lo, #b.ci_hi\]], [#b.p], [#b.d], [#b.wins/#b.n],
 )
 
 #let tab-h2 = figure(
   table(
-    columns: (auto, auto, auto, auto, 1fr, auto, auto, auto),
-    align: (left, right, right, right, center, right, right, right),
+    columns: (auto, auto, auto, 1fr, auto, auto, auto),
+    align: (left, right, right, center, right, right, right),
     stroke: none,
     inset: (x: 2.5pt, y: 2.2pt),
     toprule,
-    [*Batch*], [*n*], [*S3*], [*S4*], [*S4 − S3 \[95% CI\]*], [*p*], [*d*], [*Wins*],
+    [*Batch*], [*S3*], [*S4*], [*S4 − S3 \[95% CI\]*], [*p*], [*d*], [*Wins*],
     rule,
     ..h2row([A], H.b5),
     ..h2row([B], H.b10a),
     ..h2row([C], H.b10b),
     rule,
-    [Pooled], [#H.pooled.n], [–], [–], [#H.pooled.diff \[#H.pooled.ci_lo, #H.pooled.ci_hi\]], [#H.pooled.p],
+    [Pooled], [–], [–], [#H.pooled.diff \[#H.pooled.ci_lo, #H.pooled.ci_hi\]], [#H.pooled.p],
     [#H.pooled.d], [#H.pooled.wins/#H.pooled.n],
     toprule,
   ),
-  caption: [Paired S3 against S4, mean p99 in ms. One-sided exact permutation p (alternative: S4 faster);
-    the pooled p is sampled with 10,000 sign flips. d is the paired Cohen's d. Wins counts pairs S4 won.],
+  caption: [Paired S3 against S4 with the leak-free GRU, mean p99 in ms. One-sided exact permutation p
+    (alternative: S4 faster); the pooled p is sampled with 10,000 sign flips. d is the paired Cohen's d.
+    Wins is the number of pairs in which S4 was faster, out of all pairs. C is the confirmatory batch.],
 )
+
+// ---------------------------------------------------------------------------
+// Fig.: p99 of every run of the scenario batch.
+#let fig-runs = {
+  let cols = (([S1 \ HPA], F.s1), ([S2 \ Knative], F.s2), ([S3 \ reactive], F.s3), ([S4#super[a] \ predictive], F.s4))
+  let sy(v) = v / 72
+  let right = 7.7
+  figure(
+    cetz.canvas(length: 1cm, {
+      import cetz.draw: *
+      set-style(stroke: 0.5pt)
+      line((0, 0), (0, sy(262)))
+      line((0, 0), (right, 0))
+      for t in (0, 100, 200) {
+        line((0, sy(t)), (-0.08, sy(t)))
+        content((-0.14, sy(t)), text(size: 6.5pt, str(t)), anchor: "east")
+      }
+      content((-0.78, sy(130)), angle: 90deg, text(size: 6.5pt, [p99 per run (ms)]))
+      line((0, sy(200)), (right, sy(200)), stroke: (dash: "dashed", paint: luma(120)))
+      content((right, sy(200) + 0.04), text(size: 6.5pt, [SLO 200 ms]), anchor: "south-east")
+      for (i, (label, s)) in cols.enumerate() {
+        let x = 1.0 + i * 1.9
+        content((x, -0.1), align(center, text(size: 6.5pt, label)), anchor: "north")
+        let m = s.plot.sum() / s.plot.len()
+        line((x - 0.55, sy(m)), (x + 0.55, sy(m)), stroke: 0.9pt)
+        for (j, v) in s.plot.enumerate() {
+          circle((x + (j - 2) * 0.17, sy(v)), radius: 0.055, fill: white)
+        }
+      }
+    }),
+    caption: [p99 of every run of the scenario batch. The bar is the mean of five runs. #super[a]S4 ran
+      an earlier GRU.],
+  )
+}
 
 // ---------------------------------------------------------------------------
 // Fig.: forest plot of the paired p99 difference per batch.
 #let fig-forest = {
-  let rows = (([A (n = 5)], H.b5.plot), ([B (n = 10)], H.b10a.plot), ([C (n = 10)], H.b10b.plot), ([Pooled (n = 25)], H.pooled.plot))
+  let rows = (([A (5 pairs)], H.b5.plot), ([B (10 pairs)], H.b10a.plot), ([C (10 pairs)], H.b10b.plot), ([Pooled (25 pairs)], H.pooled.plot))
   let sx(v) = v / 260
   figure(
     cetz.canvas(length: 1cm, {
@@ -229,12 +265,7 @@
         rect((sx(v.at(0)) - s, y - s), (sx(v.at(0)) + s, y + s), fill: black)
       }
     }),
-    caption: [Paired p99 difference with 95% bootstrap interval for the three batches that ran the
-      ClarkNet-trained predictor, and for the 25 pairs pooled.],
+    caption: [Mean paired p99 difference with its 95% bootstrap interval for the three batches that ran
+      the leak-free GRU, and for the 25 pairs pooled.],
   )
 }
-
-#let fig-boxplot = figure(
-  image(figdir + "fig04-p99-boxplot.svg", width: 100%),
-  caption: [p99 per run for the four scenarios (five runs each). The dashed line is the 200 ms SLO.],
-)

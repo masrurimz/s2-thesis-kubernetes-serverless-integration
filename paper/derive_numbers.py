@@ -51,6 +51,8 @@ SCENARIOS = {
 CONSTANTS = {
     "0": "zero weight / zero RPS in the routing rule",
     "0.4": "post-hoc quiet-host threshold, peak CPU-busy (2026-09-13 bundle SUMMARY.md)",
+    "0.05": "test level alpha of the paired profiles (profiles.py)",
+    "0.3": "pod CPU request, 300m (test-app-warm-deployment.yaml)",
     "0.5": "target CPU utilization u (calibration)",
     "0.75": "scale-down threshold (cluster_controller.py)",
     "0.90": "upper-envelope coverage target (90th percentile offsets)",
@@ -75,6 +77,7 @@ CONSTANTS = {
     "80": "statistical power (%)",
     "90": "proactive hold (s); 90th percentile",
     "95": "confidence level (%)",
+    "99": "the 99th percentile that defines p99",
     "75": "provisioning delay in the paired sequence (profiles.py _DELAY_SEQ)",
     "100": "percentage scale in the routing rule",
     "120": "upper provisioning delay; scale-down cooldown (s)",
@@ -164,6 +167,7 @@ def four_scenario() -> dict:
             "share": num(mean([traffic_share(r) for r in rs])),
             "replica_s": num(mean([r["k8s_replica_seconds"] for r in rs]), 0),
             "cost": num(mean(monthly_cost(cost, name)), 0),
+            "plot": [round(v, 1) for v in p99[key]],
         }
     for other in ("s1", "s2", "s3"):
         _, p = mann_whitney_u(p99[other], p99["s4"])
@@ -172,6 +176,7 @@ def four_scenario() -> dict:
     replicas = {key: mean([r["k8s_replica_seconds"] for r in runs(FOUR, name)]) for key, name in SCENARIOS.items()}
     for key in ("s3", "s4"):
         out[f"{key}_pods_below_s1"] = num(100.0 * (1 - replicas[key] / replicas["s1"]), 0)
+    out["requests"] = num(mean([r["total_requests"] for name in SCENARIOS.values() for r in runs(FOUR, name)]), 0)
     return out
 
 
@@ -299,6 +304,9 @@ def predictor() -> dict:
         "persistence": num(float(base.group(1)), 2),
         "trend": num(float(base.group(2)), 2),
         "seasonal": num(float(base.group(3)), 2),
+        "ols_skill": num(1 - ols["rmse"] / float(base.group(1)), 3),
+        "trend_skill": num(1 - float(base.group(2)) / float(base.group(1)), 3),
+        "seasonal_skill": num(1 - float(base.group(3)) / float(base.group(1)), 3),
         "synthetic_nrmse": num(100 * syn["overall"]["nrmse"]["mean"], 1),
         "hidden": cfg["hidden_size"],
         "layers": cfg["num_layers"],
