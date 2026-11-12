@@ -114,10 +114,10 @@ pods $n$ from the Kubernetes API, and then runs two algorithms.
 == Algorithm 1: capacity-aware traffic distribution
 One ready pod serves $r_"eff" = r_"sat" dot u = 33.3 times 0.5 = 16.65$ RPS, where $r_"sat"$ is the
 measured saturation throughput of three pods divided by three and $u$ the target utilization. The ready
-capacity is $C = n r_"eff"$. Kubernetes keeps the load up to $C$, and serverless takes the excess:
+capacity is $C = n dot r_"eff"$. Kubernetes keeps the load up to $C$, and serverless takes the excess:
 $ w_"sls" = cases(0 & "if" x <= C, min(50, ceil(100 (x - C) \/ x)) & "otherwise.") $
 The weight moves to its target in one cycle (@alg:routing). The 50% cap bounds the serverless cost of a
-capacity failure. A proportional-integral pacing term can add serverless weight when SLO violations use
+capacity failure. A proportional-integral pacing term $p_"burn" >= 0$ can add serverless weight when SLO violations use
 up a budget too fast. It counts at most one violation per 15 s decision, so it does not reach its
 threshold within a 20-minute run. The weight therefore follows observed load and ready capacity. A
 forecast changes it only through the pods that Algorithm 2 adds.
@@ -133,8 +133,8 @@ forecast changes it only through the pods that Algorithm 2 adds.
 ]
 
 == Algorithm 2: ElaX-derived scaling with a forecast
-Algorithm 2 sizes the deployment with the linear model $R(v) = "clamp"(ceil(alpha v + beta), 3, 10)$,
-with $alpha = 1 \/ r_"eff"$ and $beta = 0$. The reactive hybrid (S3) uses $v = x_"obs"$, the mean load
+Algorithm 2 sizes the deployment with the linear model $R(v) = "clamp"(ceil(alpha v + beta), R_min, R_max)$,
+with $alpha = 1 \/ r_"eff"$, $beta = 0$, $R_min = 3$ and $R_max = 10$. The reactive hybrid (S3) uses $v = x_"obs"$, the mean load
 over the last 30 s. The predictive hybrid (S4) also computes a forecast target from the GRU upper
 envelope
 $ hat(u)_(t+k) = hat(y)_(t+k) + delta_k, quad k = 1, dots, 9, $

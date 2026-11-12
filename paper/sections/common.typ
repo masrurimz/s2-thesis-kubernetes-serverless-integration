@@ -74,7 +74,7 @@
     + *if* $x <= C$ *then* $w' <- 0$
     + *else* $w' <- min(50, ceil(100 (x - C) \/ x))$ #h(1fr) ▷ burst share, capped
     + $w' <- "clamp"(w' + p_"burn", 0, 50)$ #h(1fr) ▷ SLO pacing term
-    + *if* $w' != w$ *then* set HAProxy weights to $(100 - w', w')$
+    + *if* $w' != w$ *then* set HAProxy weights $(w_"k8s", w_"sls") <- (100 - w', w')$
   ])),
 )
 
@@ -83,7 +83,7 @@
   supplement: [Algorithm],
   caption: [ElaX-derived replica scaling with the forecast decision factor, every 15 s],
   align(start, text(size: 8pt, pseudocode-list(booktabs: true, numbered-title: none)[
-    + *input:* load samples, upper envelope $hat(u)_(t+1..t+9)$ (S4), replicas $r$, p99
+    + *input:* load samples, upper envelope $hat(u)_(t+1..t+9)$ (S4), desired replicas $r$, p99
     + $R(v) := "clamp"(ceil(alpha v + beta), R_min, R_max)$
     + $x_"obs" <-$ mean observed load over the last 30 s; $T <- R(x_"obs")$
     + *if* scenario is S4 *then*
@@ -110,7 +110,7 @@
     [Predictor], [LSTM on a denoised series], [GRU, direct 9-output head],
     [Horizon], [60 one-minute points], [9 steps of 15 s (135 s)],
     [Refresh], [forecast and reservation hourly; model daily], [every 15 s control cycle],
-    [Decision factor $x$], [largest point forecast in the next hour], [largest *upper-envelope* value in the next 135 s, used only if its target exceeds $R(x_"obs")$; raised target held 90 s],
+    [Decision factor $v$], [largest point forecast in the next hour], [largest *upper-envelope* value in the next 135 s, used only if its target exceeds $R(x_"obs")$; raised target held 90 s],
     [Feedback], [slack-based online controller, every 2 s], [not reimplemented; cooldowns and a p99 guard on scale-down],
     [Dimension], [horizontal and vertical], [horizontal pods; node tier separate],
     [Scope], [one container cluster], [Kubernetes and Knative behind one router (Algorithm 1)],
