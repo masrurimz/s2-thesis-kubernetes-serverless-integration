@@ -355,6 +355,23 @@ Exchange (verbatim, 12/11/26):
   - Apply his revisions and rebuild — owner: agent — on receipt — `pending`.
   - Submit on EDAS — owner: user — 2026-11-14 WIB — `pending`.
 
+### 2026-11-12 18:35 — Pak Roy's feedback on the paper
+- Direction: in
+- Status: replied (feedback received; revision: actioned in `paper/sections/body.typ`, awaiting his reread)
+- Channel: not stated by the user; text as relayed by the user.
+
+Feedback (verbatim, as relayed):
+> • apa bedannya dengan Spock ? perlu diperkuat penjelasannya
+> • perlu lebih diperjelas apakah memang GRU berpengaruh ?
+> • mengapa p99 dibahas di introduction ? apa pentingnya ? introduction harus membangun motivasi reasoning
+> • bahasa tidak terlalu jelas. struktur kalimat juga tidak saya mengerti. harap diperbaiki penulisan kalimatnya
+> • tolong cek dengan teliti tata bahasa kalimat dst
+
+- English note: (1) state the difference from Spock more strongly; (2) make clear whether the GRU actually has an effect; (3) the introduction should build the motivation, and p99 needs a reason if it appears there; (4) sentences are hard to follow, rewrite them; (5) check grammar carefully.
+- Action items:
+  - Revise the paper for all five points, keep 6 pages and every number — owner: agent — 2026-11-12 — `actioned` (trail: [decisions-2026-11-12-roy-feedback.tsv](decisions-2026-11-12-roy-feedback.tsv)).
+  - Send the revised PDF back to Pak Roy with a short list of what changed — owner: user — 2026-11-13 — `pending`.
+
 ---
 
 *Conventions: append events, never rewrite. Statuses: pending → sent → replied → actioned. See [README.md](README.md).*
