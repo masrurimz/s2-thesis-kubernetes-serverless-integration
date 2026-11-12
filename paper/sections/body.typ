@@ -15,11 +15,11 @@
   load that the ready Kubernetes pods cannot serve, and a scaler derived from ElaX sets the number of
   pods. In the predictive hybrid, the scaler also reads a 135 s forecast from a gated recurrent unit
   (GRU), plus a safety margin, and adds pods before the load arrives. The reactive hybrid has no
-  forecast. We replayed the ClarkNet web trace against both hybrids, Kubernetes with the Horizontal Pod
+  forecast. We replayed the ClarkNet trace against both hybrids, Kubernetes with the Horizontal Pod
   Autoscaler (HPA), and Knative alone. Both hybrids matched the projected cost of Kubernetes with the
   HPA, but the reactive hybrid had a higher 99th-percentile latency (p99). Knative alone had the lowest
-  p99 at more than twice the cost. In ten pairs of runs planned
-  in advance, the forecast changed p99 by #H.b10b.diff ms (95% CI \[#H.b10b.ci_lo, #H.b10b.ci_hi\],
+  p99 at more than twice the cost. In ten planned pairs of runs, the forecast changed p99 by
+  #H.b10b.diff ms (95% CI \[#H.b10b.ci_lo, #H.b10b.ci_hi\],
   $p = #H.b10b.p$) and used #H.b10b.replica_pct% more pod-seconds. This design detects differences
   above about #H.b10b.mde ms, and the GRU forecast was no more accurate than a linear autoregression.
   These results suggest that in a hybrid, the serverless backend already serves the load while new pods
