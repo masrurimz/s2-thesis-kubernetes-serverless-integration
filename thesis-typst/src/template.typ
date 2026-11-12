@@ -478,8 +478,8 @@
   }
 
   // ---- 3. Figure-caption style ----
-  //? Table
-  show figure.where(kind: table): it => context [
+  //? Table: caption above, kept on the same page as the table
+  show figure.where(kind: table): it => context block(breakable: false)[
     #set text(size: 10pt)
     #supp-table #counter(heading.where(level: 1)).display("1").#it.counter.display(it.numbering). #it.caption.body
     #it.body

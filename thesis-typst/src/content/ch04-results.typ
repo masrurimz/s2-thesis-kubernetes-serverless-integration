@@ -269,10 +269,13 @@ Eight batches compared S3 and S4 before the pre-registered batch.
 @tab:h2-history lists each one with the reason it is not the H2 result, and @fig:replication-batches plots the batches that ran with the final controller configuration.
 Two further batches from 2026-08-07 are left out, because their result files were deleted before they were committed.
 
+#[
+#set par(justify: false)
 #figure(
   kind: table,
   table(
-    columns: (auto, auto, auto, auto, auto),
+    columns: (1.2fr, auto, auto, auto, 2fr),
+    align: (left, center, center, center, left),
     [Batch], [Pairs], [Mean difference (ms)], [p], [Why it is not the H2 result],
     [Pre-calibration (2026-07-11)], [5], [+10.0], [--], [Replica targets counted the safety margin twice, so S4 sized replicas exactly like S3],
     [Initial (2026-07-12)], [5], [-8.1], [0.38], [Five-step (75 s) forecast horizon and an untuned reactive baseline],
@@ -285,6 +288,7 @@ Two further batches from 2026-08-07 are left out, because their result files wer
   ),
   caption: [Earlier S4-vs-S3 batches. A negative difference favours S4.],
 ) <tab:h2-history>
+]
 
 #figure(
   image("../figures/fig04_6_replication_batches.png", width: 90%),

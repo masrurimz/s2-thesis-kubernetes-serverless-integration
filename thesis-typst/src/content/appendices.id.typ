@@ -1,6 +1,8 @@
 // Appendix A — Experiment Configuration
 // Appendix B — Raw Experiment Results
 // Appendix C — Code Listings
+// Appendix D — Four-Scenario Replication Data
+// Appendix E — Experiment Index
 // Ported from archived/thesis-latex/src/chapters/104-106-appendix-*.tex
 
 #import "headings.typ": H, cap
@@ -32,7 +34,7 @@ Tabel berikut menyajikan parameter kalibrasi yang dipakai dalam eksperimen.
   caption: [Parameter kalibrasi (nilai bawaan)],
 )
 
-*Catatan (penggantian kalibrasi):* _Bundle_ berpasangan H2 memakai nilai pengganti khusus eksperimen `max_k8s_replicas = 10, prediction_horizon = 9`, bukan nilai bawaan pada tabel di atas. Nilai pengganti ini penting karena menjelaskan mengapa S1 tidak jenuh pada replikasi n=5.
+*Penggantian kalibrasi:* _batch_ berpasangan H2 memakai nilai pengganti khusus eksperimen `max_k8s_replicas = 10` dan `prediction_horizon = 9`, bukan nilai bawaan pada tabel di atas. Nilai pengganti ini penting karena menjelaskan mengapa S1 tidak jenuh pada replikasi empat skenario.
 
 == #H("app-a-alloc")
 
@@ -73,15 +75,38 @@ Tabel berikut menyajikan parameter kalibrasi yang dipakai dalam eksperimen.
 
 = #H("app-b")
 
-== #H("app-b-pairs")
+== #H("app-b-primary")
 
-Tabel berikut menyajikan nilai p99 per pasangan dari _bundle_ Juli `2026-07-14_clarknet-tuned-paired-n5` (sejarah). Desainnya menyeimbangkan urutan: pada lima pasangan (10 _run_), urutan S3 dan S4 bergantian, dengan beban _trace_ ClarkNet.
+Tabel berikut menyajikan latensi p99 per pasangan pada _batch_ pra-registrasi (E10 di Lampiran E), yaitu hasil H2 pada @sec:h2. Setiap pasangan menjalankan S3 dan S4 berurutan pada _replay_ ClarkNet, dengan urutan yang bergantian.
 
 #figure(
   kind: table,
   table(
     columns: (auto, auto, auto, auto, auto),
-    [Pasangan], [p99 S3 (ms)], [p99 S4 (ms)], [Selisih (ms)], [S4 lebih baik?],
+    [Pasangan], [p99 S3 (ms)], [p99 S4 (ms)], [Selisih (ms)], [S4 lebih cepat?],
+    [1], [101,2], [113,7], [+12,5], [Tidak],
+    [2], [301,3], [123,0], [-178,3], [Ya],
+    [3], [166,9], [169,5], [+2,6], [Tidak],
+    [4], [158,3], [299,8], [+141,5], [Tidak],
+    [5], [127,0], [119,6], [-7,4], [Ya],
+    [6], [154,9], [96,0], [-59,0], [Ya],
+    [7], [158,3], [102,4], [-55,9], [Ya],
+    [8], [110,6], [150,2], [+39,5], [Tidak],
+    [9], [158,0], [187,8], [+29,7], [Tidak],
+    [10], [167,1], [106,1], [-61,0], [Ya],
+  ),
+  caption: [Latensi p99 per pasangan pada _batch_ pra-registrasi],
+) <tab:app-primary-pairs>
+
+== #H("app-b-pairs")
+
+Tabel berikut menyajikan latensi p99 per pasangan pada _batch_ Juli (E3 di Lampiran E), yang dilaporkan sebagai sejarah pada @sec:h2-history. Desainnya sama: lima pasangan (10 _run_) yang diimbangi urutannya pada _replay_ ClarkNet.
+
+#figure(
+  kind: table,
+  table(
+    columns: (auto, auto, auto, auto, auto),
+    [Pasangan], [p99 S3 (ms)], [p99 S4 (ms)], [Selisih (ms)], [S4 lebih cepat?],
     [1], [235,6], [101,4], [-134,2], [Ya],
     [2], [192,2], [104,9], [-87,3], [Ya],
     [3], [151,4], [100,5], [-50,9], [Ya],
@@ -97,7 +122,7 @@ Tabel berikut menyajikan nilai p99 per pasangan dari _bundle_ Juli `2026-07-14_c
   kind: table,
   table(
     columns: (auto, auto),
-    [Metrik], [Nilai],
+    [Statistik], [Nilai],
     [Rata-rata p99 S3 (ms)], [188,5],
     [Rata-rata p99 S4 (ms)], [126,0],
     [Selisih rata-rata (ms)], [-62,5 (-33,1%)],
@@ -111,7 +136,9 @@ Tabel berikut menyajikan nilai p99 per pasangan dari _bundle_ Juli `2026-07-14_c
   caption: [Hasil statistik _bundle_ berpasangan Juli (sejarah)],
 )
 
-_Bundle_ ini adalah perbandingan berpasangan _batch_ Juli untuk H2. Penelitian ini kini melaporkannya sebagai sejarah. Seluruh 5 pasangan valid dan seluruh 280 prediksi GRU terkirim. Nilai `predictive_count` berada pada 4 sampai 5 per _run_ S4. Metrik sekunder dilaporkan secara deskriptif setelah koreksi Bonferroni (p terkoreksi = 0,1248). Nilai p = 0,0312 adalah batas bawah desain, yaitu 1/32 pada n = 5, karena kelima pasangan jatuh searah. Nilai ini adalah hasil hitung ulang dengan rutin `thesis experiment analyze` saat ini. Artefak _bundle_ yang tersimpan menyimpan 0,0304 dari rutin analisis lama. Prediktor terpasang `data/models/gru_model.pt` baru masuk kontrol versi pada 2026-09-12 (_commit_ 98e17d1, LFS oid 7f8244bcc403c59a3e2be5d31b1ee5586f01c0052416c2705c0a325d1cc3099d). Manifes _bundle_ 2026-07-14 tidak mencatat prediktor. Artefak pada periode itu kemudian terbukti berupa model pemenang yang dilatih dengan data sintetis, sehingga _batch_ ini tidak dapat diatribusikan ke ClarkNet. Putusan akhir H2 (Bab 4, bagian replikasi) adalah hipotesis tidak didukung. Tiga _batch_ yang dapat diatribusikan ke ClarkNet (p = 0,656; 0,168; 0,307) semuanya tidak menunjukkan selisih nyata. Gabungan 25 pasangan memberi selisih −16,5 ms (rentang kepercayaan 95% −188,6 sampai +184,5 ms, p satu sisi = 0,448; `paper/derive_numbers.py`).
+Seluruh 5 pasangan pada _batch_ Juli valid, seluruh 280 prediksi GRU terkirim, dan setiap _run_ S4 membawa 4 sampai 5 label PREDICTIVE. Metrik sekunder bersifat deskriptif setelah koreksi Bonferroni (p terkoreksi = 0,1248). Nilai p = 0,0312 adalah batas bawah desain, yaitu 1/32 pada n = 5, yang tercapai karena kelima pasangan jatuh searah. Nilai ini adalah hasil hitung ulang dengan `thesis experiment analyze` yang berlaku sekarang. Berkas analisis yang tersimpan berisi 0,0304 dari rutin yang lebih lama.
+
+_Batch_ ini tidak dapat dikreditkan kepada prediktor yang dilatih pada ClarkNet. Manifesnya tidak mencatat prediktor. Model terpasang `data/models/gru_model.pt` baru masuk kontrol versi pada 2026-09-12 (_commit_ 98e17d1, LFS oid 7f8244bcc403c59a3e2be5d31b1ee5586f01c0052416c2705c0a325d1cc3099d). Model yang terpasang pada bulan Juli kemudian diketahui sebagai model yang dilatih pada data sintetis. @sec:h2 melaporkan putusan H2.
 
 #pagebreak()
 
@@ -181,7 +208,7 @@ class CalibrationConfig(BaseModel):
 
 == #H("app-d-raw")
 
-Tabel berikut menyajikan hasil per _run_ dari replikasi empat skenario `2026-08-09_clarknet-replay_032257` yang telah selesai (n=5 per skenario). Nilai p99 dibulatkan satu desimal.
+Tabel berikut menyajikan hasil per _run_ dari replikasi empat skenario (E7 di Lampiran E), dengan 5 _run_ per skenario. Nilai p99 dibulatkan satu desimal.
 
 #figure(
   kind: table,
@@ -209,7 +236,7 @@ Tabel berikut menyajikan hasil per _run_ dari replikasi empat skenario `2026-08-
     [4], [S4 (_Hybrid_ prediktif)], [94,4], [12],
     [5], [S4 (_Hybrid_ prediktif)], [93,8], [1],
   ),
-  caption: [Hasil per _run_ replikasi n=5],
+  caption: [Hasil per _run_ replikasi empat skenario],
 )
 
 == #H("app-d-summary")
@@ -240,5 +267,56 @@ Tabel berikut menyajikan hasil per _run_ dari replikasi empat skenario `2026-08-
     [S3 vs S1], [+37,4%; p = 0,165], [Tidak signifikan],
     [S4 vs S3 (pelanggaran SLO)], [-95,4%; Mann-Whitney p = 0,0345], [Signifikan],
   ),
-  caption: [Ringkasan uji statistik replikasi n=5.],
+  caption: [Uji statistik replikasi empat skenario],
 )
+
+#pagebreak()
+
+= #H("app-e")
+
+#set par(justify: false)
+
+== #H("app-e-bundles")
+
+Setiap eksperimen yang dikutip pada Bab 3 sampai 5 tercantum di sini, dengan label yang dipakai teks dan folder yang menyimpan _run_, manifes, dan analisisnya. Folder dihitung dari `results/experiments/phase-b/` dan diawali tanggal eksperimen berjalan. Manifes _run_ mencatat _commit_ kode, konfigurasi, dan, mulai E8, _hash_ prediktor.
+
+#figure(
+  kind: table,
+  table(
+    columns: (auto, 1fr, 1fr, auto),
+    align: left,
+    [Label], [Desain], [Dipakai untuk], [Folder],
+    [E1], [Diagnostik empat skenario, 1 _run_ masing-masing], [Evaluasi komparatif dan biaya (Bab 4)], [`2026-07-11_scaling_fix_n1`],
+    [E2], [Diagnostik beban tinggi, 1 _run_ masing-masing], [Penyediaan _node_ dan _offload_ ke _serverless_], [`2026-07-13_dynamic-node-offload`],
+    [E3], [S3/S4, 5 pasangan], [Sejarah H2: _batch_ Juli], [`2026-07-14_clarknet-tuned-paired-n5`],
+    [E4], [S3/S4 dengan konsolidasi _node_, 1 _run_ masing-masing], [Diagnostik konsolidasi], [`2026-07-14_clarknet-util-scaledown-n1`],
+    [E5], [S3/S4, 5 pasangan], [Sejarah H2: Agustus A], [`2026-08-08_paired-h2_195150`],
+    [E6], [S3/S4, 5 pasangan], [Sejarah H2: Agustus B], [`2026-08-08_paired-h2_233726`],
+    [E7], [Empat skenario, 5 _run_ masing-masing], [Replikasi empat skenario (Lampiran D)], [`2026-08-09_clarknet-replay_032257`],
+    [E8], [S3/S4, 5 pasangan], [Sejarah H2: pasangan September], [`2026-09-13_h2-pair-5p`],
+    [E9], [S3/S4, 10 pasangan], [Sejarah H2: konfirmatori pertama], [`2026-09-13_h2-confirmatory-10p`],
+    [E10], [S3/S4, 10 pasangan, pra-registrasi], [Hasil H2 (@sec:h2)], [`2026-09-20_h2-confirmatory-10p`],
+    [--], [S3/S4, 5 pasangan], [Sejarah H2: sebelum kalibrasi], [`2026-07-11_paired-h2`],
+    [--], [S3/S4, 5 pasangan], [Sejarah H2: awal], [`2026-07-12_paired-h2-clean-v2`],
+  ),
+  caption: [_Bundle_ eksperimen yang dikutip dalam buku ini],
+) <tab:app-e-bundles>
+
+== #H("app-e-models")
+
+Studi prediktor dan model biaya di balik Bab 4 disimpan di luar _bundle_ eksperimen.
+
+#figure(
+  kind: table,
+  table(
+    columns: (auto, auto, auto),
+    align: left,
+    [Studi], [Dipakai untuk], [Lokasi],
+    [Pencarian representasi dengan dua belas variasi], [Bab 4, kinerja GRU], [`results/models/gru/2026-09-13_probes-representation/`],
+    [Transfer lintas _trace_ (T-cross)], [Bab 4, kinerja GRU], [`results/models/gru/2026-09-13_probe-t-cross/`],
+    [Kalibrasi T-cross], [Bab 4, kinerja GRU], [`results/models/gru/2026-09-13_t-cross-calibration/`],
+    [Model biaya diagnostik empat skenario], [Analisis biaya (E1)], [`results/cost_analysis/cost_analysis_20260711_112337.json`],
+    [Prediktor terpasang], [Setiap _run_ S4 mulai E8], [`data/models/gru_model.pt`],
+  ),
+  caption: [Studi prediktor, model biaya, dan prediktor terpasang],
+) <tab:app-e-models>

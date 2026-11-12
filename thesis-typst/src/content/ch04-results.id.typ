@@ -10,17 +10,17 @@
 
 Bab ini menyajikan hasil eksperimen untuk arsitektur _hybrid_ Kubernetes-_serverless_ dengan prediksi beban kerja berbasis GRU.
 Hasilnya disusun dalam beberapa bagian: kinerja model GRU, validasi mekanisme sistem, evaluasi komparatif antarskenario _deployment_, analisis biaya, dan diskusi.
-Setiap klaim kuantitatif di bab ini dapat ditelusuri ke catatan eksperimen terkonsolidasi di registri eksperimen.
-Catatan penting: hasil komparatif empat skenario dan hasil biaya berasal dari _baseline_ `2026-07-11_scaling_fix_n1`.
-_Baseline_ ini adalah _run_ diagnostik dengan n = 1 (H1).
+Setiap klaim kuantitatif di bab ini berasal dari eksperimen yang tercantum di Lampiran E, yang memetakan setiap nama di sini ke folder hasilnya.
+Catatan penting: hasil komparatif empat skenario dan hasil biaya berasal dari diagnostik empat skenario, satu _run_ per skenario.
+Diagnostik ini adalah _run_ dengan n = 1 (H1).
 Hasil tersebut dibingkai sebagai diagnostik, bukan konfirmatori.
 Enam perbaikan infrastruktur (Bug 8 sampai 13) membuat semua _bundle_ eksperimen sebelumnya (Februari dan 8 sampai 10 Juli 2026) tidak berlaku lagi.
 Perbaikan itu adalah (1) pembatasan CPU _node_ yang ditegakkan dan (2) kalibrasi ulang `r_saturation_per_replica`.
 Perbaikan lain adalah (3) batas keadilan untuk replika Kubernetes dan (4) perangkat kalibrasi.
 Terakhir, ada (5) gerbang keras untuk server GRU dan (6) pemisahan prediksi dari perutean.
-Perbandingan berpasangan S3/S4 (H2) bertumpu pada tiga _batch_ yang dapat diatribusikan ke ClarkNet (25 pasangan, @sec:replication).
-_Batch_ berpasangan Juli (`2026-07-14_clarknet-tuned-paired-n5`, Lampiran B) mencapai p = 0,0312, tetapi tidak dapat diatribusikan ke ClarkNet dan dilaporkan sebagai sejarah.
-Bukti prediktor juga memuat uji coba representasi dan target persilangan tanggal 2026-09-13 (`results/models/gru/2026-09-13_probes-representation/`, `results/models/gru/2026-09-13_probe-t-cross/`), yang dilaporkan bersama hasil GRU di bab ini.
+Perbandingan prediktif lawan reaktif (H2) bertumpu pada satu _batch_ konfirmatori pra-registrasi berisi 10 pasangan (@sec:h2).
+_Batch_ berpasangan sebelumnya, termasuk _batch_ Juli yang mencapai p = 0,0312 dengan prediktor yang tidak dapat diverifikasi, diringkas pada @sec:h2-history.
+Bukti prediktor juga memuat pencarian representasi dan uji coba target persilangan tanggal 2026-09-13, yang dilaporkan bersama hasil GRU di bab ini.
 
 == #H("ch4-gru") <sec:gru-model>
 
@@ -80,7 +80,7 @@ Prakiraan _persistence_ mengulang pengamatan terakhir.
 Pada resolusi ini, prakiraan itu sudah mencapai 50,5 persen dari beban rata-rata.
 
 Pencarian representasi kemudian menguji apakah ada representasi masukan atau target yang mengalahkan model linear itu.
-Dua belas variasi ditetapkan terhadap autoregresi per-_fold_ dengan protokol _fold_ bebas kebocoran data (`results/models/gru/2026-09-13_probes-representation/`).
+Dua belas variasi ditetapkan terhadap autoregresi per-_fold_ dengan protokol _fold_ bebas kebocoran data (Lampiran E).
 Kedua belas variasi tercatat hasilnya.
 Tak satu pun mengalahkan model linear.
 _Skill_ pada _fold_ seleksi berkisar dari -0,01 persen untuk `robust_scale`, yang setara sampai desimal keempat, hingga -5,08 persen untuk `calendar`.
@@ -103,8 +103,8 @@ Untuk jaringan, galat turun dari 36,69 menjadi 25,30.
 Galat ini dalam RPS pada amplitudo yang dilayani.
 Targetnya menjadi lebih kasar, dan horizon jam dinding bertambah dari 135 menjadi 180 detik.
 Ini perubahan interval dan horizon, bukan keberhasilan pemodelan.
-Kedua, target relatif terhadap kapasitas mendeteksi titik beban melewati kapasitas, yang tidak terdeteksi oleh prakiraan titik (`results/models/gru/2026-09-13_t-cross-calibration/`).
-_Recall_ persilangan adalah 0,988 $plus.minus$ 0,009 (`results/models/gru/2026-09-13_probe-t-cross/meta.yaml`), dibandingkan 0,008 sampai 0,042 untuk autoregresi ditambah ambang dan 0,119 sampai 0,163 untuk _persistence_.
+Kedua, target relatif terhadap kapasitas mendeteksi titik beban melewati kapasitas, yang tidak terdeteksi oleh prakiraan titik (Lampiran E).
+_Recall_ persilangan adalah 0,988 $plus.minus$ 0,009, dibandingkan 0,008 sampai 0,042 untuk autoregresi ditambah ambang dan 0,119 sampai 0,163 untuk _persistence_.
 Keluaran mentah jaringan terlalu percaya diri (Brier per langkah 0,236 dibandingkan 0,049 pada acuan linear).
 Pemetaan isotonik dipasang per _fold_ hanya pada langkah validasi dalam dari _fold_ itu.
 Brier terkalibrasi turun menjadi 0,043, di bawah acuan.
@@ -166,11 +166,11 @@ Evaluasi komparatif membandingkan empat skenario _deployment_: S1 (Kubernetes de
 Semua skenario me-_replay_ _trace_ HTTP ClarkNet dengan rata-rata 73 _request_ per detik (puncak 164 RPS).
 Setiap skenario memakai kapasitas _node_ terkalibrasi berupa Docker `--cpus=1.0` per _node_ beban kerja (total 2,0 CPU).
 Konfigurasi ini menetapkan `max_k8s_replicas = 6` sesuai kapasitas yang dapat dijadwalkan dan tidak memakai batas CPU per _pod_.
-Hasil ini adalah diagnostik n = 1 dari _baseline_ diagnostik satu _run_.
+Hasil ini adalah diagnostik n = 1 dari diagnostik empat skenario.
 Perbandingan empat skenario (H1) kemudian direplikasi pada n = 5, seperti dilaporkan di bawah.
-Perbandingan berpasangan S3 lawan S4 (H2) dilaporkan di bawah: _batch_ awal, _batch_ Juli (sejarah), dan replikasi yang dapat diatribusikan ke ClarkNet.
+Perbandingan berpasangan S3 lawan S4 (H2) disajikan pada @sec:h2.
 Keempat skenario berjalan pada infrastruktur tetap yang sama, sehingga perbandingan setara dalam satu _bundle_.
-_Bundle_ Juli yang digantikan berbeda: di dalamnya, S1/S2 dan S3/S4 berasal dari konfigurasi pengendali yang berbeda.
+_Bundle_ empat skenario 8 sampai 10 Juli tidak dipakai, karena di dalamnya _run_ S1 dan S2 serta _run_ S3 dan S4 berasal dari konfigurasi pengendali yang berbeda.
 
 #figure(
   kind: table,
@@ -197,11 +197,11 @@ Yang lain membandingkan skenario _hybrid_ prediktif dengan Kubernetes murni (S4 
 Tabel ini hanya memiliki satu _run_ per skenario.
 Tidak ada statistik inferensial (uji t, ukuran efek, rentang kepercayaan) yang dihitung di sini.
 Putusan S4 lawan S1 bersifat deskriptif, yaitu diagnostik n = 1.
-Perbandingan S4 lawan S3 (H2) memakai rancangan berpasangan yang dilaporkan di subbab berikut.
+Perbandingan S4 lawan S3 (H2) memakai rancangan berpasangan pada @sec:h2.
 Pada tabel, ambang SLO adalah p99 < 200 ms.
 Pelanggaran SLO dan tingkat pelanggaran SLO berasal dari satu _run_.
 Waktu di _serverless_ adalah bagian waktu _run_ dengan bobot Knative di atas nol.
-Pangsa lalu lintas, dihitung sebagai hasil kali bobot-waktu HAProxy, adalah 6,1% untuk S3 dan 3,0% untuk S4 (`2026-07-11_scaling_fix_n1`; `cost_analysis_20260711_112337.json`).
+Pangsa lalu lintas, dihitung sebagai hasil kali bobot-waktu HAProxy, adalah 6,1% untuk S3 dan 3,0% untuk S4.
 PREDICTIVE menghitung kenaikan bobot yang terjadi saat predicted_upper melebihi beban teramati.
 Label itu tidak mengubah pembagian (Bab 3).
 Jumlahnya rendah karena label memerlukan kenaikan beban di atas 3 RPS per siklus, beban di atas 80% kapasitas, dan nilai prediksi di atas beban teramati.
@@ -209,12 +209,13 @@ Pada _run_ ini, 8 dari 9 label PREDICTIVE berasal dari ekstrapolasi beban terama
 Dalam eksperimen 1.200 detik (sekitar 80 siklus kontrol), hanya 9 siklus menghasilkan label PREDICTIVE.
 Sebagian besar siklus berada dalam kapasitas siap (MAINTAIN atau RECOVERY).
 
-Replikasi empat skenario berjalan pada 8 Agustus 2026 dan 9 Agustus 2026 (`2026-08-09_clarknet-replay_032257`, Lampiran D).
-Berkas `meta.yaml` mencatat status `in_progress`, dan tidak ada artefak analisis dalam _bundle_, sehingga setiap statistik di sini dihitung ulang dari 20 hasil _run_.
+Replikasi empat skenario berjalan pada 8 Agustus 2026 dan 9 Agustus 2026 (Lampiran D).
+_Bundle_-nya tidak memuat berkas analisis, sehingga setiap statistik di sini dihitung ulang dari 20 hasil _run_.
 Replikasi menjalankan 4 skenario dengan 5 _run_ masing-masing (20 _run_ bersih).
 Semua gerbang validitas lolos (5/5 per skenario), dan fidelitas perlakuan terpenuhi di setiap _run_ S4.
 Kelompok S4 berjalan sebelum GRU bebas kebocoran pada @sec:gru-model dilatih pada 10 September 2026, sehingga mengukur prediktor yang lebih awal.
-_Upper envelope_ yang dicatat berada sekitar 10 RPS di atas prakiraan titik (`s4-hybrid-predictive_run1/daemon.log`, 76,2 dan 85,9 RPS), dibandingkan 55 sampai 60 RPS untuk model bebas kebocoran.
+Pada log _daemon_ _run_ S4 pertama, prakiraan titiknya 76,2 RPS dan _upper envelope_-nya 85,9 RPS, berselisih sekitar 10 RPS.
+Model bebas kebocoran memprakirakan 55 sampai 60 RPS untuk beban yang sama.
 Karena itu, perbandingan S1 dan S2 pada _batch_ ini berlaku untuk arsitektur, bukan untuk prakiraan pada @sec:gru-model.
 Rata-rata p99 per skenario adalah S1 110,3 ms, S2 79,7 ms, S3 151,6 ms, dan S4 99,1 ms.
 Pelanggaran SLO yang dijumlahkan atas lima _run_ adalah S1 253, S2 2, S3 1.998, dan S4 92 (rata-rata per _run_ 50,6; 0,4; 399,6; dan 18,4).
@@ -235,158 +236,86 @@ Keunggulan _hybrid_ atas Kubernetes murni muncul ketika _baseline_ dibatasi kapa
 
 #figure(
   fig-slo-violations(),
-  caption: [Pelanggaran SLO per skenario (n = 5, replikasi)],
+  caption: [Rata-rata pelanggaran SLO per _run_ pada replikasi empat skenario (5 _run_ per skenario)],
 ) <fig:slo-violations-n5>
 
-=== #H("ch4-h2-initial")
+=== #H("ch4-h2") <sec:h2>
 
-Untuk menguji H2, penelitian ini menjalankan eksperimen berpasangan dengan urutan diseimbangkan (n = 5 pasangan S3/S4, _bundle_ berpasangan awal).
-Semua 5 pasangan menghasilkan prakiraan GRU lengkap (56 siklus prediksi yang memenuhi syarat per _run_, 0 kegagalan).
-Titik akhir utama adalah selisih latensi p99 berpasangan.
-@tab:paired-h2-primary melaporkan hasilnya.
+H2 memprediksi bahwa penskalaan replika prediktif (S4) memberi latensi p99 lebih rendah daripada penskalaan reaktif (S3).
+Ujinya adalah satu _batch_ konfirmatori berisi 10 pasangan S3/S4 dengan urutan diseimbangkan (20 _run_), dijalankan pada 20 September 2026 dan didaftarkan sebelumnya (pra-registrasi) sebelum mulai.
+Titik akhir utama adalah selisih p99 berpasangan, diuji dengan uji permutasi berpasangan satu sisi.
+Setiap _run_ S4 memakai GRU yang dilatih pada ClarkNet (@sec:gru-model), dan manifes setiap _run_ mencatat model itu.
 
-#emph[Bagian ini mendokumentasikan hasil awal n = 5 yang bersih, diperoleh dengan horizon prakiraan 5 langkah (75 s) dan _baseline_ reaktif yang belum disetel. _Batch_ Juli di bawah memakai horizon 9 langkah (135 s), _baseline_ reaktif yang sudah disetel, dan konsolidasi _node_ berbasis pemakaian. _Batch_ itu dilaporkan sebagai sejarah: prediktornya tidak dapat diverifikasi.]
-
-#figure(
-  kind: table,
-  table(
-    columns: (auto, auto, auto),
-    [Statistik], [Nilai], [Interpretasi],
-    [Rata-rata p99 S3 (ms)], [136,62], [_Baseline_ reaktif],
-    [Rata-rata p99 S4 (ms)], [128,54], [Skenario prediktif],
-    [Selisih rata-rata (ms)], [-8,08], [S4 lebih cepat],
-    [Rentang kepercayaan berpasangan 95% (ms)], [-36,70 sampai +14,53], [Mencakup perbaikan dan penurunan],
-    [p permutasi (dua sisi)], [0,3784], [Tidak mendukung H2],
-    [Cohen's d berpasangan], [-0,241], [Efek kecil, S4 lebih baik],
-  ),
-  caption: [Perbandingan latensi p99 S4 lawan S3 berpasangan (n = 5 awal)],
-) <tab:paired-h2-primary>
-
-Selisih rata-rata menguntungkan S4 (S4 rata-rata 8,1 ms lebih cepat).
-Rentang kepercayaan 95% [-36,7; +14,5] melewati nol, dan uji permutasi tidak signifikan (p = 0,38).
-Karena itu, H2 (keunggulan latensi prediktif) tidak didukung secara statistik pada eksperimen awal ini.
-_Batch_ Juli di bawah mencapai signifikansi hanya dengan prediktor yang tidak dapat diverifikasi.
-Arahnya tetap konsisten dengan hipotesis.
-S4 menang pada 2 dari 5 pasangan.
-Pasangan 4 mendorong keunggulan rata-rata (S3 = 173 ms, S4 = 112 ms).
-
-Temuan sekunder: S4 menunjukkan pelanggaran SLO 56% lebih sedikit secara rata-rata (100,8 lawan 228,2, Cohen's d = -0,535, efek sedang).
-Ini juga tidak signifikan secara statistik pada n = 5 (p = 0,19).
-Penskalaan proaktif tampaknya menjaga p99 di bawah ambang SLO lebih konsisten, bahkan ketika selisih rata-rata p99 kecil.
-
-=== #H("ch4-calibration")
-
-Perbandingan berpasangan yang bersih memakai model penskalaan yang sudah dikoreksi.
-Kalibrasi awal memakai alpha = 1/r_saturation dengan penyangga 1,2x.
-Ini menghitung ganda margin keamanan (target_cpu_util sudah menyediakan ruang).
-Prakiraan 62 RPS dipetakan ke ceil(62 / 33,3 times 1,2) = 3 replika.
-Hasil ini sama dengan target dari sinyal teramati, sehingga S4 berperilaku sama dengan S3.
-Model yang dikoreksi memakai alpha = 1/r_effective (= 1 / (r_saturation times target_cpu_util) = 1/16,65) dengan buffer = 1,0.
-Sekarang 62 RPS dipetakan ke ceil(62 times 0,060) = 4 replika.
-Hasil ini membedakan prakiraan dari target 3 replika pada 45 RPS yang teramati.
-
-Perbaikan ini membalik arah efek.
-Perbandingan berpasangan sebelumnya (yang tercampur faktor pengganggu) mendapati S4 10 ms lebih lambat (selisih rata-rata +10,0 ms).
-Perbandingan bersih dengan kalibrasi yang dikoreksi mendapati S4 8,1 ms lebih cepat (selisih rata-rata -8,1 ms).
-Pembalikan ini menunjukkan bahwa ketidakcocokan kalibrasi yang menyebabkan kinerja S4 tampak buruk, bukan rancangan pengendali.
-Namun efeknya tetap kecil (d = -0,241) dan tidak signifikan secara statistik pada eksperimen awal ini.
-_Batch_ Juli di bawah mencapai signifikansi setelah horizon diperpanjang dan _baseline_ disetel, tetapi prediktornya tidak dapat diverifikasi, sehingga hasil itu adalah sejarah.
-
-=== #H("ch4-h2-definitive") <sec:definitive-h2>
-
-Eksperimen berpasangan awal (di atas) memakai horizon prakiraan 5 langkah (jendela 75 s), tanpa konsolidasi _node_, dan _baseline_ reaktif dengan _cooldown scale-down_ tingkat _pod_ 300 detik.
-_Cooldown_ itu praktis membatasi S3 pada tiga aksi _scale-down_ per _run_.
-Perbaikan berikutnya menghasilkan _bundle_ berpasangan Juli (n = 5 pasangan dengan urutan diseimbangkan).
-Perbaikan itu adalah horizon GRU yang diperpanjang menjadi 9 langkah (135 s).
-Perbaikan itu menambahkan konsolidasi _node_ berbasis pemakaian (sesuai ambang 50% pada Kubernetes Cluster Autoscaler @k8sca-faq).
-Perbaikan itu juga menambahkan _baseline_ reaktif yang disetel (_cooldown_ 120 detik, ambang 0,75).
-
-#figure(
-  kind: table,
-  table(
-    columns: (auto, auto, auto, auto),
-    [Metrik], [S3 (Reaktif)], [S4 (Prediktif)], [Statistik],
-    [Rata-rata p99 (ms)], [188,5], [126,0], [selisih -62,5, p = 0,0312],
-    [Rentang kepercayaan berpasangan 95% (ms)], [--], [--], [-100,9 sampai -26,2],
-    [Cohen's d berpasangan], [--], [--], [-1,26 (besar)],
-    [Rata-rata pelanggaran SLO], [656], [130], [-80,2%],
-    [Biaya bulanan (USD)], [163], [163], [Sama],
-  ),
-  caption: [Perbandingan berpasangan S4 lawan S3 Juli (n = 5, sejarah)],
-) <tab:paired-h2-definitive>
-
-Dalam _batch_ ini, keunggulan S4 mencapai signifikansi (p = 0,0312).
-_Batch_ ini dilaporkan sebagai sejarah.
-Putusannya berubah setelah audit asal-usul.
-Prediktor yang dipasang, `data/models/gru_model.pt`, masuk ke kendali versi pada 12 September 2026.
-Berkas itu membawa _commit_ 98e17d1 dan LFS oid 7f8244bcc403c59a3e2be5d31b1ee5586f01c0052416c2705c0a325d1cc3099d.
-Kemudian terbukti bahwa berkas itu adalah model pemenang hasil pelatihan sintetis, bukan pemenang ClarkNet.
-Manifes 2026-07-14 tidak memuat kunci prediktor sama sekali.
-Bobot _batch_ ini tidak dapat diverifikasi.
-Karena itu, _batch_ ini tidak dapat diatribusikan ke ClarkNet.
-Catatan yang dapat diatribusikan ke ClarkNet, dilaporkan pada @sec:replication dan diperluas oleh replikasi konfirmatori yang didaftarkan sebelumnya pada September, tidak mereproduksi signifikansi itu.
-S4 menang pada semua 5 pasangan dalam _batch_ ini.
-Di dalam _batch_, rentang kepercayaan 95% [-100,9; -26,2] seluruhnya berada di bawah nol.
-_Batch_ yang dapat diatribusikan ke ClarkNet pada @sec:replication tidak mereproduksinya: satu _batch_ membalik arah (+153,3 ms), dan rentang gabungan 25 pasangan [-188,6; +184,5] mencakup nol.
-S4 juga menunjukkan pelanggaran SLO 80,2% lebih sedikit (130 lawan 656) dengan biaya bulanan yang sama.
-Setiap _run_ S4 membawa 4 sampai 5 label PREDICTIVE.
-Pada seluruh 21 label itu, prakiraan GRU sama dengan atau di bawah beban teramati, sehingga label mencerminkan ekstrapolasi beban teramati, bukan prakiraan.
-Perubahan dari hasil awal (p = 0,38) ke _batch_ ini (p = 0,0312) bersamaan dengan tiga perubahan: kecukupan horizon prakiraan, konsolidasi _node_, dan penyetelan _baseline_ reaktif.
-_Batch_ ini tidak dapat diatribusikan ke ClarkNet, dan _batch_ berikutnya tidak mereproduksinya, sehingga efeknya tidak dapat dikreditkan pada salah satu dari ketiga perubahan itu.
-
-Model biaya bulanan menagih _node_ EC2 yang disediakan, berukuran dari rata-rata CPU, ditambah konkurensi Lambda.
-Model ini tidak merinci komputasi Kubernetes per replika.
-S4 menahan lima replika hangat, sedangkan S3 tiga, sehingga S4 mengumpulkan replika-detik 9 persen lebih banyak (7.608 lawan 6.980 per _run_).
-Kapasitas menganggur tambahan ini tidak terlihat oleh model berbasis _node_.
-Dengan tagihan per vCPU-detik pada tarif t3.medium, komputasi Kubernetes S4 akan lebih mahal sekitar USD 2,2 per bulan.
-Karena itu, biaya identik yang dilaporkan hanya berlaku untuk model yang menagih kapasitas yang disediakan, bukan replika-detik.
-
-#figure(
-  fig-paired-perpair(),
-  caption: [Latensi p99 per pasangan (_batch_ berpasangan Juli, sejarah)],
-) <fig:paired-h2-perpair>
-
-=== #H("ch4-replication") <sec:replication>
-
-Untuk memverifikasi keterulangan, penelitian ini memicu ulang eksperimen berpasangan dua kali dari basis kode yang telah diselaraskan pada 7 Agustus 2026.
-Kedua _batch_ replikasi awal itu (masing-masing n = 5) tidak dipertahankan.
-Berkas hasil mentah dan analisisnya dihapus dari pohon kerja sebelum _commit_, dan angkanya hanya bertahan sebagai teks tesis yang merujuk dirinya sendiri.
-Karena itu, kedua _batch_ dikecualikan dari catatan bukti.
-
-Dua _batch_ berpasangan lain berjalan pada 8 Agustus 2026 dengan artefak yang dipertahankan penuh.
-RUN1 (n = 5) tidak menunjukkan perbedaan yang signifikan (selisih rata-rata -4,0 ms, p permutasi satu sisi = 0,436).
-RUN2 (n = 5) marginal (selisih rata-rata -58,0 ms, rentang kepercayaan 95% [-161,5; -2,8], p permutasi satu sisi = 0,062).
-Kedua _batch_ mempertahankan arah yang menguntungkan S4.
-Dari gabungan dua _batch_ 8 Agustus 2026 (n = 10 pasangan), selisih rata-rata adalah -31,0 ms, p permutasi satu sisi = 0,188, d = -0,32.
-Replikasi penuh empat skenario (4 skenario, 5 _run_ masing-masing, 20 _run_ bersih) menguji perbandingan S4 lawan S3.
-Replikasi itu memakai uji t Welch dan Mann-Whitney U yang ditetapkan sebelumnya.
-Uji Welch tidak signifikan (p = 0,097).
-Uji Mann-Whitney signifikan (p = 0,032, `2026-08-09_clarknet-replay_032257/report.md`) dengan d = -1,30.
-Replikasi bergantung pada _batch_.
-@fig:replication-batches memplot setiap _batch_ yang dipertahankan.
-
-Tiga _batch_ yang dapat diatribusikan ke ClarkNet menutup catatan, masing-masing mencatat artefak pemenang ClarkNet 20623c19 dalam manifesnya.
-RUN4 (`2026-09-13_h2-pair-5p`, n = 5) tidak menunjukkan perbedaan yang signifikan, dengan arah berlawanan: +153,3 ms, p = 0,656.
-RUN5 (`2026-09-13_h2-confirmatory-10p`, n = 10) menghasilkan -104,2 ms, p = 0,168.
-Tiga _run_ paling lambat memiliki puncak CPU _host_ sibuk sebesar 66 sampai 100%.
-Deret beban _host_ per _run_ yang diperkenalkan _batch_ ini menunjukkan bahwa puncak CPU _host_ sibuk berkorelasi dengan p99 (r = 0,69).
-Estimasi subset sementara, yang dibatasi pada delapan pasangan _batch_ itu dengan puncak beban _host_ di bawah 40% (-101,3 ms, p = 0,039), mendorong replikasi yang didaftarkan sebelumnya.
-RUN6 (`2026-09-20_h2-confirmatory-10p`, n = 10) berjalan dengan gerbang beban _host_.
-Gerbang sebelum _run_ mengambil sampel beban _host_ pada rasio 0,07, di bawah ambang WARN 0,5.
-Gerbang hanya memeriksa satu sampel sebelum _run_, bukan beban selama _run_.
+_Batch_ ini berjalan dengan gerbang beban _host_, karena _batch_ sebelumnya menunjukkan p99 naik bersama beban CPU _host_ (@sec:h2-history).
+Gerbang mengambil sampel beban _host_ sebelum _run_ pada rasio 0,07, di bawah ambang peringatan 0,5.
+Gerbang hanya memeriksa satu sampel sebelum setiap _run_ dan tidak memantau beban selama _run_.
 Selama _run_, rata-rata porsi CPU _host_ sibuk adalah 0,14 sampai 0,27 per _run_, dan puncaknya melebihi 0,5 pada 7 dari 20 _run_.
 Semua 20 _run_ lolos gerbang validitas.
-Hasilnya -13,6 ms (rentang kepercayaan 95% [-63,5; +35,6], p = 0,307, d = -0,16).
-S4 menang pada 5 dari 10 pasangan.
-Estimasi subset tidak bertahan.
-Estimasi itu adalah artefak pemilihan subset.
-Penggabungan seluruh 25 pasangan yang dapat diatribusikan ke ClarkNet menghasilkan -16,5 ms (rentang kepercayaan 95% [-188,6; +184,5], p satu sisi = 0,448, d = -0,03; `paper/derive_numbers.py`, _seed_ 42).
-Putusan akhir H2 adalah hipotesis tidak didukung pada uji p99 utama yang ditetapkan sebelumnya.
+@tab:h2-primary melaporkan hasilnya.
 
 #figure(
-  image("../figures/fig04_6_replication_batches.png", width: 90%),
-  caption: [Selisih p99 berpasangan S4 lawan S3 lintas _batch_ replikasi],
+  kind: table,
+  table(
+    columns: (auto, auto),
+    [Statistik], [Nilai],
+    [Rata-rata p99 S3 (ms)], [160,4],
+    [Rata-rata p99 S4 (ms)], [146,8],
+    [Selisih rata-rata (ms)], [-13,6],
+    [Rentang kepercayaan berpasangan 95% (ms)], [-63,5 sampai +35,6],
+    [p permutasi satu sisi], [0,307],
+    [Cohen's d berpasangan], [-0,16 (diabaikan)],
+    [Pasangan dimenangkan S4], [5 dari 10],
+  ),
+  caption: [Perbandingan berpasangan S4 lawan S3 yang didaftarkan sebelumnya (10 pasangan, 20 September 2026)],
+) <tab:h2-primary>
+
+Rata-rata S4 lebih cepat 13,6 ms, tetapi rentang kepercayaan 95% mencakup nol dan p = 0,307.
+S4 menang pada 5 dari 10 pasangan.
+Karena itu, H2 tidak didukung pada uji p99 utama yang ditetapkan sebelumnya.
+
+Dua estimasi menempatkan hasil ini dalam konteks.
+Pertama, penggabungan seluruh 25 pasangan yang memakai prediktor hasil latihan ClarkNet (_batch_ ini dan dua _batch_ tanggal 13 September 2026) menghasilkan -16,5 ms (rentang kepercayaan 95% [-188,6; +184,5], p satu sisi = 0,448, d = -0,03).
+Kedua, _batch_ ini didaftarkan sebelumnya karena sebuah estimasi sementara tampak menjanjikan.
+Estimasi itu memakai delapan pasangan dari _batch_ konfirmatori 13 September 2026 dengan puncak beban _host_ di bawah 40% (-101,3 ms, p = 0,039).
+Estimasi itu tidak bertahan pada _batch_ yang didaftarkan sebelumnya, yang menunjukkan bahwa hasilnya muncul dari pemilihan subset setelah data terlihat.
+
+=== #H("ch4-h2-history") <sec:h2-history>
+
+Delapan _batch_ membandingkan S3 dan S4 sebelum _batch_ pra-registrasi.
+@tab:h2-history mencantumkan masing-masing beserta alasan mengapa _batch_ itu bukan hasil H2, dan @fig:replication-batches memplot _batch_ yang berjalan dengan konfigurasi pengendali akhir.
+Dua _batch_ lain dari 7 Agustus 2026 tidak dimasukkan, karena berkas hasilnya terhapus sebelum di-_commit_.
+
+#[
+#set par(justify: false)
+#figure(
+  kind: table,
+  table(
+    columns: (1.2fr, auto, auto, auto, 2fr),
+    align: (left, center, center, center, left),
+    [_Batch_], [Pasangan], [Selisih rata-rata (ms)], [p], [Mengapa bukan hasil H2],
+    [Pra-kalibrasi (11 Juli 2026)], [5], [+10,0], [--], [Target replika menghitung margin keamanan dua kali, sehingga S4 menentukan jumlah replika persis seperti S3],
+    [Awal (12 Juli 2026)], [5], [-8,1], [0,38], [Horizon prakiraan lima langkah (75 s) dan _baseline_ reaktif yang belum disetel],
+    [Juli (14 Juli 2026)], [5], [-62,5], [0,0312], [Manifes tidak menyebut prediktor, dan model yang dipasang saat itu dilatih pada data sintetis (Lampiran B)],
+    [Agustus A (8 Agustus 2026)], [5], [-4,0], [0,436], [Prediktor dilatih sebelum protokol bebas kebocoran pada @sec:gru-model],
+    [Agustus B (8 Agustus 2026)], [5], [-58,0], [0,062], [Prediktor sama dengan Agustus A],
+    [Replikasi empat skenario (9 Agustus 2026)], [5 _run_ per kelompok], [-52,5], [0,032], [_Run_ tidak berpasangan dengan prediktor awal yang sama; uji Welch memberi p = 0,097],
+    [Pasangan September (13 September 2026)], [5], [+153,3], [0,656], [Beban _host_ tidak dicatat; _batch_ 10 pasangan menyusul pada hari yang sama],
+    [Konfirmatori pertama (13 September 2026)], [10], [-104,2], [0,168], [p99 naik bersama beban CPU _host_ (r = 0,69); tiga _run_ paling lambat memiliki puncak CPU sibuk 66 sampai 100%],
+  ),
+  caption: [_Batch_ S4 lawan S3 sebelumnya. Selisih negatif menguntungkan S4.],
+) <tab:h2-history>
+]
+
+#figure(
+  image("../figures/fig04_6_replication_batches_id.png", width: 90%),
+  caption: [Selisih p99 S4 lawan S3 dengan rentang kepercayaan 95% untuk setiap _batch_ yang berjalan dengan konfigurasi pengendali akhir],
 ) <fig:replication-batches>
+
+Dua _batch_ sebelumnya mencapai p < 0,05: _batch_ Juli dan uji Mann-Whitney pada replikasi empat skenario.
+Keduanya tidak memakai prediktor hasil latihan ClarkNet, dan tiga _batch_ yang memakainya tidak menemukan perbedaan yang signifikan.
+Peralihan dari _batch_ awal ke _batch_ Juli juga mengubah tiga hal sekaligus.
+Horizon prakiraan bertambah dari 75 s menjadi 135 s, konsolidasi _node_ ditambahkan, dan _baseline_ reaktif disetel.
+Seandainya keuntungan pada _batch_ Juli nyata, keuntungan itu tidak dapat dikreditkan pada salah satunya.
 
 === #H("ch4-s4vs1")
 
@@ -641,30 +570,24 @@ Replikasi itu memakai `max_k8s_replicas = 10`, sehingga S1 tidak jenuh (p99 110,
 S4 lawan S1 tidak signifikan (p = 0,151).
 Karena itu, keunggulan _hybrid_ muncul ketika _baseline_ dibatasi kapasitasnya, bukan ketika HPA punya ruang yang lega.
 
-Untuk perbandingan prediktif lawan reaktif (H2), putusan akhirnya: tidak didukung.
-_Batch_ Juli (n = 5 pasangan dengan urutan diseimbangkan, perlakuan terkirim penuh) mendapati p99 rata-rata S4 126,0 ms dibandingkan 188,5 ms untuk S3.
-Selisih rata-ratanya -62,5 ms, dengan rentang kepercayaan 95% [-100,9; -26,2] ms, p = 0,0312, dan d = -1,26, efek besar.
-Tetapi audit asal-usul menunjukkan bahwa prediktor _batch_ itu tidak dapat diverifikasi.
-Artefak yang dipasang pada periode itu adalah model hasil pelatihan sintetis, sehingga _batch_ itu tidak dapat diatribusikan ke ClarkNet.
-Tiga _batch_ yang dapat diatribusikan ke ClarkNet (5, 10, dan 10 pasangan) semuanya tidak menunjukkan perbedaan yang signifikan pada uji yang ditetapkan sebelumnya.
-Hasilnya +153,3 ms p = 0,656; -104,2 ms p = 0,168; -13,6 ms p = 0,307.
-Penggabungan seluruh 25 pasangan menghasilkan -16,5 ms (rentang kepercayaan 95% [-188,6; +184,5] ms, p satu sisi = 0,448, d = -0,03).
-S4 juga menunjukkan pelanggaran SLO 80,2% lebih sedikit (130 dibandingkan 656) dengan biaya bulanan yang sama pada _batch_ Juli; hasil sekunder itu tetap deskriptif.
+Untuk perbandingan prediktif lawan reaktif (H2), putusannya: tidak didukung.
+_Batch_ konfirmatori pra-registrasi (10 pasangan dengan urutan diseimbangkan, semua 20 _run_ valid) mendapati p99 rata-rata S4 146,8 ms dibandingkan 160,4 ms untuk S3.
+Selisih rata-ratanya -13,6 ms, dengan rentang kepercayaan 95% [-63,5; +35,6] ms, p = 0,307, dan d = -0,16, efek yang dapat diabaikan.
+Metrik sekunder sejalan: p95 berbeda -0,9 ms dan pelanggaran SLO +3,6 per _run_, keduanya dapat diabaikan.
+Penggabungan seluruh 25 pasangan yang memakai prediktor hasil latihan ClarkNet menghasilkan -16,5 ms (rentang kepercayaan 95% [-188,6; +184,5] ms, p satu sisi = 0,448, d = -0,03).
+_Batch_ Juli sebelumnya mendapati -62,5 ms (p = 0,0312), tetapi prediktornya tidak dapat diverifikasi, sehingga @sec:h2-history melaporkannya sebagai sejarah.
 
 Dua catatan membatasi kesimpulan ini.
 Pertama, diagnostik empat skenario n = 1 memberi bukti mekanisme yang menunjukkan arah, tetapi tidak ada statistik inferensial untuk H1.
 Kedua, daya uji terbatas pada skala efek ini.
 Simpangan baku berpasangan adalah 484,5 ms pada 25 pasangan, dan nilai per _batch_ berkisar dari 83,6 ms sampai 1.057,3 ms (dihitung ulang dari _bundle_).
-Replikasi konfirmatori September menjalankan sepuluh pasangan karena alasan ini, dan tetap menemukan selisih yang dapat diabaikan.
-Metrik sekunder (p95, SLO) tidak signifikan setelah koreksi multiplisitas (p terkoreksi = 0,1248) dan dilaporkan sebagai deskriptif.
-Uji p99 utama telah ditetapkan sebelumnya.
+_Batch_ pra-registrasi menjalankan sepuluh pasangan karena alasan ini, dan tetap menemukan selisih yang dapat diabaikan.
+Uji p99 utamanya telah ditetapkan sebelumnya.
+Metrik sekundernya (p95, pelanggaran SLO) tidak signifikan setelah koreksi multiplisitas (p terkoreksi = 1,0) dan dilaporkan sebagai deskriptif.
 
 Secara keseluruhan, hasil mendukung H1 pada arahnya (arsitektur _hybrid_ mengungguli _baseline_ Kubernetes murni yang jenuh pada n = 1).
 H2 tidak didukung.
-Satu-satunya _batch_ yang signifikan tidak dapat diatribusikan ke ClarkNet.
-Manifesnya tidak mencatat prediktor, dan artefak yang dipasang saat itu adalah model hasil pelatihan sintetis.
-Setiap _batch_ yang dapat diatribusikan ke ClarkNet tidak menunjukkan perbedaan yang signifikan pada uji yang ditetapkan sebelumnya.
-Estimasi gabungan 25 pasangan adalah -16,5 ms dengan rentang kepercayaan yang mencakup nol.
+_Batch_ pra-registrasi menemukan selisih yang dapat diabaikan, dan estimasi gabungan 25 pasangan sebesar -16,5 ms memiliki rentang kepercayaan yang mencakup nol.
 Sebuah _batch_ dapat menguji H2 hanya bila sisi prediktif bertindak berdasarkan prakiraannya.
 _Run_ yang prakiraannya tidak pernah mengubah perencanaan replika mengukur pengendali reaktif dengan label S4, dan tidak dapat memisahkan kedua sisi.
 Perbaikan kalibrasi menunjukkan bahwa margin aman model penskalaan awal yang terhitung ganda menyebabkan kinerja S4 tampak buruk, bukan rancangan pengendali.
