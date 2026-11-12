@@ -113,6 +113,14 @@
 - Not done: no second reader checked the rewritten text. The citation check for KAPETÁNIOS used the abstract only, because the full text could not be fetched.
 - Evidence: [icaiic-2027-review/paper-review.md](icaiic-2027-review/paper-review.md), [icaiic-2027-review/cite-related.md](icaiic-2027-review/cite-related.md), [icaiic-2027-review/cite-intro-method.md](icaiic-2027-review/cite-intro-method.md); `paper/sections/body.typ`; `paper/sections/common.typ`; `paper/derive_numbers.py`.
 
+### 2026-11-12 (night) — captions cut to titles; calendar date removed
+- Status: pending
+- Why: the user asked for captions that are titles only, with the explanation in the paragraph, and for the experiment date to go.
+- What changed: every table and figure caption is now a title. What a caption used to explain moved into the paragraph that cites it (Section IV "Accuracy" for Table II, Section VI-A for Table IV). A remark about one cell is a note under its table: "decision factor" is our term (Table I), S4 ran an earlier GRU (Table IV), the pooled p is sampled with 10,000 sign flips (Table V). The Table V column "Wins" is now "S4 faster", which needs no definition. "August 2026" is gone from the Table IV title; the text before the references holds no calendar date.
+- Kept on purpose: batches A and B, the sentence about the earlier five-pair batch that is not counted, and the note that the scenario batch ran S4 with an earlier GRU. The paper reports more than the last batch, and these three say which numbers rest on which predictor. Removing them would hide results that the thesis reports.
+- Build: both conference PDFs 6 pages A4, all fonts embedded, anonymous build 0 author lines; `make check` passed. The shorter captions freed space: page 6 now has about six reference lines spare, after the scenario-batch caveat went back under threats to validity and the detectable difference back into the conclusion.
+- Evidence: `paper/sections/common.typ` (`tnote`), `paper/sections/body.typ`.
+
 ### PAPER-001 outline (6–7 pages, IEEE two-column)
 - Title and abstract: proposed title "GRU-Based Predictive Autoscaling for Hybrid Kubernetes and Serverless Clusters". Keywords: Kubernetes, serverless, autoscaling, workload prediction, GRU. Abstract of 120–150 words, no citations.
 - Framing note: serverless carries the paper's emphasis, because the study compares a Kubernetes backend against a serverless backend and then the two hybrid modes. State one caveat in the first paragraph of Section III, or a reviewer will read the platform claim as false: both backends run on a single k3d testbed, simulating a two-platform deployment, with separate namespaces, separate ingress paths, and separate workload instances (`ch03-method`, `ch03-infra`).

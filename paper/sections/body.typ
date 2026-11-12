@@ -208,7 +208,8 @@ portion, so the deployed model never saw it.
   of the values that the point forecast under-predicted, against a target of 0.90.
 ]
 
-*Accuracy.* @tab:predictor reports the error on the test portion. Skill is the share of the error of a
+*Accuracy.* @tab:predictor reports the error on the test portion at the 9-step horizon, in RPS of the
+replayed series, with the standard deviation over three seeds. Skill is the share of the error of a
 persistence forecast, which repeats the last observed value, that a model removes. The GRU has a skill
 of #G.gru.skill. Its error is slightly lower than that of an LSTM, the predictor family of ElaX,
 selected in the same way. The final LSTM was trained on the training plus validation portions and the
@@ -288,7 +289,9 @@ charges nodes, not pod-seconds, so it does not resolve differences smaller than 
 
 = Results <sec:results>
 == The hybrid against single-platform baselines
-@tab:four and @fig:runs compare the four scenarios. S2 gave the lowest p99, at #F.s2.cost USD per month,
+@tab:four and @fig:runs compare the four scenarios. The table gives p99 with its standard deviation,
+the SLO violations in a run of about #F.requests requests, the time average of the serverless weight,
+the Kubernetes pod-seconds per run and the projected monthly cost. S2 gave the lowest p99, at #F.s2.cost USD per month,
 more than twice the projected cost of any scenario with Kubernetes. The comparison with S2 is uneven:
 S2 ran three always-warm pods on a three-CPU worker, and S1 started from one pod on a one-CPU worker.
 The two hybrids had the same projected cost as S1 within the resolution of the projection. They used
@@ -300,7 +303,7 @@ against #F.s1.p99 ms for S1, with more SLO violations, and one of its five runs 
 #tab-four <tab:four>
 #fig-runs <fig:runs>
 
-The S4 row needs a caveat. This batch ran before the leak-free GRU of @sec:gru existed. Its run
+The S4 results need a caveat. This batch ran before the leak-free GRU of @sec:gru existed. Its run
 manifests do not record the predictor, and its logged envelope lay about 10 RPS above the point
 forecast, against #G.offset_min to #G.offset_max RPS for the leak-free GRU. S4 held p99 at #F.s4.p99 ms
 in this batch, #F.s4_vs_s1.abs_pct% below S1 (two-sided Mann-Whitney $p = #F.s4_vs_s1.p$), but the row
@@ -361,13 +364,16 @@ served by one function, and Algorithm 2 ran with one parameter set. A smaller ma
 would change what the forecast costs. The cost is a projection of measured resource use onto public
 prices, not a bill. The GRU is no more accurate than a linear autoregression, and its margin is large,
 so a persistence or linear forecast with the same margin may reproduce S4. Batch B ran on a loaded host,
-with a mean CPU-busy fraction up to #H.b10a.busy_avg_max, and batch A has no host record.
+with a mean CPU-busy fraction up to #H.b10a.busy_avg_max, and batch A has no host record. The scenario
+batch ran S4 with an earlier GRU, so its comparisons with S1 and S2 hold for the architecture and not
+for the forecaster of @sec:gru.
 
 = Conclusion
 A capacity-aware router and an ElaX-derived replica scaler ran in one 15 s loop over Kubernetes and
 Knative, and the scaler read the upper envelope of a 135 s GRU forecast. Both hybrids matched the
 projected cost of Kubernetes with the HPA, and the reactive hybrid had a higher p99. In ten
-pre-specified pairs, the forecast added pods and gave no measurable latency gain over reactive control.
+pre-specified pairs, the forecast added pods and gave no measurable latency gain over reactive control,
+in a design that detects differences above about #H.b10b.mde ms.
 Future work will compare the GRU with a constant-margin baseline, set the margin from the measured
 provisioning delay, and test the scaler without a serverless backend, where a forecast has a delay to
 cover.

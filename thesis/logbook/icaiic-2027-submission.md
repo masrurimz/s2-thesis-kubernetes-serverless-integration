@@ -38,8 +38,8 @@ Open venue facts:
 | `paper/conference.pdf` | upload when EDAS says the review is double-blind | 6 pages, A4, 10 pt body, 7 fonts all embedded, 0 lines matching author or institution strings (rewritten 2026-11-12) |
 
 Both come from the same body. `make check` in `paper/` passed: `numbers.json` matches the bundles and the prose
-types no measured number. Rebuild with `cd paper && make`. The sixth page is full: the last reference ends two lines
-above the bottom, so recheck the page count after any edit to the text or to `thesis-typst/src/bibliography.bib`.
+types no measured number. Rebuild with `cd paper && make`. Page 6 has about six reference lines spare, so
+recheck the page count after any edit to the text or to `thesis-typst/src/bibliography.bib`.
 
 ## 3. EDAS steps
 

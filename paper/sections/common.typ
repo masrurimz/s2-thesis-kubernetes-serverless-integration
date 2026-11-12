@@ -56,11 +56,16 @@
   }),
   placement: auto,
   scope: "parent",
-  caption: [Control architecture. HAProxy splits requests between the Kubernetes and Knative backends.
-    Every 15 s the control daemon runs Algorithm 1, which sets the split from the observed load and the
-    ready pods, and Algorithm 2, which sets the replica count. Algorithm 2 alone reads the GRU forecast,
-    and it does so in the predictive hybrid (S4) but not in the reactive hybrid (S3).],
+  caption: [Control architecture.],
 ) 
+
+// A note under a table, in the last row. Captions stay titles; a remark about one cell goes here.
+#let tnote(columns, body) = table.cell(
+  colspan: columns,
+  align: left,
+  inset: (x: 3pt, top: 3pt, bottom: 0pt),
+  text(size: 7pt, body),
+)
 
 // ---------------------------------------------------------------------------
 // Algorithms.
@@ -114,10 +119,10 @@
     [Scaling], [horizontal and vertical], [horizontal, with a separate node tier],
     [Scope], [one container cluster], [Kubernetes and Knative behind one router (Algorithm 1)],
     toprule,
+    tnote(3)[#super[a]Our term: the load value from which the scaler computes the replica count.],
   ),
   placement: auto,
-  caption: [What Algorithm 2 keeps from ElaX and what it changes. #super[a]The term decision factor is
-    ours: the load value from which the scaler computes the replica count.],
+  caption: [Algorithm 2 compared with ElaX],
 ) 
 
 #let tab-scenarios = figure(
@@ -135,7 +140,7 @@
     [S4], [Algorithm 2, observed load and forecast], [Algorithm 1], [yes],
     toprule,
   ),
-  caption: [Deployment scenarios. S3 is the reactive hybrid and S4 the predictive hybrid.],
+  caption: [Deployment scenarios],
 )
 
 #let tab-predictor = figure(
@@ -155,8 +160,7 @@
     [Seasonal naive (one day)], [#G.seasonal], [–], [#G.seasonal_skill],
     toprule,
   ),
-  caption: [Forecast error on the held-out ClarkNet test portion, 9-step horizon, in RPS of the replayed
-    (×33) series. ± is the standard deviation over seeds. Skill is $1 - "RMSE" \/ "RMSE"_"persistence"$.],
+  caption: [Forecast error on the ClarkNet test portion],
 )
 
 #let tab-four = figure(
@@ -173,11 +177,9 @@
     [S3], [#F.s3.p99 ± #F.s3.p99_sd], [#F.s3.slo], [#F.s3.share%], [#F.s3.replica_s], [#F.s3.cost],
     [S4#super[a]], [#F.s4.p99 ± #F.s4.p99_sd], [#F.s4.slo], [#F.s4.share%], [#F.s4.replica_s], [#F.s4.cost],
     toprule,
+    tnote(6)[#super[a]S4 ran an earlier GRU, not the model of @sec:gru.],
   ),
-  caption: [Scenario batch of August 2026, five runs each (mean ± sd). SLO viol. is the number of
-    requests slower than 200 ms in a run of about #F.requests requests. Serverless is the time average
-    of the serverless weight. K8s pod-s is Kubernetes pod-seconds per run and excludes Knative pods.
-    #super[a]S4 ran an earlier GRU, not the model of @sec:gru.],
+  caption: [Scenario batch, means over five runs per scenario],
 )
 
 #let h2row(label, b) = (
@@ -191,25 +193,24 @@
     stroke: none,
     inset: (x: 2.5pt, y: 2.2pt),
     toprule,
-    [*Batch*], [*S3*], [*S4*], [*S4 − S3 \[95% CI\]*], [*p*], [*d*], [*Wins*],
+    [*Batch*], [*S3*], [*S4*], [*S4 − S3 \[95% CI\]*], [*p*], [*d*], [*S4 faster*],
     rule,
     ..h2row([A], H.b5),
     ..h2row([B], H.b10a),
     ..h2row([C], H.b10b),
     rule,
-    [Pooled], [–], [–], [#H.pooled.diff \[#H.pooled.ci_lo, #H.pooled.ci_hi\]], [#H.pooled.p],
+    [Pooled], [–], [–], [#H.pooled.diff \[#H.pooled.ci_lo, #H.pooled.ci_hi\]], [#H.pooled.p#super[a]],
     [#H.pooled.d], [#H.pooled.wins/#H.pooled.n],
     toprule,
+    tnote(7)[#super[a]Sampled with 10,000 sign flips.],
   ),
-  caption: [Paired S3 against S4 with the leak-free GRU, mean p99 in ms. One-sided exact permutation p
-    (alternative: S4 faster); the pooled p is sampled with 10,000 sign flips. d is the paired Cohen's d.
-    Wins is the number of pairs in which S4 was faster, out of all pairs. C is the confirmatory batch.],
+  caption: [Paired comparison of S3 and S4, mean p99 (ms)],
 )
 
 // ---------------------------------------------------------------------------
 // Fig.: p99 of every run of the scenario batch.
 #let fig-runs = {
-  let cols = (([S1 \ HPA], F.s1), ([S2 \ Knative], F.s2), ([S3 \ reactive], F.s3), ([S4#super[a] \ predictive], F.s4))
+  let cols = (([S1 \ HPA], F.s1), ([S2 \ Knative], F.s2), ([S3 \ reactive], F.s3), ([S4 \ predictive], F.s4))
   let sy(v) = v / 72
   let right = 7.7
   figure(
@@ -235,8 +236,7 @@
         }
       }
     }),
-    caption: [p99 of every run of the scenario batch. The bar is the mean of five runs. #super[a]S4 ran
-      an earlier GRU.],
+    caption: [p99 of every run of the scenario batch, with the mean as a bar.],
   )
 }
 
@@ -265,7 +265,6 @@
         rect((sx(v.at(0)) - s, y - s), (sx(v.at(0)) + s, y + s), fill: black)
       }
     }),
-    caption: [Mean paired p99 difference with its 95% bootstrap interval for the three batches that ran
-      the leak-free GRU, and for the 25 pairs pooled.],
+    caption: [Mean paired p99 difference with its 95% bootstrap interval, per batch and pooled.],
   )
 }
