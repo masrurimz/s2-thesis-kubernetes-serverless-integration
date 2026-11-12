@@ -54,3 +54,8 @@ P08 (serverless cost) HHH, P31 (conclusion) HHH, P13 (decision-factor reasoning)
 Files `retest2-j*.md`, five judges. Plants 10/10 machine, control 0/5.
 P13 (decision-factor reasoning, now opening "We size for the upper envelope") HHHHH. P08 HHHH?, P31 HHHHH, P18 HHHH?.
 No paper paragraph draws a machine verdict.
+
+## Meaning-based tier (T4), run after the final edits
+`scripts/thesis_paraphrase_audit.py` with sentence-transformers (all-MiniLM-L6-v2, CPU-only torch in a scratch venv; the project venv pulls a 5.8 GiB ROCm build). Self-test passed.
+One hit at exactly the 0.85 threshold: the first sentence of the introduction against Serracanta et al., "By addressing the analytical gaps, we provide initial steps towards a more in-depth study...". The PDF text glued the heading "Introduction" onto the sentence; without it the score is 0.78, below the threshold. The two sentences share no wording. False positive, no change.
+All other tiers unchanged: no verbatim, fingerprint or reordered-sentence overlap, zero tell words, burstiness 0.87, two em-dashes that the IEEE template prints after "Abstract" and "Index Terms".

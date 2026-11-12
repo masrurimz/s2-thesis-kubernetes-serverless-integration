@@ -142,7 +142,7 @@
 ### 2026-11-12 (night, whole paper) — blind-judge check on every paragraph
 - Status: pending
 - What ran: the abstract and all 31 body paragraphs went to 12 independent judges (three per group of eight), with an obvious AI plant, a subtle AI plant and a human control in every set. Both plants were flagged 24 of 24; the control 0 of 12.
-- Result: 29 of 32 paragraphs drew no machine verdict. Three drew one machine verdict each at 0.6 (serverless cost, the decision-factor reasoning, the conclusion). Those three were reworded with the same claims and citations; on retest the first and the last read human 3 of 3, and the decision-factor paragraph stayed split (one machine at 0.6). A second rewording of that paragraph read human 5 of 5 (plants 10 of 10 machine), so no paragraph now draws a machine verdict.
+- Result: 29 of 32 paragraphs drew no machine verdict. Three drew one machine verdict each at 0.6 (serverless cost, the decision-factor reasoning, the conclusion). Those three were reworded with the same claims and citations; on retest the first and the last read human 3 of 3, and the decision-factor paragraph stayed split (one machine at 0.6). A second rewording of that paragraph read human 5 of 5 (plants 10 of 10 machine), so no paragraph now draws a machine verdict. The meaning-based overlap tier also ran (CPU-only torch): one threshold hit, a false positive caused by the heading glued to the first sentence; details in RESULTS.md.
 - Evidence: [icaiic-2027-review/ai-perception/RESULTS.md](icaiic-2027-review/ai-perception/RESULTS.md).
 
 ### PAPER-001 outline (6–7 pages, IEEE two-column)
