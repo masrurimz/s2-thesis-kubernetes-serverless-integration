@@ -223,6 +223,97 @@ Draft (Indonesian, for the user to send):
   - Send the draft — owner: user — `pending`.
   - Confirm ICAIIC 2027 Scopus status before submitting — owner: user — due 2026-11-15 — `pending`.
 
+## WA-2026-11-12-01 — ICAIIC 2027: approval for venue and author list
+
+### 2026-11-12 — draft, not sent
+- Direction: out
+- Status: pending
+- Outcome: none yet.
+
+Draft (Indonesian, for the user to send, with `paper/conference-named.pdf` attached):
+> Selamat siang Pak Roy, izin melaporkan rencana submit paper conference.
+>
+> Saya berencana submit ke ICAIIC 2027 (International Conference on Artificial Intelligence in Information and Communication, https://icaiic.org). Deadline submit 15 November 2026, pengumuman 15 Desember, conference 22–25 Februari 2027 di Osaka dan bisa presentasi virtual (biaya author virtual USD 550). Technical co-sponsor IEEE ComSoc, dan menurut CFP paper yang dipresentasikan dikirim ke IEEE Xplore, Scopus, dan EI Compendex.
+>
+> Paper terlampir, 6 halaman format IEEE. Judul: "Scaling Kubernetes Replicas with GRU Forecasts and Routing Overflow to Serverless". Isinya tiga kontribusi yang kita sepakati tanggal 13 Oktober.
+>
+> Mohon persetujuan Bapak untuk tiga hal:
+> 1. Apakah Bapak setuju saya submit ke ICAIIC 2027?
+> 2. Apakah Bapak berkenan dicantumkan sebagai co-author (penulis kedua)?
+> 3. Apakah Prof. Tohari juga perlu dicantumkan sebagai co-author?
+>
+> Karena deadline-nya 15 November, saya berencana submit tanggal 14 November. Daftar penulis biasanya tidak bisa diubah setelah deadline. Terima kasih Pak.
+
+- English note: asks the adviser to approve the venue (ITS rule: venue type needs the adviser's approval), his own co-authorship, and whether Prof. Tohari Ahmad is listed. It supersedes the conference and co-author questions of the unsent draft `WA-2026-10-19-01`.
+- Evidence: venue facts from `VEN-2026-11-12-01`; packet in [icaiic-2027-submission.md](icaiic-2027-submission.md).
+- Action items:
+  - Send the draft with the PDF — owner: user — due 2026-11-13 — `pending`.
+
+### 2026-11-12 (later) — revised draft, not sent
+- Direction: out
+- Status: pending
+- Outcome: none yet.
+- Why revised: `WA-2026-10-19-01` was never sent, so this message also carries its progress report. The user reports a call today with Pak Hudan (Kaprodi), who said submitting to this conference is fine. The call is user-reported; no record of it is in the repo.
+
+Draft (Indonesian, for the user to send, with `paper/conference-named.pdf` attached):
+> Selamat siang Pak Roy, mohon maaf baru update lagi. Izin melaporkan progres paper dan rencana submit conference.
+>
+> 1. Paper conference sudah saya tulis ulang berdasarkan tiga kontribusi yang kita sepakati tanggal 13 Oktober: (a) arsitektur kontrol terintegrasi, Algoritma 2 untuk scaling replika Kubernetes dan Algoritma 1 untuk distribusi trafik berbasis kapasitas ke Knative; (b) modifikasi decision factor ElaX dengan forecast GRU multi-step, sedangkan routing tidak memakai forecast; (c) evaluasi terhadap Kubernetes-only, serverless-only, dan hybrid reaktif. Judul: "Scaling Kubernetes Replicas with GRU Forecasts and Routing Overflow to Serverless". Paper terlampir, 6 halaman format IEEE.
+> 2. Hasil singkatnya: kedua hybrid biayanya sama dengan Kubernetes + HPA dan memakai 30–36% lebih sedikit pod-seconds, sedangkan serverless-only lebih dari dua kali lipat. Untuk prediktif terhadap reaktif (10 pasang), selisih p99 −13,6 ms (p = 0,31), jadi tidak signifikan. Ini saya tulis apa adanya beserta analisis penyebabnya.
+> 3. Untuk conference, saya berencana submit ke ICAIIC 2027 (https://icaiic.org). Deadline submit 15 November 2026, pengumuman 15 Desember, conference 22–25 Februari 2027 di Osaka dan bisa presentasi virtual. Technical co-sponsor IEEE ComSoc, dan menurut CFP paper yang dipresentasikan dikirim ke IEEE Xplore dan Scopus.
+> 4. Hari ini saya sudah call dengan Pak Hudan, dan beliau menyampaikan tidak masalah submit ke conference tersebut.
+>
+> Mohon persetujuan Bapak untuk tiga hal:
+> 1. Apakah Bapak setuju saya submit ke ICAIIC 2027?
+> 2. Apakah Bapak berkenan dicantumkan sebagai co-author (penulis kedua)?
+> 3. Apakah Prof. Tohari juga perlu dicantumkan sebagai co-author?
+>
+> Karena deadline-nya 15 November dan daftar penulis biasanya tidak bisa diubah setelah deadline, saya berencana submit tanggal 14 November. Terima kasih banyak Pak.
+
+- Evidence: numbers from `paper/numbers.json`; venue facts from `VEN-2026-11-12-01`.
+- Action items:
+  - Send this revised draft with the PDF today — owner: user — due 2026-11-12 — `pending`.
+
+### 2026-11-12 (short version) — draft, not sent
+- Direction: out
+- Status: pending
+- Why: the user asked for a shorter message; the adviser reads the details in the attached PDF. This version replaces the revised draft above as the one to send.
+
+Draft (Indonesian, with `paper/conference-named.pdf` attached):
+> Selamat siang Pak Roy, mohon maaf baru update lagi.
+>
+> Paper conference sudah selesai saya tulis ulang sesuai tiga kontribusi yang kita sepakati kemarin, filenya saya lampirkan (6 halaman).
+>
+> Saya berencana submit ke ICAIIC 2027 (https://icaiic.org), deadline 15 November, conference-nya Februari 2027 dan bisa virtual. Tadi saya sudah call dengan Pak Hudan, beliau bilang tidak masalah submit ke sana.
+>
+> Mohon izin Pak, apakah Bapak setuju saya submit ke sana, dan apakah Bapak berkenan saya cantumkan sebagai co-author? Untuk Prof. Tohari apakah perlu dicantumkan juga?
+>
+> Mohon juga masukan dan revisi Bapak untuk papernya, supaya bisa saya perbaiki dulu sebelum submit.
+>
+> Rencananya saya submit tanggal 14. Terima kasih Pak.
+
+### 2026-11-12 (plain-language version) — draft, not sent
+- Direction: out
+- Status: pending
+- Why: rewritten with the `bahasa-indonesia-plain` skill, and the Drive comment link added. This is the version to send; it replaces the short version above.
+
+Draft (Indonesian, with `paper/conference-named.pdf` attached):
+> Selamat siang Pak Roy, mohon maaf saya baru memberi kabar lagi.
+>
+> Paper conference sudah saya tulis ulang sesuai tiga kontribusi yang kita sepakati pada 13 Oktober. Panjangnya 6 halaman, dan filenya saya lampirkan.
+>
+> Saya berencana mengirim paper ini ke ICAIIC 2027 (https://icaiic.org). Batas pengirimannya 15 November 2026. Conference-nya berlangsung 22 sampai 25 Februari 2027 di Osaka, dan presentasinya bisa virtual. Hari ini saya sudah berbicara dengan Pak Hudan, dan beliau menyampaikan bahwa saya boleh submit ke sana.
+>
+> Saya mohon arahan Bapak untuk tiga hal:
+> 1. Apakah Bapak setuju saya submit ke ICAIIC 2027?
+> 2. Apakah Bapak berkenan saya cantumkan sebagai co-author?
+> 3. Apakah Prof. Tohari juga perlu saya cantumkan?
+>
+> Saya juga mohon masukan dan revisi Bapak untuk papernya. Saya akan memperbaikinya sebelum submit. Kalau Bapak lebih nyaman berkomentar langsung di file, Bapak bisa memakai tautan ini:
+> https://drive.google.com/file/d/1CZ0hM-vWiUCgXFUwQpEoDTWG1ADeM0i4/view
+>
+> Saya berencana submit pada 14 November 2026. Terima kasih, Pak.
+
 ---
 
 *Conventions: append events, never rewrite. Statuses: pending → sent → replied → actioned. See [README.md](README.md).*

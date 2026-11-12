@@ -62,6 +62,72 @@ Correspondence with journals, conferences, editors, and reviewers — one `VEN-Y
 - Requested action and due date: confirm the Scopus status of the chosen venue at https://www.scopus.com/sources before submitting; ICAIIC deadline 2026-11-15.
 - Related: `PUB-001`, `PUB-002`, `WA-2026-10-19-01`
 
+## VEN-2026-10-13-02 — Program office: where the publication criteria live
+
+- Date/time: 2026-10-13 10:07–10:54 [WIB, from WhatsApp]
+- Publication: `PUB-001`, `PUB-002`
+- Venue/contact: S2 Teknik Informatika ITS admin (WhatsApp)
+- Channel: WhatsApp
+- Direction: out and in
+- Status: replied
+- Submission ID / URL: https://itsacid.sharepoint.com/sites/IF/SitePages/IF-InfoTesis.aspx
+- Subject: journal and conference criteria for graduation
+- Message (verbatim, original language):
+  > [10.07.18] Muhammad Zahid Masruri: Sealmat pagi bu
+  > [10.07.51] Muhammad Zahid Masruri: saya zahid, mahasiswa s2 mau berntaya untuk kriteria jurnal dan conference yg bsia dugnakan untuk persyaratan lulus bisa saya lihat dimana ya bu ?
+  > [10.08.01] Muhammad Zahid Masruri: apakah cukup sinta 2 dan scoupus saja
+  > [10.54.29] S2 Teknik Informatika: Untuk detail terkait publikasi ada pada website berikut ya https://itsacid.sharepoint.com/sites/IF/SitePages/IF-InfoTesis.aspx
+- English note: the office pointed to the IF-InfoTesis page and did not answer the SINTA 2 / Scopus question directly. The page needs ITS Microsoft 365 login (HTTP 403 on 2026-10-20), so its criteria are not yet recorded. Summary and candidates in [publication-targets.md](publication-targets.md).
+- Attachments: none
+- Evidence for manuscript/result claims: not applicable.
+- Requested action and due date: read the page while logged in; fill section 1a of publication-targets.md.
+- Related: `PUB-001`, `PUB-002`, `VEN-2026-10-13-01`
+
+## VEN-2026-10-20-01 — Program office: study period and publication deadline
+
+- Date/time: 2026-10-20 [WIB, sent by WhatsApp; exact time not recorded]
+- Publication: `PUB-002`
+- Venue/contact: S2 Teknik Informatika ITS admin (WhatsApp)
+- Channel: WhatsApp
+- Direction: out
+- Status: awaiting reply
+- Subject: study-period limit, academic leave, LoA deadline, yudisium date, grading column
+- Message (verbatim, original language):
+  > Selamat siang, terima kasih untuk link IF-InfoTesis sebelumnya, sudah saya baca. Izin bertanya lanjutan, saya Muhammad Zahid Masruri, angkatan 2022 (NRP 6025221041).
+  >
+  > **A. Masa studi**
+  > 1. Orang tua saya menerima pemberitahuan dari ITS bahwa jika tidak lulus di semester ganjil ini, saya tidak dapat melanjutkan studi. Sepengetahuan saya masa studi saya masih tersisa 2 semester. Mohon konfirmasi, sampai semester berapa batas masa studi saya?
+  > 2. Apakah cuti akademik dihitung dalam masa studi, dan apakah saya masih bisa mengajukan cuti akademik lagi?
+  >
+  > **B. Publikasi ilmiah**
+  > 3. Batas pengumpulan LoA itu sebelum sidang akhir atau cukup sebelum yudisium?
+  > 4. Kapan jadwal yudisium terdekat setelah Desember 2026?
+  > 5. Apakah penilaian publikasi saya mengikuti kolom Mahasiswa Lama?
+  >
+  > Terima kasih.
+- English note: triggered by an ITS warning forwarded to the user's parent (finish this odd semester or lose study rights), which conflicts with the user's count of 2 semesters left. Recent Kinetik and RESTI acceptances took 3 to 9 months (see publication-targets.md), so the deadline answer decides the journal choice.
+- Attachments: none
+- Evidence for manuscript/result claims: not applicable.
+- Requested action and due date: office to answer; then decide academic leave vs. fast SINTA journal.
+- Related: `PUB-002`, `VEN-2026-10-13-02`
+
+## VEN-2026-11-12-01 — ICAIIC 2027: venue facts re-checked, submission prepared
+
+- Date/time: 2026-11-12 [desk research, no contact made]
+- Publication: `PUB-001`
+- Venue/contact: ICAIIC 2027 (https://icaiic.org/); none contacted
+- Channel: web (official site, CFP v7, registration page); EDAS portal for the submission
+- Direction: none
+- Status: pending
+- Submission ID / URL: not assigned; https://edas.info/N35066
+- Subject: submit `PUB-001` before 2026-11-15
+- Message (verbatim, original language): none, desk research only.
+- English note: this entry fills the two gaps `VEN-2026-10-19-01` left. Conference dates: 2027-02-22 to 2027-02-25, Nakanoshima Center, Osaka University, and virtual. Indexing: the CFP says accepted and presented papers are "submitted to IEEE Xplore, Scopus, and EI Compendex"; a SCImago source page for the conference series (source id 21101299653) appeared in a search but refused a scripted read, so Scopus stays `unverified` until opened by hand. Review anonymity is not stated anywhere public; the EDAS page needs a login. Both an anonymous and a named PDF are ready. Fees and deadlines are unchanged from `VEN-2026-10-19-01`; author registration is due 2027-01-05.
+- Attachments: `paper/conference-named.pdf`, `paper/conference.pdf`
+- Evidence for manuscript/result claims: `paper/numbers.json`, `make check` passed 2026-11-12.
+- Requested action and due date: user submits on EDAS by 2026-11-14 WIB after the adviser confirms venue and author list; steps and paste-ready text in [icaiic-2027-submission.md](icaiic-2027-submission.md).
+- Related: `PUB-001`, `VEN-2026-10-19-01`, `WA-2026-11-12-01`
+
 ---
 
 *Conventions: append chronologically; statuses per [README.md](README.md).*

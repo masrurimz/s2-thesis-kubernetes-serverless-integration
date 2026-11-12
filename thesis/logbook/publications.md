@@ -27,11 +27,11 @@
 
 - First logged: 2026-08-07
 - Status: pending
-- Stage: outline
-- Target venue: CCGrid 2027 (proposed 2026-09-10; abstract 2026-11-24, paper 2026-12-01, notification 2027-02-01, Dallas-Fort Worth 2027-05-24/27) — adviser confirms
-- Manuscript/artifact: new 6–7 page conference paper (separate from the thesis; existing results only)
-- Contribution claim: hybrid K8s+serverless autoscaling where GRU forecasts drive scaling (not routing), with explicit autoscaler fairness (node CPU bounding, r_saturation calibration) and an evidence-governed, replicated experiment (paired n=5, p=0.0304, independent replication 9/10 pairs). Evidence: ../../results/claims/FINAL_NUMBERS.md, bundles in experiments.md.
-- Current next action: draft the paper from the outline below — due: 2026-09-24; submit before 2026-12-01
+- Stage: draft
+- Target venue: ICAIIC 2027 (user's choice 2026-11-12; submission 2026-11-15, notification 2026-12-15, Osaka and virtual 2027-02-22/25) — adviser confirmation pending
+- Manuscript/artifact: `paper/conference-named.pdf` (author block) and `paper/conference.pdf` (anonymous), 6 pages A4 each
+- Contribution claim: as in `paper/sections/body.typ`: (1) one control loop with Algorithm 2 for Kubernetes replica scaling and Algorithm 1 for capacity-aware routing to Knative; (2) ElaX's decision factor extended with a 135 s GRU upper envelope, which routing does not read; (3) four-scenario comparison plus paired S3/S4 batches, where the pre-specified batch C gave −13.6 ms, p = 0.307 (H2 not supported). Evidence: `paper/numbers.json`, ../../results/claims/FINAL_NUMBERS.md.
+- Current next action: adviser confirms venue and author list, then submit on EDAS (https://edas.info/N35066) by 2026-11-14 WIB — packet in [icaiic-2027-submission.md](icaiic-2027-submission.md)
 - Evidence: thesis ch01 (hypotheses), ch04 sec:replication, ../DRIFT_ANALYSIS.md §6
 
 ### 2026-08-07 — ITS requirement + venue shortlist verified
@@ -85,6 +85,21 @@
 - Build: conference 6 pages, anonymous; journal 7 pages.
 - Next action: adviser confirms the title with the draft `WA-2026-10-19-01` — owner: user — `pending`.
 - Evidence: `paper/conference.typ`; `paper/journal.typ`; `thesis/logbook/decisions-2026-10-19-paper-rewrite.tsv`.
+
+### 2026-11-12 — ICAIIC 2027 chosen; submission packet prepared
+- Status: pending
+- What changed: the user chose ICAIIC 2027 and accepts a presentation in February 2027. The venue facts were re-read on the official site and CFP v7: submission 2026-11-15, notification 2026-12-15, camera-ready 2027-01-01, conference 2027-02-22/25 in Osaka and virtual, 3 to 6 pages in IEEE style on A4 or letter, EDAS https://edas.info/N35066, virtual author fee USD 550. The CFP says accepted and presented papers are submitted to IEEE Xplore, Scopus and EI Compendex. Neither the site nor the CFP states whether review is anonymous, so the paper now builds both ways from one body: `paper/conference.pdf` (anonymous) and the new `paper/conference-named.pdf`, with the author list in `paper/authors.typ` shared with the journal build.
+- Build: both conference PDFs are 6 pages A4 with all fonts embedded; `make check` passed (numbers match the bundles). The anonymous build has 0 lines matching author or institution strings.
+- Open: (a) the author list is the student and Pak Royyana, as in the journal build; Prof. Tohari Ahmad, the other supervisor in `thesis-typst/src/thesis.typ`, is not listed, and the adviser has not confirmed co-authorship. (b) Scopus: a SCImago source page titled with the conference name appeared in a web search (source id 21101299653), but the page refused a scripted read, so it is `unverified` until opened by hand. (c) ICAIIC is not in CORE, so the ITS seminar row grades it B. (d) The paper text is unchanged since the 2026-10-19 review; no new review was run.
+- Next action: send `WA-2026-11-12-01`, then submit on EDAS by 2026-11-14 WIB — owner: user — `pending`.
+- Evidence: [icaiic-2027-submission.md](icaiic-2027-submission.md); `VEN-2026-11-12-01`; `paper/numbers.json`.
+
+### 2026-11-12 (later) — equations and both algorithms checked against the controller code
+- Status: pending
+- What changed: every formula and pseudocode line was compared with the code the paired runs executed. All match: the routing split and 50% cap (`algorithm1_v3.py` `_compute_routing_split`), the pacing clamp (same file, line 277), $r_"eff"$ = 33.3 × 0.5 and α = 1/$r_"eff"$, β = 0, buffer 1.0, replica bounds 3 and 10, scale-down threshold 0.75 (`libs/shared/shared/models/calibration.py`), the 30 s mean, the 90 s hold, the 15 s and 120 s cooldowns and the 140 ms guard (`daemon/service.py` lines 601–714), and the decision factor as the largest upper-envelope value (`gru_predictor.py` line 628). Five notation fixes, no change of meaning: Table I row "Decision factor x" is now v, because x already means the request rate; $p_"burn"$ is defined in the text; $R_min$ and $R_max$ are defined in the text; Algorithm 1 line 6 names $w_"k8s"$ and $w_"sls"$; Algorithm 2 says "desired replicas r", which separates it from the ready replicas n of Algorithm 1. This supersedes point (d) of the event above.
+- Build: both conference PDFs still 6 pages; `make check` passed.
+- Not shown in the paper: the prediction server truncates the largest envelope value to an integer before it sends it (`server.py` line 133), a difference under 1 RPS.
+- Evidence: `paper/sections/body.typ`, `paper/sections/common.typ`.
 
 ### PAPER-001 outline (6–7 pages, IEEE two-column)
 - Title and abstract: proposed title "GRU-Based Predictive Autoscaling for Hybrid Kubernetes and Serverless Clusters". Keywords: Kubernetes, serverless, autoscaling, workload prediction, GRU. Abstract of 120–150 words, no citations.
