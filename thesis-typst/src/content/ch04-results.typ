@@ -383,7 +383,7 @@ Cost analysis maps the local testbed to equivalent cloud services. It maps Kuber
 The cost proxy is a model, not a billing observation.
 Break-even analyses distinguish the workload rates at which serverless and VM-backed capacity change relative advantage @skyrise2025.
 Billing and scheduling granularity can inflate measured serverless resource cost beyond raw consumption @demystifying2025.
-Keeping warm instances introduces overhead that affects hybrid cost comparisons @highcost2025.
+Keeping serverless instances warm adds CPU and memory overhead @highcost2025, which a hybrid cost comparison has to account for.
 These anchors support reporting the proxy directionally.
 They support retaining the paired equal-cost result rather than claiming universal savings.
 
@@ -452,7 +452,7 @@ The deployed GRU model outputs only 5 steps (75-second forecast window).
 S4 delivered 55 predictions at 100% delivery rate, yet it issued zero PREDICTIVE labels.
 The forecasts did not change the actuator behaviour.
 The 5-step horizon is adequate for the default 60-second provisioning delay estimate but not for the longer delays observed under high load.
-This finding validates the ADAPT-inspired design direction @adapt2026: the forecast horizon must adapt to the measured provisioning delay rather than remaining static.
+This finding is consistent with the premise of ADAPT @adapt2026: the forecast horizon must adapt to the measured provisioning delay rather than remaining static.
 
 === #H("ch4-varload")
 

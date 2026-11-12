@@ -428,7 +428,7 @@ Proyeksi di bawah berasal dari _baseline_ diagnostik n = 1 dan merupakan estimas
 Proksi biaya adalah model, bukan pengamatan tagihan.
 Analisis titik impas membedakan tingkat beban kerja pada saat keunggulan relatif _serverless_ dan kapasitas berbasis VM berubah @skyrise2025.
 Granularitas penagihan dan penjadwalan dapat membuat biaya sumber daya _serverless_ terukur melebihi konsumsi mentah @demystifying2025.
-Menjaga instans hangat menimbulkan _overhead_ yang memengaruhi perbandingan biaya _hybrid_ @highcost2025.
+Menjaga instans _serverless_ tetap hangat menambah _overhead_ CPU dan memori @highcost2025, dan perbandingan biaya _hybrid_ perlu memperhitungkannya.
 Acuan ini mendukung pelaporan proksi hanya pada arahnya.
 Acuan ini mendukung dipertahankannya hasil biaya sama pada eksperimen berpasangan, bukan klaim penghematan universal.
 
@@ -517,7 +517,7 @@ Model GRU yang dipasang hanya mengeluarkan 5 langkah (jendela prakiraan 75 detik
 S4 mengirim 55 prediksi dengan tingkat pengiriman 100%, tetapi tidak mengeluarkan label PREDICTIVE sama sekali.
 Prakiraan tidak mengubah perilaku aktuator.
 Horizon 5 langkah memadai untuk perkiraan waktu tunda penyediaan bawaan 60 detik, tetapi tidak untuk waktu tunda yang lebih panjang pada beban tinggi.
-Temuan ini mendukung arah rancangan yang terinspirasi ADAPT @adapt2026: horizon prakiraan harus menyesuaikan diri dengan waktu tunda penyediaan terukur, bukan tetap statis.
+Temuan ini sejalan dengan premis ADAPT @adapt2026: horizon prakiraan harus menyesuaikan diri dengan waktu tunda penyediaan terukur, bukan tetap statis.
 
 === #H("ch4-varload")
 
