@@ -47,10 +47,14 @@ def normalize_tokens(raw: str) -> list[str]:
     return tokens
 
 
+QUOTED = r'"[^"\n]{20,}"\s*@[A-Za-z0-9_:-]+'
+
+
 def manuscript_tokens(text: str) -> list[str]:
     import re
 
     text = re.sub(r"//[^\n]*", " ", text)
+    text = re.sub(QUOTED, " ", text)
     text = re.sub(r"#[A-Za-z-]+(\([^)]*\))?", " ", text)
     text = re.sub(r"\$[^$]*\$", " ", text)
     text = re.sub(r"@[A-Za-z0-9_:-]+", " ", text)
@@ -63,6 +67,7 @@ def manuscript_sentences(text: str) -> list[str]:
     import re
 
     text = re.sub(r"//[^\n]*", " ", text)
+    text = re.sub(QUOTED, " ", text)
     text = re.sub(r"\$[^$]*\$", " ", text)
     text = re.sub(r"@[A-Za-z0-9_:-]+", " ", text)
     text = re.sub(r"<[^>]+>", " ", text)
@@ -172,6 +177,8 @@ def stylometric_report(text: str) -> list[str]:
     prose = re.sub(r"//[^\n]*", " ", text)
     prose = re.sub(r"\$[^$]*\$", " ", prose)
     prose = re.sub(r"@[A-Za-z0-9_:-]+", " ", prose)
+    prose = re.sub(r"```.*?```", " ", prose, flags=re.S)
+    prose = re.sub(r"`[^`\n]*`", " ", prose)
     findings = []
     for name, pat in AI_TELLS.items():
         n = len(re.findall(pat, prose, re.I))
@@ -274,6 +281,7 @@ def self_test(ref_dir: str, extract_dir: str) -> int:
     )
     vt, ot, ct = manuscript_tokens(verbatim), manuscript_tokens(reordered), manuscript_tokens(clean)
     t1 = maximal_overlaps(vt, rt, REVIEW_N)
+    quoted = not maximal_overlaps(manuscript_tokens(f'The paper reports that "{verbatim}" @aapa2025.'), rt, REVIEW_N)
     fp_v = winnow_fingerprints(vt) & winnow_fingerprints(rt)
     fp_o = winnow_fingerprints(ot) & winnow_fingerprints(rt)
     fp_c = winnow_fingerprints(ct) & winnow_fingerprints(rt)
@@ -285,13 +293,14 @@ def self_test(ref_dir: str, extract_dir: str) -> int:
     omax = max((jaccard(set(ot), r) for r in rsents), default=0.0)
     cmax = max((jaccard(set(ct), r) for r in rsents), default=0.0)
 
-    ok = t1 and t2v > 0.1 and omax >= JACCARD_THRESHOLD and t2c < 0.05 and cmax < 0.3
+    ok = t1 and quoted and t2v > 0.1 and omax >= JACCARD_THRESHOLD and t2c < 0.05 and cmax < 0.3
     print(
         f"self-test: T1 verbatim {'PASS' if t1 else 'FAIL'} ({t1[0][0] if t1 else 0}w) | "
         f"T2 verbatim {t2v:.2f} {'PASS' if t2v > 0.1 else 'FAIL'} | "
         f"T3 reordered {omax:.2f} {'PASS' if omax >= JACCARD_THRESHOLD else 'FAIL'} | "
         f"T2/T3 clean-control {t2c:.2f}/{cmax:.2f} "
-        f"{'PASS' if t2c < 0.05 and cmax < 0.3 else 'FAIL'}"
+        f"{'PASS' if t2c < 0.05 and cmax < 0.3 else 'FAIL'} | "
+        f"T1 quoted-and-cited {'PASS' if quoted else 'FAIL'}"
     )
     print(f"(info) T2 on reordered plant: {t2o:.2f} — winnowing is not expected to fire here")
     return 0 if ok else 3

@@ -242,16 +242,15 @@ Keunggulan _hybrid_ atas Kubernetes murni muncul ketika _baseline_ dibatasi kapa
 === #H("ch4-h2") <sec:h2>
 
 H2 memprediksi bahwa penskalaan replika prediktif (S4) memberi latensi p99 lebih rendah daripada penskalaan reaktif (S3).
-Ujinya adalah satu _batch_ konfirmatori berisi 10 pasangan S3/S4 dengan urutan diseimbangkan (20 _run_), dijalankan pada 20 September 2026 dan didaftarkan sebelumnya (pra-registrasi) sebelum mulai.
-Titik akhir utama adalah selisih p99 berpasangan, diuji dengan uji permutasi berpasangan satu sisi.
-Setiap _run_ S4 memakai GRU yang dilatih pada ClarkNet (@sec:gru-model), dan manifes setiap _run_ mencatat model itu.
+Ujinya adalah satu _batch_ konfirmatori berisi 10 pasangan S3/S4 dengan urutan diseimbangkan (20 _run_), yang dijalankan pada 20 September 2026 dengan pra-registrasi: rancangan dan ujinya ditetapkan sebelum _run_ pertama.
+Titik akhir utamanya adalah selisih p99 berpasangan, yang diuji satu sisi dengan uji permutasi berpasangan.
+Semua _run_ S4 memakai GRU hasil latihan ClarkNet (@sec:gru-model), dan manifes setiap _run_ menyebut model itu.
 
-_Batch_ ini berjalan dengan gerbang beban _host_, karena _batch_ sebelumnya menunjukkan p99 naik bersama beban CPU _host_ (@sec:h2-history).
-Gerbang mengambil sampel beban _host_ sebelum _run_ pada rasio 0,07, di bawah ambang peringatan 0,5.
-Gerbang hanya memeriksa satu sampel sebelum setiap _run_ dan tidak memantau beban selama _run_.
-Selama _run_, rata-rata porsi CPU _host_ sibuk adalah 0,14 sampai 0,27 per _run_, dan puncaknya melebihi 0,5 pada 7 dari 20 _run_.
-Semua 20 _run_ lolos gerbang validitas.
-@tab:h2-primary melaporkan hasilnya.
+_Batch_ sebelumnya memperlihatkan p99 yang naik bersama beban CPU _host_ (@sec:h2-history), sehingga _batch_ ini dijalankan dengan gerbang beban _host_.
+Gerbang itu kasar.
+Ia hanya membaca satu sampel sebelum setiap _run_ (di sini rasionya 0,07, di bawah ambang peringatan 0,5) dan tidak memantau lagi setelah _run_ dimulai.
+Beban memang naik selama _run_. Rata-rata porsi CPU _host_ yang sibuk adalah 0,14 sampai 0,27 per _run_, dan puncaknya melewati 0,5 pada 7 dari 20 _run_.
+Semua 20 _run_ lolos gerbang validitas, dan @tab:h2-primary melaporkan hasilnya.
 
 #figure(
   kind: table,

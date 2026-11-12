@@ -225,17 +225,16 @@ The hybrid's advantage over pure Kubernetes appears when the baseline is capacit
 
 === #H("ch4-h2") <sec:h2>
 
-H2 predicts that predictive replica scaling (S4) gives a lower p99 latency than reactive scaling (S3).
-The test is a confirmatory batch of 10 counterbalanced S3/S4 pairs (20 runs), run on 2026-09-20 and pre-registered before it started.
-The primary endpoint is the paired difference in p99 latency, tested with a one-sided paired permutation test.
-Every S4 run used the ClarkNet-trained GRU of @sec:gru-model, and every run manifest records that model.
+H2 predicts that predictive replica scaling (S4) gives lower p99 latency than reactive scaling (S3).
+The test is a confirmatory batch of 10 counterbalanced S3/S4 pairs (20 runs), run on 2026-09-20 and pre-registered, with its design and test fixed before the first run.
+Its primary endpoint is the paired difference in p99 latency, tested one-sided with a paired permutation test.
+All S4 runs used the ClarkNet-trained GRU of @sec:gru-model, which each run manifest names.
 
-The batch ran with a host-load gate, because the batch before it showed p99 rising with host CPU load (@sec:h2-history).
-The gate sampled host load before the runs at a ratio of 0.07, below the warning threshold of 0.5.
-It checks a single sample before each run and does not watch the load during the run.
-During the runs, the mean host CPU-busy share was 0.14 to 0.27 per run, and the peak exceeded 0.5 in 7 of 20 runs.
-All 20 runs passed the validity gates.
-@tab:h2-primary reports the result.
+The batch before it had shown p99 climbing with host CPU load (@sec:h2-history), so this one ran behind a host-load gate.
+That gate is coarse.
+It reads a single sample before each run (a ratio of 0.07 here, against a warning threshold of 0.5) and stops watching once the run starts.
+Load did rise during the runs; the mean host CPU-busy share was 0.14 to 0.27 per run, and the peak passed 0.5 in 7 of 20 runs.
+All 20 runs passed the validity gates, and @tab:h2-primary reports the result.
 
 #figure(
   kind: table,
