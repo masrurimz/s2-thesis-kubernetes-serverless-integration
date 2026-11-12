@@ -174,7 +174,7 @@ Pengendali menskalakan dengan menjalankan kubectl scale deployment. Pengendali m
 
 === #H("ch3-consolidation")
 
-K3dAutoscaler mengimplementasikan konsolidasi _node_ berbasis pemakaian. Semantiknya sama dengan Kubernetes Cluster Autoscaler @k8sca-faq. _Node_ dinamis menjadi kandidat untuk dihapus bila tiga syarat terpenuhi. Pemakaian _request_ CPU-nya di bawah 50% dari kapasitas yang dapat dialokasikan. Semua _pod_ beban kerja dapat dijadwalkan ulang ke _node_ lain. _Node_ itu sudah kurang terpakai selama paling sedikit 90 detik. Perintah kubectl drain mengeluarkan _pod_ sebelum penghapusan. _Cooldown_ 120 detik mencegah penghapusan beruntun. _Scale-down_ tingkat _pod_ memakai _cooldown_ 120 detik dan ambang pemakaian 0,75.
+K3dAutoscaler mengimplementasikan konsolidasi _node_ berbasis pemakaian. Ambang pemakaian dan syarat penjadwalan ulangnya mengikuti Kubernetes Cluster Autoscaler @k8sca-faq. Cluster Autoscaler secara bawaan menunggu 10 menit sebelum menghapus _node_ yang tidak diperlukan, dan _testbed_ ini mempersingkat waktu tunggu itu menjadi 90 detik. _Node_ dinamis menjadi kandidat untuk dihapus bila tiga syarat terpenuhi. Pemakaian _request_ CPU-nya di bawah 50% dari kapasitas yang dapat dialokasikan. Semua _pod_ beban kerja dapat dijadwalkan ulang ke _node_ lain. _Node_ itu sudah kurang terpakai selama paling sedikit 90 detik. Perintah kubectl drain mengeluarkan _pod_ sebelum penghapusan. _Cooldown_ 120 detik mencegah penghapusan beruntun. _Scale-down_ tingkat _pod_ memakai _cooldown_ 120 detik dan ambang pemakaian 0,75.
 
 == #H("ch3-evalplan")
 

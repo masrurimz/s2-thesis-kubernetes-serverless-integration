@@ -554,7 +554,7 @@ Biaya bulanan yang sama (USD 196/bln) mengonfirmasi tidak ada penalti biaya untu
 
 === #H("ch4-consol")
 
-_Autoscaler node_ menerapkan konsolidasi bergaya _cluster-autoscaler_, sesuai perilaku bawaan Kubernetes Cluster Autoscaler @k8sca-faq.
+_Autoscaler node_ menerapkan konsolidasi bergaya _cluster-autoscaler_, mengikuti ambang pemakaian bawaan 50% pada Kubernetes Cluster Autoscaler @k8sca-faq.
 Sebuah _node_ dinamis menjadi kandidat penghapusan bila tiga kondisi terpenuhi.
 Pemakaian permintaan CPU-nya turun di bawah 50% dari kapasitas yang dapat dialokasikan.
 Semua _pod_ beban kerja pada _node_ itu dapat dijadwalkan ulang ke _node_ beban kerja lain.
@@ -606,7 +606,7 @@ Pada _testbed_ sumber daya bersama dengan variansi antar-_run_ yang tinggi, tida
 Konfigurasi yang tampak kuat pada satu _run_ menurun tajam saat direplikasi.
 Konfigurasi itu mempersempit margin aman Kubernetes dan menyebabkan saturasi lebih sering pada variansi tinggi.
 Ini konsisten dengan risiko _overfitting_ pada pemilihan model @cawley2010overfitting.
-Ini juga menyoroti sulitnya HPO pada sistem daring, tempat setiap evaluasi memerlukan eksperimen penuh dalam kondisi sumber daya bersama yang berisik @nonstationary2022 @falkner2018bohb.
+Ini juga menyoroti sulitnya HPO pada sistem daring, tempat fungsi tujuan bergeser seiring waktu @nonstationary2022 dan setiap evaluasi berisik serta mahal @falkner2018bohb. Pada _testbed_ ini setiap evaluasi adalah satu eksperimen penuh pada sumber daya bersama.
 Metodologi dua tahap (penyaringan lalu konfirmasi) dan pendekatan berbantuan _surrogate_ menyesuaikan kalibrasi dengan _baseline_ yang teramati.
 Tidak ada penyimpangan hasil HPO yang dipakai pada hasil diagnostik n = 1.
 

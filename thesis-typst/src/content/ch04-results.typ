@@ -487,7 +487,7 @@ The identical monthly cost (USD 196/mo) confirms no cost penalty for the predict
 
 === #H("ch4-consol")
 
-The node autoscaler implements cluster-autoscaler-style consolidation, matching the Kubernetes Cluster Autoscaler's default behaviour @k8sca-faq.
+The node autoscaler implements cluster-autoscaler-style consolidation, following the Kubernetes Cluster Autoscaler's default 50% utilization threshold @k8sca-faq.
 A dynamic node is a candidate for removal when three conditions hold.
 Its CPU request utilization falls below 50% of allocatable capacity.
 All workload pods on the node can be rescheduled onto other workload nodes.
@@ -534,7 +534,7 @@ Its specific quantitative results are *directional* and are superseded by Bugs 8
 They are not part of the current baseline.
 They are not used in the comparative evaluation above.
 
-The substantive lesson is methodological rather than numerical. On a shared-resource testbed with high run-to-run variance, no parameter deviation from the default calibration survived holdout validation. Configurations that looked strong on a single run degraded sharply under replication. They narrowed the Kubernetes safety margin and caused more frequent saturation under high variance. This is consistent with overfitting risks in model selection @cawley2010overfitting. It also highlights the difficulty of HPO in online systems, where each evaluation requires a full experiment under noisy shared-resource conditions @nonstationary2022 @falkner2018bohb. The two-stage methodology (screening followed by confirmation) and the surrogate-assisted approach adapt the calibration to the observed baseline. No HPO-tuned deviation is used in the n = 1 diagnostic results.
+The substantive lesson is methodological rather than numerical. On a shared-resource testbed with high run-to-run variance, no parameter deviation from the default calibration survived holdout validation. Configurations that looked strong on a single run degraded sharply under replication. They narrowed the Kubernetes safety margin and caused more frequent saturation under high variance. This is consistent with overfitting risks in model selection @cawley2010overfitting. It also highlights the difficulty of HPO in online systems, where the objective drifts over time @nonstationary2022 and each evaluation is noisy and costly @falkner2018bohb. In this testbed each evaluation is a full experiment on shared resources. The two-stage methodology (screening followed by confirmation) and the surrogate-assisted approach adapt the calibration to the observed baseline. No HPO-tuned deviation is used in the n = 1 diagnostic results.
 
 == #H("ch4-discussion")
 

@@ -174,7 +174,7 @@ The controller scales by invoking kubectl scale deployment. It chose this comman
 
 === #H("ch3-consolidation")
 
-The K3dAutoscaler implements utilization-based node consolidation. It matches the Kubernetes Cluster Autoscaler semantics @k8sca-faq. A dynamic node is a candidate for removal when three conditions hold. Its CPU request utilization falls below 50% of allocatable capacity. All workload pods can reschedule onto other nodes. The node has stayed underutilized for at least 90 seconds. The kubectl drain command evicts pods before deletion. A 120-second cooldown prevents cascading deletions. Pod-level scale-down uses a 120-second cooldown and 0.75 utilization threshold.
+The K3dAutoscaler implements utilization-based node consolidation. Its utilization threshold and rescheduling condition follow the Kubernetes Cluster Autoscaler @k8sca-faq. The Cluster Autoscaler waits 10 minutes by default before it removes an unneeded node, and this testbed shortens that wait to 90 seconds. A dynamic node is a candidate for removal when three conditions hold. Its CPU request utilization falls below 50% of allocatable capacity. All workload pods can reschedule onto other nodes. The node has stayed underutilized for at least 90 seconds. The kubectl drain command evicts pods before deletion. A 120-second cooldown prevents cascading deletions. Pod-level scale-down uses a 120-second cooldown and 0.75 utilization threshold.
 
 == #H("ch3-evalplan")
 
