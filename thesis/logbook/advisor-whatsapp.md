@@ -368,6 +368,9 @@ Feedback (verbatim, as relayed):
 > • tolong cek dengan teliti tata bahasa kalimat dst
 
 - English note: (1) state the difference from Spock more strongly; (2) make clear whether the GRU actually has an effect; (3) the introduction should build the motivation, and p99 needs a reason if it appears there; (4) sentences are hard to follow, rewrite them; (5) check grammar carefully.
+- Drive comments on the shared PDF (file `1CZ0hM-vWiUCgXFUwQpEoDTWG1ADeM0i4`, read with `gws-personal drive comments list`), both unresolved, 2026-11-12 18:36 WIB:
+  - "why this paper asks ??" on the old intro sentence "This paper asks whether ElaX's forecast-driven scaling decision still helps inside a hybrid…". Fixed: the intro now gives the reason before the question (the forecast can only remove the delay serverless leaves, it costs extra pods and a forecaster to train and serve, and Spock's gain is from a simulator only), then asks it.
+  - "p99 ??" on the old sentence "Requests queue in that window, and the 99th-percentile latency (p99) climbs." Fixed: p99 left the opening paragraph and now appears at the end of the intro with its reason.
 - Action items:
   - Revise the paper for all five points, keep 6 pages and every number — owner: agent — 2026-11-12 — `actioned` (trail: [decisions-2026-11-12-roy-feedback.tsv](decisions-2026-11-12-roy-feedback.tsv)).
   - Send the revised PDF back to Pak Roy with a short list of what changed — owner: user — 2026-11-13 — `pending`.

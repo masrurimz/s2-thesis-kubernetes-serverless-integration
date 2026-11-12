@@ -50,10 +50,12 @@ only the excess to serverless functions @dehigama2024.
 
 Both remedies target the same delay, and a hybrid already uses the second one. While new pods and nodes
 start, the serverless platform serves the excess load. A forecast can then remove only the delay that the
-serverless platform leaves, and its extra pods cost money. This paper asks whether a forecast still
-helps in such a hybrid. MArk @zhang2019mark and Spock @gunasekaran2019spock combine both remedies on
-virtual machines. Spock reports fewer SLO violations with its forecast, but only in a simulator, and its
-forecast sizes machines for the average request rate (@sec:related).
+serverless platform leaves, and its extra pods cost money. A forecaster must also be trained and served.
+An operator of a hybrid therefore needs to know whether the forecast pays for itself. Prior work does not
+answer this. MArk @zhang2019mark and Spock @gunasekaran2019spock combine both remedies on virtual
+machines. Spock reports fewer SLO violations with its forecast, but only in a simulator, and its forecast
+sizes machines for the average request rate (@sec:related). This paper therefore asks whether a forecast
+still lowers latency in a hybrid that runs as a real deployment.
 
 We study the question on Kubernetes and Knative, a serverless platform that runs on Kubernetes. Every
 15~s, a capacity-aware router (Algorithm 1) sends the load above the capacity of the ready pods to
