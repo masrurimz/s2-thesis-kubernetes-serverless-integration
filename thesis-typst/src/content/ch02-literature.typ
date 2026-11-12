@@ -35,7 +35,7 @@ The Data Plane consists of Worker Nodes. These nodes run application workloads. 
 
 #figure(
   fig-k8s-architecture(),
-  caption: cap([Architecture of a Kubernetes cluster @kubernetes2024components], [Arsitektur klaster Kubernetes @kubernetes2024components]),
+  caption: [Architecture of a Kubernetes cluster @kubernetes2024components],
 ) <fig:k8s-architecture>
 
 == #H("ch2-serverless")
@@ -46,14 +46,14 @@ Major commercial platforms include AWS Lambda, Google Cloud Functions, and Azure
 
 #figure(
   fig-serverless-architecture(),
-  caption: cap([Serverless computing architecture @mampage2022holistic], [Arsitektur komputasi _serverless_ @mampage2022holistic]),
+  caption: [Serverless computing architecture @mampage2022holistic],
 ) <fig:serverless-architecture>
 
 The cloud service model and division of responsibilities are shown below @kavis2014.
 
 #figure(
   fig-cloud-services(),
-  caption: cap([Cloud services and division of responsibilities @kavis2014], [Layanan _cloud_ dan pembagian tanggung jawab @kavis2014]),
+  caption: [Cloud services and division of responsibilities @kavis2014],
 ) <fig:cloud-services>
 
 The cold start problem is the primary performance limitation of serverless computing @golec2023cold. A cold start occurs when a function invocation arrives but no warm (pre-initialized) function instance exists to handle it. The platform must then do several sequential initialization steps. These steps are container provisioning, runtime initialization, function code loading, and dependency initialization. Typical cold start latencies range from 100–500 ms for AWS Lambda, 200–600 ms for Google Cloud Functions, and 1000–3000 ms for Knative on Kubernetes. Knative must provision a full Kubernetes pod, not a lightweight container sandbox. Beni et al. @beni2021reducing showed that keeping warm containers during elastic scaling of Kubernetes-based serverless platforms can reduce cold start latency by 50–80%. This finding motivates the predictive pre-warming approach used in this research.
@@ -93,7 +93,7 @@ Earlier studies cover parts of this problem. @table-prior-work shows what each s
     [GRU prediction for Kubernetes], [@mondal2023toward], [GRU forecasting of cluster load], [No routing, no serverless backend],
     [Unified prediction and allocation], [@yang2019elax], [Predictor, resource model, online controller], [Single platform, no SLO-aware routing],
   ),
-  caption: cap([Partial prior work on each thread], [Sebagian penelitian terdahulu pada setiap jalur penelitian]),
+  caption: [Partial prior work on each thread],
 ) <table-prior-work>
 
 Earlier work covers each thread. No single thread is new. The contribution combines three parts. Cross-platform routing moves traffic between Kubernetes and an independent serverless platform. GRU prediction drives replica scaling through an extension of ElaX's largest-value scaling decision. Routing reads observed load and ready capacity and does not read the forecast. No earlier system combines these parts. Built on ElaX's resource allocation model, this combination closes the research gap.
@@ -130,7 +130,7 @@ GRU (Gated Recurrent Unit) is simpler than LSTM. Cho et al. proposed it @cho2014
     [Prediction accuracy], [Reference], [Comparable],
     [Real-time suitability], [Moderate], [High],
   ),
-  caption: cap([LSTM vs GRU comparison], [Perbandingan LSTM vs GRU]),
+  caption: [LSTM vs GRU comparison],
 ) <table-lstm-gru>
 
 For the workload prediction task in this research, GRU is the preferred architecture. The task is short-horizon (135 s, 9 × 15 s) HTTP traffic forecasting with a real-time latency constraint (under 50ms inference). GRU has a lower computational cost and comparable accuracy. The reduced parameter count also lowers overfitting risk. The synthetic workload patterns provide limited training data.
@@ -149,5 +149,5 @@ The combination of ElaX's resource allocation model with cross-platform routing 
 
 #figure(
   fig-elax-architecture(),
-  caption: cap([ElaX system architecture @yang2019elax], [Arsitektur sistem ElaX @yang2019elax]),
+  caption: [ElaX system architecture @yang2019elax],
 ) <fig:elax-architecture>

@@ -104,10 +104,12 @@
 // Compile the Indonesian edition with:
 //     typst compile --input lang=id src/thesis.typ build/thesis-id.pdf
 //   or: make master-id
-// Structural headings flip with the edition (CHAPTER I INTRODUCTION vs
-// BAB I PENDAHULUAN) via content/headings.typ. Always rendered in BOTH
-// editions: the administrative chrome (cover, approval, KATA PENGANTAR)
-// and the dual abstracts (ABSTRAK id + ABSTRACT en).
+// The body is one file per chapter and edition: content/<name>.typ is the
+// English text and content/<name>.id.typ its Indonesian translation. Headings
+// flip through content/headings.typ. `make check-id` fails when a translation
+// drops a citation, label, figure, table or number of its English source.
+// Always rendered in BOTH editions: the administrative chrome (cover,
+// approval, KATA PENGANTAR) and the dual abstracts (ABSTRAK id + ABSTRACT en).
 // text(lang:, region:) drives hyphenation, smart quotes, figure supplement
 // localization (when supplement: auto), and the CSL bibliography locale:
 // with lang "id"/"ID", Typst 0.13's hayagriva uses locales-id-ID for APA
@@ -116,6 +118,7 @@
 #let edition = sys.inputs.at("lang", default: "en")
 #let body-lang = if edition == "id" { "id" } else { "en" }
 #let body-region = if body-lang == "id" { "ID" } else { none }
+#let chapter(name) = "content/" + name + (if edition == "id" { ".id" } else { "" }) + ".typ"
 
 #show: thesis.with(
   author: author,
@@ -170,16 +173,16 @@
 
 #v(1.5em)
 
-Puji syukur penulis panjatkan ke hadirat Allah SWT yang telah memberikan rahmat serta kemudahan sehingga peneliti dapat menyelesaikan penelitian tesis dengan judul "Pengambilan Keputusan dan Pengaturan Skalabilitas Elastis pada Lingkungan Cloud yang Heterogen dengan Berbasiskan pada Prediksi Workload" ini dapat terselesaikan.
+Puji syukur penulis panjatkan ke hadirat Allah SWT atas rahmat dan kemudahan yang diberikan, sehingga penulis dapat menyelesaikan penelitian tesis berjudul "Pengambilan Keputusan dan Pengaturan Skalabilitas Elastis pada Lingkungan Cloud yang Heterogen dengan Berbasiskan pada Prediksi Workload".
 
-Peneliti menyadari bahwa tesis ini tidak akan berhasil tanpa adanya bantuan dari beberapa pihak. Oleh karena itu, penulis ingin mengucapkan terima kasih kepada:
+Penulis menyadari bahwa tesis ini tidak akan selesai tanpa bantuan banyak pihak. Oleh karena itu, penulis mengucapkan terima kasih kepada:
 
-+ Bapak Prof. Tohari Ahmad, S.Kom., M.IT., Ph.D. selaku dosen pembimbing tesis 1 yang telah sabar dalam membimbing dan mengarahkan peneliti sehingga dapat menyelesaikan tesis ini.
-+ Bapak Royyana Muslim Ijtihadie, S.Kom., M.Kom., Ph.D. selaku dosen pembimbing tesis 2 yang telah sabar dalam membimbing dan mengarahkan peneliti sehingga dapat menyelesaikan tesis ini.
-+ Orang tua dari peneliti yang telah memberikan dukungan, nasihat, kasih sayang, dan perhatian dalam mendidik dan membantu penulis, sehingga dapat menyelesaikan tesis ini.
-+ Semua pihak lainnya yang secara langsung maupun tidak langsung dalam membantu peneliti menyelesaikan tesis ini.
++ Bapak Prof. Tohari Ahmad, S.Kom., M.IT., Ph.D. selaku dosen pembimbing tesis 1, yang dengan sabar membimbing dan mengarahkan penulis sampai tesis ini selesai.
++ Bapak Royyana Muslim Ijtihadie, S.Kom., M.Kom., Ph.D. selaku dosen pembimbing tesis 2, yang dengan sabar membimbing dan mengarahkan penulis sampai tesis ini selesai.
++ Orang tua penulis, yang telah memberikan dukungan, nasihat, kasih sayang, dan perhatian dalam mendidik dan membantu penulis sampai tesis ini selesai.
++ Semua pihak lain yang secara langsung maupun tidak langsung membantu penulis menyelesaikan tesis ini.
 
-Peneliti menyadari bahwa dalam penyusunan laporan tesis ini masih terdapat banyak kekurangan, sehingga kritik dan saran sangat diharapkan. Akhir kata peneliti berharap tesis ini dapat membawa manfaat bagi semua pihak yang menggunakannya.
+Penulis menyadari bahwa laporan tesis ini masih memiliki banyak kekurangan, sehingga penulis mengharapkan kritik dan saran. Akhir kata, penulis berharap tesis ini bermanfaat bagi semua pihak yang menggunakannya.
 
 #v(2em)
 #align(right)[
@@ -216,15 +219,15 @@ Peneliti menyadari bahwa dalam penyusunan laporan tesis ini masih terdapat banya
 #align(center, text(size: 13pt, weight: "bold")[#upper("ABSTRAK")])
 
 #v(1em)
-Arsitektur *cloud* modern harus menjaga latensi rendah dengan biaya terkendali. *Kubernetes* memberi kontrol yang stabil tetapi lambat merespons lonjakan lalu lintas. Komputasi *serverless* menskala dengan cepat tetapi lebih mahal per *request*. Penelitian ini membangun dan mengevaluasi arsitektur *hybrid* dari keduanya, dengan prakiraan GRU (*gated recurrent unit*) sebagai masukan penskalaan replika Kubernetes.
+Sistem _cloud_ modern harus menjaga _tail latency_ tetap rendah dengan biaya terkendali. Kubernetes memberi kontrol yang stabil, tetapi lambat merespons lonjakan lalu lintas. Komputasi _serverless_ menskalakan dengan cepat, tetapi biayanya lebih mahal per _request_. Tesis ini membangun dan mengevaluasi arsitektur _hybrid_ dari keduanya. Dalam arsitektur itu, prakiraan GRU (_gated recurrent unit_) menjadi masukan bagi penskalaan replika Kubernetes.
 
-Sistem mengalihkan lalu lintas dari *Kubernetes* ke *serverless* ketika beban teramati melebihi kapasitas replika Kubernetes yang siap. Prakiraan GRU merencanakan replika Kubernetes melalui Algoritma 2. Algoritma 1 merutekan berdasarkan beban saat ini dan kapasitas replika yang siap, tanpa membaca prakiraan. Pengujian memasangkan kontrol reaktif dan prediktif dalam empat batch (5, 5, 10, dan 10 pasang; tiga terakhir memakai prediktor ClarkNet) pada beban *trace* ClarkNet, ditambah uji tunggal empat skenario dan uji mekanisme bertahap. Beban *replay* terdiri dari 40 tahap × 30 detik = 20 menit dengan RPS (*requests per second*) 22--164.
+Sistem mengalihkan lalu lintas dari Kubernetes ke _serverless_ ketika beban teramati melebihi kapasitas replika Kubernetes yang siap. Prakiraan GRU merencanakan replika Kubernetes dalam Algoritma 2. Algoritma 1 merutekan lalu lintas berdasarkan beban saat ini dan kapasitas replika yang siap, tanpa membaca prakiraan. Pengujian memasangkan kontrol reaktif dan prediktif dalam empat _batch_ pada lalu lintas ClarkNet, yaitu 5, 5, 10, dan 10 pasang. Tiga _batch_ terakhir memakai prediktor yang dilatih dengan ClarkNet. Pengujian juga mencakup perbandingan empat skenario dengan satu _run_ per skenario dan pemeriksaan mekanisme bertahap. Beban _replay_ terdiri dari 40 tahap × 30 detik = 20 menit, dengan RPS (_requests per second_) 22 sampai 164.
 
-Untuk beban ClarkNet, tidak ada pemenang yang jelas. Semua batch yang dapat diatribusikan ke ClarkNet menunjukkan hasil yang sama: selisihnya masih dalam batas kebetulan (+153,3 ms p = 0,656, n = 5; -104,2 ms p = 0,168, n = 10; -13,6 ms p = 0,307, d = -0,16, n = 10 pada ulangan dengan beban *host* tercatat per *run*). Dalam 25 pasang, S4 lebih cepat 16,5 ms secara rata-rata. Rentang kepercayaan 95% untuk selisih rata-rata adalah dari 188,6 ms lebih cepat sampai 184,5 ms lebih lambat ([-188,6, +184,5] ms, p satu sisi = 0,448), sehingga data tidak menunjukkan keunggulan prediksi. Batch Juli dilaporkan sebagai sejarah. Pada n = 5 dengan beban ClarkNet yang naik turun, S4 mencapai rata-rata p99 (persentil ke-99) 126,0 ms vs 188,5 ms untuk S3 (selisih -62,5 ms, CI 95% [-100,9, -26,2] ms, p = 0,0312, Cohen's d = -1,26). Nilai p tersebut adalah nilai terkecil yang mungkin pada n = 5 (1/32), karena kelima pasangan jatuh searah. S4 juga menunjukkan 80,2% lebih sedikit pelanggaran SLO (*service level objective*) (130 vs 656) dengan biaya bulanan yang identik. Setiap *run* S4 memuat 4-5 label PREDICTIVE; label ini berasal dari tren beban teramati, bukan dari prakiraan GRU. Ukuran sekunder seperti p95 tidak signifikan setelah koreksi (p terkoreksi = 0,1248). *Manifest* batch itu tidak mencatat prediktor; artefak yang terpasang pada periode itu adalah model yang dilatih dengan data sintetis, sehingga batch ini tidak dapat diatribusikan ke prediktor ClarkNet. Model GRU mencapai RMSE 5,2% pada data sintetis. Akurasi pada *trace* ClarkNet berada di bawah target karena beban kerja tidak stasioner.
+Pada beban ClarkNet, tidak ada pemenang yang jelas. Setiap _batch_ yang dapat diatribusikan ke ClarkNet menunjukkan hasil yang sama, yaitu selisihnya masih dalam batas kebetulan. Selisih itu adalah +153,3 ms (p = 0,656; n = 5), -104,2 ms (p = 0,168; n = 10), dan -13,6 ms (p = 0,307; d = -0,16; n = 10). Hasil terakhir berasal dari ulangan dengan beban _host_ yang dicatat pada setiap _run_. Dari 25 pasang, S4 rata-rata 16,5 ms lebih cepat. Rentang kepercayaan 95% untuk selisih rata-rata berkisar dari 188,6 ms lebih cepat sampai 184,5 ms lebih lambat ([-188,6; +184,5] ms, p satu sisi = 0,448). Karena itu, data tidak menunjukkan keunggulan prediksi. _Batch_ Juli dilaporkan sebagai sejarah. Pada n = 5 dengan beban ClarkNet yang naik turun, S4 mencapai rata-rata p99 (persentil ke-99) 126,0 ms, sedangkan S3 mencapai 188,5 ms (selisih rata-rata -62,5 ms, rentang kepercayaan 95% [-100,9; -26,2] ms, p = 0,0312, Cohen's d = -1,26). Nilai p itu adalah yang terkecil yang mungkin pada n = 5 (1/32), karena kelima pasangan jatuh searah. S4 juga mencatat pelanggaran SLO (_service level objective_) 80,2% lebih sedikit (130 berbanding 656) dengan biaya bulanan yang identik. Setiap _run_ S4 memuat 4 sampai 5 label PREDICTIVE. Label ini berasal dari tren beban teramati, bukan dari prakiraan GRU. Ukuran sekunder seperti p95 tidak signifikan setelah koreksi (p terkoreksi = 0,1248). Manifes _batch_ itu tidak mencatat prediktor. Artefak yang terpasang pada periode itu adalah model yang dilatih dengan data sintetis, sehingga _batch_ ini tidak dapat diatribusikan ke prediktor ClarkNet. Model GRU mencapai RMSE 5,2% pada data sintetis. Pada _trace_ ClarkNet, akurasinya di bawah target karena beban tidak stasioner.
 
 #v(1em)
 #par(first-line-indent: 0pt)[
-  #text(weight: "bold")[Kata Kunci:] Cloud Computing, Kubernetes, Serverless, Prediksi Beban Kerja, GRU, Distribusi Lalu Lintas, Arsitektur Hybrid.
+  #text(weight: "bold")[Kata Kunci:] Komputasi Awan, Kubernetes, _Serverless_, Prediksi Beban Kerja, GRU, Distribusi Lalu Lintas, Arsitektur _Hybrid_.
 ]
 
 #pagebreak()
@@ -299,11 +302,11 @@ On ClarkNet load, there is no clear winner. Every ClarkNet-attributable batch te
 #counter(page).update(1)
 #set page(numbering: "1")
 
-#include "content/ch01-introduction.typ"
-#include "content/ch02-literature.typ"
-#include "content/ch03-methodology.typ"
-#include "content/ch04-results.typ"
-#include "content/ch05-conclusion.typ"
+#include chapter("ch01-introduction")
+#include chapter("ch02-literature")
+#include chapter("ch03-methodology")
+#include chapter("ch04-results")
+#include chapter("ch05-conclusion")
 
 //=============================================================================
 // BIBLIOGRAPHY
@@ -325,7 +328,7 @@ On ClarkNet load, there is no clear winner. Every ClarkNet-attributable batch te
 // APPENDICES
 //=============================================================================
 
-#include "content/appendices.typ"
+#include chapter("appendices")
 
 #pagebreak()
 

@@ -135,22 +135,22 @@
     "ch2-integration": "Integrasi Kubernetes-_Serverless_",
     "ch2-metrics": "Metrik Kinerja Aplikasi _Cloud_",
     "ch2-prediction": "Prediksi Beban Kerja dengan _Recurrent Neural Network_",
-    "ch2-elax": "Pen-skalaan Kubernetes dan Algoritma ElaX",
+    "ch2-elax": "Penskalaan Kubernetes dan Algoritma ElaX",
 
     ch3: "METODOLOGI PENELITIAN",
     "ch3-flow": "Alur Penelitian",
     "ch3-data": "Pengumpulan Data",
     "ch3-training": "Data Pelatihan",
-    "ch3-replay": "Beban _Replay_ (Sampling _Trace_ Nyata)",
+    "ch3-replay": "Beban _Replay_ (Cuplikan dari _Trace_ Nyata)",
     "ch3-arch": "Arsitektur Sistem",
     "ch3-infra": "Komponen Infrastruktur",
     "ch3-monitoring": "Pemantauan dan Pengumpulan Metrik",
     "ch3-impl": "Implementasi",
     "ch3-predictor": "Prediktor Beban Kerja (Arsitektur GRU)",
     "ch3-alloc": "Model Alokasi Sumber Daya",
-    "ch3-algo1": "Algoritma 1: Kontroler _Routing_",
-    "ch3-algo2": "Algoritma 2: Kontroler Kluster",
-    "ch3-consolidation": "Konsolidasi Level _Node_",
+    "ch3-algo1": "Algoritma 1: Pengendali Perutean",
+    "ch3-algo2": "Algoritma 2: Pengendali _Cluster_",
+    "ch3-consolidation": "Konsolidasi Tingkat _Node_",
     "ch3-evalplan": "Rencana Evaluasi",
     "ch3-scenarios": "Skenario Evaluasi",
     "ch3-phases": "Tahap Evaluasi",
@@ -160,19 +160,19 @@
 
     ch4: "HASIL DAN PEMBAHASAN",
     "ch4-gru": "Kinerja Model Prediksi GRU",
-    "ch4-phasea1": "Validasi Mekanisme Sistem (Phase A1)",
-    "ch4-comparative": "Evaluasi Komparatif",
-    "ch4-h2-initial": "Prediktif versus Reaktif (H2, Hasil Awal, Digantikan)",
+    "ch4-phasea1": "Validasi Mekanisme Sistem (Fase A1)",
+    "ch4-comparative": "Evaluasi Perbandingan",
+    "ch4-h2-initial": "Prediktif versus Reaktif (H2, Hasil Awal yang Telah Digantikan)",
     "ch4-calibration": "Perbaikan Kalibrasi dan Pembalikan Efek",
-    "ch4-h2-definitive": "Batch Juli Berpasangan (Sejarah: Signifikan, Tak Terverifikasi)",
-    "ch4-replication": "Replikasi Independen (2026-08-07)",
+    "ch4-h2-definitive": "_Batch_ Juli Berpasangan (Sejarah: Signifikan, Tidak Dapat Diverifikasi)",
+    "ch4-replication": "Replikasi Independen (7 Agustus 2026)",
     "ch4-s4vs1": "_Hybrid_ versus Kubernetes Murni (S4 vs S1)",
     "ch4-cost": "Analisis Biaya",
-    "ch4-node": "_Provisioning Node_ Dinamis dan _Offload Serverless_",
-    "ch4-varload": "Validasi Beban Variabel (ClarkNet, Semua _Tier_ Diuji)",
-    "ch4-consol": "Konsolidasi _Node_ (_Scale-Down_ Berbasis Utilisasi)",
-    "ch4-hpo": "HPO Kontroler dan Validasi _Holdout_",
-    "ch4-discussion": "Diskusi",
+    "ch4-node": "Penyediaan _Node_ Dinamis dan Pengalihan Beban ke _Serverless_",
+    "ch4-varload": "Validasi Beban Variabel (ClarkNet, Semua Tingkat Diuji)",
+    "ch4-consol": "Konsolidasi _Node_ (_Scale-Down_ Berbasis Pemakaian)",
+    "ch4-hpo": "HPO Pengendali dan Validasi _Holdout_",
+    "ch4-discussion": "Pembahasan",
 
     ch5: "KESIMPULAN DAN SARAN",
     "ch5-conclusion": "Kesimpulan",
@@ -183,18 +183,18 @@
 
     "app-a": "LAMPIRAN A: Konfigurasi Eksperimen",
     "app-a-calib": "Parameter Kalibrasi",
-    "app-a-alloc": "Alokasi Sumber Daya Kluster",
+    "app-a-alloc": "Alokasi Sumber Daya _Cluster_",
     "app-a-trace": "Parameter _Trace_ ClarkNet",
     "app-b": "LAMPIRAN B: Hasil Eksperimen Mentah",
-    "app-b-pairs": "Hasil Per-Pasangan Definitif (n=5)",
-    "app-b-stats": "Ringkasan Uji Statistik Definitif",
+    "app-b-pairs": "Hasil Per Pasangan _Batch_ Juli Berpasangan (n=5, Sejarah)",
+    "app-b-stats": "Ringkasan Uji Statistik _Batch_ Juli Berpasangan (Sejarah)",
     "app-c": "LAMPIRAN C: Daftar Kode",
-    "app-c-signal": "Sinyal Kapasitas Berbasis Prakiraan (Kontroler V3)",
+    "app-c-signal": "Sinyal Kapasitas dari Prakiraan (Pengendali V3)",
     "app-c-capacity": "Kapasitas Efektif K8s",
     "app-c-config": "CalibrationConfig",
     "app-d": "LAMPIRAN D: Data Mentah Replikasi",
     "app-d-raw": "Data Mentah Replikasi n=5",
-    "app-d-summary": "Ringkasan Per-Skenario n=5",
+    "app-d-summary": "Ringkasan per Skenario n=5",
     "app-d-stats": "Perbandingan Statistik n=5",
 
     biography: "BIOGRAFI PENULIS",
@@ -202,8 +202,14 @@
 }
 
 // Lookup. Fails loudly on an unknown key so a typo cannot silently
-// drop a heading from the book.
-#let H(key) = _headings.at(key)
+// drop a heading from the book. Indonesian entries mark foreign terms
+// with _italics_; a string holding a marker is evaluated as markup so the
+// underscores render as emphasis instead of printing literally. Every
+// other entry stays a plain string.
+#let H(key) = {
+  let title = _headings.at(key)
+  if title.contains("_") { eval(title, mode: "markup") } else { title }
+}
 
 // Bilingual caption / label text. Picks the active edition's variant.
 // Usage (code position, e.g. figure named args): caption: cap([English caption], [Takarir Indonesia])

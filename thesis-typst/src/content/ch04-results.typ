@@ -62,7 +62,7 @@ The baselines scored on identical windows.
     [Linear autoregression, same window, RMSE], [29.465],
     [Inference latency (median, September bundle)], [4.0 ms (p95 5.1 ms)],
   ),
-  caption: cap([GRU model performance under the leak-free protocol], [Kinerja model GRU pada protokol bebas kebocoran]),
+  caption: [GRU model performance under the leak-free protocol],
 ) <tab:gru-performance>
 
 Two conclusions follow, and the second is uncomfortable.
@@ -144,7 +144,7 @@ Phase A1 validated the correct operation of the individual system mechanisms und
     [PREDICTIVE], [1],
     [Total], [18],
   ),
-  caption: cap([Routing-controller decision distribution (Phase A1)], [Distribusi keputusan kontroler _routing_ (Phase A1)]),
+  caption: [Routing-controller decision distribution (Phase A1)],
 ) <tab:phase-a1-decisions>
 
 The experiment validated weight shifting. Traffic weights moved from 100/0 (pure Kubernetes) through successive scale-out steps to 50/50 (maximum serverless engagement) as tail latency exceeded the SLO threshold. Each step shifted the split by ten percentage points. The experiment validated the PREDICTIVE action while the system was in a healthy state (p99 = 146 ms). The GRU predicted a 47% workload increase with 72% confidence, and the controller triggered PREDICTIVE to maintain the 50/50 split. This preserved serverless readiness before any SLO violation occurred. With that earlier controller the forecast acted on routing. The V3 controller used in all paired runs does not (Chapter 3).
@@ -171,7 +171,7 @@ The superseded July bundles differed: in them, S1/S2 and S3/S4 came from differe
     [S3 (Reactive)], [98.8], [3], [0.00%], [31.8%], [0],
     [S4 (Predictive)], [118.2], [104], [0.12%], [24.7%], [9],
   ),
-  caption: cap([Per-scenario summary (n = 1 diagnostic)], [Ringkasan per-skenario (n = 1 diagnostik)]),
+  caption: [Per-scenario summary (n = 1 diagnostic)],
 ) <tab:scenario-summary>
 
 The four scenarios separate into two regimes.
@@ -215,12 +215,12 @@ The hybrid's advantage over pure Kubernetes appears when the baseline is capacit
 
 #figure(
   fig-p99-boxplot(),
-  caption: cap([Per-scenario p99 latency (n = 5 four-scenario replication)], [Latensi p99 per-skenario (n = 5, replikasi empat skenario)]),
+  caption: [Per-scenario p99 latency (n = 5 four-scenario replication)],
 ) <fig:p99-box-n5>
 
 #figure(
   fig-slo-violations(),
-  caption: cap([SLO violations per scenario (n = 5 replication)], [Pelanggaran SLO per skenario (n = 5, replikasi)]),
+  caption: [SLO violations per scenario (n = 5 replication)],
 ) <fig:slo-violations-n5>
 
 === #H("ch4-h2-initial")
@@ -244,7 +244,7 @@ The primary endpoint is the paired p99 latency difference.
     [Permutation p (two-sided)], [0.3784], [Does not support H2],
     [Paired Cohen's d], [-0.241], [Small effect, S4 better],
   ),
-  caption: cap([Paired S4-vs-S3 p99 latency comparison (initial n = 5)], [Perbandingan latensi p99 S4-vs-S3 berpasangan (n = 5 awal)]),
+  caption: [Paired S4-vs-S3 p99 latency comparison (initial n = 5)],
 ) <tab:paired-h2-primary>
 
 The mean difference favors S4 (S4 is 8.1 ms faster on average). The 95% CI [-36.7, +14.5] crosses zero, and the permutation test is not significant (p = 0.38). H2 (predictive latency superiority) is therefore *not statistically supported in this initial experiment; the July batch below reached significance only with an unverifiable predictor*. The direction is still consistent with the hypothesis. S4 wins 2 of 5 pairs. Pair 4 drives the mean advantage (S3 = 173 ms, S4 = 112 ms).
@@ -284,7 +284,7 @@ They also added a tuned reactive baseline (120-second cooldown, 0.75 threshold).
     [Mean SLO violations], [656], [130], [-80.2%],
     [Monthly cost (USD)], [163], [163], [Identical],
   ),
-  caption: cap([July paired S4-vs-S3 comparison (n = 5, history)], [Perbandingan berpasangan S4-vs-S3 Juli (n = 5, sejarah)]),
+  caption: [July paired S4-vs-S3 comparison (n = 5, history)],
 ) <tab:paired-h2-definitive>
 
 Within this batch the S4 advantage reached significance (p = 0.0312). The batch is reported as history.
@@ -307,7 +307,7 @@ The monthly cost model charges provisioned EC2 nodes sized from average CPU plus
 
 #figure(
   fig-paired-perpair(),
-  caption: cap([Per-pair p99 latency (July paired batch, history)], [Latensi p99 per-pasangan (batch berpasangan Juli, sejarah)]),
+  caption: [Per-pair p99 latency (July paired batch, history)],
 ) <fig:paired-h2-perpair>
 
 === #H("ch4-replication") <sec:replication>
@@ -344,7 +344,7 @@ The final H2 verdict is: not supported on the pre-specified primary p99 test.
 
 #figure(
   image("../figures/fig04_6_replication_batches.png", width: 90%),
-  caption: cap([S4-vs-S3 paired p99 difference across replication batches], [Selisih p99 berpasangan S4-vs-S3 lintas batch replikasi]),
+  caption: [S4-vs-S3 paired p99 difference across replication batches],
 ) <fig:replication-batches>
 
 === #H("ch4-s4vs1")
@@ -360,7 +360,7 @@ With the infrastructure correctly bounded (`--cpus=1.0` per node enforced, `max_
     [SLO violations], [6,717], [104], [-6,613 (-98.5%)],
     [SLO violation rate], [7.66%], [0.12%], [-7.54 pp],
   ),
-  caption: cap([Hybrid predictive (S4) versus pure Kubernetes (S1)], [_Hybrid_ prediktif (S4) versus Kubernetes murni (S1)]),
+  caption: [Hybrid predictive (S4) versus pure Kubernetes (S1)],
 ) <tab:s4-vs-s1>
 
 The hybrid predictive scenario reduces p99 latency by 95.1% (from 2,421.3 ms to 118.2 ms) and SLO violations by 98.5% (from 6,717 to 104) relative to pure Kubernetes.
@@ -397,14 +397,14 @@ They support retaining the paired equal-cost result rather than claiming univers
     [S3 (Hybrid-reactive)], [2→2 (0)], [5,354 (1)], [USD 147 = 72+60+15], [USD 0.81],
     [S4 (Hybrid-predictive)], [2→2 (0)], [2,666 (1)], [USD 143 = 72+60+11], [USD 0.79],
   ),
-  caption: cap([AWS monthly cost projection (n = 1 diagnostic)], [Proyeksi biaya bulanan AWS (n = 1 diagnostik)]),
+  caption: [AWS monthly cost projection (n = 1 diagnostic)],
 ) <tab:cost-analysis>
 
 S1 is the cheapest scenario (USD 132/mo) but fails the SLO catastrophically (p99 = 2,421 ms, 7.66% violation rate). Its low cost reflects poor service rather than efficiency. S2 (serverless-only) is the most expensive (USD 395/mo) but achieves the best raw latency (77.7 ms). In the table, Nodes is base→peak with dynamic node-hours in parentheses; Total/mo decomposes into EKS+EC2+Lambda. These n = 1 cost projections are *directional diagnostic estimates only*. They must not be used to rank S3 and S4 or to claim monthly savings. The USD/1M SLO-OK column normalizes the total monthly cost by the count of SLO-satisfying requests.
 
 #figure(
   fig-cost-comparison(),
-  caption: cap([AWS monthly cost projection per scenario], [Proyeksi biaya bulanan AWS per skenario]),
+  caption: [AWS monthly cost projection per scenario],
 ) <fig:cost-comparison>
 
 == #H("ch4-node")
@@ -421,7 +421,7 @@ The n = 1 diagnostic baseline caps `max_k8s_replicas = 6` to match the two-node 
     [S3 (Reactive)], [874.4], [2], [51.8], [96.5%], [387], [23,913],
     [S4 (Predictive)], [1,393.3], [2], [70.5], [96.5%], [387], [46,245],
   ),
-  caption: cap([Three-tier architecture diagnostic (n = 1)], [Diagnostik arsitektur tiga _tier_ (n = 1)]),
+  caption: [Three-tier architecture diagnostic (n = 1)],
 ) <tab:dynamic-node-offload>
 
 This diagnostic exercises all three tiers.
@@ -437,7 +437,7 @@ Monthly USD is a directional diagnostic estimate.
 
 #figure(
   fig-node-provisioning(),
-  caption: cap([Dynamic node provisioning timeline], [Linimasa _provisioning node_ dinamis]),
+  caption: [Dynamic node provisioning timeline],
 ) <fig:node-provisioning>
 
 The trade-off between adding nodes and offloading to serverless is visible in the data. S1 (pure Kubernetes with two dynamic nodes but no serverless offload) has the worst p99 (6,665 ms) and success rate (65.6%). S3 (hybrid-reactive with the same two dynamic nodes plus 96.5% serverless time) achieves the best p99 (874 ms). Knative absorbed the 51--70-second provisioning delay in S3 and S4 in this July diagnostic; the later batches measured delays of 50--125 s. The same delay caused severe latency degradation in S1, where no serverless fallback existed. Dynamic node provisioning alone is not a substitute for serverless offload. The two mechanisms are complementary. The hybrid architecture gains its value by using both concurrently.
@@ -473,7 +473,7 @@ They trigger dynamic nodes without artificial load inflation.
     [S3 (Reactive)], [103.9], [2], [21.2%], [---], [---], [---], [196],
     [S4 (Predictive)], [108.3], [2], [17.6%], [55], [4], [1], [196],
   ),
-  caption: cap([ClarkNet variable-load experiment (n = 1)], [Eksperimen beban variabel ClarkNet (n = 1)]),
+  caption: [ClarkNet variable-load experiment (n = 1)],
 ) <tab:clarknet-dynamic-node>
 
 Under variable load, the GRU forecast produced proactive actions for the first time.
@@ -505,7 +505,7 @@ Under the same ClarkNet variable-load trace, consolidation produced the stronges
     [S3 (Reactive)], [228.4], [1,085], [3], [3], [162],
     [S4 (Predictive)], [113.0], [40], [5], [3], [170],
   ),
-  caption: cap([ClarkNet variable-load with node consolidation (n = 1)], [Beban variabel ClarkNet dengan konsolidasi _node_ (n = 1)]),
+  caption: [ClarkNet variable-load with node consolidation (n = 1)],
 ) <tab:clarknet-consolidation>
 
 S4 achieved 50.5% lower p99 (113 ms vs 228 ms).

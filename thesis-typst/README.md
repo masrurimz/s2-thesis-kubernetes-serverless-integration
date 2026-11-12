@@ -1,13 +1,14 @@
 # ITS Thesis (Typst)
 
-Canonical thesis book source (English-first body + dual abstracts + Indonesian ITS front matter).
+Canonical thesis book source. Two editions build from it: English (`build/thesis.pdf`) and Indonesian (`build/thesis-id.pdf`). Both carry the dual abstracts and the Indonesian ITS front matter.
 
 ## Build
 
 ```bash
-make          # or make master
-# produces build/thesis.pdf
-make watch    # live preview (typst watch)
+make            # or make master: English edition, build/thesis.pdf
+make master-id  # Indonesian edition, build/thesis-id.pdf
+make check-id   # compare each Indonesian chapter with its English source
+make watch      # live preview (typst watch)
 make clean
 ```
 
@@ -54,10 +55,11 @@ Uses Liberation Serif/Sans (available on system) with fallbacks for Times/Trebuc
 Charts currently use data tables; CeTZ plots to be re-enabled after package version pinning.
 
 ## Language
-- Body: English first
-- Abstracts: ID + EN (both)
-- Structural labels (BAB, DAFTAR ISI, Gambar, Tabel): Indonesian (ITS requirement)
-- Later ID body translation if required for submission.
+- Each chapter and the appendices exist twice: `src/content/<name>.typ` (English, the source of truth) and `src/content/<name>.id.typ` (Indonesian). `src/thesis.typ` includes one or the other by edition.
+- Change the English file first, then carry the change into the `.id.typ` file. `make check-id` fails when the Indonesian file lacks a citation, label, heading key, figure, table, code block or number that the English file has. Numbers compare by digits, so `0.307` matches `0,307`.
+- Indonesian text follows `.agents/skills/bahasa-indonesia-plain/SKILL.md`: short active sentences, decimal comma, English technical terms kept in italics.
+- Headings come from `src/content/headings.typ`, one dictionary per edition. Figure files are shared; a label that differs by edition uses `cap(en, id)`.
+- Abstracts are always both (ID + EN). Cover, approval pages, KATA PENGANTAR and the biography are always Indonesian.
 
 ## Reproduction
 From repo root:

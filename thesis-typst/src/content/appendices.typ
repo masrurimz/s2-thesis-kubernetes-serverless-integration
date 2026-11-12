@@ -29,7 +29,7 @@ Tabel berikut menyajikan parameter kalibrasi yang digunakan dalam eksperimen.
     [proactive_approach_ratio], [0.6],
     [proactive_lookahead_steps], [9],
   ),
-  caption: cap([Calibration parameters (default)], [Parameter kalibrasi (default)]),
+  caption: [Calibration parameters (default)],
 )
 
 *Catatan (override kalibrasi):* Bundle berpasangan H2 menggunakan override khusus eksperimen `max_k8s_replicas = 10, prediction_horizon = 9`, bukan nilai default pada tabel di atas. Override ini penting karena menjelaskan mengapa S1 tidak jenuh pada replikasi n=5.
@@ -48,7 +48,7 @@ Tabel berikut menyajikan parameter kalibrasi yang digunakan dalam eksperimen.
     [K8s baseline pods], [---], [3 x 300m],
     [Knative pods (KPA)], [---], [3 (min-scale)],
   ),
-  caption: cap([Cluster resource allocation], [Alokasi sumber daya klaster]),
+  caption: [Cluster resource allocation],
 )
 
 == #H("app-a-trace")
@@ -66,7 +66,7 @@ Tabel berikut menyajikan parameter kalibrasi yang digunakan dalam eksperimen.
     [RPS rata-rata], [73],
     [Jumlah request per run], [87840],
   ),
-  caption: cap([ClarkNet trace replay parameters], [Parameter replay trace ClarkNet]),
+  caption: [ClarkNet trace replay parameters],
 )
 
 #pagebreak()
@@ -88,7 +88,7 @@ Tabel berikut menyajikan nilai p99 per pasangan dari bundle Juli `2026-07-14_cla
     [4], [164.0], [155.7], [-8.3], [Ya],
     [5], [199.2], [167.4], [-31.8], [Ya],
   ),
-  caption: cap([Per-pair p99 latency (July paired bundle, history)], [Latensi p99 per-pasangan (bundel berpasangan Juli, sejarah)]),
+  caption: [Per-pair p99 latency (July paired bundle, history)],
 )
 
 == #H("app-b-stats")
@@ -108,7 +108,7 @@ Tabel berikut menyajikan nilai p99 per pasangan dari bundle Juli `2026-07-14_cla
     [Pelanggaran SLO rata-rata], [S3 656; S4 130],
     [Biaya bulanan], [USD 163 vs USD 163],
   ),
-  caption: cap([Statistical results of the July paired bundle (history)], [Hasil statistik bundel berpasangan Juli (sejarah)]),
+  caption: [Statistical results of the July paired bundle (history)],
 )
 
 Bundle ini adalah perbandingan paired batch Juli untuk H2 dan kini dilaporkan sebagai sejarah. Seluruh 5 pasangan valid, seluruh 280 prediksi GRU terkirim, dan `predictive_count` berada pada 4--5 per run S4. Metrik sekunder dilaporkan deskriptif setelah koreksi Bonferroni (p terkoreksi = 0.1248). Nilai p = 0.0312 adalah lantai desain 1/32 pada n = 5, karena kelima pasangan jatuh searah. Nilai ini adalah hasil hitung ulang rutin `thesis experiment analyze` saat ini. Artefak bundel tersimpan menyimpan 0.0304 dari rutin analisis lama. Prediktor yang dideploy `data/models/gru_model.pt` baru masuk kontrol versi pada 2026-09-12 (commit 98e17d1, LFS oid 7f8244bcc403c59a3e2be5d31b1ee5586f01c0052416c2705c0a325d1cc3099d) sebagai artefak yang dideploy. Manifest bundle 2026-07-14 tidak mencatat prediktor, dan artefak periode itu kemudian terbukti merupakan pemenang terlatih-sintetis, sehingga batch ini tidak teratribusikan ke ClarkNet. Verdict final H2 (Bab 4, bagian replikasi): tidak didukung — tiga batch teratribusikan ClarkNet (p = 0.656, 0.168, 0.307) semuanya null, dan pooled 25 pasangan memberi −16.5 ms (95% CI [−188.6, +184.5], p satu sisi = 0.448; `paper/derive_numbers.py`).
@@ -209,7 +209,7 @@ Tabel berikut menyajikan hasil per-run replikasi empat skenario `2026-08-09_clar
     [4], [S4 (Hybrid-prediktif)], [94.4], [12],
     [5], [S4 (Hybrid-prediktif)], [93.8], [1],
   ),
-  caption: cap([Per-run results of the n=5 replication], [Hasil per-run replikasi n=5]),
+  caption: [Per-run results of the n=5 replication],
 )
 
 == #H("app-d-summary")
@@ -224,7 +224,7 @@ Tabel berikut menyajikan hasil per-run replikasi empat skenario `2026-08-09_clar
     [S3 (Hybrid-reaktif)], [5], [151.6], [1998], [73.2],
     [S4 (Hybrid-prediktif)], [5], [99.1], [92], [73.2],
   ),
-  caption: cap([Mean summary per scenario], [Ringkasan rata-rata per skenario]),
+  caption: [Mean summary per scenario],
 )
 
 == #H("app-d-stats")
@@ -240,5 +240,5 @@ Tabel berikut menyajikan hasil per-run replikasi empat skenario `2026-08-09_clar
     [S3 vs S1], [+37.4%; p = 0.165], [Tidak signifikan],
     [S4 vs S3 (SLO)], [-95.4%; Mann-Whitney p = 0.0345], [Signifikan],
   ),
-  caption: cap([Summary of statistical tests for the n=5 replication.], [Ringkasan uji statistik replikasi n=5.]),
+  caption: [Summary of statistical tests for the n=5 replication.],
 )

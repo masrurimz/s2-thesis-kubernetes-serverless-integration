@@ -41,7 +41,7 @@ Each phase produces artifacts that feed the next phases. The literature study in
 
 #figure(
   align(center, fig-research-flow()),
-  caption: cap([Research methodology flow], [Alur metodologi penelitian]),
+  caption: [Research methodology flow],
 ) <fig:research-flow>
 
 == #H("ch3-data")
@@ -78,7 +78,7 @@ The system uses Prometheus for metrics collection. It also uses an SLO monitor c
 
 #figure(
   align(center, fig-control-loop()),
-  caption: cap([Hybrid system architecture], [Arsitektur sistem hibrida]),
+  caption: [Hybrid system architecture],
 ) <fig:control-loop>
 
 == #H("ch3-impl")
@@ -104,10 +104,10 @@ Algorithm 1 sets the traffic split between the Kubernetes and serverless backend
 - *Pacing.* A proportional-integral term adds serverless weight when cycles with p99 above 200 ms use up a violation budget (1000 violations per 1200 s run) faster than allowed. The controller counts at most one violation per 15-second cycle, so the burn rate stays below 8% of the allowance, and the term never added weight in the reported runs. In the n = 1 diagnostic (`2026-07-11_scaling_fix_n1`) the logged pacing adjustment was −5 or −7 points, which lowered the serverless weight. The term is therefore inactive in the reported results.
 - *Label.* Each decision carries a label for logs and statistics. A weight increase is PREDICTIVE when predicted_upper exceeds the observed load, and REACTIVE otherwise. A weight decrease is RECOVERY. No change is MAINTAIN. The label does not change the weights.
 
-In S4 the controller derives predicted_upper from the forecast. When the observed load rises by more than 3 RPS per cycle and exceeds 80% of capacity, predicted_upper is the larger of the forecast and a nine-step linear extrapolation of the observed load. predicted_upper sets only the label. Algorithm 2 sizes replicas from the daemon's own forecast signal. The split never reads either value. In S3 no forecast exists, so the label is always REACTIVE, RECOVERY, or MAINTAIN. When serverless first enables, the controller sends a health-check request to the Knative endpoint, meant to start a cold start before traffic arrives. In the September confirmatory batch that request returned HTTP 404 in every run, and no run logged a successful pre-warm. The July runs logged a successful pre-warm. [INFERENCE] The probe uses a fixed host name that the September cluster did not answer, so the pre-warm did not take place there.
+In S4 the controller derives predicted_upper from the forecast. When the observed load rises by more than 3 RPS per cycle and exceeds 80% of capacity, predicted_upper is the larger of the forecast and a nine-step linear extrapolation of the observed load. predicted_upper sets only the label. Algorithm 2 sizes replicas from the daemon's own forecast signal. The split never reads either value. In S3 no forecast exists, so the label is always REACTIVE, RECOVERY, or MAINTAIN. When serverless first enables, the controller sends a health-check request to the Knative endpoint, meant to start a cold start before traffic arrives. In the September confirmatory batch that request returned HTTP 404 in every run, and no run logged a successful pre-warm. The July runs logged a successful pre-warm. The likely cause is that the probe uses a fixed host name that the September cluster did not answer, so the pre-warm did not take place there.
 
 #algo(
-  cap([#text(weight: "bold")[Algorithm 1:] Routing Controller (capacity-driven split)], [#text(weight: "bold")[Algoritma 1:] Kontroler _Routing_ (pembagian berbasis kapasitas)]),
+  [#text(weight: "bold")[Algorithm 1:] Routing Controller (capacity-driven split)],
   [
     *Input:* p99 (SLO status); x (observed load, RPS); n_ready (ready Kubernetes replicas); forecast = \{predicted_requests, confidence\} (S4 only); current weights (k3s, knative), serverless_enabled \
     *Parameters:* r_effective = r_saturation \* target_cpu_util, max_knative = 50, confidence_threshold = 0.5, violation budget = 1000 cycles per 1200 s run, PI gains kp and ki, cycle = 15 s
@@ -141,7 +141,7 @@ The decision factor that this research changes is the load signal x in R = alpha
 The controller scales by invoking kubectl scale deployment. It chose this command for its determinism and explicit audit trail. Safety checks include cooldown periods, replica bounds clamping, scale-down hysteresis, and readiness verification before traffic returns to Kubernetes. The cooldown periods are 15 seconds for scale-up and 120 seconds for scale-down in V3 mode. A scale-down also requires p99 below 140 ms and a target floored at min_replicas = 3. The paired H2 batches used the tuned baseline: 120 s cooldown with a 0.75 scale-down threshold.
 
 #algo(
-  cap([#text(weight: "bold")[Algorithm 2:] Cluster Controller (Kubernetes replica scaling)], [#text(weight: "bold")[Algoritma 2:] Kontroler _Cluster_ (penskalaan replika Kubernetes)]),
+  [#text(weight: "bold")[Algorithm 2:] Cluster Controller (Kubernetes replica scaling)],
   [
     *Input:* x_obs (mean observed RPS, last 30 s); predicted_upper (GRU upper forecast; S4 only); c (current desired replicas), p99 \
     *Parameters:* alpha = 1 / (r_sat \* cpu_util), beta = 0, buffer = 1.0, min_replicas = 3, max_replicas = 6 (10 in the September bundles), scale_down_threshold = 0.75, hold = 90 s, up_cooldown = 15 s, down_cooldown = 120 s
@@ -193,10 +193,10 @@ The research defines four scenarios. They compare platform-native autoscaling ba
     [S3 (Hybrid Reactive)], [Dynamic K8s to Knative routing via Algorithm 1], [Algorithm 2 scaling using observed RPS (observed)], [off],
     [S4 (Hybrid Predictive)], [Dynamic K8s to Knative routing via Algorithm 1], [Algorithm 2 scaling using GRU forecast (predicted)], [on],
   ),
-  caption: cap([Experimental scenarios], [Skenario eksperimen]),
+  caption: [Experimental scenarios],
 ) <tab:scenarios>
 
-The S1 vs S2 comparison evaluates platform-native baselines. The S3 vs S1/S2 comparison evaluates whether the hybrid reactive control plane improves over either baseline alone. The S3 vs S4 comparison isolates the value of GRU prediction. Both use hybrid routing and Algorithm 2 scaling. Both route by observed load. S4 also consumes the GRU upper forecast for Kubernetes replica planning. A practical caveat applies. The scaling model maps load to replicas via ceil(alpha dot.op x dot.op gamma) clamped to a minimum of three replicas. Therefore moderate-load forecasts (e.g., 62 RPS) can map to the same replica target as the observed signal. This makes the predictive and reactive paths operationally identical for that cycle. The comparison is therefore only discriminative when the forecast produces a *different* replica target than the observed signal. This condition depends on the calibration margin and is analyzed in Chapter 4.
+The S1 vs S2 comparison evaluates platform-native baselines. The S3 vs S1/S2 comparison evaluates whether the hybrid reactive control plane improves over either baseline alone. The S3 vs S4 comparison isolates the value of GRU prediction. Both use hybrid routing and Algorithm 2 scaling. Both route by observed load. S4 also consumes the GRU upper forecast for Kubernetes replica planning. A practical caveat applies. The scaling model maps load to replicas via $ceil(alpha dot.op x dot.op gamma)$ clamped to a minimum of three replicas. Therefore moderate-load forecasts (e.g., 62 RPS) can map to the same replica target as the observed signal. This makes the predictive and reactive paths operationally identical for that cycle. The comparison is therefore only discriminative when the forecast produces a *different* replica target than the observed signal. This condition depends on the calibration margin and is analyzed in Chapter 4.
 
 The original ElaX algorithm is not evaluated as a separate scenario. ElaX performs elasticity control within a single platform. It has no cross-platform routing layer, so it does not solve the hybrid routing problem studied in this research. The thesis therefore treats ElaX as the algorithmic foundation. It isolates the contribution through the S3 versus S4 ablation, which differs only in the scaling signal. Recent predictive autoscaling work uses the same evaluation method @adapt2026. It compares modified controllers against platform-native baselines and ablations. It does not re-implement the original algorithm.
 
