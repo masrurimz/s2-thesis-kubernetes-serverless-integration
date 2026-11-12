@@ -22,9 +22,9 @@ url: "https://doi.org/10.1109/ACCESS.2025.3526751"
 source_pdf: serracanta-hpa-stability-control-loop-2025.pdf
 source_sha256: 89efb1425386e0429c12eb10cbacb85d12a96d1cab9cee61058d7d856c4c9ef7
 pdf_pages: 7
-converted: 2026-09-13
+converted: 2026-11-12
 record_source: crossref
-key_insight: "Formal proof of HPA control-loop stability (global asymptotic, zero steady-state error) at any utilization target 30--80%. Justifies threshold tuning."
+key_insight: "Formal proof that the HPA control loop of a single service (second-order model, step input) is globally asymptotically stable with zero steady-state error (Theorem 1); verified in simulation and on a testbed at an 80% CPU target. The paper states no 30--80% range."
 first_page: "Received 22 November 2024, accepted 27 December 2024, date of publication 7 January 2025, date of current version 13 January 2025. Digital Object Identifier 10.1109/ACCESS.2025.3526751 On the Stabilit"
 ---
 
