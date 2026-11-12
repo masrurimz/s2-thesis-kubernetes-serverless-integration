@@ -31,14 +31,15 @@
 
 #let body(extended: false) = [
 = Introduction
-A Kubernetes deployment scales on load that it has already observed. The Horizontal Pod Autoscaler (HPA)
-compares CPU use with a target and adds pods, the running copies of a service, after the target is
-crossed @serracanta2025hpa. When the cluster also lacks nodes, a new virtual machine takes about one to
-two minutes to start @hao2021vmstartup. Until the new pods are ready, requests queue and the
-99th-percentile latency (p99) rises. Serverless platforms react faster. They add instances within
-seconds @demystifying2025, but a new instance pays a cold-start delay @golec2023cold. Public serverless
-platforms also charge higher unit prices plus a per-invocation fee @demystifying2025, and sustained load
-is several times more expensive there than on virtual machines @dehigama2024.
+A Kubernetes deployment scales on load it has already seen. The Horizontal Pod Autoscaler (HPA)
+compares CPU use with a target and adds pods, the running copies of a service, only after the target is
+crossed @serracanta2025hpa. If the cluster is also out of nodes, the wait is longer. A new virtual
+machine takes one to two minutes to boot @hao2021vmstartup, and on our testbed the first new node was
+ready #H.b10b.delay_min to #H.b10b.delay_max s after the request. Requests queue in that window, and the
+99th-percentile latency (p99) climbs. Serverless platforms add instances within seconds
+@demystifying2025. Each new instance still pays a cold-start delay @golec2023cold. Public platforms also
+charge a higher unit price plus a fee per invocation @demystifying2025, and steady load costs several
+times more there than on virtual machines @dehigama2024.
 
 A hybrid deployment uses both. Reserved machines serve the stable base load, and serverless functions
 serve the excess @dehigama2024. A hybrid of Kubernetes and a serverless backend makes two decisions in

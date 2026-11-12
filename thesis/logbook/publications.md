@@ -129,6 +129,16 @@
 - Build: both conference PDFs 6 pages; `make check` passed. The paste-ready abstract in [icaiic-2027-submission.md](icaiic-2027-submission.md) matches the PDF.
 - Evidence: `paper/sections/body.typ` lines 10 to 26.
 
+### 2026-11-12 (night, last) — AI-perception check on the conference paper
+- Status: pending
+- Method: `writing-docs-papers` references `ai-perception.md`. No detector is an authorship verdict; this measures how the text reads. T1 to T3 and T5 ran through `scripts/thesis_paraphrase_audit.py` on the text of `paper/conference.pdf` before the references (self-test passed). T4 was skipped because sentence-transformers is not installed. T6 is a blind judgment by three independent agents, each given the samples in a different order, with a planted AI-slop paragraph and a plain human-register control.
+- Overlap with the 79 archived references: no verbatim span, fingerprint or reordered-sentence finding.
+- Tell scan: zero tell words. Two em-dashes, both the template labels "Abstract—" and "Index Terms—". Sentence-length burstiness 0.87 (target near 0.9).
+- Round 1: the plant was flagged machine 3 of 3 at 0.95, so the run is valid. The discussion paragraph read human 3 of 3. The first introduction paragraph read machine 3 of 3 at 0.6; the judges quoted its generic background lines.
+- Fix: that paragraph now states one testbed fact (the first new node was ready 50 to 125 s after the request, `H.b10b.delay_min/max`) and splits the serverless sentence. Same claims, same citations.
+- Round 2 (fresh judges, new order): plant machine 3 of 3. The rewritten introduction paragraph and the Testbed paragraph drew no machine flag in 6 judgments (4 human, 2 uncertain).
+- Build: both conference PDFs 6 pages; `make check` passed.
+
 ### PAPER-001 outline (6–7 pages, IEEE two-column)
 - Title and abstract: proposed title "GRU-Based Predictive Autoscaling for Hybrid Kubernetes and Serverless Clusters". Keywords: Kubernetes, serverless, autoscaling, workload prediction, GRU. Abstract of 120–150 words, no citations.
 - Framing note: serverless carries the paper's emphasis, because the study compares a Kubernetes backend against a serverless backend and then the two hybrid modes. State one caveat in the first paragraph of Section III, or a reviewer will read the platform claim as false: both backends run on a single k3d testbed, simulating a two-platform deployment, with separate namespaces, separate ingress paths, and separate workload instances (`ch03-method`, `ch03-infra`).
