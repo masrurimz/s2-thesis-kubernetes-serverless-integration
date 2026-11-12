@@ -72,10 +72,13 @@ Scaling Kubernetes Replicas with GRU Forecasts and Routing Overflow to Serverles
 **Authors, in order** (from `paper/authors.typ`; the EDAS list must match the PDF)
 
 1. Muhammad Zahid Masruri, Department of Informatics, Institut Teknologi Sepuluh Nopember, Surabaya, Indonesia, masruri03@gmail.com
-2. Royyana Muslim Ijtihadie, Department of Informatics, Institut Teknologi Sepuluh Nopember, Surabaya, Indonesia, roy@if.its.ac.id
+2. Tohari Ahmad, Department of Informatics, Institut Teknologi Sepuluh Nopember, Surabaya, Indonesia, tohari@if.its.ac.id
+3. Royyana Muslim Ijtihadie, Department of Informatics, Institut Teknologi Sepuluh Nopember, Surabaya, Indonesia, roy@if.its.ac.id
 
-Open: the thesis lists two supervisors, and Prof. Tohari Ahmad is not in this list. ITS requires the adviser as
-a co-author. Ask Pak Roy (draft `WA-2026-11-12-01`). Adding an author is one entry in `paper/authors.typ`.
+Order follows the thesis: supervisor 1 (Prof. Tohari Ahmad), then supervisor 2 (Pak Roy). Prof. Tohari was added
+on 2026-11-12 at the user's request; his email is from his ITS profile
+(https://www.its.ac.id/informatika/profil-tohari-ahmad/, "tohari[at]if.its.ac.id"). To swap the two supervisors,
+swap their entries in `paper/authors.typ` and rebuild.
 
 **Topic** (pick the closest one EDAS offers)
 

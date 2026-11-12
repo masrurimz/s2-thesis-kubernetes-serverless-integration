@@ -9,6 +9,13 @@
     email: "masruri03@gmail.com",
   ),
   (
+    name: "Tohari Ahmad",
+    department: [Department of Informatics],
+    organization: [Institut Teknologi Sepuluh Nopember],
+    location: [Surabaya, Indonesia],
+    email: "tohari@if.its.ac.id",
+  ),
+  (
     name: "Royyana Muslim Ijtihadie",
     department: [Department of Informatics],
     organization: [Institut Teknologi Sepuluh Nopember],

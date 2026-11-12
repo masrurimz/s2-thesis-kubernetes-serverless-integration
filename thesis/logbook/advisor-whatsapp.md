@@ -314,6 +314,29 @@ Draft (Indonesian, with `paper/conference-named.pdf` attached):
 >
 > Saya berencana submit pada 14 November 2026. Terima kasih, Pak.
 
+### 2026-11-12 (author list set) — draft, not sent
+- Direction: out
+- Status: pending
+- Why: the user added Prof. Tohari Ahmad as second author (thesis supervisor order: student, supervisor 1, supervisor 2). The third question becomes a statement of the order. This version replaces the plain-language version above.
+
+Draft (Indonesian, with `paper/conference-named.pdf` attached):
+> Selamat siang Pak Roy, mohon maaf saya baru memberi kabar lagi.
+>
+> Paper conference sudah saya tulis ulang sesuai tiga kontribusi yang kita sepakati pada 13 Oktober. Panjangnya 6 halaman, dan filenya saya lampirkan.
+>
+> Saya berencana mengirim paper ini ke ICAIIC 2027 (https://icaiic.org). Batas pengirimannya 15 November 2026. Conference-nya berlangsung 22 sampai 25 Februari 2027 di Osaka, dan presentasinya bisa virtual. Hari ini saya sudah berbicara dengan Pak Hudan, dan beliau menyampaikan bahwa saya boleh submit ke sana.
+>
+> Penulis paper ini saya susun sesuai urutan pembimbing tesis: saya, Prof. Tohari, lalu Bapak.
+>
+> Saya mohon arahan Bapak untuk dua hal:
+> 1. Apakah Bapak setuju saya submit ke ICAIIC 2027?
+> 2. Apakah Bapak setuju dengan susunan penulis ini?
+>
+> Saya juga mohon masukan dan revisi Bapak untuk papernya. Saya akan memperbaikinya sebelum submit. Kalau Bapak lebih nyaman berkomentar langsung di file, Bapak bisa memakai tautan ini:
+> https://drive.google.com/file/d/1CZ0hM-vWiUCgXFUwQpEoDTWG1ADeM0i4/view
+>
+> Saya berencana submit pada 14 November 2026. Terima kasih, Pak.
+
 ---
 
 *Conventions: append events, never rewrite. Statuses: pending → sent → replied → actioned. See [README.md](README.md).*

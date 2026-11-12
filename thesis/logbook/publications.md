@@ -145,6 +145,11 @@
 - Result: 29 of 32 paragraphs drew no machine verdict. Three drew one machine verdict each at 0.6 (serverless cost, the decision-factor reasoning, the conclusion). Those three were reworded with the same claims and citations; on retest the first and the last read human 3 of 3, and the decision-factor paragraph stayed split (one machine at 0.6). A second rewording of that paragraph read human 5 of 5 (plants 10 of 10 machine), so no paragraph now draws a machine verdict. The meaning-based overlap tier also ran (CPU-only torch): one threshold hit, a false positive caused by the heading glued to the first sentence; details in RESULTS.md.
 - Evidence: [icaiic-2027-review/ai-perception/RESULTS.md](icaiic-2027-review/ai-perception/RESULTS.md).
 
+### 2026-11-12 (night) - Prof. Tohari Ahmad added as second author
+- Status: pending
+- What changed: at the user's request the author list is now Masruri, Tohari Ahmad, Royyana Muslim Ijtihadie (thesis supervisor order). Email tohari@if.its.ac.id from his ITS profile. Both conference builds are still 6 pages; the anonymous build has 0 author lines. The adviser draft now states the order and asks Pak Roy to approve it (`WA-2026-11-12-01`, "author list set").
+- Evidence: `paper/authors.typ`; [icaiic-2027-submission.md](icaiic-2027-submission.md) section 4.
+
 ### PAPER-001 outline (6–7 pages, IEEE two-column)
 - Title and abstract: proposed title "GRU-Based Predictive Autoscaling for Hybrid Kubernetes and Serverless Clusters". Keywords: Kubernetes, serverless, autoscaling, workload prediction, GRU. Abstract of 120–150 words, no citations.
 - Framing note: serverless carries the paper's emphasis, because the study compares a Kubernetes backend against a serverless backend and then the two hybrid modes. State one caveat in the first paragraph of Section III, or a reviewer will read the platform claim as false: both backends run on a single k3d testbed, simulating a two-platform deployment, with separate namespaces, separate ingress paths, and separate workload instances (`ch03-method`, `ch03-infra`).
