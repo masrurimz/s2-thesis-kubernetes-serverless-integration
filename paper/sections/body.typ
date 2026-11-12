@@ -13,16 +13,17 @@
   platform can instead serve the extra load within seconds, but at a higher price per request. A hybrid
   serves the base load on Kubernetes and the overflow on a serverless platform. We ask whether a forecast
   still helps in such a hybrid. Every 15~s, a router sends the load above the capacity of the ready
-  Kubernetes pods to Knative, and a scaler derived from ElaX sets the number of pods. In the predictive
-  hybrid, the scaler also uses a 135~s forecast from a gated recurrent unit (GRU) plus a safety margin.
-  The reactive hybrid has no forecast. We replayed the ClarkNet trace against both hybrids, Kubernetes
-  with the Horizontal Pod Autoscaler (HPA), and Knative alone. Both hybrids had the projected cost of
-  Kubernetes with the HPA. Knative alone had the lowest 99th-percentile latency (p99) at more than twice
-  that cost. In ten pairs of runs, the forecast added #H.b10b.replica_pct% more pod-seconds but did not
-  measurably change the p99 (difference #H.b10b.diff ms, 95% CI \[#H.b10b.ci_lo, #H.b10b.ci_hi\],
-  $p = #H.b10b.p$). The test can detect differences above about #H.b10b.mde ms. The GRU was no more
-  accurate than a linear autoregression. The serverless platform probably already serves the load while
-  new pods start.
+  Kubernetes pods to the serverless platform Knative. A scaler derived from the forecast-based autoscaler
+  ElaX sets the number of pods. In the predictive hybrid, the scaler also uses a 135~s forecast from a
+  gated recurrent unit (GRU) plus a safety margin. We replayed the
+  ClarkNet trace against both hybrids, Kubernetes with the Horizontal Pod Autoscaler (HPA), and Knative
+  alone. Both hybrids had the projected cost of Kubernetes with the HPA. Knative alone had the lowest
+  99th-percentile latency (p99) at more than twice that cost. In ten confirmatory pairs of
+  runs, the forecast added #H.b10b.replica_pct% more pod-seconds but did not measurably change the p99
+  (difference #H.b10b.diff ms, 95% CI \[#H.b10b.ci_lo, #H.b10b.ci_hi\], $p = #H.b10b.p$). With ten pairs,
+  the test detects differences of about #H.b10b.mde ms or more. The GRU was no more accurate than a linear
+  autoregression. A likely, untested explanation is that the serverless platform already serves
+  the load while new pods start.
 ]
 
 #let keywords = ([Kubernetes], [serverless computing], [autoscaling], [workload prediction],
@@ -30,7 +31,8 @@
 
 #let body(extended: false) = [
 = Introduction
-Many web services must answer within a fixed time, and their load changes from minute to minute. A
+Many web services must answer within a fixed time, a service-level objective (SLO), and their load
+changes from minute to minute. A
 Kubernetes deployment adds capacity only after the load has risen. The Horizontal Pod Autoscaler (HPA)
 adds pods, the running copies of a service, only after the CPU use crosses a target @serracanta2025hpa.
 If no node has room for a new pod, the cluster must also start a new virtual machine, which takes one to
@@ -42,15 +44,16 @@ There are two remedies for this delay. The first remedy predicts the load and ad
 load arrives. ElaX does this for a container cluster with an hourly long short-term memory (LSTM)
 forecast @yang2019elax. The
 second remedy sends the excess load to a serverless platform, which adds instances within seconds
-@demystifying2025. Each new instance still has a cold-start delay @golec2023cold. Serverless is also
+@demystifying2025. Each new instance still has a start-up (cold-start) delay @golec2023cold. Serverless is also
 expensive for steady load. Public platforms charge a higher unit price plus a fee per invocation
 @demystifying2025, and steady load costs several times more there than on virtual machines
 @dehigama2024. A hybrid deployment therefore serves the stable base load on reserved machines and sends
 only the excess to serverless functions @dehigama2024.
 
 Both remedies target the same delay, and a hybrid already uses the second one. While new pods and nodes
-start, the serverless platform serves the excess load. A forecast can then remove only the delay that the
-serverless platform leaves, and its extra pods cost money. A forecaster must also be trained and served.
+start, the serverless platform serves the excess load. A forecast can only remove the part of the delay
+that the serverless platform does not cover, and its extra pods cost money. A forecaster must also be
+trained and served.
 An operator of a hybrid therefore needs to know whether the forecast pays for itself. Prior work does not
 answer this. MArk @zhang2019mark and Spock @gunasekaran2019spock combine both remedies on virtual
 machines. Spock reports fewer SLO violations with its forecast, but only in a simulator, and its forecast
@@ -73,12 +76,10 @@ follows.
 
 We judge latency by the 99th-percentile latency (p99) of each run, the time within which 99% of the
 requests finish. A surge delays only the requests that arrive while capacity is short. These requests
-are a small share of the total, so the mean latency hides them, but the p99 shows them. Our
-service-level objective (SLO) is a p99 of 200~ms. Both hybrids had the same projected cost as S1, but
-the reactive hybrid had a higher p99 than S1. In ten pre-specified pairs, the forecast added
-#H.b10b.replica_pct% more pod-seconds and gave no measurable p99 gain. The GRU was also no more accurate
-than a linear autoregression. The forecast thus changed how many pods ran, but it did not measurably
-change how fast the requests finished.
+are a small share of the total, so the mean latency hides them, but the p99 shows them. Our SLO is a p99
+of 200~ms. Both hybrids had the same projected cost as S1, but the reactive hybrid (S3) had a higher p99
+than S1. In the ten pairs of a confirmatory batch, the forecast added #H.b10b.replica_pct% more
+pod-seconds (pods times seconds running) but did not measurably change how fast the requests finished.
 
 = Related work <sec:related>
 *Hybrid execution.* The closest systems pair virtual machines with serverless functions. MArk provisions
@@ -102,9 +103,9 @@ model when the forecast error rises @hypa2023. KAPETÁNIOS adapts HPA parameters
 of the cluster @kapetanios2022. Forecast-based scalers for Kubernetes use time-series models of CPU use
 @mondal2023toward or of the request rate @yuan2024time. AAPA adds archetype awareness and uncertainty
 estimates for serverless workloads @aapa2025. ADAPT sets its planning horizon from an online estimate of
-the cold-start duration @adapt2026. Each of these systems scales one platform only. A recent benchmark
-found that a calibrated rule-based autoscaler beat six deep reinforcement learning algorithms on cost
-@rayscale2026.
+the cold-start duration @adapt2026. A calibrated rule-based autoscaler beat six deep reinforcement
+learning algorithms on cost @rayscale2026. Each of these systems scales one platform only, and none
+sends overflow to serverless.
 
 *Serverless cost and cold starts.* A survey of serverless resource management names the start-up delay
 of new function instances as a challenge for autoscaling @mampage2022holistic. Benchmarks measure this
@@ -122,10 +123,10 @@ and the CPU and memory needed to keep instances warm @highcost2025 add to that b
   each service to service dependencies and to workload changes over time @stalex2025.
 ]
 
-*ElaX.* @tab:elax compares Algorithm 2 with ElaX. Algorithm 2 keeps two parts of ElaX. It reserves
-capacity from a forecast, and it sizes for the largest predicted value. It changes the predictor, the
-horizon, the refresh period and the decision factor. It also runs next to a router, which ElaX does not
-have.
+*ElaX.* @tab:elax compares Algorithm 2 with ElaX. Algorithm 2 keeps two parts of ElaX. It adds capacity
+ahead of time from a forecast, and it sizes for the largest predicted value. It changes the predictor,
+the horizon, the refresh period and the decision factor. It also runs next to a router, which ElaX does
+not have.
 
 #tab-elax <tab:elax>
 
@@ -139,14 +140,14 @@ number of ready pods $n$ from the Kubernetes API. Then it runs the two algorithm
 passes its readiness probe and can receive traffic.
 
 == Algorithm 1: capacity-aware router
-One ready pod serves $r_"eff" = r_"sat" dot u = 33.3 times 0.5 = 16.65$ RPS. Here, $r_"sat"$ is the
-measured saturation throughput of three pods divided by three, and $u$ is the target utilization. The
+One ready pod serves $r_"eff" = r_"sat" dot rho = 33.3 times 0.5 = 16.65$ RPS. Here, $r_"sat"$ is the
+saturation throughput of one pod, measured with three pods, and $rho$ is the target utilization. The
 ready capacity is $C = n dot r_"eff"$. Kubernetes serves the load up to $C$. Knative receives the rest
 through the serverless weight, in percent:
 $ w_"sls" = cases(0 & "if" x <= C, min(50, ceil(100 (x - C) \/ x)) & "otherwise.") $
-The weight reaches its target in one cycle (@alg:routing). The cap of 50% limits the serverless cost
-when the Kubernetes capacity is far below the load. A forecast can change the weight only through the
-pods that Algorithm 2 adds. The implementation also has a pacing term in the style of BACC @bacc2026.
+The router applies the new weight at once, without smoothing (@alg:routing). The cap of 50% limits the
+serverless cost when the Kubernetes capacity is far below the load. A forecast can change the weight only
+through the pods that Algorithm 2 adds. The code also has a pacing term in the style of BACC @bacc2026.
 This term cannot reach its threshold within one run, so @alg:routing omits it.
 
 #alg-routing <alg:routing>
@@ -175,9 +176,9 @@ times the current replica count, 120~s have passed since the last scale-down, an
 
 #alg-scaling <alg:scaling>
 
-We size for the upper envelope, and not for the point forecast, because a forecast that is too low costs
-more than one that is too high. A pod that arrives late causes SLO violations. A pod that arrives early
-only stays idle. The
+We size for the upper envelope, and not for the point forecast, because a forecast that is too low
+costs more than one that is too high. A pod that arrives late causes SLO violations. A pod that arrives
+early only stays idle. The
 forecast can only raise the target. If the GRU predicts too low, the observed load still sets the replica
 count. The scaler holds a raised target for 90~s. Without the hold, a short dip in the load would remove
 pods, and the next forecast would ask for them again 15~s later.
@@ -193,8 +194,8 @@ delay plus one control cycle.
 = GRU forecaster <sec:gru>
 *Model.* A two-layer GRU @cho2014learning @chung2014empirical with #G.hidden hidden units reads the last
 30 load samples, one sample per 15~s. One dense output layer emits all nine future steps. The forecast
-server answers in #G.latency.median ms (median; p95 #G.latency.p95 ms), which is small compared with the
-15~s cycle.
+server answers in #G.latency.median ms (median; p95 #G.latency.p95 ms), so the forecast does not delay
+the 15~s control loop.
 
 *Leak-free protocol.* We aggregate the ClarkNet HTTP trace @clarknet into 15~s buckets and multiply it
 by 33, the factor that the replay uses. We split the series in time order into training, validation and
@@ -218,10 +219,9 @@ so the deployed model never saw it.
 *Accuracy.* @tab:predictor reports the error on the test portion at the 9-step horizon, in RPS of the
 replayed series, over three seeds. A persistence forecast repeats the last value. Skill is the share of
 its error that a model removes. The GRU has a skill of #G.gru.skill. It is slightly more accurate than
-an LSTM, the model family of ElaX, tuned in the same way. This comparison favors the LSTM, which was
-trained on the training and validation portions, while the GRU was trained on the training portion only.
-The GRU does not beat a linear autoregression on the same inputs, and none of the #G.levers other
-variants that we screened beat the linear model either.
+an LSTM, the model family of ElaX, tuned in the same way, although the LSTM had more training data. The
+GRU does not beat a linear autoregression on the same inputs, and none of the #G.levers other variants
+that we screened beat the linear model either.
 
 #tab-predictor <tab:predictor>
 
@@ -246,38 +246,39 @@ variants that we screened beat the linear model either.
 Kubernetes cluster has one static worker plus the dynamic nodes of @sec:design. Docker limits each of
 these workers to one CPU. The Knative cluster has one worker with three CPUs. Its autoscaler keeps three
 to ten pods, so Knative never scales to zero. Each pod requests 0.3 CPU. Each request computes the 33rd
-Fibonacci number and then waits 50~ms to simulate I/O.
+Fibonacci number (CPU work) and then waits 50~ms (simulated I/O).
 
 *Workload.* The load generator k6 replays a 20-minute ClarkNet window in 40 steps of 30~s, with a mean of
-73~RPS and a peak of 164~RPS. Each request slower than the 200~ms SLO counts as one SLO violation.
+73~RPS and a peak of 164~RPS. Each request slower than the 200~ms SLO counts as one SLO violation, and
+one run serves about #F.requests requests.
 
 *Scenarios and batches.* @tab:scenarios lists the four scenarios. In the scenario batch, each scenario
 ran five times. The comparison of S4 with S3 then ran in pairs. Both runs of a pair start from one static
-worker and use the same provisioning delay. The delay cycles through 60, 90, 120, 75 and 45~s from pair
-to pair. The order of S3 and S4 alternates between pairs (counterbalancing), so a drift of the host does
-not favor one arm. Three paired batches used the leak-free GRU of @sec:gru: A (5 pairs), B (10 pairs)
-and C (10 pairs). Each batch fixed its primary endpoint and its test level in the run profile before the
-first run. B and C used the same ten-pair profile. B ran while other processes loaded the host, so C
-repeated it on a quieter host. We treat C as the confirmatory batch. An earlier batch of five pairs
-showed a significant advantage for S4. We do not count it as evidence for the leak-free GRU. Its run
-manifests do not identify the predictor, and the predictor of that period was trained on a synthetic
-trace.
+worker and face the same provisioning delay. The timer cycles this delay through 60, 90, 120, 75 and
+45~s from pair to pair. The order of S3 and S4 alternates between pairs (counterbalancing), so a drift of
+the host does not favor one arm. Three paired batches used the leak-free GRU of @sec:gru: A (5 pairs), B
+(10 pairs) and C (10 pairs). Each batch fixed its main measure and its test level before the first run.
+B and C used the same design. B ran while other processes loaded the host, so C repeated it on a quieter
+host. We treat C as the confirmatory batch. We exclude an earlier batch of five pairs that favored S4,
+because its run records do not identify the predictor, and the predictor of that period was trained on a
+synthetic trace.
 
-*Tests and validity.* The primary endpoint is the p99 of each run, the 99th percentile of all request
-latencies in that run. For the paired batches, we use a one-sided exact paired permutation test at a
-level of 0.05, with the alternative that S4 is faster. We also report a bootstrap 95% interval and the
-paired Cohen's $d$. A run counts only when it passes validity checks. A hybrid run must use the node
-tier. That is, a pod must become unschedulable or a dynamic node must be provisioned. An S4 run must also
-receive every eligible forecast, use a horizon that covers the provisioning delay, and raise the replica
-target from a forecast at least once. Every run of the three paired batches passed (#H.b5.valid of
-#H.b5.runs, #H.b10a.valid of #H.b10a.runs and #H.b10b.valid of #H.b10b.runs). Batch C received
-#H.b10b.delivered of #H.b10b.eligible forecasts. Batches B and C also recorded the CPU-busy fraction of the
-host, the share of non-idle CPU time, sampled from `/proc/stat` during a run.
+*Tests and validity.* The main measure is the p99 of each run, the 99th percentile of all request
+latencies in that run. Our hypothesis is that S4 has a lower p99 than S3. For the paired batches, we
+therefore use a one-sided exact paired permutation test at a level of 0.05. We also report a bootstrap
+95% interval, the range of mean differences that fits the data, and the paired Cohen's $d$, an effect
+size. A run counts only when it passes validity checks. A hybrid run must use the node tier. That is, a
+pod must become unschedulable or a dynamic node must be provisioned. An S4 run must also receive every
+forecast it requests, use a horizon that covers the provisioning delay, and raise the replica target
+from a forecast at least once. Every run of the three paired batches passed (#H.b5.valid of #H.b5.runs,
+#H.b10a.valid of #H.b10a.runs and #H.b10b.valid of #H.b10b.runs). Batch C received #H.b10b.delivered of
+#H.b10b.eligible forecasts. Batches B and C also recorded the CPU-busy fraction of the host, the share of
+non-idle CPU time, sampled from `/proc/stat` during a run.
 
 *Cost.* We project the cost onto AWS prices. Kubernetes maps to an EKS control plane plus t3.medium
 nodes, sized from the mean Kubernetes CPU use. Knative maps to Lambda with provisioned concurrency, sized
 from the serverless request rate. We scale each 20-minute run to a 30-day month. The projection charges
-nodes, not pod-seconds, so it cannot resolve differences smaller than about one node-month.
+nodes, not pod-seconds, so it cannot resolve differences smaller than one node running for a month.
 
 #if extended [
   *Run conditioning.* Before each run of the paired batches, the experiment tool sets the static worker
@@ -293,7 +294,7 @@ nodes, not pod-seconds, so it cannot resolve differences smaller than about one 
 
 = Results <sec:results>
 == Hybrids compared with single-platform baselines
-@tab:four and @fig:runs compare the four scenarios. One run serves about #F.requests requests. S2 gave
+@tab:four and @fig:runs compare the four scenarios. S2 gave
 the lowest p99, but its cost of #F.s2.cost USD per month is more than twice that of any scenario with
 Kubernetes. The comparison with S2 is not fair, because S2 ran three always-warm pods on a three-CPU
 worker, while S1 started from one pod on a one-CPU worker. The two hybrids had the same
@@ -307,8 +308,8 @@ for S1, with more SLO violations, and one of its five runs exceeded the SLO.
 #fig-runs <fig:runs>
 
 The S4 row needs a caveat. This batch ran before the leak-free GRU of @sec:gru existed. Its run
-manifests do not record the predictor. Its logged envelope lay about 10~RPS above the point forecast,
-while the margin of the leak-free GRU is #G.offset_min to #G.offset_max RPS. In this batch, S4 held the p99
+manifests do not record the predictor. Its logged margin was about 10~RPS, against #G.offset_min to
+#G.offset_max RPS for the leak-free GRU. In this batch, S4 held the p99
 at #F.s4.p99 ms, #F.s4_vs_s1.abs_pct% below S1 (two-sided Mann-Whitney $p = #F.s4_vs_s1.p$). This row
 does not measure the forecaster of @sec:gru. The paired batches do.
 
@@ -349,15 +350,13 @@ both arms used the same node tier.
 
 The extra pods cannot be credited to the GRU itself. The margin alone adds #G.offset_min to
 #G.offset_max RPS, or three to four pods, to a mean load of 73~RPS. The hold keeps these pods for 90~s.
-The GRU is
-also no more accurate than a linear autoregression (@tab:predictor). A linear or persistence forecast
-with the same margin may therefore add the same pods. We did not run this baseline.
+The GRU is also no more accurate than a linear autoregression (@tab:predictor). A linear or persistence
+forecast with the same margin may therefore add the same pods. We did not run this baseline.
 
-Both arms provisioned about #H.b10b.nodes dynamic nodes per run. The first node became ready
-#H.b10b.delay_min to #H.b10b.delay_max s after the scale-up request. In that window, the router sent the
-excess load to Knative in both arms. We did not record which backend served the slowest requests. We
-therefore cannot say whether the slowest requests came from Knative, from Kubernetes pods that were still
-starting, or from the shared host.
+Both arms provisioned about #H.b10b.nodes dynamic nodes per run. Until the first node was ready, the
+router sent the excess load to Knative in both arms. We did not record which backend served the slowest
+requests, so we cannot say whether they came from Knative, from Kubernetes pods that were still starting,
+or from the shared host.
 
 = Discussion <sec:discussion>
 One explanation fits these results. Inside a hybrid, Knative serves the load during the provisioning

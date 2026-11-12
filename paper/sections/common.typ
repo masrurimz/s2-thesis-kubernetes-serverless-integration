@@ -179,7 +179,7 @@
     toprule,
     tnote(6)[#super[a]S4 ran an earlier GRU, not the model of @sec:gru.],
   ),
-  caption: [Scenario batch, means over five runs per scenario],
+  caption: [Scenario batch, means over five runs per scenario. SLO viol.: requests over 200~ms per run],
 )
 
 #let h2row(label, b) = (
