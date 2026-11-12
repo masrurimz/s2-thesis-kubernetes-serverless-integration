@@ -17,7 +17,8 @@
   (GRU), plus a safety margin, and adds pods before the load arrives. The reactive hybrid has no
   forecast. We replayed the ClarkNet web trace against both hybrids, Kubernetes with the Horizontal Pod
   Autoscaler (HPA), and Knative alone. Both hybrids matched the projected cost of Kubernetes with the
-  HPA, but the reactive hybrid had a higher 99th-percentile latency (p99). In ten pairs of runs planned
+  HPA, but the reactive hybrid had a higher 99th-percentile latency (p99). Knative alone had the lowest
+  p99 at more than twice the cost. In ten pairs of runs planned
   in advance, the forecast changed p99 by #H.b10b.diff ms (95% CI \[#H.b10b.ci_lo, #H.b10b.ci_hi\],
   $p = #H.b10b.p$) and used #H.b10b.replica_pct% more pod-seconds. This design detects differences
   above about #H.b10b.mde ms. The GRU was also no more accurate than a linear autoregression. One
