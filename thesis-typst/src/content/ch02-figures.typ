@@ -118,8 +118,8 @@
       (cx, top - 0.34), text(size: 8pt, weight: "bold", fill: c-dp-edge, label),
       anchor: "center",
     )
-    dbox((cx, top - 1.05), 4.3, 0.72, c-box, c-box-edge, [kubelet], size: 7.5pt)
-    dbox((cx, top - 1.9), 4.3, 0.72, c-box, c-box-edge, [kube-proxy], size: 7.5pt)
+    dbox((cx + 0.3, top - 1.05), 3.6, 0.72, c-box, c-box-edge, [kubelet], size: 7.5pt)
+    dbox((cx + 0.3, top - 1.9), 3.6, 0.72, c-box, c-box-edge, [kube-proxy], size: 7.5pt)
 
     // Pods group (dashed) with two containers + runtime label
     let ptop = top - 2.5
@@ -142,9 +142,12 @@
       anchor: "center",
     )
 
-    // kubelet / kube-proxy -> pods
-    darrow((cx, top - 1.41), (cx, ptop + 0.02), label: none)
-    darrow((cx, top - 2.26), (cx, ptop + 0.02), label: none)
+    // kubelet -> pods runs down the free left margin so it never crosses kube-proxy
+    cetz.draw.line(
+      (cx - 1.5, top - 1.05), (cx - 1.75, top - 1.05), (cx - 1.75, ptop + 0.02),
+      mark: (end: "stealth", fill: c-arrow), stroke: c-arrow,
+    )
+    darrow((cx + 0.3, top - 2.26), (cx + 0.3, ptop + 0.02), label: none)
   }
 
   // ---- two worker nodes (Node 1 above Node 2) ------------------------------
@@ -155,8 +158,8 @@
   darrow((cp-cx + 2.3, 6.9), (node-cx - 2.15, 8.7 - 1.05), label: none)
   darrow((cp-cx + 2.3, 6.9), (node-cx - 2.15, 4.35 - 1.05), label: none)
   cetz.draw.content(
-    (6.95, 5.4), text(size: 6.5pt, fill: c-note, cap([kubelet watches apiserver], [kubelet memantau\ apiserver])),
-    anchor: "center",
+    (6.95, 7.6), text(size: 6.5pt, fill: c-note, cap([kubelet watches apiserver], [kubelet memantau\ apiserver])),
+    anchor: "south",
   )
 })
 

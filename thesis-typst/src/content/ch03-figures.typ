@@ -147,7 +147,7 @@
   )
   container((4.8, 3.2), 3.8cm, 1.6cm, cap([Knative Backend], [_Backend_ Knative]), [Knative + Kourier], cap([scale-to-zero serverless], [_serverless_ dengan _scale-to-zero_]), c-inf)
   container((9.2, 3.2), 3.8cm, 1.6cm, cap([K3s Backend], [_Backend_ K3s]), cap([K3s via k3d], [K3s melalui k3d]), cap([always-warm pods], [_pod_ selalu hangat]), c-inf)
-  tag((7.0, 1.6), cap([simulated platform separation\
+  tag((7.0, 1.35), cap([simulated platform separation\
     (shared physical testbed)], [pemisahan platform tersimulasi\
     (_testbed_ fisik bersama)]))
 

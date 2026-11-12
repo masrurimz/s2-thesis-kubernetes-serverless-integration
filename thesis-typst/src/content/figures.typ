@@ -40,7 +40,7 @@
 
 // ---------------------------------------------------------------------------
 // fig04_5 — Monthly cost comparison (n=1 directional diagnostic).
-// Bars S1/S2/S3/S4; dashed h-line at the July paired batch cost (S3=S4=163).
+// Bars S1/S2/S3/S4.
 // ---------------------------------------------------------------------------
 #let fig-cost-comparison() = bar-chart(
   ((cap("S1: K8s Only", "S1: hanya K8s"), 132), (cap("S2: Serverless Only", "S2: hanya serverless"), 395), (cap("S3: Hybrid Reactive", "S3: hybrid reaktif"), 147), (cap("S4: Hybrid Predictive", "S4: hybrid prediktif"), 143)),
@@ -51,9 +51,6 @@
   subtitle: cap([Directional diagnostic estimate (n=1)], [Perkiraan diagnostik arah (n=1)]),
   x-label: cap([Scenario], [Skenario]),
   theme: (palette: (s1, s2, s3, s4)),
-  annotations: (
-    (type: "h-line", value: 163, dash: "dashed", color: slo, label: cap([July paired batch, history (S3 = S4 = 163)], [Batch berpasangan Juli, sejarah (S3 = S4 = 163)])),
-  ),
 )
 
 // ---------------------------------------------------------------------------

@@ -77,7 +77,7 @@ Four mechanisms enforce the logical isolation between the two platforms. First, 
 The system uses Prometheus for metrics collection. It also uses an SLO monitor component for real-time compliance checking. Prometheus scrapes HAProxy statistics at 1-second intervals. It collects request counts, response times, and backend health status. The SLO Monitor computes the 99th percentile (p99) tail latency from Prometheus time-series data. It also maintains a rolling violation window to detect sustained SLO breaches.
 
 #figure(
-  align(center, fig-control-loop()),
+  align(center, scale(90%, reflow: true, fig-control-loop())),
   caption: [Hybrid system architecture],
 ) <fig:control-loop>
 
@@ -101,7 +101,7 @@ Algorithm 1 sets the traffic split between the Kubernetes and serverless backend
 
 - *Capacity.* The effective Kubernetes capacity C is the number of ready replicas times r_effective, the effective rate per replica. Ready replicas count, not desired replicas.
 - *Split.* When the observed load x is at or below C, the serverless weight is 0. Above C, the serverless weight is the burst share, rounded up: ceil(100 (x - C) / x). The weight is capped at 50. When the cap binds, the controller flags a capacity deficit. The weight moves to the target in one cycle, with no fixed step.
-- *Pacing.* A proportional-integral term adds serverless weight when cycles with p99 above 200 ms use up a violation budget (1000 violations per 1200 s run) faster than allowed. The controller counts at most one violation per 15-second cycle, so the burn rate stays below 8% of the allowance, and the term never added weight in the reported runs. In the four-scenario diagnostic (n = 1) the logged pacing adjustment was −5 or −7 points, which lowered the serverless weight. The term is therefore inactive in the reported results.
+- *Pacing.* A proportional-integral term adds serverless weight when cycles with p99 above 200 ms use up a violation budget (1,000 violations per 1,200 s run) faster than allowed. The controller counts at most one violation per 15-second cycle, so the burn rate stays below 8% of the allowance, and the term never added weight in the reported runs. In the four-scenario diagnostic (n = 1) the logged pacing adjustment was −5 or −7 points, which lowered the serverless weight. The term is therefore inactive in the reported results.
 - *Label.* Each decision carries a label for logs and statistics. A weight increase is PREDICTIVE when predicted_upper exceeds the observed load, and REACTIVE otherwise. A weight decrease is RECOVERY. No change is MAINTAIN. The label does not change the weights.
 
 In S4 the controller derives predicted_upper from the forecast. When the observed load rises by more than 3 RPS per cycle and exceeds 80% of capacity, predicted_upper is the larger of the forecast and a nine-step linear extrapolation of the observed load. predicted_upper sets only the label. Algorithm 2 sizes replicas from the daemon's own forecast signal. The split never reads either value. In S3 no forecast exists, so the label is always REACTIVE, RECOVERY, or MAINTAIN. When serverless first enables, the controller sends a health-check request to the Knative endpoint, meant to start a cold start before traffic arrives. In the September confirmatory batch that request returned HTTP 404 in every run, and no run logged a successful pre-warm. The July runs logged a successful pre-warm. The likely cause is that the probe uses a fixed host name that the September cluster did not answer, so the pre-warm did not take place there.
@@ -110,7 +110,7 @@ In S4 the controller derives predicted_upper from the forecast. When the observe
   [#text(weight: "bold")[Algorithm 1:] Routing Controller (capacity-driven split)],
   [
     *Input:* p99 (SLO status); x (observed load, RPS); n_ready (ready Kubernetes replicas); forecast = \{predicted_requests, confidence\} (S4 only); current weights (k3s, knative), serverless_enabled \
-    *Parameters:* r_effective = r_saturation \* target_cpu_util, max_knative = 50, confidence_threshold = 0.5, violation budget = 1000 cycles per 1200 s run, PI gains kp and ki, cycle = 15 s
+    *Parameters:* r_effective = r_saturation \* target_cpu_util, max_knative = 50, confidence_threshold = 0.5, violation budget = 1,000 cycles per 1,200 s run, PI gains kp and ki, cycle = 15 s
   ],
   (
     (1, [*if* p99 <= 0 *and* x <= 0 *then* *return* MAINTAIN (current weights)]),
@@ -206,7 +206,7 @@ Phase A0 validates infrastructure and autoscaler mechanisms. Phase A1 validates 
 
 === #H("ch3-metrics")
 
-User-perceived performance metrics include p50, p95, and p99 latency, error rate, and achieved throughput. The primary SLO metric is p99 latency with a threshold of 200ms. Routing and control-plane metrics include weight change count, time-in-serverless percentage, prediction usage rate, and control-loop latency. Kubernetes replica scaling metrics include desired replicas, current replicas, ready replicas, scale-up/down events and latencies, and oscillation index. Resource and cost proxy metrics include CPU/memory utilization, K8s capacity time, Knative active time, and cost-normalized metrics (USD/1M requests, USD/1M SLO-compliant requests).
+User-perceived performance metrics include p50, p95, and p99 latency, error rate, and achieved throughput. The primary SLO metric is p99 latency with a threshold of 200 ms. Routing and control-plane metrics include weight change count, time-in-serverless percentage, prediction usage rate, and control-loop latency. Kubernetes replica scaling metrics include desired replicas, current replicas, ready replicas, scale-up/down events and latencies, and oscillation index. Resource and cost proxy metrics include CPU/memory utilization, K8s capacity time, Knative active time, and cost-normalized metrics (USD/1M requests, USD/1M SLO-compliant requests).
 
 === #H("ch3-stats")
 

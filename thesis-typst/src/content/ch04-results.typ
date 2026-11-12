@@ -269,7 +269,6 @@ Eight batches compared S3 and S4 before the pre-registered batch.
 Two further batches from 2026-08-07 are left out, because their result files were deleted before they were committed.
 
 #[
-#set par(justify: false)
 #figure(
   kind: table,
   table(
@@ -524,14 +523,14 @@ Pooling all 25 pairs that ran the ClarkNet-trained predictor gives -16.5 ms (95%
 The earlier July batch found -62.5 ms (p = 0.0312), but its predictor cannot be verified, so @sec:h2-history reports it as history.
 
 Two caveats bound these conclusions.
-First, the n = 1 four-scenario diagnostic provides directional mechanism evidence but no inferential statistics for H1.
+First, the n = 1 four-scenario diagnostic provides directional mechanism evidence but no inferential statistics for H1, and the five-run replication, in which S1 did not saturate, did not reproduce it.
 Second, power is limited at this effect scale.
 The paired standard deviation is 484.5 ms over the 25 pairs, and the per-batch values range from 83.6 ms to 1057.3 ms (recomputed from the bundles).
 The pre-registered batch ran ten pairs for this reason and still found a negligible difference.
 Its primary p99 test was pre-specified.
 Its secondary metrics (p95, SLO violations) are not significant after multiplicity correction (corrected p = 1.0) and are reported as descriptive.
 
-Taken together, the results support H1 directionally (the hybrid architecture outperforms the saturated pure Kubernetes baseline at n = 1).
+Taken together, the results support H1 only directionally: the hybrid architecture beat a saturated pure Kubernetes baseline in one n = 1 run, and the replication with replica headroom did not reproduce it.
 H2 is not supported.
 The pre-registered batch found a negligible difference, and the pooled 25-pair estimate of -16.5 ms has a confidence interval spanning zero.
 A batch can test H2 only when the predictive arm acts on its forecast.

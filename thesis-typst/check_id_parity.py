@@ -23,8 +23,8 @@ from pathlib import Path
 CONTENT = Path(__file__).parent / "src" / "content"
 
 PATTERNS = {
-    "citation": re.compile(r"(?<![\w@])@([A-Za-z][\w:-]*\w)"),
-    "label": re.compile(r"<([A-Za-z][\w:-]*)>"),
+    "citation": re.compile(r"(?<![\w@])@([A-Za-z][\w:-]*\w)|#cite\(<([A-Za-z][\w:-]*)>"),
+    "label": re.compile(r"(?<!cite\()<([A-Za-z][\w:-]*)>"),
     "heading key": re.compile(r'H\("([^"]+)"\)'),
     "code block": re.compile(r"`[^`\n]+`"),
 }
@@ -63,6 +63,7 @@ def numbers(text: str) -> Counter:
 def facts(path: Path) -> dict[str, Counter]:
     text = strip_comments(path.read_text(encoding="utf-8"))
     out = {name: Counter(p.findall(text)) for name, p in PATTERNS.items()}
+    out["citation"] = Counter(key or cite for key, cite in PATTERNS["citation"].findall(text))
     out["structure"] = Counter({label: text.count(token) for token, label in COUNTED.items()})
     out["number"] = numbers(text)
     return out

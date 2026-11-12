@@ -75,28 +75,28 @@
     #upper(essay)
   ]
 
+  // The author block follows the title, so a long title pushes it down
+  // instead of printing over it.
   place(left + top, dx: 3cm, dy: 10cm)[
-    #set text(size: 22pt, weight: "bold")
     #block(width: 15cm)[
-      #set text(hyphenate: false)
+      #set text(size: 22pt, weight: "bold", hyphenate: false)
+      #set par(justify: false)
       #title.id
     ]
-  ]
-
-  place(left + top, dx: 3cm, dy: 15cm)[
+    #v(0.8cm)
     #set text(size: 14pt, weight: "bold")
     #upper(author) \
     #upper(nrp)
   ]
 
-  place(left + top, dx: 3cm, dy: 18cm)[
+  place(left + top, dx: 3cm, dy: 19cm)[
     #set text(size: 12pt, weight: "bold")
     DOSEN PEMBIMBING \
     #supervisors.at(0).name \
     #supervisors.at(1).name
   ]
 
-  place(left + top, dx: 3cm, dy: 21cm)[
+  place(left + top, dx: 3cm, dy: 22cm)[
     #set text(size: 11pt, weight: "bold")
     #upper(program.type) \
     BIDANG KEAHLIAN #upper(program.courseClass) (#program.courseClassShort) \
@@ -133,28 +133,28 @@
     #upper(essay)
   ]
 
+  // The author block follows the title, so a long title pushes it down
+  // instead of printing over it.
   place(left + top, dx: 3cm, dy: 12cm)[
-    #set text(size: 22pt, weight: "bold")
     #block(width: 15cm)[
-      #set text(hyphenate: false)
+      #set text(size: 22pt, weight: "bold", hyphenate: false)
+      #set par(justify: false)
       #title.id
     ]
-  ]
-
-  place(left + top, dx: 3cm, dy: 17cm)[
+    #v(0.8cm)
     #set text(size: 14pt, weight: "bold")
     #upper(author) \
     #upper(nrp)
   ]
   
-  place(left + top, dx: 3cm, dy: 20cm)[
+  place(left + top, dx: 3cm, dy: 21cm)[
     #set text(size: 12pt)
     DOSEN PEMBIMBING \
     #supervisors.at(0).name \
     #supervisors.at(1).name
   ]
 
-  place(left + top, dx: 3cm, dy: 22.5cm)[
+  place(left + top, dx: 3cm, dy: 23.5cm)[
     #set text(size: 11pt)
     #upper(program.type) \
     BIDANG KEAHLIAN #upper(program.courseClass) (#program.courseClassShort) \
@@ -486,7 +486,10 @@
   ]
 
   //? Image
-  show figure.where(kind: image): it => context [
+  // Table cells are narrow; justified text spreads words apart in them.
+  show table: set par(justify: false)
+
+  show figure.where(kind: image): it => context block(breakable: false)[
     #set text(size: 10pt)
     #it.body
     #supp-image #counter(heading.where(level: 1)).display("1").#it.counter.display(it.numbering). #it.caption.body

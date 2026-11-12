@@ -6,6 +6,7 @@
 // Ported from archived/thesis-latex/src/chapters/104-106-appendix-*.tex
 
 #import "headings.typ": H, cap
+#show raw.where(block: true): set text(size: 8pt)
 
 = #H("app-a")
 
@@ -309,7 +310,7 @@ The predictor studies and the cost model behind Chapter 4 are stored outside the
 #figure(
   kind: table,
   table(
-    columns: (auto, auto, auto),
+    columns: (1fr, auto, 2fr),
     align: left,
     [Study], [Used for], [Location],
     [Twelve-lever representation search], [Chapter 4, GRU performance], [`results/models/gru/2026-09-13_probes-representation/`],
