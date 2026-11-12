@@ -2,21 +2,12 @@
 
 Five of the six figures are rendered natively in Typst via
 ``thesis-typst/src/content/figures.typ`` (cetz/cetz-plot + primaviz). Only the
-H2 effect-size forest plot — which has no first-class native primitive — is
-generated here as a matplotlib PNG.
+H2 effect-size forest plot, which has no first-class native primitive, is
+generated here as a matplotlib PNG, once per edition (English and Indonesian).
 
-Every number is read from the real experiment bundles; nothing is fabricated.
-
-Data sources (all under ``results/experiments/phase-b/``):
-
-- ``2026-07-14_clarknet-tuned-paired-n5/paired_analysis.json`` — definitive
-  paired H2 (d = -1.26, p = 0.030).
-- ``2026-08-08_paired-h2_195150/paired_analysis.json`` — replication RUN1
-  (d = -0.050, p = 0.436).
-- ``2026-08-08_paired-h2_233726/paired_analysis.json`` — replication RUN2
-  (d = -0.505, p = 0.062).
-- ``2026-08-09_clarknet-replay_032257/report.md`` — n=5 RUN3 S4-vs-S3
-  (d = -1.300, Mann-Whitney p = 0.032).
+Every number is read from the experiment bundles under
+``results/experiments/phase-b/``. The pre-registered 2026-09-20 batch is the H2
+result; the other batches are history, named as in the Chapter 4 history table.
 
 Run::
 
@@ -35,14 +26,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # ---------------------------------------------------------------------------
-# Constants (bundle names — single source of truth)
+# Bundles (single source of truth). The four-scenario replication is unpaired
+# and has no paired_analysis.json; its Welch estimate is typed below.
 # ---------------------------------------------------------------------------
-DEFINITIVE_PAIRED = "2026-07-14_clarknet-tuned-paired-n5"
-PAIRED_RUN1 = "2026-08-08_paired-h2_195150"
-PAIRED_RUN2 = "2026-08-08_paired-h2_233726"
-PAIRED_SEP13_PAIR = "2026-09-13_h2-pair-5p"
-PAIRED_SEP13_CONF = "2026-09-13_h2-confirmatory-10p"
-PAIRED_SEP20_QUIET = "2026-09-20_h2-confirmatory-10p"
+PRIMARY = "2026-09-20_h2-confirmatory-10p"
+JULY = "2026-07-14_clarknet-tuned-paired-n5"
+AUGUST_A = "2026-08-08_paired-h2_195150"
+AUGUST_B = "2026-08-08_paired-h2_233726"
+SEPTEMBER_PAIR = "2026-09-13_h2-pair-5p"
+FIRST_CONFIRMATORY = "2026-09-13_h2-confirmatory-10p"
 
 plt.rcParams.update(
     {
@@ -79,99 +71,108 @@ def _paired_stats(repo_root: Path, bundle: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# fig04_6 — H2 forest plot across replication batches.
-# Point estimate = S4−S3 mean-difference (ms); whiskers = 95% CI. Negative = S4
-# faster. CI is on the ms scale in every source (paired CI for the three paired
-# bundles; Welch CI for the n=5 replay RUN3).
+# fig04_6: H2 forest plot. Point = S4-S3 mean p99 difference (ms), whiskers =
+# 95% CI, negative favours S4. The pre-registered batch sits on top in its own
+# colour; history batches follow in date order.
 # ---------------------------------------------------------------------------
-def _fig_replication_batches(repo_root: Path, out_dir: Path) -> Path:
-    st_def = _paired_stats(repo_root, DEFINITIVE_PAIRED)
-    st_run1 = _paired_stats(repo_root, PAIRED_RUN1)
-    st_run2 = _paired_stats(repo_root, PAIRED_RUN2)
-    st_sep13_pair = _paired_stats(repo_root, PAIRED_SEP13_PAIR)
-    st_sep13_conf = _paired_stats(repo_root, PAIRED_SEP13_CONF)
-    st_sep20_quiet = _paired_stats(repo_root, PAIRED_SEP20_QUIET)
+LABELS: dict[str, list[str]] = {
+    "en": [
+        "Pre-registered (09-20, n=10)",
+        "July (07-14, n=5)",
+        "August A (08-08, n=5)",
+        "August B (08-08, n=5)",
+        "Four-scenario replication\n(08-09, 5 runs per arm)",
+        "September pair (09-13, n=5)",
+        "First confirmatory (09-13, n=10)",
+    ],
+    "id": [
+        "Pra-registrasi (20-09, n=10)",
+        "Juli (14-07, n=5)",
+        "Agustus A (08-08, n=5)",
+        "Agustus B (08-08, n=5)",
+        "Replikasi empat skenario\n(09-08, 5 run per lengan)",
+        "Pasangan September (13-09, n=5)",
+        "Konfirmatori pertama (13-09, n=10)",
+    ],
+}
+TEXT: dict[str, dict[str, str]] = {
+    "en": {
+        "xlabel": "S4 - S3 mean p99 difference (ms), negative favours S4",
+        "primary": "H2 result",
+        "history": "History",
+        "file": "fig04_6_replication_batches.png",
+    },
+    "id": {
+        "xlabel": "Selisih rata-rata p99 S4 - S3 (ms), negatif berarti S4 lebih baik",
+        "primary": "Hasil H2",
+        "history": "Sejarah",
+        "file": "fig04_6_replication_batches_id.png",
+    },
+}
 
-    # RUN3 (n=5 replay) S4-vs-S3 from report.md: Welch mean diff −52.50 ms,
-    # 95% CI [−102.60, −11.81], Cohen's d −1.300, Mann-Whitney p 0.0317.
-    st_run3 = {
-        "mean_diff": -52.50,
-        "ci_lower": -102.60,
-        "ci_upper": -11.81,
-        "d": -1.300,
-        "p": 0.0317,
-    }
 
-    labels = [
-        "Definitive\n(07-14 synthetic pred., n=5)",
-        "RUN1\n(08-08 19:51, n=5)",
-        "RUN2\n(08-08 23:37, n=5)",
-        "RUN3\n(08-09 replay, n=5)",
-        "RUN4\n(09-13 pair, ClarkNet, n=5)",
-        "RUN5\n(09-13 confirmatory, ClarkNet, n=10)",
-        "RUN6\n(09-20 quiet-host, ClarkNet, n=10)",
-    ]
+def _fig_replication_batches(repo_root: Path, out_dir: Path, lang: str) -> Path:
+    # Four-scenario replication, S4 vs S3 from its report.md: Welch mean
+    # difference -52.50 ms, 95% CI [-102.60, -11.81], Cohen's d -1.300.
+    four_scenario = {"mean_diff": -52.50, "ci_lower": -102.60, "ci_upper": -11.81, "d": -1.300}
     stats = [
-        st_def,
-        st_run1,
-        st_run2,
-        st_run3,
-        st_sep13_pair,
-        st_sep13_conf,
-        st_sep20_quiet,
+        _paired_stats(repo_root, PRIMARY),
+        _paired_stats(repo_root, JULY),
+        _paired_stats(repo_root, AUGUST_A),
+        _paired_stats(repo_root, AUGUST_B),
+        four_scenario,
+        _paired_stats(repo_root, SEPTEMBER_PAIR),
+        _paired_stats(repo_root, FIRST_CONFIRMATORY),
     ]
+    text = TEXT[lang]
+    sep = 1.0  # extra gap below the primary row
+    ypos = np.array([len(stats) + sep - 1] + list(range(len(stats) - 2, -1, -1)), dtype=float)
 
     fig, ax = plt.subplots(figsize=(8, 6.2))
-    ypos = np.arange(len(labels))[::-1]
-
     ax.axvline(0, color="#999999", linewidth=1.0, zorder=1)
+    ax.axhline(ypos[0] - (1 + sep) / 2, color="#cccccc", linewidth=0.8, zorder=1)
 
-    for y, s in zip(ypos, stats):
-        color = "#2ca02c" if s["p"] < 0.05 else "#bdbdbd"
-        # Asymmetric error: [mean−CI_lower, CI_upper−mean] in ms.
+    for i, (y, s) in enumerate(zip(ypos, stats)):
+        color = "#1f77b4" if i == 0 else "#bdbdbd"
         xerr = [[s["mean_diff"] - s["ci_lower"]], [s["ci_upper"] - s["mean_diff"]]]
         ax.errorbar(
             s["mean_diff"],
             y,
             xerr=xerr,
-            fmt="o",
+            fmt="D" if i == 0 else "o",
             markersize=11,
             markerfacecolor=color,
             markeredgecolor="#222222",
             markeredgewidth=0.8,
-            elinewidth=1.6,
+            elinewidth=2.2 if i == 0 else 1.6,
             capsize=4,
             capthick=1.2,
-            ecolor="#555555",
+            ecolor="#1f77b4" if i == 0 else "#555555",
             zorder=3,
         )
-        ax.text(
-            s["mean_diff"] + 12,
-            y + 0.18,
-            f"d = {s['d']:.2f}   p = {s['p']:.3f}",
-            va="center",
-            ha="left",
-            fontsize=9,
-            color="#222222",
-        )
+        diff = f"{s['mean_diff']:+.1f} ms"
+        if lang == "id":
+            diff = diff.replace(".", ",")
+        ax.text(s["mean_diff"] + 12, y + 0.3, diff, va="center", ha="left", fontsize=9, color="#222222")
 
+    ax.text(-640, ypos[0] + 0.55, text["primary"], fontsize=9, fontweight="bold", color="#1f77b4")
+    ax.text(-640, ypos[1] + 0.55, text["history"], fontsize=9, fontweight="bold", color="#555555")
     ax.set_yticks(ypos)
-    ax.set_yticklabels(labels)
-    ax.set_xlabel("S4 − S3 mean p99 difference (ms) — negative favours S4")
-    ax.set_title("H2 across replication batches (mean diff, 95% CI)")
+    ax.set_yticklabels(LABELS[lang])
+    ax.set_xlabel(text["xlabel"])
     ax.set_xlim(-650, 1150)
+    ax.set_ylim(-0.7, ypos[0] + 1.0)
     ax.grid(axis="x", linestyle=":", alpha=0.5)
-    ax.axvspan(-650, 0, color="#2ca02c", alpha=0.05, zorder=0)
     fig.tight_layout()
 
-    out = out_dir / "fig04_6_replication_batches.png"
+    out = out_dir / text["file"]
     fig.savefig(out)
     plt.close(fig)
     return out
 
 
 def generate_thesis_figures(repo_root: str | Path, output_dir: str | Path) -> list[Path]:
-    """Generate the single matplotlib PNG figure (the H2 forest plot).
+    """Generate the H2 forest plot, one PNG per edition.
 
     The other five figures are native Typst (cetz/cetz-plot/primaviz) and live
     in ``thesis-typst/src/content/figures.typ``; they are not produced here.
@@ -181,9 +182,7 @@ def generate_thesis_figures(repo_root: str | Path, output_dir: str | Path) -> li
     repo_root = Path(repo_root)
     out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    return [
-        _fig_replication_batches(repo_root, out_dir),
-    ]
+    return [_fig_replication_batches(repo_root, out_dir, lang) for lang in TEXT]
 
 
 if __name__ == "__main__":

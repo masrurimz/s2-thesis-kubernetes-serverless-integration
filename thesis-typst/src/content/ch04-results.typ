@@ -10,17 +10,17 @@
 
 This chapter presents the experimental results for the hybrid Kubernetes-serverless architecture with GRU-based workload prediction.
 The chapter organizes the results into sections on GRU model performance, system mechanism validation, the comparative evaluation across deployment scenarios, cost analysis, and a discussion.
-Every quantitative claim in this chapter is traceable to the consolidated experiment record in the experiment registry.
-_Important caveat:_ the four-scenario comparative and cost results come from the `2026-07-11_scaling_fix_n1` baseline.
-This baseline is an *n = 1 diagnostic* run (H1).
+Every quantitative claim in this chapter comes from an experiment listed in Appendix E, which maps each name used here to its result folder.
+_Important caveat:_ the four-scenario comparative and cost results come from the four-scenario diagnostic, a single run per scenario.
+This diagnostic is an *n = 1* run (H1).
 These results are framed as diagnostic rather than confirmatory.
-Six infrastructure fixes (Bugs 8-13) invalidated all previous experiment bundles (February and July 8-10, 2026).
+Six infrastructure fixes (Bugs 8-13) invalidated all earlier experiment bundles (February and July 8-10, 2026).
 These fixes were (1) enforced node CPU limits and (2) recalibrated `r_saturation_per_replica`.
 They also added (3) a fairness cap on Kubernetes replicas and (4) calibration tooling.
 Finally, they added (5) a GRU-server hard gate and (6) separation of prediction from routing.
-The paired S3/S4 comparison (H2) rests on three ClarkNet-attributable batches (25 pairs, @sec:replication).
-The July paired batch (`2026-07-14_clarknet-tuned-paired-n5`, Appendix B) reached p = 0.0312 but is not ClarkNet-attributable and is reported as history.
-The predictor evidence additionally carries the 2026-09-13 representation and crossing-target probes (`results/models/gru/2026-09-13_probes-representation/`, `results/models/gru/2026-09-13_probe-t-cross/`), reported with the GRU results in this chapter.
+The predictive-versus-reactive comparison (H2) rests on one pre-registered confirmatory batch of 10 pairs (@sec:h2).
+Earlier paired batches, including a July batch that reached p = 0.0312 with a predictor that cannot be verified, are summarized in @sec:h2-history.
+The predictor evidence also includes the representation search and the crossing-target probes of 2026-09-13, reported with the GRU results in this chapter.
 
 == #H("ch4-gru") <sec:gru-model>
 
@@ -80,7 +80,7 @@ A persistence forecast repeats the last observation.
 It already reaches 50.5 percent of the mean load at this resolution.
 
 A representation search then asked whether any input or target representation beats that linear model.
-Twelve levers were specified against the per-fold autoregression under the leak-free fold protocol (`results/models/gru/2026-09-13_probes-representation/`).
+Twelve levers were specified against the per-fold autoregression under the leak-free fold protocol (Appendix E).
 All twelve have records.
 None beats the linear model.
 Selection-fold skill ranges from -0.01 percent for `robust_scale`, which is parity to the fourth decimal, to -5.08 percent for `calendar`.
@@ -103,8 +103,8 @@ For the network, it falls from 36.69 to 25.30.
 These errors are in RPS at the served amplitude.
 The target becomes coarser, and the wall-clock horizon grows from 135 to 180 seconds.
 This is an interval and horizon change, not a modelling win.
-Second, a capacity-relative target detects capacity crossings where the point forecast does not (`results/models/gru/2026-09-13_t-cross-calibration/`).
-Crossing recall is 0.988 $plus.minus$ 0.009 (`results/models/gru/2026-09-13_probe-t-cross/meta.yaml`), against 0.008 to 0.042 for the autoregression plus threshold and 0.119 to 0.163 for persistence.
+Second, a capacity-relative target detects capacity crossings where the point forecast does not (Appendix E).
+Crossing recall is 0.988 $plus.minus$ 0.009, against 0.008 to 0.042 for the autoregression plus threshold and 0.119 to 0.163 for persistence.
 The raw head is overconfident (per-step Brier 0.236 against the 0.049 linear reference).
 An isotonic map was fitted per fold on that fold's inner-validation steps only.
 Calibrated Brier falls to 0.043, under the reference.
@@ -155,11 +155,11 @@ The comparative evaluation compares four deployment scenarios: S1 (Kubernetes wi
 All scenarios replayed the ClarkNet HTTP trace at a mean of 73 requests per second (peak 164 RPS).
 Each scenario used a calibrated node capacity of Docker `--cpus=1.0` per workload node (2.0 CPU total).
 It set `max_k8s_replicas = 6` to schedulable capacity and used no per-pod CPU limits.
-These are *n = 1 diagnostic* results from the single-run diagnostic baseline.
-The four-scenario comparison (H1) was subsequently replicated at n = 5, as reported below.
-The S3-vs-S4 paired comparison (H2) is reported below: an initial batch, the July batch (history), and the ClarkNet-attributable replications.
+These are *n = 1 diagnostic* results from the four-scenario diagnostic.
+The four-scenario comparison (H1) was later replicated at n = 5, as reported below.
+The S3-versus-S4 paired comparison (H2) follows in @sec:h2.
 All four scenarios ran on this fixed infrastructure, so the comparison is like-for-like within a single bundle.
-The superseded July bundles differed: in them, S1/S2 and S3/S4 came from different controller configurations.
+The four-scenario bundles of July 8-10 are not used, because in them the S1 and S2 runs and the S3 and S4 runs came from different controller configurations.
 
 #figure(
   kind: table,
@@ -186,21 +186,21 @@ The other compares the hybrid predictive scenario against pure Kubernetes (S4 vs
 Only a single run is available per scenario for this table.
 No inferential statistics (t-tests, effect sizes, confidence intervals) are computed here.
 The S4-vs-S1 verdict is a descriptive *n = 1 diagnostic*.
-The S4-vs-S3 comparison (H2) uses the paired design reported in the subsections below.
+The S4-vs-S3 comparison (H2) uses the paired design of @sec:h2.
 In the table, the SLO threshold is p99 < 200 ms.
 SLO Violations and SLO Rate are for the single run.
-Time in serverless is the share of run time with a Knative weight above zero. The traffic share, computed as the HAProxy weight-time product, is 6.1% for S3 and 3.0% for S4 (`2026-07-11_scaling_fix_n1`; `cost_analysis_20260711_112337.json`).
+Time in serverless is the share of run time with a Knative weight above zero. The traffic share, computed as the HAProxy weight-time product, is 6.1% for S3 and 3.0% for S4.
 PREDICTIVE counts weight increases made while predicted_upper exceeded the observed load. The label does not change the split (Chapter 3).
 The count is low because the label needs a load rise above 3 RPS per cycle, load above 80% of capacity, and a predicted value above the observed load.
 In this run 8 of the 9 PREDICTIVE labels came from the observed-load extrapolation, with the GRU forecast below the observed load.
 Over the 1,200 s experiment (about 80 control cycles), only 9 cycles produced a PREDICTIVE label.
 Most cycles were within ready capacity (MAINTAIN or RECOVERY).
 
-The four-scenario replication ran on 2026-08-08 and 2026-08-09 (`2026-08-09_clarknet-replay_032257`, Appendix D). Its `meta.yaml` records status `in_progress`, and no analysis artifact exists in the bundle, so every statistic here was recomputed from the 20 run results.
+The four-scenario replication ran on 2026-08-08 and 2026-08-09 (Appendix D). Its bundle holds no analysis file, so every statistic here was recomputed from the 20 run results.
 It ran 4 scenarios, 5 runs each (20 clean runs).
 All validity gates passed (5/5 per scenario), and treatment fidelity was delivered in every S4 run.
 The S4 arm ran before the leak-free GRU of @sec:gru-model was trained on 2026-09-10, so it measures an earlier predictor.
-Its logged upper envelope lies about 10 RPS above the point forecast (`s4-hybrid-predictive_run1/daemon.log`, 76.2 and 85.9 RPS), against 55 to 60 RPS for the leak-free model, so the S1 and S2 comparisons in this batch hold for the architecture, not for the forecaster of @sec:gru-model.
+In the daemon log of the first S4 run, the point forecast is 76.2 RPS and the upper envelope 85.9 RPS, about 10 RPS apart. The leak-free model forecasts 55 to 60 RPS for the same load. The S1 and S2 comparisons in this batch therefore hold for the architecture, not for the forecaster of @sec:gru-model.
 Per-scenario mean p99 was S1 110.3 ms, S2 79.7 ms, S3 151.6 ms, and S4 99.1 ms.
 SLO violations summed over the five runs were S1 253, S2 2, S3 1,998, and S4 92 (per-run means 50.6, 0.4, 399.6, and 18.4).
 The replication did not reproduce the n = 1 diagnostic's S1 saturation.
@@ -220,132 +220,82 @@ The hybrid's advantage over pure Kubernetes appears when the baseline is capacit
 
 #figure(
   fig-slo-violations(),
-  caption: [SLO violations per scenario (n = 5 replication)],
+  caption: [Mean SLO violations per run in the four-scenario replication (5 runs per scenario)],
 ) <fig:slo-violations-n5>
 
-=== #H("ch4-h2-initial")
+=== #H("ch4-h2") <sec:h2>
 
-To test H2, the study ran a counterbalanced paired experiment (n = 5 S3/S4 pairs, the initial paired bundle).
-All 5 pairs delivered complete GRU forecasts (56 eligible prediction cycles per run, 0 failures).
-The primary endpoint is the paired p99 latency difference.
-@tab:paired-h2-primary reports the result.
+H2 predicts that predictive replica scaling (S4) gives a lower p99 latency than reactive scaling (S3).
+The test is a confirmatory batch of 10 counterbalanced S3/S4 pairs (20 runs), run on 2026-09-20 and pre-registered before it started.
+The primary endpoint is the paired difference in p99 latency, tested with a one-sided paired permutation test.
+Every S4 run used the ClarkNet-trained GRU of @sec:gru-model, and every run manifest records that model.
 
-#emph[This section documents the initial clean n = 5 result, obtained with the 5-step (75 s) forecast horizon and an untuned reactive baseline. The July batch below uses the 9-step (135 s) horizon, a tuned reactive baseline, and utilization-based node consolidation. It is reported as history: its predictor is unverifiable.]
-
-#figure(
-  kind: table,
-  table(
-    columns: (auto, auto, auto),
-    [Statistic], [Value], [Interpretation],
-    [S3 mean p99 (ms)], [136.62], [Reactive baseline],
-    [S4 mean p99 (ms)], [128.54], [Predictive scenario],
-    [Mean difference (ms)], [-8.08], [S4 faster],
-    [95% paired CI (ms)], [-36.70 to +14.53], [Spans improvement and deterioration],
-    [Permutation p (two-sided)], [0.3784], [Does not support H2],
-    [Paired Cohen's d], [-0.241], [Small effect, S4 better],
-  ),
-  caption: [Paired S4-vs-S3 p99 latency comparison (initial n = 5)],
-) <tab:paired-h2-primary>
-
-The mean difference favors S4 (S4 is 8.1 ms faster on average). The 95% CI [-36.7, +14.5] crosses zero, and the permutation test is not significant (p = 0.38). H2 (predictive latency superiority) is therefore *not statistically supported in this initial experiment; the July batch below reached significance only with an unverifiable predictor*. The direction is still consistent with the hypothesis. S4 wins 2 of 5 pairs. Pair 4 drives the mean advantage (S3 = 173 ms, S4 = 112 ms).
-
-A secondary finding is that S4 shows 56% fewer SLO violations on average (100.8 vs 228.2, Cohen's d = -0.535, medium effect). This is also not statistically significant at n = 5 (p = 0.19). Proactive scaling appears to keep p99 below the SLO threshold more consistently, even when the mean p99 difference is small.
-
-=== #H("ch4-calibration")
-
-The clean paired comparison used a corrected scaling model.
-The original calibration used alpha = 1/r_saturation with a 1.2x buffer.
-This double-counted the safety margin (target_cpu_util already provides headroom).
-A forecast of 62 RPS mapped to ceil(62 / 33.3 times 1.2) = 3 replicas.
-This equals the target from the observed signal, so S4 behaved the same as S3.
-The corrected model uses alpha = 1/r_effective (= 1 / (r_saturation times target_cpu_util) = 1/16.65) with buffer = 1.0.
-Now 62 RPS maps to ceil(62 times 0.060) = 4 replicas.
-This separates the forecast from the observed 45-RPS target of 3.
-
-This repair reversed the effect direction. The earlier (confounded) paired comparison found S4 10 ms *slower* (mean diff +10.0 ms). The clean comparison with the corrected calibration finds S4 8.1 ms *faster* (mean diff -8.1 ms). The reversal shows that the calibration mismatch caused S4's apparent underperformance, not the controller design. However, the effect remains small (d = -0.241) and not statistically significant in this initial experiment. The July batch below reached significance after horizon extension and baseline tuning, but its predictor is unverifiable, so that result is history.
-
-=== #H("ch4-h2-definitive") <sec:definitive-h2>
-
-The initial paired experiment (above) used a 5-step forecast horizon (75 s window), no node consolidation, and a reactive baseline with a 300-second pod-level scale-down cooldown.
-That cooldown effectively limited S3 to three scale-down actions per run.
-Later improvements produced the July paired bundle (n = 5 counterbalanced pairs).
-The improvements were an extended 9-step GRU horizon (135 s).
-They added utilization-based node consolidation (matching the Kubernetes Cluster Autoscaler's 50% threshold @k8sca-faq).
-They also added a tuned reactive baseline (120-second cooldown, 0.75 threshold).
-
-#figure(
-  kind: table,
-  table(
-    columns: (auto, auto, auto, auto),
-    [Metric], [S3 (Reactive)], [S4 (Predictive)], [Statistic],
-    [Mean p99 (ms)], [188.5], [126.0], [diff -62.5, p = 0.0312],
-    [95% paired CI (ms)], [--], [--], [-100.9 to -26.2],
-    [Paired Cohen's d], [--], [--], [-1.26 (large)],
-    [Mean SLO violations], [656], [130], [-80.2%],
-    [Monthly cost (USD)], [163], [163], [Identical],
-  ),
-  caption: [July paired S4-vs-S3 comparison (n = 5, history)],
-) <tab:paired-h2-definitive>
-
-Within this batch the S4 advantage reached significance (p = 0.0312). The batch is reported as history.
-The verdict changed after a provenance audit.
-The deployed predictor `data/models/gru_model.pt` entered version control on 2026-09-12.
-It carried commit 98e17d1 and LFS oid 7f8244bcc403c59a3e2be5d31b1ee5586f01c0052416c2705c0a325d1cc3099d.
-It was later shown to be the synthetic-trained winner rather than the ClarkNet winner.
-The 2026-07-14 manifest has no predictor key at all.
-This batch's weights cannot be verified.
-The batch is therefore not ClarkNet-attributable.
-The ClarkNet-attributable record, reported in @sec:replication and extended by a pre-registered confirmatory replication in September, does not reproduce the significance.
-S4 wins all 5 pairs in this batch.
-Within the batch the 95% confidence interval [-100.9, -26.2] lies entirely below zero.
-The ClarkNet-attributable batches in @sec:replication do not reproduce it: one reverses direction (+153.3 ms), and the pooled 25-pair interval [-188.6, +184.5] spans zero.
-S4 also shows 80.2% fewer SLO violations (130 vs 656) at identical monthly cost.
-Each S4 run carried 4--5 PREDICTIVE labels. In all 21 of those labels the GRU forecast was at or below the observed load, so the labels reflect the observed-load extrapolation, not the forecast.
-The change from the initial result (p = 0.38) to this batch (p = 0.0312) coincided with three changes: forecast horizon adequacy, node consolidation, and reactive-baseline tuning. This batch is not ClarkNet-attributable, and the later batches did not reproduce it, so the effect cannot be credited to any of the three.
-
-The monthly cost model charges provisioned EC2 nodes sized from average CPU plus Lambda concurrency. It does not itemize per-replica Kubernetes compute. S4 holds five warm replicas to S3's three, so S4 accumulates 9 percent more replica-seconds (7,608 vs 6,980 per run). This added idle capacity is invisible to a node-based model. Under a per-vCPU-second charge at the t3.medium rate, S4's Kubernetes compute would cost about USD 2.2 more per month. The reported identical cost therefore holds only for a model that bills provisioned capacity, not replica-seconds.
-
-#figure(
-  fig-paired-perpair(),
-  caption: [Per-pair p99 latency (July paired batch, history)],
-) <fig:paired-h2-perpair>
-
-=== #H("ch4-replication") <sec:replication>
-
-To verify repeatability, the study re-triggered the paired experiment twice from the aligned codebase on 2026-08-07. Those two initial replication batches (n = 5 each) were not retained. Their raw result and analysis files were deleted from the working tree before commit, and their numbers survive only as self-referential thesis text. The two batches are therefore excluded from the evidence record.
-
-Two further paired batches ran on 2026-08-08 with fully retained artifacts.
-RUN1 (n = 5) was null (mean difference -4.0 ms, one-sided permutation p = 0.436).
-RUN2 (n = 5) was marginal (mean difference -58.0 ms, 95% CI [-161.5, -2.8], one-sided permutation p = 0.062).
-Both batches retained the S4-favorable direction.
-Pooled over the two 2026-08-08 batches (n = 10 pairs), the mean difference is -31.0 ms, one-sided permutation p = 0.188, d = -0.32.
-The full four-scenario replication (4 scenarios, 5 runs each, 20 clean runs) tested the S4-vs-S3 comparison.
-It used the pre-specified Welch t-test and Mann-Whitney U.
-The Welch test was not significant (p = 0.097).
-The Mann-Whitney test was significant (p = 0.032, `2026-08-09_clarknet-replay_032257/report.md`) with d = -1.30.
-The replication is batch-dependent.
-@fig:replication-batches plots every retained batch.
-
-Three ClarkNet-attributable batches close the record, each recording the ClarkNet winner artifact 20623c19 in its manifests.
-RUN4 (`2026-09-13_h2-pair-5p`, n = 5) was null in the opposite direction: +153.3 ms, p = 0.656.
-RUN5 (`2026-09-13_h2-confirmatory-10p`, n = 10) returned -104.2 ms, p = 0.168.
-The three slowest runs had host CPU-busy peaks of 66 to 100%.
-The per-run host-load series this batch introduces shows peak host CPU-busy correlating with p99 (r = 0.69).
-An interim subset estimate restricted to that batch's eight pairs with peak host load below 40% (-101.3 ms, p = 0.039) motivated a pre-registered replication.
-RUN6 (`2026-09-20_h2-confirmatory-10p`, n = 10) ran with a host-load gate.
-The pre-run gate sampled host load at a ratio of 0.07, below the WARN threshold of 0.5. The gate checks a single sample before the run, not the load during it. During the runs the mean host CPU-busy share was 0.14 to 0.27 per run, and the peak exceeded 0.5 in 7 of 20 runs.
+The batch ran with a host-load gate, because the batch before it showed p99 rising with host CPU load (@sec:h2-history).
+The gate sampled host load before the runs at a ratio of 0.07, below the warning threshold of 0.5.
+It checks a single sample before each run and does not watch the load during the run.
+During the runs, the mean host CPU-busy share was 0.14 to 0.27 per run, and the peak exceeded 0.5 in 7 of 20 runs.
 All 20 runs passed the validity gates.
-The result is -13.6 ms (95% CI [-63.5, +35.6], p = 0.307, d = -0.16).
+@tab:h2-primary reports the result.
+
+#figure(
+  kind: table,
+  table(
+    columns: (auto, auto),
+    [Statistic], [Value],
+    [S3 mean p99 (ms)], [160.4],
+    [S4 mean p99 (ms)], [146.8],
+    [Mean difference (ms)], [-13.6],
+    [95% paired CI (ms)], [-63.5 to +35.6],
+    [One-sided permutation p], [0.307],
+    [Paired Cohen's d], [-0.16 (negligible)],
+    [Pairs won by S4], [5 of 10],
+  ),
+  caption: [Pre-registered paired S4-vs-S3 comparison (10 pairs, 2026-09-20)],
+) <tab:h2-primary>
+
+S4 was 13.6 ms faster on average, but the 95% interval spans zero and p = 0.307.
 S4 won 5 of 10 pairs.
-The subset estimate did not survive.
-It was an artifact of subset selection.
-Pooling all 25 ClarkNet-attributable pairs gives -16.5 ms (95% CI [-188.6, +184.5], one-sided p = 0.448, d = -0.03; `paper/derive_numbers.py`, seed 42).
-The final H2 verdict is: not supported on the pre-specified primary p99 test.
+H2 is therefore not supported on the pre-specified primary p99 test.
+
+Two estimates put this result in context.
+First, pooling all 25 pairs that ran the ClarkNet-trained predictor (this batch and the two batches of 2026-09-13) gives -16.5 ms (95% CI [-188.6, +184.5], one-sided p = 0.448, d = -0.03).
+Second, the batch was pre-registered because an interim estimate looked promising.
+That estimate used the eight pairs of the 2026-09-13 confirmatory batch with peak host load below 40% (-101.3 ms, p = 0.039).
+It did not survive the pre-registered batch, which shows that it came from choosing the subset after seeing the data.
+
+=== #H("ch4-h2-history") <sec:h2-history>
+
+Eight batches compared S3 and S4 before the pre-registered batch.
+@tab:h2-history lists each one with the reason it is not the H2 result, and @fig:replication-batches plots the batches that ran with the final controller configuration.
+Two further batches from 2026-08-07 are left out, because their result files were deleted before they were committed.
+
+#figure(
+  kind: table,
+  table(
+    columns: (auto, auto, auto, auto, auto),
+    [Batch], [Pairs], [Mean difference (ms)], [p], [Why it is not the H2 result],
+    [Pre-calibration (2026-07-11)], [5], [+10.0], [--], [Replica targets counted the safety margin twice, so S4 sized replicas exactly like S3],
+    [Initial (2026-07-12)], [5], [-8.1], [0.38], [Five-step (75 s) forecast horizon and an untuned reactive baseline],
+    [July (2026-07-14)], [5], [-62.5], [0.0312], [The manifest names no predictor, and the model deployed then was trained on synthetic data (Appendix B)],
+    [August A (2026-08-08)], [5], [-4.0], [0.436], [Predictor trained before the leak-free protocol of @sec:gru-model],
+    [August B (2026-08-08)], [5], [-58.0], [0.062], [Same predictor as August A],
+    [Four-scenario replication (2026-08-09)], [5 runs per arm], [-52.5], [0.032], [Unpaired runs with the same earlier predictor; the Welch test gives p = 0.097],
+    [September pair (2026-09-13)], [5], [+153.3], [0.656], [Host load not recorded; a 10-pair batch followed the same day],
+    [First confirmatory (2026-09-13)], [10], [-104.2], [0.168], [p99 rose with host CPU load (r = 0.69); the three slowest runs had CPU-busy peaks of 66 to 100%],
+  ),
+  caption: [Earlier S4-vs-S3 batches. A negative difference favours S4.],
+) <tab:h2-history>
 
 #figure(
   image("../figures/fig04_6_replication_batches.png", width: 90%),
-  caption: [S4-vs-S3 paired p99 difference across replication batches],
+  caption: [S4-vs-S3 p99 difference with 95% confidence interval for each batch run with the final controller configuration],
 ) <fig:replication-batches>
+
+Two earlier batches reached p < 0.05: the July batch and the Mann-Whitney test of the four-scenario replication.
+Neither ran the ClarkNet-trained predictor, and the three batches that did run it found no significant difference.
+The step from the initial batch to the July batch also changed three things at once.
+The forecast horizon grew from 75 s to 135 s, node consolidation was added, and the reactive baseline was tuned.
+Even if the July gain were real, it could not be credited to any one of them.
 
 === #H("ch4-s4vs1")
 
@@ -563,29 +513,24 @@ It used `max_k8s_replicas = 10`, so S1 did not saturate (p99 110.3 ms).
 S4 versus S1 was not significant (p = 0.151).
 The hybrid's advantage therefore appears when the baseline is capacity-constrained, not when HPA has ample headroom.
 
-For the predictive-versus-reactive comparison (H2), the final verdict is: not supported.
-The July batch (n = 5 counterbalanced pairs, full treatment delivery) found S4 mean p99 126.0 ms versus 188.5 ms for S3.
-It found a mean difference of -62.5 ms, with 95% CI [-100.9, -26.2] ms, p = 0.0312, and d = -1.26, large effect.
-But a provenance audit showed that batch's predictor is unverifiable.
-The artifact deployed in that period was the synthetic-trained model, so the batch is not ClarkNet-attributable.
-The three ClarkNet-attributable batches (5, 10, and 10 pairs) are all null on the pre-specified test.
-Their results are +153.3 ms p = 0.656; -104.2 ms p = 0.168; -13.6 ms p = 0.307.
-Pooling all 25 pairs gives -16.5 ms (95% CI [-188.6, +184.5] ms, one-sided p = 0.448, d = -0.03).
-S4 also showed 80.2% fewer SLO violations (130 vs 656) at identical monthly cost in the July batch; those secondaries remain descriptive.
+For the predictive-versus-reactive comparison (H2), the verdict is: not supported.
+The pre-registered confirmatory batch (10 counterbalanced pairs, all 20 runs valid) found S4 mean p99 146.8 ms versus 160.4 ms for S3.
+The mean difference is -13.6 ms, with 95% CI [-63.5, +35.6] ms, p = 0.307, and d = -0.16, a negligible effect.
+The secondary metrics agree: p95 differs by -0.9 ms and SLO violations by +3.6 per run, both negligible.
+Pooling all 25 pairs that ran the ClarkNet-trained predictor gives -16.5 ms (95% CI [-188.6, +184.5] ms, one-sided p = 0.448, d = -0.03).
+The earlier July batch found -62.5 ms (p = 0.0312), but its predictor cannot be verified, so @sec:h2-history reports it as history.
 
 Two caveats bound these conclusions.
 First, the n = 1 four-scenario diagnostic provides directional mechanism evidence but no inferential statistics for H1.
 Second, power is limited at this effect scale.
 The paired standard deviation is 484.5 ms over the 25 pairs, and the per-batch values range from 83.6 ms to 1057.3 ms (recomputed from the bundles).
-The September confirmatory replication ran ten pairs for this reason and still found a negligible difference.
-Secondary metrics (p95, SLO) are not significant after multiplicity correction (corrected p = 0.1248) and are reported as descriptive.
-The primary p99 test was pre-specified.
+The pre-registered batch ran ten pairs for this reason and still found a negligible difference.
+Its primary p99 test was pre-specified.
+Its secondary metrics (p95, SLO violations) are not significant after multiplicity correction (corrected p = 1.0) and are reported as descriptive.
 
 Taken together, the results support H1 directionally (the hybrid architecture outperforms the saturated pure Kubernetes baseline at n = 1).
 H2 is not supported.
-The only significant batch is not ClarkNet-attributable. Its manifest records no predictor, and the artifact deployed then was the synthetic-trained model.
-Every ClarkNet-attributable batch is null on the pre-specified test.
-The pooled 25-pair estimate is -16.5 ms with a confidence interval spanning zero.
+The pre-registered batch found a negligible difference, and the pooled 25-pair estimate of -16.5 ms has a confidence interval spanning zero.
 A batch can test H2 only when the predictive arm acts on its forecast.
 Runs in which the forecast never changes replica planning measure the reactive controller under an S4 label and cannot separate the two arms.
 The calibration repair showed that the original scaling model's double-counted safety margin caused S4's apparent underperformance, not the controller design.

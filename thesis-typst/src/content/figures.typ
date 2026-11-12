@@ -23,7 +23,7 @@
 // without re-sourcing:
 //   - Cost (n=1):       results/claims/FINAL_NUMBERS.md
 //   - Paired per-pair:  results/experiments/phase-b/2026-07-14_clarknet-tuned-paired-n5/paired_analysis.json
-//   - SLO violations:   2026-07-14_clarknet-tuned-paired-n5 and 2026-08-09_clarknet-replay_032257 result.json (n=5 per scenario)
+//   - SLO violations:   2026-08-09_clarknet-replay_032257/*/result.json (mean per run, n=5 per scenario)
 //   - Node timeline:    2026-07-14_clarknet-tuned-paired-n5/s3-hybrid-reactive_run1/{node_utilization,provision_events}.json
 //   - p99 boxplot:      2026-08-09_clarknet-replay_032257/*/result.json (n=5)
 // ============================================================================
@@ -79,22 +79,17 @@
 )
 
 // ---------------------------------------------------------------------------
-// fig04_3 — SLO violations S3 vs S4, two evidence tiers side by side.
-// July paired batch (656 vs 130, history) and n=5 replication (1998 vs 92).
+// fig04_3 — Mean SLO violations per run for the four scenarios of the
+// four-scenario replication (n=5 runs each): 50.6, 0.4, 399.6, 18.4.
 // ---------------------------------------------------------------------------
-#let fig-slo-violations() = grouped-bar-chart(
-  (
-    labels: (cap("July batch (07-14, history)", "Batch Juli (07-14, sejarah)"), cap("Replication (08-09)", "Replikasi (08-09)")),
-    series: (
-      (name: cap("S3 Reactive", "S3 Reaktif"), values: (656, 399.6)),
-      (name: cap("S4 Predictive", "S4 Prediktif"), values: (130, 18.4)),
-    ),
-  ),
+#let fig-slo-violations() = bar-chart(
+  ((cap("S1: K8s Only", "S1: hanya K8s"), 50.6), (cap("S2: Serverless Only", "S2: hanya serverless"), 0.4), (cap("S3: Hybrid Reactive", "S3: hybrid reaktif"), 399.6), (cap("S4: Hybrid Predictive", "S4: hybrid prediktif"), 18.4)),
   width: 420pt,
-  height: 280pt,
-  x-label: cap([Evidence tier], [Tingkat bukti]),
-  y-label: cap([SLO violations (count)], [Pelanggaran SLO (jumlah)]),
-  theme: (palette: (s3, s4)),
+  height: 260pt,
+  bar-width: 0.62,
+  x-label: cap([Scenario], [Skenario]),
+  y-label: cap([SLO violations per run (mean)], [Pelanggaran SLO per run (rata-rata)]),
+  theme: (palette: (s1, s2, s3, s4)),
 )
 
 // ---------------------------------------------------------------------------
