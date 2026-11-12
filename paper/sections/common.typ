@@ -256,7 +256,7 @@
         content((sx(t), -0.32), text(size: 6.5pt, str(t).replace("-", "−")), anchor: "north")
       }
       line((sx(-700), -0.2), (sx(1100), -0.2))
-      content((sx(200), -0.75), text(size: 6.5pt, [S4 − S3 p99 (ms); left of 0 favours S4]), anchor: "north")
+      content((sx(200), -0.75), text(size: 6.5pt, [S4 − S3 p99 (ms); left of 0 favors S4]), anchor: "north")
       for (i, (label, v)) in rows.enumerate() {
         let y = top - 0.3 - i * 0.6
         content((sx(-720), y), text(size: 7pt, label), anchor: "east")
