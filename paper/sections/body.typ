@@ -14,9 +14,7 @@
   The Kubernetes Horizontal Pod Autoscaler (HPA) adds pods only after load rises, and when no node has room,
   requests wait one to two minutes for a new virtual machine. A workload forecast can add pods
   before the load arrives, and a serverless platform absorbs the overflow within seconds at a higher
-  price. Published hybrids disagree on whether a forecast is needed once serverless covers the wait: some
-  size their base capacity from one, and a recent one uses none. To find out, we built a hybrid of Kubernetes
-  and the serverless platform Knative in which a
+  price. We built a hybrid of Kubernetes and the serverless platform Knative in which a
   router sends Knative the load the ready pods cannot serve, and a replica scaler adapted from the
   autoscaler ElaX sets the pod count. The reactive version sizes pods from the observed load. The predictive
   version adds a gated recurrent unit (GRU) forecast of the next 135~s plus a margin, and nothing else
