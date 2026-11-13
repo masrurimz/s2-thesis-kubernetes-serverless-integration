@@ -11,20 +11,21 @@
 #import "common.typ": *
 
 #let abstract = [
-  Kubernetes keeps web services on warm pods and serves steady load cheaply, but its Horizontal Pod Autoscaler
-  (HPA) adds pods only after load rises. When no node has room, requests wait one to two minutes for a new
-  virtual machine. Serverless platforms add instances within seconds without capacity planning, but steady load
-  costs more there. A hybrid therefore keeps the steady load on Kubernetes and sends the excess to serverless.
-  A workload forecast could also add pods before the load arrives, and we ask whether it still helps once
-  serverless covers the wait. In our hybrid, the serverless platform Knative takes whatever the ready pods
-  cannot serve, and a scaler adapted from the autoscaler ElaX sets the pod count.
-  We ran two versions that differ only in what this scaler reads. The reactive version reads
-  the current load. The predictive version also reads a gated recurrent unit (GRU) forecast of the next 135~s,
-  plus a safety margin. We compared the two versions in ten pairs of back-to-back runs.
-  The predictive version kept #H.b10b.replica_pct% more pods running, but its 99th-percentile latency was not
-  measurably lower. The change was #H.b10b.diff ms (95% CI \[#H.b10b.ci_lo, #H.b10b.ci_hi\],
-  $p = #H.b10b.p$), and the test could detect a change of about #H.b10b.mde ms. This suggests that Knative
-  already absorbs the excess while new pods start, leaving a forecast little to add. The GRU was also no more
+  Kubernetes serves steady load cheaply but adds capacity late, and when no node has room, a new virtual machine
+  takes one to two minutes to start. Serverless platforms scale within seconds but cost more for steady load.
+  We propose a hybrid that keeps the base load on Kubernetes, sends the excess to the serverless platform
+  Knative, and extends the ElaX autoscaler with a gated recurrent unit (GRU) workload forecast so that pods are
+  added before the load arrives. We compare the hybrid with Kubernetes alone and Knative alone, and we test
+  whether the forecast improves tail latency and cost. A reactive
+  version of the scaler uses only the current load, while the predictive version also uses the GRU forecast of
+  the next 135~s with a safety margin. The reactive hybrid cost about as much as Kubernetes alone and less than
+  half as much as Knative alone, but it had a higher tail latency than Kubernetes alone. Over ten
+  pairs of back-to-back runs of the two versions, the
+  predictive version used #H.b10b.replica_pct% more pods at the same projected cost (USD #H.b10b.cost_s4
+  against #H.b10b.cost_s3 per month), yet its 99th-percentile latency did not improve
+  measurably. The difference was #H.b10b.diff ms (95% CI \[#H.b10b.ci_lo, #H.b10b.ci_hi\], $p = #H.b10b.p$),
+  although the test could detect a change of about #H.b10b.mde ms. This suggests that, because Knative already
+  serves the excess while new pods start, a forecast has little left to improve. The GRU was also no more
   accurate than a linear model.
 ]
 
