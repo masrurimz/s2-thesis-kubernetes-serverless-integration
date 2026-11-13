@@ -180,7 +180,7 @@ Pods that cannot be scheduled trigger a node autoscaler, and a timer stands in f
 machine. The autoscaler waits for a provisioning delay of 45 to 120~s, close to the start-up times measured
 in public clouds @hao2021vmstartup. It then adds a worker with one CPU. It removes a dynamic node when that
 node's CPU utilization falls below 50%, the default scale-down threshold of the Kubernetes Cluster
-Autoscaler for pod requests @k8sca-faq. The 135~s forecast horizon covers the longest delay plus one cycle.
+Autoscaler for pod requests @k8sca-faq. The 135~s forecast horizon covers the longest delay, 120~s, plus one 15~s cycle.
 
 = GRU forecaster <sec:gru>
 *Model.* A two-layer GRU @cho2014learning @chung2014empirical with #G.hidden hidden units reads the last 30
@@ -249,7 +249,7 @@ arm. Pairing cancels much of the run-to-run movement of the p99 that comes from 
 the number of pairs sets how small a difference the test can see. Three paired batches used the leak-free GRU
 of @sec:gru, and each had its main measure and test level fixed before its first run. Batch A had five pairs,
 which reach the 0.05 level only if S4 wins all five, so batches B and C used ten pairs each. B ran on a loaded
-host, so C, the confirmatory batch, repeated it on a quieter one. We exclude an earlier five-pair batch that
+host, so C, the confirmatory batch, repeated it on a quieter one. We exclude a five-pair batch run before A that
 favored S4, because its run records do not identify the predictor, which was trained on a synthetic trace.
 
 *Tests and validity.* The main measure is the p99 of each run. Our hypothesis is that S4 has a lower p99 than
