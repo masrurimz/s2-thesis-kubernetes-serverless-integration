@@ -13,19 +13,20 @@
 #let abstract = [
   The Kubernetes Horizontal Pod Autoscaler (HPA) adds pods only after load rises, and when no node has room,
   requests wait one to two minutes for a new virtual machine. A workload forecast can add pods
-  before the load arrives, and a serverless platform can absorb the overflow within seconds at a higher
-  price. Published hybrid systems already send the overflow to serverless, so we ask whether a forecast still
-  helps once serverless covers the wait. We built a hybrid of Kubernetes and the serverless platform Knative in which a
-  router sends Knative only the load the ready pods cannot serve, and a replica scaler adapted from the
+  before the load arrives, and a serverless platform absorbs the overflow within seconds at a higher
+  price. Published hybrids disagree on whether a forecast is needed once serverless covers the wait: some
+  size their base capacity from one, and a recent one uses none. To find out, we built a hybrid of Kubernetes
+  and the serverless platform Knative in which a
+  router sends Knative the load the ready pods cannot serve, and a replica scaler adapted from the
   autoscaler ElaX sets the pod count. The reactive version sizes pods from the observed load. The predictive
   version adds a gated recurrent unit (GRU) forecast of the next 135~s plus a margin, and nothing else
   differs. On a replayed web trace, the reactive hybrid matched the cost of
   Kubernetes with the HPA but not its latency. In ten confirmatory run pairs, the forecast added
   #H.b10b.replica_pct% more pod time but did not measurably change the 99th-percentile latency
-  (#H.b10b.diff ms, 95% CI \[#H.b10b.ci_lo, #H.b10b.ci_hi\], $p = #H.b10b.p$), and the test could detect a
-  change of about #H.b10b.mde ms. The GRU was no more accurate than a linear model, so its margin alone may
-  have added those pods. A likely but untested reason is that serverless already serves
-  the excess while new pods start, which leaves the forecast little of that wait to remove.
+  (#H.b10b.diff ms, 95% CI \[#H.b10b.ci_lo, #H.b10b.ci_hi\], $p = #H.b10b.p$), and the test could detect
+  changes of about #H.b10b.mde ms. The GRU was no more accurate than a linear model, so its margin alone may
+  have added those pods. A likely but untested reason is that serverless serves
+  the excess while new pods start, leaving the forecast little to remove.
 ]
 
 #let keywords = ([Kubernetes], [serverless computing], [autoscaling], [workload prediction],
@@ -53,8 +54,9 @@ therefore keep the steady base load on their own machines and send only the exce
 Once a deployment is hybrid, the two remedies compete for the same provisioning delay. While new pods and nodes
 start, serverless already serves the excess load, so a forecast can remove only the part of the delay that
 serverless does not cover. The forecast still costs extra pods and a model that must be trained and served, and
-whether it pays for itself is unknown, because the one prior hybrid system that tested its forecast did so in
-a simulator (@sec:related). We therefore
+published hybrids disagree on whether it earns that cost. Three size their base capacity from a forecast, a
+recent one uses none, and we found none that measured on a running deployment what its forecast adds
+(@sec:related). We therefore
 ask whether, once serverless absorbs the overflow, a forecast still lowers the tail latency of a running
 deployment.
 
@@ -73,17 +75,19 @@ versions isolate what the forecast changes. Our contributions are as follows.
   its margin added those pods.
 
 = Related work <sec:related>
-*Hybrid execution.* Two systems combine a forecast with a serverless overflow, which is the combination we
-test. MArk provisions virtual machines from a forecast of the peak request rate and sends AWS Lambda the
-requests that the machines cannot serve in time @zhang2019mark. Spock sends a request to Lambda when no
-virtual machine has a free slot, and it starts machines for the average request rate that a linear
-regression predicts for the time they will be ready @gunasekaran2019spock. In an event-driven simulator,
-Spock's forecast reduced SLO violations. Our setting differs from Spock's in three ways that matter for that
-result. First, our base tier is Kubernetes, so capacity grows in two steps, pods when a node has room and
-nodes only after the provisioning delay. Second, our forecast adds pods for the predicted peak rather than the
-average. Third, we measure a running deployment in paired
-runs and test the difference statistically. Other hybrids route between two serverless paths @pulsenet2025
-or between edge and cloud tiers @laimr2026, and neither pairs a load forecast with a serverless overflow.
+*Hybrid execution.* Four systems send to serverless the load that their virtual machines cannot serve, and they
+disagree on the forecast. Three size the machines from one. MArk forecasts the peak request rate
+@zhang2019mark, and LIBRA uses a moving average of the load plus a multiple of its deviation @libra2021. Both
+ran on AWS, where they were compared with other provisioning schemes. Spock predicts by linear regression the
+average rate at the time new machines will be ready, and it compared a reactive with a predictive policy, but
+only in an event-driven simulator, where the predictive policy did best @gunasekaran2019spock. The fourth
+system, Spandana, uses no forecast. It argues that forecasts act at the scale of minutes, which is too coarse
+for short bursts, and it steers each request to serverless when the machine cannot meet the SLO
+@spandana2026. Our work differs from Spock's in three ways that matter for its result. First, our base tier is
+Kubernetes, so capacity grows in two steps, pods when a node has room and nodes only after the provisioning
+delay. Second, Spock's forecast sizes the machines for the average rate and leaves the peaks to Lambda, so it
+avoids extra machines, whereas ours adds pods early for the predicted peak. Third, we measure a running
+deployment in paired runs and test the difference statistically.
 
 *Autoscaling with forecasts.* Many autoscalers forecast the load, but each scales a single platform. Some scale
 Kubernetes pods from a forecast of CPU use or of the request rate @mondal2023toward @yuan2024time, refit the
@@ -99,6 +103,9 @@ warm costs CPU and memory @highcost2025. Our router therefore sends Knative only
 cannot serve, and it caps that share.
 
 #if extended [
+  *Other hybrids.* Other hybrids route between two serverless paths @pulsenet2025 or between edge and cloud
+  tiers @laimr2026, and neither pairs a load forecast with a serverless overflow.
+
   *Scheduling and scaling control.* A survey of Kubernetes scheduling includes a category of
   autoscaling-enabled scheduling @senjab2023survey. Containers also pay a start-up cost when a deployment
   scales out @beni2021reducing. Forecasts have been used to start serverless functions before requests
@@ -345,10 +352,10 @@ the same margin may add the same pods. Our pairs compare a forecast with no fore
 forecast.
 
 = Discussion <sec:discussion>
-Why did Spock find a gain where we did not? The second difference in @sec:related may explain it, although we
-did not test it. Spock sizes machines for the average rate and leaves the peaks to Lambda
-@gunasekaran2019spock, so its forecast adds base capacity, whereas ours adds pods for the peak that Knative
-already serves. The same reading predicts where a forecast should help: without an overflow backend, with one
+Why did Spock report a gain where we found none? The second difference in @sec:related may explain it, although
+we did not test it. Spock's forecast adds base capacity for the average rate, whereas ours adds pods for a peak
+that Knative already serves. Spandana points the same way, since it keeps its SLO with per-request offload and
+no forecast @spandana2026. The same reading predicts where a forecast should help: without an overflow backend, with one
 that cannot take the whole excess, or after a scale-down that removes capacity that the load soon needs again.
 Two measurements would test it directly. One records which backend serves the slowest requests, and the other
 replaces the GRU with a constant margin.
