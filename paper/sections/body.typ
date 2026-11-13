@@ -8,22 +8,21 @@
 #import "common.typ": *
 
 #let abstract = [
-  Kubernetes adds capacity only after the load has risen. When the nodes are full, a new node takes one to
-  two minutes to start, and requests wait. A forecast can add pods before the load arrives. A serverless
-  platform can instead serve the extra load within seconds, but at a higher price per request. A hybrid
-  serves the base load on Kubernetes and the overflow on a serverless platform. We ask whether a forecast
-  still helps in such a hybrid. Every 15~s, a router sends the load above the capacity of the ready
-  Kubernetes pods to the serverless platform Knative. A scaler derived from the forecast-based autoscaler
-  ElaX sets the number of pods. In the predictive hybrid, the scaler also uses a 135~s forecast from a
-  gated recurrent unit (GRU) plus a safety margin. We replayed the
-  ClarkNet trace against both hybrids, Kubernetes with the Horizontal Pod Autoscaler (HPA), and Knative
-  alone. Both hybrids had the projected cost of Kubernetes with the HPA. Knative alone had the lowest
-  99th-percentile latency (p99) at more than twice that cost. In ten confirmatory pairs of
-  runs, the forecast added #H.b10b.replica_pct% more pod-seconds but did not measurably change the p99
-  (difference #H.b10b.diff ms, 95% CI \[#H.b10b.ci_lo, #H.b10b.ci_hi\], $p = #H.b10b.p$). With ten pairs,
-  the test detects differences of about #H.b10b.mde ms or more. The GRU was no more accurate than a linear
-  autoregression. A likely, untested explanation is that the serverless platform already serves
-  the load while new pods start.
+  The Kubernetes Horizontal Pod Autoscaler (HPA) adds pods only after load rises, and if nodes are full, a
+  new virtual machine takes one to two minutes to start while requests wait. A forecast can add pods early.
+  A serverless platform can instead absorb the extra load within seconds at a higher price, so hybrids keep
+  the base load on Kubernetes and send only the overflow to serverless. We test whether a forecast still
+  helps once serverless covers this delay, in a hybrid of Kubernetes and the serverless platform Knative.
+  Every 15~s, a router sends Knative only the load the ready pods cannot serve, and a scaler adapted from
+  the forecast-based autoscaler ElaX sets the pod count. The reactive hybrid uses only the observed load,
+  and the predictive one adds a 135~s gated recurrent unit (GRU) forecast plus a safety margin. On a
+  ClarkNet trace replay, both hybrids had the projected cost of Kubernetes with the HPA, while Knative
+  alone had the lowest 99th-percentile latency (p99) at over twice that cost. In ten confirmatory pairs,
+  the forecast added #H.b10b.replica_pct% more pod-seconds, but the p99 did not change measurably
+  (#H.b10b.diff ms, 95% CI \[#H.b10b.ci_lo, #H.b10b.ci_hi\], $p = #H.b10b.p$). With ten pairs, the test
+  detects differences of about #H.b10b.mde ms or more. The GRU itself was no more accurate than a linear
+  autoregression. A likely, untested explanation is that the serverless platform already serves the load
+  while new pods start, leaving the forecast little delay to remove.
 ]
 
 #let keywords = ([Kubernetes], [serverless computing], [autoscaling], [workload prediction],
