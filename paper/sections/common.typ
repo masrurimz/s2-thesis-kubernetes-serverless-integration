@@ -80,6 +80,7 @@
     + *else* $w' <- min(50, ceil(100 (x - C) \/ x))$ #h(1fr) ▷ excess share, capped
     + *if* $w' != w$ *then* set HAProxy weights $(w_"k8s", w_"sls") <- (100 - w', w')$
   ])),
+  placement: auto,
 )
 
 #let alg-scaling = figure(
@@ -97,6 +98,7 @@
     + *if* $T > r$ *and* 15 s since last scale-up *then* scale to $T$
     + *else if* $T < 0.75 r$ *and* 120 s since last scale-down *and* p99 $< 140$ ms *then* scale to $T$
   ])),
+  placement: auto,
 )
 
 // ---------------------------------------------------------------------------
@@ -179,6 +181,7 @@
     toprule,
     tnote(6)[#super[a]S4 ran an earlier GRU, not the model of @sec:gru.],
   ),
+  placement: auto,
   caption: [Scenario batch, means over five runs per scenario. SLO viol.: requests over 200~ms per run],
 )
 
@@ -204,6 +207,7 @@
     toprule,
     tnote(7)[#super[a]Sampled with 10,000 sign flips.],
   ),
+  placement: auto,
   caption: [Paired comparison of S3 and S4, mean p99 (ms)],
 )
 
@@ -236,6 +240,7 @@
         }
       }
     }),
+    placement: auto,
     caption: [p99 of every run of the scenario batch, with the mean as a bar.],
   )
 }
@@ -265,6 +270,7 @@
         rect((sx(v.at(0)) - s, y - s), (sx(v.at(0)) + s, y + s), fill: black)
       }
     }),
+    placement: auto,
     caption: [Mean paired p99 difference with its 95% bootstrap interval, per batch and pooled.],
   )
 }

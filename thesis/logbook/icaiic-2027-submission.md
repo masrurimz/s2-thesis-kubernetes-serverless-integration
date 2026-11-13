@@ -41,8 +41,8 @@ Open venue facts:
 
 | File | Use | Verified 2026-11-12 |
 |---|---|---|
-| `paper/conference-named.pdf` | upload when EDAS does not ask for an anonymous manuscript; also the base for the camera-ready | 6 pages, A4, 10 pt body, 7 fonts all embedded, author block present (rewritten 2026-11-12) |
-| `paper/conference.pdf` | upload when EDAS says the review is double-blind | 6 pages, A4, 10 pt body, 7 fonts all embedded, 0 lines matching author or institution strings (rewritten 2026-11-12) |
+| `paper/conference-named.pdf` | upload when EDAS does not ask for an anonymous manuscript; also the base for the camera-ready | 6 pages, A4, author block present (restructured 2026-11-13) |
+| `paper/conference.pdf` | upload when EDAS says the review is double-blind | 6 pages, A4, 0 lines matching author or institution strings (restructured 2026-11-13) |
 
 Both come from the same body. `make check` in `paper/` passed: `numbers.json` matches the bundles and the prose
 types no measured number. Rebuild with `cd paper && make`. Page 6 has about six reference lines spare, so
@@ -67,7 +67,10 @@ section 4's author list before submitting.
 
 **Title**
 
-Scaling Kubernetes Replicas with GRU Forecasts and Routing Overflow to Serverless
+Does a GRU Forecast Still Help Kubernetes Scaling When Serverless Absorbs Overflow?
+
+(Changed 2026-11-13 from "Scaling Kubernetes Replicas with GRU Forecasts and Routing Overflow to Serverless" so the
+title states the question the paper answers. If the paper is already registered on EDAS, edit the title there too.)
 
 **Authors, in order** (from `paper/authors.typ`; the EDAS list must match the PDF)
 
@@ -89,13 +92,13 @@ swap their entries in `paper/authors.typ` and rebuild.
 
 Kubernetes, serverless computing, autoscaling, workload prediction, gated recurrent unit, traffic routing
 
-**Abstract** (249 words, plain text, same as the PDF; 2026-11-13 second revision: defines a pair in place)
+**Abstract** (249 words by `wc -w`, plain text, same as the PDF; 2026-11-13 restructure: question before method)
 
-The Kubernetes Horizontal Pod Autoscaler (HPA) adds pods only after load rises, and if nodes are full, a new virtual machine takes one to two minutes to start while requests wait. A forecast can add pods early. A serverless platform can absorb the extra load within seconds at a higher price, so hybrids keep the base load on Kubernetes and send only the overflow to serverless. We test whether a forecast still helps once serverless covers this delay, in a hybrid of Kubernetes and the serverless platform Knative. Every 15 s, a router sends Knative only the load the ready pods cannot serve, and a scaler adapted from the forecast-based autoscaler ElaX sets the pod count. The reactive hybrid uses only the observed load, and the predictive one adds a 135 s gated recurrent unit (GRU) forecast plus a safety margin. On a ClarkNet trace replay, both hybrids had the projected cost of Kubernetes with the HPA, while Knative alone had the lowest 99th-percentile latency (p99) at over twice that cost. In ten confirmatory pairs of runs that differed only in the forecast, the forecast added 45% more pod-seconds, but the p99 did not change measurably (-13.6 ms, 95% CI [-63.5, +35.6], p = 0.307). The test detects differences of about 72 ms or more. The GRU was no more accurate than a linear autoregression. A likely, untested explanation is that the serverless platform already serves the load while new pods start, leaving the forecast little delay to remove.
+The Kubernetes Horizontal Pod Autoscaler (HPA) adds pods only after load rises. If no node has room for them, requests wait one to two minutes while a new virtual machine starts. A workload forecast can add pods before the load arrives, and a serverless platform can absorb the overflow within seconds at a higher price. Hybrids already use serverless this way, so we ask whether a forecast still helps once serverless covers the wait. We built a hybrid of Kubernetes and the serverless platform Knative in which the forecast is the only difference between two versions. Every 15 s, a router sends Knative only the load the ready pods cannot serve, and a replica scaler adapted from the autoscaler ElaX sets the pod count. The reactive version sizes from the observed load, and the predictive version adds a 135 s gated recurrent unit (GRU) forecast plus a safety margin. On a ClarkNet trace replay, both hybrids had the projected cost of Kubernetes with the HPA. Knative alone had the lowest 99th-percentile latency (p99) at more than twice that cost. In ten confirmatory run pairs, the forecast added 45% more pod-seconds, but the p99 did not change measurably (-13.6 ms, 95% CI [-63.5, +35.6], p = 0.307). The test detects differences of about 72 ms or more. The GRU was no more accurate than a linear autoregression. A likely, untested explanation is that serverless already serves the load while new pods start, which leaves the forecast little delay to remove.
 
-**Short abstract** (200 words; paste this one if EDAS caps the field at 200 words. The PDF keeps the longer abstract; IEEE allows up to 250 words.)
+**Short abstract** (under 200 words; paste this one if EDAS caps the field at 200 words. The PDF keeps the longer abstract; IEEE allows up to 250 words.)
 
-The Kubernetes Horizontal Pod Autoscaler (HPA) adds pods only after load rises, and if nodes are full, a new virtual machine takes one to two minutes to start while requests wait. A forecast can add pods early. A serverless platform can absorb the extra load within seconds at a higher price, so hybrids keep the base load on Kubernetes and send only the overflow to serverless. We test whether a forecast still helps once serverless covers this delay, using Kubernetes and the serverless platform Knative. Every 15 s, a router sends Knative only the load the ready pods cannot serve, and a scaler adapted from the forecast-based autoscaler ElaX sets the pod count. The predictive hybrid's scaler uses a 135 s gated recurrent unit (GRU) forecast. In ten confirmatory pairs of runs that differed only in the forecast, on a ClarkNet trace replay, the forecast added 45% more pod-seconds, but the 99th-percentile latency did not change measurably (-13.6 ms, 95% CI [-63.5, +35.6], p = 0.307). The GRU was no more accurate than a linear autoregression. A likely, untested explanation is that the serverless platform already serves the load while new pods start, leaving the forecast little delay to remove.
+The Kubernetes Horizontal Pod Autoscaler (HPA) adds pods only after load rises. If no node has room, requests wait one to two minutes while a new virtual machine starts. A workload forecast can add pods before the load arrives, and a serverless platform can absorb the overflow within seconds at a higher price. Hybrids already use serverless this way, so we ask whether a forecast still helps once serverless covers the wait. We built a hybrid of Kubernetes and the serverless platform Knative in which the forecast is the only difference between two versions. A router sends Knative the load the ready pods cannot serve, and a replica scaler adapted from the autoscaler ElaX sets the pod count, in the predictive version from a 135 s gated recurrent unit (GRU) forecast plus a margin. In ten confirmatory run pairs on a ClarkNet replay, the forecast added 45% more pod-seconds, but the 99th-percentile latency did not change measurably (-13.6 ms, 95% CI [-63.5, +35.6], p = 0.307). The GRU was no more accurate than a linear autoregression. A likely, untested explanation is that serverless already serves the load while new pods start, which leaves the forecast little delay to remove.
 
 ## 5. After acceptance (2026-12-15 onward)
 

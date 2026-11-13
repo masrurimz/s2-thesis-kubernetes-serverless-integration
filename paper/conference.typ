@@ -4,7 +4,7 @@
 #import "sections/body.typ": abstract, body, keywords
 
 #show: ieee.with(
-  title: [Scaling Kubernetes Replicas with GRU Forecasts and Routing Overflow to Serverless],
+  title: [Does a GRU Forecast Still Help Kubernetes Scaling When Serverless Absorbs Overflow?],
   // Double-blind review: no author names or affiliations in the manuscript.
   authors: (),
   abstract: abstract,
