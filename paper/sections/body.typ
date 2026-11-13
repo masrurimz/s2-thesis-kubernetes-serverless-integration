@@ -58,18 +58,19 @@ the provisioning delay, the forecast may have less left to improve than it would
 test what it adds. We run the scaler in two versions, a reactive one that uses only the current load and a
 predictive one that also uses the forecast, and compare them in back-to-back pairs of runs. Our contributions
 are as follows.
-+ A control architecture that runs the router and the replica scaler in one loop, built so that the forecast
-  acts only through the pods it adds (@sec:design).
-+ An extension of the ElaX scaling decision with a GRU forecast, trained without test data, that sizes the pods
-  for the largest forecast value plus a safety margin (@sec:gru).
-+ An evaluation on a running testbed against Kubernetes alone and Knative alone, and a paired comparison of the
-  two versions (@sec:setup, @sec:results). The forecast added #H.b10b.replica_pct% more pod-seconds (pods times
-  seconds running) without a measurable change in the tail latency, and because the GRU was no more accurate
-  than a linear model, we cannot tell whether the GRU or its margin added those pods.
++ A control loop that decides every 15~s how much load goes to Knative and how many pods Kubernetes runs. The
+  forecast changes only the pod count, never the routing, so its effect can be measured alone (@sec:design).
++ An extension of ElaX that replaces its LSTM with a GRU forecast of the next 135~s and adds pods for the
+  highest forecast value plus a safety margin (@sec:gru).
++ An evaluation on a running testbed against Kubernetes alone and Knative alone, with the two scaler versions
+  compared in back-to-back pairs (@sec:setup, @sec:results). The forecast used #H.b10b.replica_pct% more pods
+  but did not measurably lower the tail latency. Because the GRU was no more accurate than a linear model, we
+  cannot tell whether the forecast or its safety margin added those pods.
 
 = Related work <sec:related>
-*Hybrid execution.* Four published systems send to serverless the load that their virtual machines cannot
-serve, and they disagree on whether a forecast is needed. Three size their machines from one. MArk forecasts the
+*Hybrid execution.* Four published systems run the base load on virtual machines and send whatever the machines
+cannot serve to serverless, but they disagree on whether a forecast is needed. Three of them use a forecast to
+decide how many machines to run. MArk forecasts the
 peak request rate @zhang2019mark, while LIBRA uses a moving average of the load plus a multiple of its deviation
 @libra2021, and both were compared with other provisioning schemes on AWS. Spock uses linear regression to
 predict the average rate at the time new machines will be ready @gunasekaran2019spock. It compared a reactive
@@ -204,8 +205,7 @@ Persistence, the simplest forecast, repeats the last value, and we define a mode
 persistence's error that it removes. The GRU removes #G.gru.skill of that error and is slightly more accurate
 than an LSTM, the model family of ElaX, tuned the same way and given more training data. A linear
 autoregression on the same inputs, however, is as accurate as the GRU, and none of the #G.levers other variants
-we screened, such as input transforms and other architectures, beat it. Whatever the forecast changes in the
-scaling, a linear model would therefore likely change as well, a point we return to in @sec:effect.
+we screened, such as input transforms and other architectures, beat it (see @sec:effect).
 
 #tab-predictor <tab:predictor>
 
@@ -287,7 +287,7 @@ Before testing the forecast, we look at what the hybrid delivers without it (@ta
 baseline was the fastest, but at #F.s2.cost USD per month it cost more than twice as much as the HPA baseline.
 The comparison also favors it, since it ran three always-warm pods on a three-CPU worker, while the HPA baseline
 started from one pod on a one-CPU worker. The reactive hybrid had about the same projected cost as the HPA
-baseline and used #F.s3_pods_below_s1% fewer Kubernetes pod-seconds, but it also kept at least three Knative
+baseline and used #F.s3_pods_below_s1% fewer Kubernetes pod-seconds (pods times seconds running), but it also kept at least three Knative
 pods warm, so it saved no pods once those are counted. It paid in latency instead, with a p99 of #F.s3.p99 ms
 against #F.s1.p99 ms, more SLO violations, and one of its five runs above the SLO. Routing the overflow
 therefore kept the cost of Kubernetes but not its tail latency, which leaves room for a forecast to help.
@@ -303,7 +303,6 @@ batches pointed in opposite directions, the pilot toward the reactive hybrid and
 the predictive one, and neither difference was significant.
 
 #tab-h2 <tab:h2>
-#fig-forest <fig:forest>
 
 Host load is the likely reason the loaded-host batch looked different. Its pair differences had a standard
 deviation of #H.b10a.diff_sd ms, against #H.b10b.diff_sd ms in the confirmatory batch, and its peak CPU-busy
@@ -324,6 +323,8 @@ difference of about #H.b10b.mde ms or more with 80% power. The 95% interval reac
 a larger reduction is unlikely, although a smaller one is not ruled out. Pooled over #H.pooled.n pairs, the
 difference is #H.pooled.diff ms and the interval includes zero, but the batches ran under different host load,
 so we treat the pooled row as descriptive only.
+
+#fig-forest <fig:forest>
 
 == The forecast changed scaling, not latency <sec:effect>
 If the forecast did not lower the p99, its effect went elsewhere, and we trace it in three steps. First, the
@@ -353,8 +354,7 @@ we did not test it. Spock's forecast adds base capacity for the average rate, wh
 that Knative already serves. Spandana points the same way, since it meets its SLO with per-request offload and
 no forecast @spandana2026. The same reading predicts that a forecast should help in three cases: without an
 overflow backend, with one that cannot take the whole excess, or after a scale-down that removes capacity the
-load soon needs again. Two measurements would test this directly. One would record which backend serves the
-slowest requests, and the other would replace the GRU with a constant margin.
+load soon needs again. Recording which backend serves the slowest requests would test this directly.
 
 *Threats to validity.* All clusters share one host, so the testbed simulates two platforms rather than two
 clouds, and a timer simulates the provisioning delay. The workload is one 20-minute window of one trace, served
