@@ -63,7 +63,7 @@ reads a forecast, so comparing the two versions shows what the forecast changes.
 as follows.
 + A control loop that runs the router and the replica scaler together, with a router that uses only the
   observed load and the ready pods.
-+ An extension of the ElaX scaling decision with a GRU forecast. The GRU predicts nine steps of 15~s and
++ An extension of the ElaX scaling decision with a gated recurrent unit (GRU) forecast. The GRU predicts nine steps of 15~s and
   refreshes every cycle. The scaler sizes for the largest forecast value plus a margin, and training uses
   no test data and no window that crosses a split boundary.
 + An evaluation on a running testbed against Kubernetes under the HPA (S1) and Knative alone (S2), followed
@@ -173,7 +173,7 @@ the last scale-down, and the p99 is below 140~ms.
 We size for the upper envelope, not the point forecast, because a forecast that is too low costs more than one
 that is too high. A late pod causes SLO violations, whereas an early pod only stays idle. The forecast can only
 raise the target, so the observed load still sets the replica count when the GRU predicts too low. Without the
-hold, a short dip would remove pods that the next forecast asks for 15~s later.
+hold, a short dip would remove pods that the next forecast would ask for again 15~s later.
 
 == Node tier
 Pods that cannot be scheduled trigger a node autoscaler, and a timer stands in for the start of a virtual
@@ -189,8 +189,8 @@ in #G.latency.median ms (median; p95 #G.latency.p95 ms), so the forecast does no
 
 *Leak-free protocol.* We aggregate the ClarkNet HTTP trace @clarknet, a public web-server log, into 15~s
 buckets and multiply it by 33, the factor that the replay uses. We split the series in time order into
-training, validation and test portions, with a gap of 38 samples between two portions, the input length plus
-the horizon minus one, so no input window or target crosses into another portion. We fit
+training, validation and test portions, with a gap of 38 samples (the input length plus the horizon minus one)
+between two portions, so no input window or target crosses into another portion. We fit
 the input normalization on the training portion only. We select the hyperparameters and the number of epochs on
 the validation portion with the Tree-structured Parzen Estimator @bergstra2011tpe, a Bayesian search method
 implemented in Optuna @optuna2019. The test portion takes no part in this selection, because a score on data
@@ -244,7 +244,7 @@ one run serves about #F.requests requests.
 *Scenarios and batches.* @tab:scenarios lists the four scenarios. Each scenario ran five times, which we call the
 scenario batch. We then compared S4 and S3 in pairs of back-to-back runs. Both runs of a pair start from one static
 worker and face the same provisioning delay. The timer cycles that delay through 60, 90, 120, 75 and 45~s from pair
-to pair. Their order alternates between pairs (counterbalancing), so that a drift of the host favors neither
+to pair. The order of the two runs alternates between pairs (counterbalancing), so that a drift of the host favors neither
 arm. Pairing cancels much of the run-to-run movement of the p99 that comes from load on the shared host, and
 the number of pairs sets how small a difference the test can see. Three paired batches used the leak-free GRU
 of @sec:gru, and each had its main measure and test level fixed before its first run. Batch A had five pairs,
@@ -256,7 +256,7 @@ favored S4, because its run records do not identify the predictor, which was tra
 S3. For the paired batches, we use a one-sided exact paired
 permutation test at a level of 0.05. We also report a bootstrap 95% interval and the paired Cohen's $d$, the
 mean difference divided by its spread. A run counts only when it passes validity checks. A hybrid run must use the
-node tier, so a pod must become unschedulable (no node has room for it) or a dynamic node must be provisioned.
+node tier, meaning that a pod must become unschedulable (no node has room for it) or a dynamic node must be provisioned.
 An S4 run must also receive every
 forecast it requests, use a horizon that covers the provisioning delay, and raise the replica target from a forecast
 at least once. Every run of the three paired batches passed (#H.b5.valid of #H.b5.runs, #H.b10a.valid of
