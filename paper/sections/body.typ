@@ -21,11 +21,11 @@
   version adds a gated recurrent unit (GRU) forecast of the next 135~s plus a margin, and nothing else
   differs. On a replayed web trace, the reactive hybrid matched the cost of
   Kubernetes with the HPA but not its latency. In ten confirmatory run pairs, the forecast added
-  #H.b10b.replica_pct% more pod-seconds but did not measurably change the 99th-percentile latency
+  #H.b10b.replica_pct% more pod time but did not measurably change the 99th-percentile latency
   (#H.b10b.diff ms, 95% CI \[#H.b10b.ci_lo, #H.b10b.ci_hi\], $p = #H.b10b.p$), and the test could detect a
   change of about #H.b10b.mde ms. The GRU was no more accurate than a linear model, so its margin alone may
   have added those pods. A likely but untested reason is that serverless already serves
-  the excess while new pods start, which leaves the forecast little delay to remove.
+  the excess while new pods start, which leaves the forecast little of that wait to remove.
 ]
 
 #let keywords = ([Kubernetes], [serverless computing], [autoscaling], [workload prediction],
@@ -50,14 +50,15 @@ several times more there than on virtual machines @demystifying2025 @dehigama202
 therefore keep the steady base load on their own machines and send only the excess to serverless
 @dehigama2024.
 
-Once a deployment is hybrid, the two remedies compete for the same delay. While new pods and nodes start,
-serverless already serves the excess load, so a forecast can remove only the wait that serverless leaves. The
-forecast still costs extra pods and a model that must be trained and served, and whether it pays for itself
-is unknown, because the one hybrid that tested its forecast did so in a simulator (@sec:related). We therefore
+Once a deployment is hybrid, the two remedies compete for the same provisioning delay. While new pods and nodes
+start, serverless already serves the excess load, so a forecast can remove only the part of the delay that
+serverless does not cover. The forecast still costs extra pods and a model that must be trained and served, and
+whether it pays for itself is unknown, because the one prior hybrid system that tested its forecast did so in
+a simulator (@sec:related). We therefore
 ask whether, once serverless absorbs the overflow, a forecast still lowers the tail latency of a running
 deployment.
 
-To answer this question, we built a hybrid of Kubernetes and Knative, a serverless platform that runs on
+To answer this question, we built one such hybrid deployment from Kubernetes and Knative, a serverless platform that runs on
 Kubernetes, and ran it in two versions that differ only in the forecast. In both versions, a router sends
 Knative the load that the ready pods cannot serve, and a replica scaler derived from ElaX sets the number of
 pods. Only the scaler of the predictive version reads a forecast, so back-to-back pairs of runs of the two
@@ -119,9 +120,9 @@ ready pods, those that pass their readiness probe, from Kubernetes. It then runs
 weights, and the replica scaler, which sets the pod count. Only the scaler can read the forecast.
 
 == Algorithm 1: capacity-aware router
-The router decides how much of the load the ready pods can take. One pod serves $r_"eff" = 16.65$ RPS, its
-measured saturation throughput of 33.3 RPS at a target utilization of 0.5, so the ready pods can serve
-$C = n dot r_"eff"$. The router sends the rest to Knative through the serverless weight, in percent,
+The router decides how much of the load the ready pods can take. In calibration, one pod saturated at 33.3 RPS.
+The router plans each pod at a target utilization of 0.5, so one pod serves $r_"eff" = 16.65$ RPS and the
+ready pods can serve $C = n dot r_"eff"$. The router sends the rest to Knative through the serverless weight, in percent,
 $ w_"sls" = cases(0 & "if" x <= C, min(50, ceil(100 (x - C) \/ x)) & "otherwise,") $
 and applies it at once, without smoothing (@alg:routing). The cap of 50% bounds the serverless cost when
 Kubernetes capacity is far below the load. Because the router looks only at ready pods, a forecast can change
@@ -261,7 +262,8 @@ batch, which also received #H.b10b.delivered of #H.b10b.eligible forecasts. Beca
 host whose load can move the p99, the last two batches also logged its CPU-busy fraction, the share of
 non-idle CPU time in `/proc/stat`.
 
-*Cost.* We project the cost onto AWS prices. Kubernetes maps to EKS nodes sized from the mean CPU use, Knative
+*Cost.* Because the forecast adds pods, it can also add cost, so we project each run's resource use onto AWS
+prices. Kubernetes maps to EKS nodes sized from the mean CPU use, Knative
 maps to Lambda with provisioned concurrency sized from the serverless request rate, and each 20-minute run is
 scaled to a 30-day month. The projection charges whole nodes, so it cannot show differences smaller than one
 node running for a month.
@@ -291,11 +293,12 @@ not its tail latency, which leaves room for a forecast to help.
 #fig-runs <fig:runs>
 
 == The forecast did not measurably lower the p99
-Could the forecast close the latency gap between the reactive hybrid and the HPA baseline? @tab:h2 and @fig:forest give the paired results. The pilot batch favored the
-reactive hybrid, and the loaded-host batch favored the predictive one, but not significantly. In the
-confirmatory batch, the forecast changed the p99 by #H.b10b.diff ms ($p = #H.b10b.p$, $d = #H.b10b.d$), and the
-predictive hybrid was faster in #H.b10b.wins of #H.b10b.n pairs. The data therefore do not support the
-hypothesis that the forecast lowers the p99.
+Could the forecast close the latency gap between the reactive hybrid and the HPA baseline? @tab:h2 and
+@fig:forest give the paired results. In the confirmatory batch, the forecast changed the p99 by #H.b10b.diff ms
+($p = #H.b10b.p$, $d = #H.b10b.d$), and the predictive hybrid was faster in #H.b10b.wins of #H.b10b.n pairs.
+The data therefore do not support the hypothesis that the forecast lowers the p99. The two earlier batches
+pointed in opposite directions, the pilot toward the reactive hybrid and the loaded-host batch toward the
+predictive one, and neither difference was significant.
 
 #tab-h2 <tab:h2>
 #fig-forest <fig:forest>
@@ -314,8 +317,8 @@ with mean CPU-busy fractions of #H.b10b.busy_avg_min to #H.b10b.busy_avg_max, an
 ]
 
 How large a gain could ten pairs have missed? With the confirmatory spread of #H.b10b.diff_sd ms, the test
-detects a difference of about #H.b10b.mde ms or more with 80% power, and the 95% interval reaches down to
-#H.b10b.ci_lo ms, the largest reduction that the data still allow. Pooled over #H.pooled.n pairs, the difference
+detects a difference of about #H.b10b.mde ms or more with 80% power. Separately, the 95% interval reaches down
+to #H.b10b.ci_lo ms, so a larger reduction is unlikely but a smaller one is not ruled out. Pooled over #H.pooled.n pairs, the difference
 is #H.pooled.diff ms and the interval includes zero, but the batches ran under different host load, so the
 pooled row is only descriptive.
 
@@ -330,7 +333,7 @@ the same (USD #H.b10b.cost_s3 and #H.b10b.cost_s4 per month), because both hybri
 
 Second, did the extra pods make requests faster? Not measurably (@tab:h2). The likely but untested reason is
 that, until the first of about #H.b10b.nodes dynamic nodes per run was ready, the router sent the excess to
-Knative in both hybrids. The reactive hybrid thus already had serverless capacity during the delay that the
+Knative in both hybrids. The reactive hybrid thus already had serverless capacity during the provisioning delay that the
 forecast was meant to cover, and the forecast's pods replaced that capacity instead of adding capacity where
 there was none. We did not record which backend served the slowest requests, so they may have come from
 Knative, from pods still starting, or from the shared host.
