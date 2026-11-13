@@ -50,8 +50,8 @@ Serverless is expensive for steady load, however, and can cost several times mor
 @demystifying2025 @dehigama2024, so hybrid deployments keep the base load on their own machines and send only
 the excess to serverless @dehigama2024.
 
-We propose a hybrid that uses both remedies. It keeps the base load on Kubernetes and sends the excess to
-Knative, a serverless platform that runs on Kubernetes. A capacity-aware router decides how much of the load
+We propose a hybrid that uses both remedies. It keeps the base load on a Kubernetes deployment and sends the
+excess to Knative, an open-source serverless platform. A capacity-aware router decides how much of the load
 goes to Knative, and a replica scaler derived from ElaX decides how many pods to run, using a gated recurrent
 unit (GRU) forecast so that pods are added before the load arrives. Because serverless already covers part of
 the provisioning delay, the forecast may have less left to improve than it would on Kubernetes alone, so we also
