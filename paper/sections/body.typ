@@ -11,20 +11,21 @@
 #import "common.typ": *
 
 #let abstract = [
-  The Kubernetes Horizontal Pod Autoscaler (HPA) adds pods only after load rises, and when no node has room,
-  requests wait one to two minutes for a new virtual machine. A workload forecast can add pods
-  before the load arrives, and a serverless platform absorbs the overflow within seconds at a higher
-  price. We built a hybrid of Kubernetes and the serverless platform Knative in which a
-  router sends Knative the load the ready pods cannot serve, and a replica scaler adapted from the
-  autoscaler ElaX sets the pod count. The reactive version sizes pods from the observed load. The predictive
-  version adds a gated recurrent unit (GRU) forecast of the next 135~s plus a margin, and nothing else
-  differs. On a replayed web trace, the reactive hybrid matched the cost of
-  Kubernetes with the HPA but not its latency. In ten confirmatory run pairs, the forecast added
-  #H.b10b.replica_pct% more pod time but did not measurably change the 99th-percentile latency
-  (#H.b10b.diff ms, 95% CI \[#H.b10b.ci_lo, #H.b10b.ci_hi\], $p = #H.b10b.p$), and the test could detect
-  changes of about #H.b10b.mde ms. The GRU was no more accurate than a linear model, so its margin alone may
-  have added those pods. A likely but untested reason is that serverless serves
-  the excess while new pods start, leaving the forecast little to remove.
+  Kubernetes keeps web services on warm pods and serves steady load cheaply, but its Horizontal Pod Autoscaler
+  (HPA) adds pods only after load rises. When no node has room, requests wait one to two minutes for a new
+  virtual machine. Serverless platforms add instances within seconds without capacity planning, but steady load
+  costs more there. A hybrid therefore keeps the steady load on Kubernetes and sends the excess to serverless.
+  A workload forecast could also add pods before the load arrives, and we ask whether it still helps once
+  serverless covers the wait. In our hybrid, the serverless platform Knative takes whatever the ready pods
+  cannot serve, and a scaler adapted from the autoscaler ElaX sets the pod count.
+  We ran two versions that differ only in what this scaler reads. The reactive version reads
+  the current load. The predictive version also reads a gated recurrent unit (GRU) forecast of the next 135~s,
+  plus a safety margin. We compared the two versions in ten pairs of back-to-back runs.
+  The predictive version kept #H.b10b.replica_pct% more pods running, but its 99th-percentile latency was not
+  measurably lower. The change was #H.b10b.diff ms (95% CI \[#H.b10b.ci_lo, #H.b10b.ci_hi\],
+  $p = #H.b10b.p$), and the test could detect a change of about #H.b10b.mde ms. This suggests that Knative
+  already absorbs the excess while new pods start, leaving a forecast little to add. The GRU was also no more
+  accurate than a linear model.
 ]
 
 #let keywords = ([Kubernetes], [serverless computing], [autoscaling], [workload prediction],
