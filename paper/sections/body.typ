@@ -67,21 +67,20 @@ are as follows.
   extra pods may come from the safety margin rather than from the GRU itself.
 
 = Related work <sec:related>
-*Hybrid execution.* Four published systems run the base load on virtual machines and send whatever the machines
-cannot serve to serverless, but they disagree on whether a forecast is needed. Three of them use a forecast to
-decide how many machines to run. MArk forecasts the
-peak request rate @zhang2019mark, while LIBRA uses a moving average of the load plus a multiple of its deviation
-@libra2021, and both were compared with other provisioning schemes on AWS. Spock uses linear regression to
-predict the average rate at the time new machines will be ready @gunasekaran2019spock. It compared a reactive
-with a predictive policy and found the predictive one best, but only in an event-driven simulator. The fourth
-system, Spandana, uses no forecast at all @spandana2026. It argues that forecasts act over minutes, which is too
-coarse for short bursts, and instead steers each request to serverless when its machine cannot meet the SLO. As
-far as we found, none of these systems switched its forecast off on a running deployment to measure what it adds. Our work is
-closest to Spock but differs in three ways that matter for the result. First, our base tier is Kubernetes, so
-capacity grows in two steps, pods when a node has room and nodes only after the provisioning delay. Second,
-Spock's forecast sizes the machines for the average rate and leaves the peaks to Lambda, so it avoids extra
-machines, whereas ours adds pods early for the predicted peak. Third, we measure a running deployment in paired
-runs and test the difference statistically.
+*Hybrid execution.* MArk, LIBRA, Spock and Spandana all serve the base load on virtual machines and send the
+excess to serverless. They differ on whether a forecast is needed. MArk forecasts the peak request rate
+@zhang2019mark, and LIBRA uses a moving average of the load plus a multiple of its deviation @libra2021. Both
+size their machines from that forecast, and both were compared with other provisioning schemes on AWS. Spock
+uses linear regression to predict the average rate at the time new machines will be ready
+@gunasekaran2019spock. It compared a reactive policy with a predictive one and found the predictive one best,
+but only in an event-driven simulator. Spandana uses no forecast at all @spandana2026. It argues that forecasts
+act over minutes, which is too coarse for short bursts, so it instead sends each request to serverless when its
+machine cannot meet the SLO. As far as we found, none of these systems switched its forecast off on a running
+deployment to measure what it adds. Our work is closest to Spock but differs in three ways that matter for the
+result. First, our base tier is Kubernetes, so capacity grows in two steps, pods when a node has room and nodes
+only after the provisioning delay. Second, Spock's forecast sizes the machines for the average rate and leaves
+the peaks to AWS Lambda, so it avoids extra machines, whereas ours adds pods early for the predicted peak.
+Third, we measure a running deployment in paired runs and test the difference statistically.
 
 *Autoscaling with forecasts.* Many autoscalers forecast the load, but each scales a single platform. Some scale
 Kubernetes pods from a forecast of CPU use or of the request rate @mondal2023toward @yuan2024time, refit the
