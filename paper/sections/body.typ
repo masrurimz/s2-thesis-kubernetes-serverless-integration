@@ -20,12 +20,12 @@
   version of the scaler uses only the current load, while the predictive version also uses the GRU forecast of
   the next 135~s with a safety margin. The reactive hybrid cost about as much as Kubernetes alone and less than
   half as much as Knative alone, but it had a higher tail latency than Kubernetes alone. Over ten
-  pairs of back-to-back runs of the two versions, the predictive version used #H.b10b.replica_pct% more pods,
+  pairs of back-to-back runs, the predictive version used #H.b10b.replica_pct% more pods,
   which fit on the same nodes, so the projected cost stayed the same, yet its 99th-percentile latency did not
-  improve measurably. The difference was #H.b10b.diff ms (95% CI \[#H.b10b.ci_lo, #H.b10b.ci_hi\],
-  $p = #H.b10b.p$), and the test could have detected a change of about #H.b10b.mde ms. This suggests that, because Knative already
-  serves the excess while new pods start, a forecast has little left to improve. The GRU was also no more
-  accurate than a linear model.
+  improve measurably. It was #H.b10b.diff_abs ms faster on average, but the 95% CI runs from #H.b10b.ci_lo_abs ms
+  faster to #H.b10b.ci_hi_abs ms slower ($p = #H.b10b.p$), so the gain could be chance. This suggests that,
+  because Knative already serves the excess while new pods start, a forecast has little left to improve. The GRU
+  was no more accurate than a linear model.
 ]
 
 #let keywords = ([Kubernetes], [serverless computing], [autoscaling], [workload prediction],
