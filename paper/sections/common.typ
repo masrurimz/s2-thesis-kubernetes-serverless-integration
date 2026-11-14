@@ -15,49 +15,50 @@
 // ---------------------------------------------------------------------------
 // Fig. 1: control architecture. The forecast arrow reaches Algorithm 2 only.
 #let fig-architecture = figure(
-  cetz.canvas(length: 0.98cm, {
+  cetz.canvas(length: 1cm, {
     import cetz.draw: *
-    set-style(stroke: 0.6pt, mark: (fill: black, scale: 0.6))
+    set-style(stroke: 0.6pt, mark: (fill: black, scale: 0.5))
     let node(a, b, name, body, fill: white) = {
       rect(a, b, name: name, fill: fill, radius: 2pt)
-      content(name, align(center, text(size: 7pt, body)))
+      content(name, align(center, text(size: 6.5pt, body)))
     }
-    let arrow(..pts, label: none, anchor: "south", pos: none) = {
-      line(..pts, mark: (end: ">"))
-      if label != none and pos != none {
-        content(pos, text(size: 6.5pt, style: "italic", label), anchor: anchor, padding: 2pt)
-      }
-    }
-    let weight(sub) = text(size: 8.5pt, style: "normal", $w_sub$)
+    let lab(pos, body, anchor: "south") = content(pos, text(size: 6pt, style: "italic", body), anchor: anchor, padding: 1.5pt)
+    let arrow(..pts) = line(..pts, mark: (end: ">"))
 
-    node((0, 2), (2.4, 3.2), "load", [*Load generator* \ k6, ClarkNet replay])
-    node((3.4, 2), (5.8, 3.2), "lb", [*HAProxy* \ weighted ingress], fill: luma(240))
-    node((3.4, 4.4), (5.8, 5.6), "prom", [*Prometheus* \ load $x$, p99])
-    node((7, 3.4), (10, 4.6), "k8s", [*Kubernetes backend* \ 3–10 pods])
-    node((7, 0.6), (10, 1.8), "kn", [*Knative backend* \ 3–10 warm pods])
-    node((6.6, 5.4), (10.4, 6.4), "nodes", [*Node autoscaler* \ new node after 45–120 s])
-    node((13, 5.5), (17.4, 6.5), "gru", [*GRU forecaster* \ 9 steps $times$ 15 s], fill: luma(240))
+    node((0, 4.5), (1.6, 5.3), "load", [*Load gen.* \ k6 replay])
+    node((2.1, 4.5), (3.7, 5.3), "lb", [*HAProxy*], fill: luma(240))
+    node((2.1, 3.0), (3.7, 3.8), "prom", [*Prometheus*])
+    node((4.6, 5.1), (8.0, 5.9), "kn", [*Knative* \ 3–10 warm pods])
+    node((4.6, 3.9), (8.0, 4.7), "k8s", [*Kubernetes* \ 3–10 pods])
+    node((5.45, 2.5), (8.0, 3.5), "nodes", [*Node autoscaler* \ new node after 45–120 s])
+    rect((0, 0), (5.6, 2.3), stroke: (dash: "dashed"), radius: 2pt)
+    content((0.95, 2.22), text(size: 6pt, [control daemon, every 15 s]), anchor: "north-west")
+    node((0.15, 0.15), (2.75, 1.75), "alg1", [*Algorithm 1: router* \ weights from load $x$ \ and ready pods $n$])
+    node((2.95, 0.15), (5.45, 1.75), "alg2", [*Algorithm 2: scaler* \ pods $R(x)$, or \ $R(max_k hat(u)_(t+k))$ \ if larger])
+    node((6.0, 0.3), (8.0, 1.1), "gru", [*GRU forecaster* \ 9 steps $times$ 15 s], fill: luma(240))
 
-    rect((11.4, 0.2), (17.4, 4.9), name: "daemon", stroke: (dash: "dashed"), radius: 2pt)
-    content((11.55, 4.75), text(size: 6.5pt, [control daemon, every 15 s]), anchor: "north-west")
-    node((11.7, 2.7), (17.1, 4.2), "alg2", [*Algorithm 2: replica scaler* \ replica count $R(v)$ from observed load. \ Predictive: $R(max_k hat(u)_(t+k))$ if larger])
-    node((11.7, 0.5), (17.1, 2.0), "alg1", [*Algorithm 1: capacity-aware router* \ serverless weight from $x$ and ready pods $n$])
-
-    arrow("load.east", "lb.west", label: [HTTP], pos: (2.9, 2.6))
-    arrow((5.8, 2.9), (7, 4.0), label: weight("k8s"), pos: (6.3, 3.55), anchor: "south-east")
-    arrow((5.8, 2.3), (7, 1.2), label: weight("sls"), pos: (6.3, 1.65), anchor: "north-east")
-    arrow("lb.north", "prom.south", label: [metrics], pos: (4.6, 3.8), anchor: "west")
-    arrow("prom.north", (4.6, 7.1), (12.2, 7.1), (12.2, 4.9), label: [load $x$, p99], pos: (8.4, 7.1))
-    arrow("gru.south", (15.2, 4.2), label: [upper envelope $hat(u)$ (predictive only)], pos: (15.05, 5.2), anchor: "east")
-    arrow("alg2.west", "k8s.east", label: [replica count], pos: (10.65, 3.6), anchor: "north")
-    arrow((9.8, 3.4), (9.8, 2.4), (11.0, 2.4), (11.0, 1.25), "alg1.west", label: [ready pods $n$], pos: (10.9, 2.3), anchor: "north-east")
-    arrow("alg1.south", (14.4, -0.5), (4.6, -0.5), "lb.south", label: [weights $w_"k8s", w_"sls"$], pos: (9.5, -0.5))
-    arrow("nodes.south", "k8s.north")
+    arrow("load.east", "lb.west")
+    arrow((3.7, 5.05), (4.6, 5.5))
+    lab((4.15, 5.3), $w_"sls"$, anchor: "south-east")
+    arrow((3.7, 4.75), (4.6, 4.3))
+    lab((4.15, 4.5), $w_"k8s"$, anchor: "north-east")
+    arrow("lb.south", "prom.north")
+    lab((2.9, 4.15), [metrics], anchor: "west")
+    arrow("prom.south", (2.9, 2.3))
+    lab((2.9, 2.65), [load $x$, p99], anchor: "west")
+    arrow((0.8, 1.75), (0.8, 4.1), (2.4, 4.1), (2.4, 4.5))
+    lab((0.8, 3.0), [weights], anchor: "west")
+    arrow((5.0, 3.9), (5.0, 2.3))
+    lab((5.0, 3.1), [ready pods $n$], anchor: "east")
+    arrow("nodes.north", (6.8, 3.9))
+    arrow((5.45, 1.5), (8.3, 1.5), (8.3, 4.3), (8.0, 4.3))
+    lab((6.9, 1.5), [replica count])
+    arrow("gru.west", (5.45, 0.7))
+    lab((5.72, 0.7), $hat(u)$)
   }),
   placement: auto,
-  scope: "parent",
-  caption: [Control architecture.],
-) 
+  caption: [Control architecture. Only the predictive hybrid uses the forecast $hat(u)$.],
+)
 
 // A note under a table, in the last row. Captions stay titles; a remark about one cell goes here.
 #let tnote(columns, body) = table.cell(
