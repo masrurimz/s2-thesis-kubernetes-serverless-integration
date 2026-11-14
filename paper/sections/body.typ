@@ -41,7 +41,7 @@ use has crossed a target @serracanta2025hpa. When no node has room for the new p
 a virtual machine, which takes one to two minutes @hao2021vmstartup, and the requests that arrive during this
 provisioning delay wait in a queue and break the SLO.
 
-There are two remedies for this delay. A workload forecast can hide it by adding capacity before the load
+There are two ways to close this delay. A workload forecast can hide it by adding capacity before the load
 arrives, as ElaX, an autoscaler for container clusters, does with an hourly long short-term memory (LSTM)
 forecast @yang2019elax. A serverless platform can absorb it instead, because it adds instances within seconds
 @demystifying2025, although each new instance pays a short start-up (cold-start) delay @golec2023cold.
@@ -49,7 +49,7 @@ Serverless is expensive for steady load, however, and can cost several times mor
 @demystifying2025 @dehigama2024, so hybrid deployments keep the base load on their own machines and send only
 the excess to serverless @dehigama2024.
 
-We propose a hybrid that uses both remedies. It keeps the base load on a Kubernetes deployment and sends the
+We propose a hybrid that uses both ways. It keeps the base load on a Kubernetes deployment and sends the
 excess to Knative, an open-source serverless platform. A capacity-aware router decides how much of the load
 goes to Knative, and a replica scaler derived from ElaX decides how many pods to run, using a gated recurrent
 unit (GRU) forecast so that pods are added before the load arrives. Because serverless already covers part of
