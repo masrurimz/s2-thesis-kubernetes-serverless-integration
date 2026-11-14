@@ -119,7 +119,9 @@ requests between a Kubernetes deployment and a Knative service according to two 
 daemon collects the load $x$ in requests per second (RPS) and the p99 from the metrics store Prometheus, together
 with the number $n$ of ready pods, those that pass their readiness probe, from Kubernetes. It then runs the
 router, which sets the weights, and the replica scaler, which sets the pod count. Only the scaler has access to
-the forecast.
+the forecast. The 15~s period is the default of the HPA's own control loop @kubernetes2026hpa, so the hybrids and
+the HPA baseline react at the same pace. Prometheus also collects a new sample every 15~s, so a shorter period
+would only read the same data again.
 
 == Algorithm 1: capacity-aware router
 The router works out how much of the load the ready pods can take and sends the rest to Knative. In calibration,
@@ -173,8 +175,10 @@ autoscaler waits a set provisioning delay of 45 to 120~s, close to the virtual m
 in public clouds @hao2021vmstartup, and then adds a one-CPU worker. In our runs, the first new node arrived
 #H.b10b.delay_min to #H.b10b.delay_max~s after the first pod could not be scheduled, slightly longer than the set delay. A node is
 removed when its CPU utilization falls below 50%, the default of the Kubernetes Cluster Autoscaler @k8sca-faq.
-The forecast horizon of 135~s equals the longest set delay plus one 15~s cycle, so the predictive hybrid can ask
-for a pod before the load that needs it arrives.
+The forecast horizon follows the rule of ADAPT @adapt2026, which looks ahead by the provisioning delay in
+control cycles plus one cycle. With the longest set delay of 120~s, that gives $120 \/ 15 + 1 = 9$ steps, or
+135~s. The extra cycle covers the 15~s until the scaler's next decision, and it also covers the node arrivals of
+up to #H.b10b.delay_max~s.
 
 = GRU forecaster <sec:gru>
 A fair test of the forecast needs a forecaster that is well tuned and has never seen the load it is tested on.
