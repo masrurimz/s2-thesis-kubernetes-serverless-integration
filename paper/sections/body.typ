@@ -124,12 +124,13 @@ would only read the same data again.
 
 == Algorithm 1: capacity-aware router
 The router works out how much of the load the ready pods can take and sends the rest to Knative. In calibration,
-one pod saturated at 33.3 RPS. The router plans each pod at a target utilization of 0.5, so one pod serves
-$r_"eff" = 16.65$ RPS and the ready pods together serve $C = n dot r_"eff"$. The serverless weight, in percent, is
+three pods crossed a p99 of 200~ms at 100~RPS, so one pod saturates at about 33.3 RPS. The router plans each pod
+at half that rate, the 50% CPU target of the HPA baseline, so one pod serves $r_"eff" = 16.65$ RPS and the ready
+pods together serve $C = n dot r_"eff"$. The serverless weight, in percent, is
 $ w_"sls" = cases(0 & "if" x <= C, min(50, ceil(100 (x - C) \/ x)) & "otherwise,") $
-and the router applies it at once, without smoothing (@alg:routing). The cap of 50% bounds the serverless cost
-when Kubernetes capacity is far below the load. Because the router looks only at ready pods, the forecast can
-change the weight only through the pods that the scaler adds.
+and the router applies it at once, without smoothing (@alg:routing). The cap of 50% keeps at least half of the
+load on Kubernetes and so bounds the serverless cost. The router never reads the forecast. A forecast lowers the
+serverless weight only by making the scaler add pods earlier.
 
 #alg-routing <alg:routing>
 
@@ -148,17 +149,18 @@ change the weight only through the pods that the scaler adds.
 The replica scaler decides how many pods to run, and it is the only component that sees the forecast. Its
 design rests on an asymmetry. A pod that starts too late causes SLO violations, while a pod that starts too
 early only stands idle, so the scaler errs toward too many pods. It turns a load value $v$, which we call the
-decision factor, into a replica count $R(v) = ceil(v \/ r_"eff")$, clamped to 3 to 10 pods. The reactive hybrid
-uses the observed load $x_"obs"$, the mean over the last 30~s. The predictive hybrid also forms the upper
+decision factor, into a replica count $R(v) = ceil(v \/ r_"eff")$, clamped to 3 to 10 pods. Three pods keep the
+deployment warm, as in the Knative baseline, and ten matches the Knative maximum. The reactive hybrid uses the
+observed load $x_"obs"$, the mean over the last 30~s. The predictive hybrid also forms the upper
 envelope of the GRU forecast,
 $ hat(u)_(t+k) = hat(y)_(t+k) + delta_k, quad k = 1, dots, 9, $
 where $hat(y)_(t+k)$ is the forecast for step $k$ and the margin $delta_k$, #G.offset_min to #G.offset_max RPS,
 is the 90th percentile of the forecast's underestimates at that step on the validation data. Its decision
 factor is the largest envelope value. This forecast target replaces the observed-load target only when it asks
 for more pods, so a forecast that is too low never removes pods. Once raised, the target holds for 90~s, so that
-a brief dip does not remove pods that the next forecast would ask for again (@alg:scaling). Pods are removed
-only when the target falls below 0.75 times the current count, at least 120~s after the last removal, and while
-the p99 is below 140~ms.
+a brief dip does not remove pods that the next forecast would ask for again (@alg:scaling). As in the HPA
+@kubernetes2026hpa, pods are removed more slowly than they are added: only when the target falls below 0.75
+times the current count, at least 120~s after the last removal, and while the p99 is below 140~ms.
 
 #alg-scaling <alg:scaling>
 
@@ -228,21 +230,24 @@ the linear model.
 = Experimental setup <sec:setup>
 #tab-scenarios <tab:scenarios>
 
-The experiment answers two questions (@tab:batches). The first is what the hybrid delivers without a forecast,
-which a scenario batch answers by running the reactive hybrid beside two single-platform baselines. The second
-is what the forecast adds, which the paired batches answer, and it is the main question of this paper.
+The experiment answers two questions (@tab:batches): what the hybrid delivers without a forecast, which a
+scenario batch answers beside two single-platform baselines, and what the forecast adds, the main question of
+this paper, which the paired batches answer.
 
-*Testbed.* We sized the testbed so that the replayed load outgrows the static capacity and new nodes must start.
-Two clusters run on one host under k3d, a tool that runs Kubernetes nodes as containers. The Kubernetes cluster
+*Testbed.* Two clusters run on one host under k3d, a tool that runs Kubernetes nodes as containers. The Kubernetes cluster
 has one static worker plus the dynamic nodes of @sec:design, each limited to one CPU. The Knative cluster has
-one three-CPU worker and keeps three to ten pods, so it never scales to zero. Each pod requests 0.3 CPU, and
-each request computes the 33rd Fibonacci number and then waits 50~ms to simulate I/O.
+one three-CPU worker and keeps three to ten pods, so it never scales to zero. Each pod requests 0.3 CPU, so three
+fit on a one-CPU worker. Each request computes the 33rd Fibonacci number and then waits 50~ms to simulate a
+database call.
 
-*Workload and measure.* The load generator k6 replays a 20-minute ClarkNet window in 40 steps of 30~s, with a
-mean of 73~RPS, a peak of 164~RPS, and about #F.requests requests per run. We judge each run by its p99 rather
+*Workload and measure.* The load generator k6 replays a 20-minute ClarkNet window in 40 steps of 30~s. We
+multiply the trace by 33, so that its peak of 164~RPS outgrows the three pods of the static worker and new nodes
+must start. The mean is
+73~RPS, and each run sends
+about #F.requests requests. We judge each run by its p99 rather
 than its mean, because a surge delays only the requests that arrive while capacity is short, and these are too
-few to move the mean. The SLO is a p99 of 200~ms, and every request slower than 200~ms counts as one SLO
-violation.
+few to move the mean. The SLO is a p99 of 200~ms, the same bound as the example SLO in MArk @zhang2019mark, and
+every request slower than 200~ms counts as one SLO violation.
 
 *Scenarios and batches.* @tab:scenarios lists the four scenarios. In the scenario batch, the HPA baseline, the
 Knative baseline and the reactive hybrid each ran five times. The paired batches compare the predictive hybrid
@@ -285,6 +290,8 @@ projection charges whole nodes, so it cannot show a difference smaller than one 
   rate and the measured execution time.
 ]
 
+#fig-runs <fig:runs>
+
 = Results <sec:results>
 == Routing the overflow kept the cost of Kubernetes, not its latency
 Before testing the forecast, we look at what the hybrid delivers without it (@tab:four, @fig:runs). The Knative
@@ -293,10 +300,8 @@ The comparison also favors it, since it ran three always-warm pods on a three-CP
 started from one pod on a one-CPU worker. The reactive hybrid had about the same projected cost as the HPA
 baseline and ran #F.s3_pods_below_s1% fewer pod-seconds (pods times seconds running) on Kubernetes, but it also kept at
 least three Knative pods warm, so it ran no fewer pods in total. It paid in latency instead, with a p99 of #F.s3.p99 ms
-against #F.s1.p99 ms, more SLO violations, and one of its five runs above the SLO. Routing the overflow
-therefore kept the cost of Kubernetes but not its tail latency, which leaves room for a forecast to help.
-
-#fig-runs <fig:runs>
+against #F.s1.p99 ms, more SLO violations, and one of its five runs above the SLO. This leaves room for a
+forecast to help.
 
 == The forecast did not measurably lower the p99
 @tab:h2 and @fig:forest compare the predictive hybrid with the reactive one, pair by pair. In the confirmatory
@@ -324,9 +329,8 @@ no gain.
 
 Ten pairs could still miss a small gain. With the confirmatory spread of #H.b10b.diff_sd ms, the test detects a
 difference of about #H.b10b.mde ms or more with 80% power. The 95% interval reaches down to #H.b10b.ci_lo ms, so
-a reduction beyond that bound is unlikely, although a smaller one is not ruled out. Pooled over #H.pooled.n pairs, the
-difference is #H.pooled.diff ms and the interval includes zero, but the batches ran under different host load,
-so we treat the pooled row as descriptive only.
+a reduction beyond that bound is unlikely, although a smaller one is not ruled out. The pooled row of @tab:h2 is
+descriptive only, because the batches ran under different host load.
 
 #fig-forest <fig:forest>
 
@@ -346,11 +350,9 @@ provisioning delay that the forecast was meant to cover, so the forecast's pods 
 than adding capacity where there was none. We did not record which backend served the slowest requests, so these
 may have come from Knative, from pods still starting, or from the shared host.
 
-Third, as the introduction noted, our design cannot tell whether the GRU itself caused the extra pods. The
-margin alone adds #G.offset_min to #G.offset_max RPS to a mean load of 73~RPS, which is three to four extra pods,
-and the hold keeps them for 90~s. Since the GRU is no more accurate than a linear autoregression
-(@tab:predictor), a simpler forecast with the same margin may well add the same pods. Our pairs compare a
-forecast with no forecast, not the GRU with a simpler forecast.
+Third, our design cannot tell whether the GRU itself caused the extra pods. The margin alone adds
+#G.offset_min to #G.offset_max RPS to a mean load of 73~RPS, which is three to four extra pods, and the hold keeps
+them for 90~s. A linear autoregression is as accurate as the GRU (@tab:predictor), so it may well add the same pods.
 
 = Discussion <sec:discussion>
 Spock reported a gain where we found none, and the purpose of each forecast may explain why, although
@@ -358,20 +360,18 @@ we did not test it. Spock's forecast adds base capacity for the average rate, wh
 that Knative already serves. Spandana points the same way, since it meets its SLO with per-request offload and
 no forecast @spandana2026. The same reading predicts that a forecast should help in three cases: without an
 overflow backend, with one that cannot take the whole excess, or after a scale-down that removes capacity the
-load soon needs again. Recording which backend serves the slowest requests would test this directly.
+load soon needs again.
 
 *Threats to validity.* All clusters share one host, so the testbed simulates two platforms rather than two
 clouds, and a timer simulates the provisioning delay. The workload is one 20-minute window of one trace, served
 by one function. Algorithm 2 ran with one parameter set, and a smaller margin or a shorter hold would change what
-the forecast costs. Finally, the loaded-host batch ran with a mean CPU-busy fraction of up to
-#H.b10a.busy_avg_max, and the pilot batch has no host record.
+the forecast costs.
 
 = Conclusion
 We proposed a hybrid that keeps the base load on Kubernetes, sends the excess to Knative, and scales pods with
-an ElaX-derived scaler extended with a GRU forecast. Without the forecast, the hybrid cost about as much as
-Kubernetes alone but had a higher tail latency. In ten confirmatory pairs, the forecast added
-#H.b10b.replica_pct% more pod-seconds without a measurable change in the p99, and the 95% interval of its effect
-reaches down to #H.b10b.ci_lo ms. A deployment that already routes its overflow to serverless should therefore
+an ElaX-derived scaler extended with a GRU forecast. In ten confirmatory pairs, the forecast added
+#H.b10b.replica_pct% more pod-seconds without a measurable change in the p99. A deployment that already routes
+its overflow to serverless should therefore
 measure what a forecast buys before adopting one. Our next experiments are a constant-margin baseline, which
 keeps the margin but drops the GRU, and a run without a serverless backend, where the forecast has a delay to
 remove.
