@@ -74,11 +74,11 @@
   supplement: [Algorithm],
   caption: [Capacity-aware router, every 15 s],
   align(start, text(size: 8pt, pseudocode-list(booktabs: true, numbered-title: none)[
-    + *input:* load $x$ (RPS), ready pods $n$, current serverless weight $w$
-    + $C <- n dot r_"eff"$ #h(1fr) ▷ capacity of ready pods
-    + *if* $x <= C$ *then* $w' <- 0$
-    + *else* $w' <- min(50, ceil(100 (x - C) \/ x))$ #h(1fr) ▷ excess share, capped
-    + *if* $w' != w$ *then* set HAProxy weights $(w_"k8s", w_"sls") <- (100 - w', w')$
+    + *input:* load $x$ (RPS), ready pods $n$
+    + $C <- n dot r_"eff"$ #h(1fr) ▷ load the ready pods can serve
+    + *if* $x <= C$ *then* $w_"sls" <- 0$ #h(1fr) ▷ all to Kubernetes
+    + *else* $w_"sls" <- min(50, ceil(100 (x - C) \/ x))$ #h(1fr) ▷ excess share, in %
+    + set HAProxy weights $(w_"k8s", w_"sls") <- (100 - w_"sls", w_"sls")$
   ])),
   placement: auto,
 )
@@ -86,17 +86,16 @@
 #let alg-scaling = figure(
   kind: "algorithm",
   supplement: [Algorithm],
-  caption: [ElaX-derived replica scaler with the forecast decision factor, every 15 s],
+  caption: [ElaX-derived replica scaler, every 15 s],
   align(start, text(size: 8pt, pseudocode-list(booktabs: true, numbered-title: none)[
-    + *input:* load samples, upper envelope $hat(u)_(t+1..t+9)$ (predictive hybrid), current replica count $r$, p99
-    + $R(v) := "clamp"(ceil(v \/ r_"eff"), 3, 10)$
-    + $x_"obs" <-$ mean load over the last 30 s; $T <- R(x_"obs")$ #h(1fr) ▷ observed-load target
+    + *input:* mean load $x_"obs"$ over the last 30 s, current pods $r$, p99; \ predictive hybrid also: envelope $hat(u)_(t+1), dots, hat(u)_(t+9)$
+    + $R(v) := "clamp"(ceil(v \/ r_"eff"), 3, 10)$ #h(1fr) ▷ pods for load $v$
+    + $T <- R(x_"obs")$ #h(1fr) ▷ observed-load target
     + *if* predictive hybrid *then*
-      + $T_p <- R(max_k hat(u)_(t+k))$ #h(1fr) ▷ forecast target
-      + *if* $T_p > T$ *then* $T <- T_p$; hold $(T_p, t + 90 "s")$
-      + *else if* a hold is active *and* its target $> T$ *then* $T <-$ held target
-    + *if* $T > r$ *and* 15 s since last scale-up *then* scale to $T$
-    + *else if* $T < 0.75 r$ *and* 120 s since last scale-down *and* p99 $< 140$ ms *then* scale to $T$
+      + *if* $R(max_k hat(u)_(t+k)) > T$ *then* $T <- R(max_k hat(u)_(t+k))$, kept for 90 s
+      + *else if* a kept target is above $T$ *then* $T <-$ kept target
+    + *if* $T > r$ *then* scale up to $T$
+    + *else if* $T < 0.75 r$ *and* p99 $< 140$ ms *and* 120 s since the last scale-down *then* scale down to $T$
   ])),
   placement: auto,
 )
@@ -108,42 +107,24 @@
     columns: (auto, 1fr, 1fr),
     align: (left, left, left),
     stroke: none,
-    inset: (x: 3pt, y: 2.2pt),
+    inset: (x: 3pt, y: 2pt),
     toprule,
-    [], [*ElaX* @yang2019elax], [*This work (Algorithm 2)*],
+    [], [*ElaX* @yang2019elax], [*Algorithm 2*],
     rule,
-    [Predictor], [LSTM on a denoised series], [GRU with one 9-step output head],
-    [Horizon], [60 one-minute points], [9 steps of 15 s (135 s)],
-    [Refresh], [forecast and reservation every hour, model retrained every day], [every 15 s control cycle],
-    [Decision factor $v$#super[a]], [largest point forecast of the next hour], [largest upper-envelope value of the next 135 s, used when it needs more pods than the observed load],
-    [Resource model], [$R = sigma y + beta$, fitted by profiling], [$R = ceil(v \/ r_"eff")$, with $r_"eff"$ measured per pod],
-    [Feedback], [slack-based online controller, every 2 s], [cooldowns and a p99 guard on scale-down],
-    [Scaling], [horizontal and vertical], [horizontal, with a separate node tier],
-    [Scope], [one container cluster], [Kubernetes and Knative behind one router (Algorithm 1)],
+    [Predictor], [LSTM, denoised series], [GRU, one 9-step head],
+    [Horizon], [60 × 1 min], [9 × 15 s (135 s)],
+    [Refresh], [hourly; retrained daily], [every 15 s],
+    [Decision factor#super[a]], [top point forecast], [top upper envelope],
+    [Resource model], [$R = sigma y + beta$, profiled], [$R = ceil(v \/ r_"eff")$, measured],
+    [Feedback], [slack controller, 2 s], [cooldowns, p99 guard],
+    [Scaling], [horizontal, vertical], [horizontal, node tier],
+    [Scope], [one cluster], [Kubernetes + Knative],
     toprule,
-    tnote(3)[#super[a]Our term: the load value from which the scaler computes the replica count.],
+    tnote(3)[#super[a]The load value the replica count is computed from.],
   ),
   placement: auto,
   caption: [Algorithm 2 compared with ElaX],
 ) 
-
-#let tab-scenarios = figure(
-  table(
-    columns: (auto, 1fr, auto),
-    align: (left, left, left),
-    stroke: none,
-    inset: (x: 3pt, y: 2.2pt),
-    toprule,
-    [*Scenario*], [*Pod scaling*], [*Traffic*],
-    rule,
-    [HPA baseline], [HPA at 50% CPU, 1–10 pods], [all to Kubernetes],
-    [Knative baseline], [Knative autoscaler, 3–10 pods], [all to Knative],
-    [Reactive hybrid], [Alg. 2 on the observed load], [Alg. 1],
-    [Predictive hybrid], [Alg. 2 on the observed load and the GRU forecast], [Alg. 1],
-    toprule,
-  ),
-  caption: [Deployment scenarios],
-)
 
 #let tab-batches = figure(
   table(
@@ -186,113 +167,93 @@
   caption: [Forecast error on the ClarkNet test portion],
 )
 
+// A strip plot inside a table cell: values on a fixed axis [lo, hi], a dashed reference line at ref,
+// and either dots (one per run) or an interval with its mean.
+#let strip(lo, hi, ref, body, w: 2.6) = box(baseline: 20%, cetz.canvas(length: 1cm, {
+  import cetz.draw: *
+  set-style(stroke: 0.5pt)
+  let sx(v) = (v - lo) / (hi - lo) * w
+  rect((0, -0.09), (w, 0.09), stroke: none)
+  line((sx(ref), -0.11), (sx(ref), 0.11), stroke: (dash: "densely-dashed", paint: luma(120)))
+  body(sx)
+}))
+#let strip-axis(lo, hi, ticks, w: 2.6) = box(cetz.canvas(length: 1cm, {
+  import cetz.draw: *
+  set-style(stroke: 0.5pt)
+  let sx(v) = (v - lo) / (hi - lo) * w
+  line((0, 0), (w, 0))
+  for t in ticks {
+    line((sx(t), 0), (sx(t), -0.05))
+    content((sx(t), -0.07), text(size: 6pt, str(t).replace("-", "−")), anchor: "north")
+  }
+}))
+#let runs-strip(plot) = strip(0, 300, 200, w: 3.0, sx => {
+  import cetz.draw: *
+  for v in plot { circle((sx(v), 0), radius: 0.045, fill: white, stroke: 0.45pt) }
+})
+#let ci-w = 6.0
+#let ci-strip(v, bold: false) = strip(-700, 1100, 0, w: ci-w, sx => {
+  import cetz.draw: *
+  line((sx(v.at(1)), 0), (sx(v.at(2)), 0), stroke: 0.9pt)
+  let s = if bold { 0.075 } else { 0.05 }
+  rect((sx(v.at(0)) - s, -s), (sx(v.at(0)) + s, s), fill: black, stroke: none)
+})
+
 #let tab-four = figure(
   table(
-    columns: (auto, auto, auto, auto, auto, auto),
-    align: (left, right, right, right, right, right),
+    columns: (auto, auto, auto, auto, auto, auto, auto, auto, auto),
+    align: (left, left, left, right, center, right, right, right, right),
     stroke: none,
     inset: (x: 3pt, y: 2.2pt),
     toprule,
-    [], [*p99 (ms)*], [*SLO viol.*], [*Serverless*], [*K8s pod-s*], [*USD/mo*],
+    [*Scenario*], [*Pod scaling*], [*Traffic*], [*p99 (ms)*], [*p99 per run*#super[a]], [*SLO viol.*#super[b]],
+    [*Serverless*], [*K8s pod-s*], [*USD/mo*],
     rule,
-    [HPA baseline], [#F.s1.p99 ± #F.s1.p99_sd], [#F.s1.slo], [#F.s1.share%], [#F.s1.replica_s], [#F.s1.cost],
-    [Knative baseline], [#F.s2.p99 ± #F.s2.p99_sd], [#F.s2.slo], [#F.s2.share%], [#F.s2.replica_s], [#F.s2.cost],
-    [Reactive hybrid], [#F.s3.p99 ± #F.s3.p99_sd], [#F.s3.slo], [#F.s3.share%], [#F.s3.replica_s], [#F.s3.cost],
-    toprule,
+    [HPA baseline], [HPA at 50% CPU, 1–10 pods], [Kubernetes], [#F.s1.p99 ± #F.s1.p99_sd], runs-strip(F.s1.plot),
+    [#F.s1.slo], [#F.s1.share%], [#F.s1.replica_s], [#F.s1.cost],
+    [Knative baseline], [Knative KPA, 3–10 pods], [Knative], [#F.s2.p99 ± #F.s2.p99_sd],
+    runs-strip(F.s2.plot), [#F.s2.slo], [#F.s2.share%], [#F.s2.replica_s], [#F.s2.cost],
+    [Reactive hybrid], [Alg. 2 on the observed load], [Alg. 1], [#F.s3.p99 ± #F.s3.p99_sd], runs-strip(F.s3.plot),
+    [#F.s3.slo], [#F.s3.share%], [#F.s3.replica_s], [#F.s3.cost],
+    [Predictive hybrid], [Alg. 2 on load + forecast], [Alg. 1],
+    table.cell(colspan: 6, align: left)[paired with the reactive hybrid only (@tab:h2)],
+    rule,
+    [], [], [], [], strip-axis(0, 300, (0, 100, 200, 300), w: 3.0), [], [], [], [],
+    tnote(9)[#super[a]One dot per run of the scenario batch; dashed line: the 200~ms SLO.
+      #super[b]Requests over 200~ms per run.],
   ),
   placement: auto,
   scope: "parent",
-  caption: [Scenario batch, means over five runs per scenario. SLO viol.: requests over 200~ms per run],
+  caption: [Scenarios, and the scenario batch: means over five runs per scenario],
 )
 
 #let h2row(label, b) = (
-  label, [#b.s3], [#b.s4], [#b.diff \[#b.ci_lo, #b.ci_hi\]], [#b.p], [#b.d], [#b.wins/#b.n],
+  label, [#b.s3], [#b.s4], [#b.diff \[#b.ci_lo, #b.ci_hi\]], ci-strip(b.plot), [#b.p], [#b.d], [#b.wins/#b.n],
 )
 
 #let tab-h2 = figure(
   table(
-    columns: (auto, auto, auto, 1fr, auto, auto, auto),
-    align: (left, right, right, center, right, right, right),
+    columns: (auto, auto, auto, auto, 1fr, auto, auto, auto),
+    align: (left, right, right, right, center, right, right, right),
     stroke: none,
-    inset: (x: 2.5pt, y: 2.2pt),
+    inset: (x: 3pt, y: 2.2pt),
     toprule,
-    [*Batch*], [*Reactive*], [*Predictive*], [*Difference \[95% CI\]*#super[a]], [*p*], [*d*], [*Wins*#super[b]],
+    [*Batch*], [*Reactive*], [*Predictive*], [*Difference \[95% CI\]*#super[a]], [*Interval*#super[b]], [*p*],
+    [*d*], [*Wins*#super[c]],
     rule,
     ..h2row([Pilot], H.b5),
     ..h2row([Loaded host], H.b10a),
     ..h2row([Confirmatory], H.b10b),
     rule,
-    [Pooled], [–], [–], [#H.pooled.diff \[#H.pooled.ci_lo, #H.pooled.ci_hi\]], [#H.pooled.p#super[c]],
-    [#H.pooled.d], [#H.pooled.wins/#H.pooled.n],
-    toprule,
-    tnote(7)[#super[a]Predictive minus reactive. #super[b]Pairs in which the predictive hybrid was faster.
-      #super[c]Sampled with 10,000 sign flips.],
+    [Pooled], [–], [–], [#H.pooled.diff \[#H.pooled.ci_lo, #H.pooled.ci_hi\]], ci-strip(H.pooled.plot, bold: true),
+    [#H.pooled.p#super[d]], [#H.pooled.d], [#H.pooled.wins/#H.pooled.n],
+    rule,
+    [], [], [], [], strip-axis(-700, 1100, (-500, 0, 500, 1000), w: ci-w), [], [], [],
+    tnote(8)[#super[a]Predictive minus reactive. #super[b]Mean and 95% interval; left of the dashed zero line favors
+      the forecast. #super[c]Pairs in which the predictive hybrid was faster. #super[d]Sampled with 10,000 sign
+      flips.],
   ),
   placement: auto,
   scope: "parent",
   caption: [Paired comparison of the reactive and predictive hybrids, mean p99 (ms)],
 )
-
-// ---------------------------------------------------------------------------
-// Fig.: p99 of every run of the scenario batch.
-#let fig-runs = {
-  let cols = (([HPA \ baseline], F.s1), ([Knative \ baseline], F.s2), ([Reactive \ hybrid], F.s3))
-  let sy(v) = v / 72
-  let right = 7.7
-  figure(
-    cetz.canvas(length: 1cm, {
-      import cetz.draw: *
-      set-style(stroke: 0.5pt)
-      line((0, 0), (0, sy(262)))
-      line((0, 0), (right, 0))
-      for t in (0, 100, 200) {
-        line((0, sy(t)), (-0.08, sy(t)))
-        content((-0.14, sy(t)), text(size: 6.5pt, str(t)), anchor: "east")
-      }
-      content((-0.78, sy(130)), angle: 90deg, text(size: 6.5pt, [p99 per run (ms)]))
-      line((0, sy(200)), (right, sy(200)), stroke: (dash: "dashed", paint: luma(120)))
-      content((right, sy(200) + 0.04), text(size: 6.5pt, [SLO 200 ms]), anchor: "south-east")
-      for (i, (label, s)) in cols.enumerate() {
-        let x = 1.2 + i * 2.6
-        content((x, -0.1), align(center, text(size: 6.5pt, label)), anchor: "north")
-        let m = s.plot.sum() / s.plot.len()
-        line((x - 0.55, sy(m)), (x + 0.55, sy(m)), stroke: 0.9pt)
-        for (j, v) in s.plot.enumerate() {
-          circle((x + (j - 2) * 0.17, sy(v)), radius: 0.055, fill: white)
-        }
-      }
-    }),
-    placement: auto,
-    caption: [p99 of every run of the scenario batch, with the mean as a bar.],
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Fig.: forest plot of the paired p99 difference per batch.
-#let fig-forest = {
-  let rows = (([Pilot (5 pairs)], H.b5.plot), ([Loaded host (10)], H.b10a.plot), ([Confirmatory (10)], H.b10b.plot), ([Pooled (25)], H.pooled.plot))
-  let sx(v) = v / 260
-  figure(
-    cetz.canvas(length: 1cm, {
-      import cetz.draw: *
-      set-style(stroke: 0.5pt)
-      let top = rows.len() * 0.6
-      line((sx(0), -0.2), (sx(0), top), stroke: (dash: "dashed", paint: luma(120)))
-      for t in (-500, 0, 500, 1000) {
-        line((sx(t), -0.2), (sx(t), -0.28))
-        content((sx(t), -0.32), text(size: 6.5pt, str(t).replace("-", "−")), anchor: "north")
-      }
-      line((sx(-700), -0.2), (sx(1100), -0.2))
-      content((sx(200), -0.75), text(size: 6.5pt, [Predictive − reactive p99 (ms); left of 0 favors the forecast]), anchor: "north")
-      for (i, (label, v)) in rows.enumerate() {
-        let y = top - 0.3 - i * 0.6
-        content((sx(-720), y), text(size: 7pt, label), anchor: "east")
-        line((sx(v.at(1)), y), (sx(v.at(2)), y), stroke: 0.9pt)
-        let s = if i == rows.len() - 1 { 0.11 } else { 0.07 }
-        rect((sx(v.at(0)) - s, y - s), (sx(v.at(0)) + s, y + s), fill: black)
-      }
-    }),
-    placement: auto,
-    caption: [Mean paired p99 difference with its 95% bootstrap interval, per batch and pooled.],
-  )
-}
